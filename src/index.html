@@ -20,9 +20,14 @@
         <div id="save-message" style="display:none; color:green; margin-top:10px;">저장되었습니다!</div>
       </div>
     </div>
-    <div id="animation-buttons" style="position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1000;">
+    <div id="animation-buttons" style="position: fixed; top: 50%; left: 20px; transform: translateY(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 5px; background-color: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;">
       <!-- 디버그용 '미소' 표정 버튼 추가 -->
       <button id="smile-debug-button" style="margin: 5px; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">미소 표정</button>
+      <!-- 디버그용 포즈 저장 버튼 추가 -->
+      <button id="save-pose-button" style="margin: 5px; padding: 10px; background-color: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">포즈 저장</button>
+      <!-- 디버그용 포즈 로드 버튼 추가 -->
+      <button id="load-pose-button" style="margin: 5px; padding: 10px; background-color: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">포즈 로드</button>
+      <!-- 애니메이션 버튼들이 여기에 동적으로 추가될 것입니다. -->
     </div>
     <div id="chat-container">
       <div id="chat-messages"></div>
@@ -53,25 +58,97 @@
       };
       document.getElementById('llm-api-key').value = localStorage.getItem('llmApiKey') || '';
 
-      // 디버그용 '미소' 표정 버튼 로직
+      // 애니메이션 버튼 생성 로직
+      const animationButtonsContainer = document.getElementById('animation-buttons');
+      console.log('animationButtonsContainer:', animationButtonsContainer);
+      if (animationButtonsContainer && window.vrmAnimationList && window.currentVrm && window.mixer) {
+        console.log('Creating animation buttons...');
+        window.vrmAnimationList.forEach((clip, index) => {
+          const button = document.createElement('button');
+          button.textContent = clip.name || `Animation ${index}`;
+          button.style.margin = '5px';
+          button.style.padding = '10px';
+          button.style.backgroundColor = '#007bff';
+          button.style.color = 'white';
+          button.style.border = 'none';
+          button.style.borderRadius = '5px';
+          button.style.cursor = 'pointer';
+
+          button.onclick = () => {
+            window.mixer.stopAllAction(); // 기존 애니메이션 중지
+            const action = window.mixer.clipAction(clip);
+            action.play();
+            console.log(`Applied animation: ${clip.name || `Animation ${index}`}`);
+          };
+          animationButtonsContainer.appendChild(button);
+          console.log(`Button created for: ${clip.name || `Animation ${index}`}`);
+        });
+      } else {
+        console.warn('Animation list or VRM model/mixer not ready for animation buttons.', { animationButtonsContainer, vrmAnimationList: window.vrmAnimationList, currentVrm: window.currentVrm, mixer: window.mixer });
+      }
+
+      // 디버그용 '미소' 표정 버튼 로직 (기존 로직 유지)
       const smileDebugButton = document.getElementById('smile-debug-button');
       if (smileDebugButton) {
         let currentDebugExpressionIndex = 0; // 디버그 버튼용 인덱스
         smileDebugButton.onclick = () => {
-          if (window.currentVrm && window.currentVrm.expressionManager && window.vrmExpressionList && window.vrmExpressionList.length > 0) {
+          if (window.currentVrm && window.currentVrm.expressionManager && window.vrmExpressionList && window.vrmExpressionList.length > 0 && window.expressionMap) {
             // 모든 표정 초기화
-            window.vrmExpressionList.forEach(expName => {
-              window.currentVrm.expressionManager.setValue(expName, 0.0);
-            });
+            for (const mappedName in window.expressionMap) {
+              const vrmInternalName = window.expressionMap[mappedName];
+              window.currentVrm.expressionManager.setValue(vrmInternalName, 0.0);
+            }
 
-            const nextDebugExpression = window.vrmExpressionList[currentDebugExpressionIndex];
-            window.currentVrm.expressionManager.setValue(nextDebugExpression, 1.0);
-            window.currentVrm.expressionManager.update(); // 변경 사항 적용
-            console.log(`Debug: Applied expression: ${nextDebugExpression}`);
+            const nextMappedExpression = window.vrmExpressionList[currentDebugExpressionIndex];
+            const nextInternalExpression = window.expressionMap[nextMappedExpression];
+
+            if (nextInternalExpression) {
+              window.currentVrm.expressionManager.setValue(nextInternalExpression, 1.0);
+              window.currentVrm.expressionManager.update(); // 변경 사항 적용
+              console.log(`Debug: Applied expression: ${nextMappedExpression} (Internal: ${nextInternalExpression})`);
+            } else {
+              console.warn(`Debug: Internal VRM expression name not found for mapped expression: ${nextMappedExpression}`);
+            }
 
             currentDebugExpressionIndex = (currentDebugExpressionIndex + 1) % window.vrmExpressionList.length;
           } else {
-            console.warn('Debug: VRM model or expression list not ready.');
+            console.warn('Debug: VRM model or expression list/map not ready.');
+          }
+        };
+      }
+
+      // 디버그용 포즈 저장/로드 버튼 로직
+      const savePoseButton = document.getElementById('save-pose-button');
+      const loadPoseButton = document.getElementById('load-pose-button');
+      let savedPose = null;
+
+      if (savePoseButton) {
+        savePoseButton.onclick = () => {
+          if (window.saveVrmPose) {
+            savedPose = window.saveVrmPose();
+            if (savedPose) {
+              localStorage.setItem('vrmSavedPose', JSON.stringify(savedPose));
+              console.log('Pose saved to localStorage.');
+            }
+          } else {
+            console.warn('saveVrmPose function not available.');
+          }
+        };
+      }
+
+      if (loadPoseButton) {
+        loadPoseButton.onclick = () => {
+          if (window.loadVrmPose) {
+            const storedPose = localStorage.getItem('vrmSavedPose');
+            if (storedPose) {
+              savedPose = JSON.parse(storedPose);
+              window.loadVrmPose(savedPose);
+              console.log('Pose loaded from localStorage.');
+            } else {
+              console.warn('No pose found in localStorage.');
+            }
+          } else {
+            console.warn('loadVrmPose function not available.');
           }
         };
       }
@@ -136,14 +213,20 @@
             console.log('window.currentVrm.expressionManager:', window.currentVrm.expressionManager);
 
             // 모든 표정을 초기화 (선택 사항, 이전 표정을 끄기 위함)
-            for (const key in window.expressionMap) {
-              window.currentVrm.expressionManager.setValue(window.expressionMap[key], 0.0);
+            for (const mappedName in window.expressionMap) {
+              const vrmInternalName = window.expressionMap[mappedName];
+              window.currentVrm.expressionManager.setValue(vrmInternalName, 0.0);
             }
 
             // LLM이 제안한 표정을 VRM 모델에 적용
             if (window.vrmExpressionList.includes(expression)) { // LLM이 제안한 표정이 유효한지 다시 확인
-              window.currentVrm.expressionManager.setValue(expression, 1.0);
-              console.log(`Applying VRM expression: ${expression}`);
+              const vrmInternalName = window.expressionMap[expression];
+              if (vrmInternalName) {
+                window.currentVrm.expressionManager.setValue(vrmInternalName, 1.0);
+                console.log(`Applying VRM expression: ${expression} (Internal: ${vrmInternalName})`);
+              } else {
+                console.warn(`VRM internal name not found for mapped expression: ${expression}`);
+              }
             } else {
               console.warn(`LLM proposed expression "${expression}" not found in VRM expression list. Not applying.`);
             }

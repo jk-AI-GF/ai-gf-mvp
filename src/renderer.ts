@@ -130,41 +130,84 @@ loader.load(
     currentVrm = vrm; // 현재 VRM 모델 저장
     (window as any).currentVrm = vrm; // currentVrm을 window 객체에 노출
 
-    // VRM 모델의 표정 목록을 전역 변수로 노출
-    if (vrm.expressionManager) {
-      const rawExpressionKeys = Array.from(vrm.expressionManager.expressions.keys());
-      console.log('Raw VRM Expression Keys:', rawExpressionKeys); // 실제 키 로깅
+    // 포즈 저장/로드 함수를 window 객체에 노출
+    (window as any).saveVrmPose = () => {
+      if (!currentVrm) return null;
+      const pose: { [key: string]: { position: number[], quaternion: number[], scale: number[] } } = {};
+      Object.values(currentVrm.humanoid.humanBones).forEach((bone: any) => {
+        if (bone.node) {
+          pose[bone.node.name] = {
+            position: bone.node.position.toArray(),
+            quaternion: bone.node.quaternion.toArray(),
+            scale: bone.node.scale.toArray(),
+          };
+        }
+      });
+      console.log('VRM Pose Saved:', pose);
+      return pose;
+    };
 
-      // 임시 매핑: 실제 VRM 모델의 표정 이름에 따라 수정해야 합니다.
-      const expressionMap: { [key: string]: string } = {
-        '0': '기본', // Neutral
-        '1': '행복', // Happy
-        '2': '슬픔', // Sad
-        '3': '놀람', // Surprise
-        '4': '화남', // Angry
-        '5': '미소', // Smile
-        '6': '눈감음', // Blink
-        // 여기에 더 많은 표정 매핑을 추가하세요.
-      };
-      window.vrmExpressionList = rawExpressionKeys.map(key => expressionMap[key] || `알수없음_${key}`);
-      (window as any).expressionMap = expressionMap; // expressionMap을 window 객체에 노출
-      console.log('VRM Expression List (Mapped):', window.vrmExpressionList);
-      console.log('Type of vrm.expressionManager.expressions:', typeof vrm.expressionManager.expressions);
-      console.log('Type of first expression key:', typeof rawExpressionKeys[0]);
-    }
+    (window as any).loadVrmPose = (pose: { [key: string]: { position: number[], quaternion: number[], scale: number[] } }) => {
+      if (!currentVrm || !pose) return;
+      Object.values(currentVrm.humanoid.humanBones).forEach((bone: any) => {
+        if (bone.node && pose[bone.node.name]) {
+          const saved = pose[bone.node.name];
+          bone.node.position.fromArray(saved.position);
+          bone.node.quaternion.fromArray(saved.quaternion);
+          bone.node.scale.fromArray(saved.scale);
+        }
+      });
+      console.log('VRM Pose Loaded.');
+    };
+
+    // VRM 모델의 표정 목록을 전역 변수로 노출
+      if (vrm.expressionManager) {
+        const actualExpressionNames: string[] = [];
+        vrm.expressionManager.expressions.forEach((expressionObj, key) => {
+          // VRMExpression 객체의 name 속성을 사용
+          actualExpressionNames.push(expressionObj.name);
+        });
+        console.log('Actual VRM Expression Names (from objects): ', actualExpressionNames);
+
+        // 임시 매핑: 실제 VRM 모델의 표정 이름에 따라 수정해야 합니다.
+        const expressionMap: { [key: string]: string } = {
+          '기본': 'neutral',
+          '아': 'aa',
+          '이': 'ih',
+          '우': 'ou',
+          '에': 'ee',
+          '오': 'oh',
+          '눈감음': 'blink',
+          '행복': 'happy',
+          '화남': 'angry',
+          '슬픔': 'sad',
+          '편안': 'relaxed',
+          '위보기': 'lookUp',
+          '아래보기': 'lookDown',
+          '왼쪽보기': 'lookLeft',
+          '오른쪽보기': 'lookRight',
+          '왼쪽눈감음': 'blinkLeft',
+          '오른쪽눈감음': 'blinkRight',
+          '하트': 'ハート',
+          '반짝반짝': 'キラキラ',
+          '메롱': 'あっかんべー',
+          '째려보기': 'じとめ',
+        };
+
+        // LLM에 전달할 표정 목록 (한국어 이름)
+        window.vrmExpressionList = Object.keys(expressionMap);
+
+        (window as any).expressionMap = expressionMap; // expressionMap을 window 객체에 노출
+        console.log('VRM Expression List (Mapped for LLM):', window.vrmExpressionList);
+        console.log('Type of vrm.expressionManager.expressions:', typeof vrm.expressionManager.expressions);
+      }
 
     // 애니메이션 믹서 생성
     mixer = new THREE.AnimationMixer(vrm.scene);
 
     // VRM 모델에 애니메이션 클립이 있다면 재생
     console.log('GLTF Animations Length:', gltf.animations.length); // 이 줄을 추가합니다.
-
-    // GLTF 모델에 애니메이션 클립이 있다면 재생
-    // if (gltf.animations && gltf.animations.length > 0) {
-    //   const clip = gltf.animations[0]; // 첫 번째 애니메이션 클립 사용
-    //   const action = mixer.clipAction(clip);
-    //   action.play();
-    // }
+    (window as any).vrmAnimationList = gltf.animations; // 애니메이션 클립을 window 객체에 노출
 
     // 디버그 로그 추가: VRM 모델의 바운딩 박스 확인
     vrm.scene.updateMatrixWorld(true); // 월드 행렬 업데이트
@@ -180,51 +223,7 @@ loader.load(
     // 애니메이션 버튼 생성 및 이벤트 리스너 설정 (이 부분을 loader.load 콜백 안으로 이동)
     const animationButtonsContainer = document.getElementById('animation-buttons');
     if (animationButtonsContainer) {
-      const animationFiles = [
-        'Rumba Dancing.fbx',
-        'Sitting Laughing.fbx'
-      ]; // glob으로 가져온 파일 목록 사용
-
-      animationFiles.forEach(fileName => {
-        const button = document.createElement('button');
-        button.textContent = fileName.replace('.fbx', '');
-        button.style.margin = '5px';
-        button.style.padding = '10px';
-        button.style.backgroundColor = '#007bff';
-        button.style.color = 'white';
-        button.style.border = 'none';
-        button.style.borderRadius = '5px';
-        button.style.cursor = 'pointer';
-
-        button.onclick = () => {
-          if (currentVrm) {
-            // 기존 애니메이션 중지
-            mixer.stopAllAction();
-
-            // FBXLoader 대신 VRM.loadAnimation 사용
-            const fbxLoader = new FBXLoader();
-            fbxLoader.load(
-              `assets/animation/${fileName}`, // assets/animation 폴더 경로
-              (object) => {
-                const animationClip = object.animations[0];
-                if (animationClip) {
-                  const action = mixer.clipAction(animationClip);
-                  action.play();
-                } else {
-                  console.warn(`No animation clip found in ${fileName}`);
-                }
-              },
-              undefined,
-              (error) => {
-                console.error(`Failed to load FBX animation ${fileName}:`, error);
-              }
-            );
-          } else {
-            console.warn('VRM model not loaded yet.');
-          }
-        };
-        animationButtonsContainer.appendChild(button);
-      });
+      // 기존 애니메이션 파일 로딩 로직 제거
 
       // 디버그용 카메라 정보 로그 버튼 추가
       const debugButton = document.createElement('button');
@@ -257,7 +256,11 @@ function animate() {
 
   const delta = clock.getDelta(); // 이전 프레임과의 시간 차이 계산
   if (mixer) {
-    mixer.update(delta); // 애니메이션 믹서 업데이트
+    mixer.update(delta);
+  }
+
+  if (currentVrm) {
+    currentVrm.update(delta); // VRM 모델 업데이트 추가
   }
 
   if (controls) {
