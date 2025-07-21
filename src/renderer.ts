@@ -128,6 +128,30 @@ loader.load(
     vrm.scene.rotation.y = Math.PI; // Y축을 기준으로 180도 회전 (PI 라디안)
     scene.add(vrm.scene);
     currentVrm = vrm; // 현재 VRM 모델 저장
+    (window as any).currentVrm = vrm; // currentVrm을 window 객체에 노출
+
+    // VRM 모델의 표정 목록을 전역 변수로 노출
+    if (vrm.expressionManager) {
+      const rawExpressionKeys = Array.from(vrm.expressionManager.expressions.keys());
+      console.log('Raw VRM Expression Keys:', rawExpressionKeys); // 실제 키 로깅
+
+      // 임시 매핑: 실제 VRM 모델의 표정 이름에 따라 수정해야 합니다.
+      const expressionMap: { [key: string]: string } = {
+        '0': '기본', // Neutral
+        '1': '행복', // Happy
+        '2': '슬픔', // Sad
+        '3': '놀람', // Surprise
+        '4': '화남', // Angry
+        '5': '미소', // Smile
+        '6': '눈감음', // Blink
+        // 여기에 더 많은 표정 매핑을 추가하세요.
+      };
+      window.vrmExpressionList = rawExpressionKeys.map(key => expressionMap[key] || `알수없음_${key}`);
+      (window as any).expressionMap = expressionMap; // expressionMap을 window 객체에 노출
+      console.log('VRM Expression List (Mapped):', window.vrmExpressionList);
+      console.log('Type of vrm.expressionManager.expressions:', typeof vrm.expressionManager.expressions);
+      console.log('Type of first expression key:', typeof rawExpressionKeys[0]);
+    }
 
     // 애니메이션 믹서 생성
     mixer = new THREE.AnimationMixer(vrm.scene);

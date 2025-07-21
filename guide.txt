@@ -1,0 +1,50 @@
+Three.js 환경에서 VRM 파일에서 가능한 표정 목록을 직접 추출하는 건 가능하다. 다만 약간의 구조 파악이 필요해. VRM 0.x 기준으로 설명하면:
+
+✅ 가능한 표정 목록 추출 방법 (VRM 0.x 기준, Three.js 사용)
+VRM은 GLTF의 확장 형태로, 표정(blendshape)은 VRM.blendShapeProxy에 등록되어 있어.
+
+js
+복사
+편집
+import { VRM } from '@pixiv/three-vrm';
+
+// vrm 로드 후
+loader.load('your.vrm', (gltf) => {
+  VRM.from(gltf).then((vrm) => {
+    const blendShapeProxy = vrm.blendShapeProxy;
+    const presetNames = Object.keys(blendShapeProxy.presets);
+
+    console.log('가능한 표정:', presetNames);
+  });
+});
+이렇게 하면 보통 다음과 같은 표정 이름들을 얻을 수 있어:
+
+css
+복사
+편집
+["neutral", "happy", "angry", "sad", "surprised", "aa", "ih", "ou", "ee", "oh", "blink", "blinkL", "blinkR", "lookUp", "lookDown", "lookLeft", "lookRight"]
+🎯 주의할 점
+표정은 모델에 따라 다를 수 있음 (어떤 VRM은 "happy" 없고 "joy"만 있을 수도 있음)
+
+표정 강도는 blendShapeProxy.setValue(name, weight)로 조절 가능
+
+표정은 preset과 custom으로 나뉘는데, custom은 직접 추가된 블렌드셰이프일 수 있음
+
+✅ 만약 VRM 1.0이라면?
+VRM 1.0은 구조가 다르고 vrm.expressionManager를 써야 해:
+
+js
+복사
+편집
+const expressionManager = vrm.expressionManager;
+const expressions = expressionManager?.expressions;
+
+for (const name in expressions) {
+  console.log(name); // 가능한 표정 키 출력
+}
+결론
+VRM에서 가능한 표정 목록은 blendShapeProxy.presets (VRM 0.x) 또는 expressionManager.expressions (VRM 1.0) 으로 얻을 수 있음.
+
+모델 로딩 후 즉시 리스트를 추출해두고, LLM 출력 시 그 중 하나를 매칭해 쓰면 됨.
+
+원하는 방식(0.x인지 1.0인지, 코드 구조 등) 말해주면 구체적으로 예시 더 줄 수 있어.
