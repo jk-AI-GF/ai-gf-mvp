@@ -29,65 +29,8 @@
 import './index.css';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { VRMLoaderPlugin, VRM, VRMUtils } from '@pixiv/three-vrm';
-
-
-const mixamoVRMRigMap = {
-    mixamorigHips: 'hips',
-    mixamorigSpine: 'spine',
-    mixamorigSpine1: 'chest',
-    mixamorigSpine2: 'upperChest',
-    mixamorigNeck: 'neck',
-    mixamorigHead: 'head',
-    mixamorigLeftShoulder: 'leftShoulder',
-    mixamorigLeftArm: 'leftUpperArm',
-    mixamorigLeftForeArm: 'leftLowerArm',
-    mixamorigLeftHand: 'leftHand',
-    mixamorigLeftHandThumb1: 'leftThumbProximal',
-    mixamorigLeftHandThumb2: 'leftThumbIntermediate',
-    mixamorigLeftHandThumb3: 'leftThumbDistal',
-    mixamorigLeftHandIndex1: 'leftIndexProximal',
-    mixamorigLeftHandIndex2: 'leftIndexIntermediate',
-    mixamorigLeftHandIndex3: 'leftIndexDistal',
-    mixamorigLeftHandMiddle1: 'leftMiddleProximal',
-    mixamorigLeftHandMiddle2: 'leftMiddleIntermediate',
-    mixamorigLeftHandMiddle3: 'leftMiddleDistal',
-    mixamorigLeftHandRing1: 'leftRingProximal',
-    mixamorigLeftHandRing2: 'leftRingIntermediate',
-    mixamorigLeftHandRing3: 'leftRingDistal',
-    mixamorigLeftHandPinky1: 'leftLittleProximal',
-    mixamorigLeftHandPinky2: 'leftLittleIntermediate',
-    mixamorigLeftHandPinky3: 'leftLittleDistal',
-    mixamorigRightShoulder: 'rightShoulder',
-    mixamorigRightArm: 'rightUpperArm',
-    mixamorigRightForeArm: 'rightLowerArm',
-    mixamorigRightHand: 'rightHand',
-    mixamorigRightHandThumb1: 'rightThumbProximal',
-    mixamorigRightHandThumb2: 'rightThumbIntermediate',
-    mixamorigRightHandThumb3: 'rightThumbDistal',
-    mixamorigRightHandIndex1: 'rightIndexProximal',
-    mixamorigRightHandIndex2: 'rightIndexIntermediate',
-    mixamorigRightHandIndex3: 'rightIndexDistal',
-    mixamorigRightHandMiddle1: 'rightMiddleProximal',
-    mixamorigRightHandMiddle2: 'rightMiddleIntermediate',
-    mixamorigRightHandMiddle3: 'rightMiddleDistal',
-    mixamorigRightHandRing1: 'rightRingProximal',
-    mixamorigRightHandRing2: 'rightRingIntermediate',
-    mixamorigRightHandRing3: 'rightRingDistal',
-    mixamorigRightHandPinky1: 'rightLittleProximal',
-    mixamorigRightHandPinky2: 'rightLittleIntermediate',
-    mixamorigRightHandPinky3: 'rightLittleDistal',
-    mixamorigLeftUpLeg: 'leftUpperLeg',
-    mixamorigLeftLeg: 'leftLowerLeg',
-    mixamorigLeftFoot: 'leftFoot',
-    mixamorigLeftToeBase: 'leftToes',
-    mixamorigRightUpLeg: 'rightUpperLeg',
-    mixamorigRightLeg: 'rightLowerLeg',
-    mixamorigRightFoot: 'rightFoot',
-    mixamorigRightToeBase: 'rightToes',
-};
+import { VRMLoaderPlugin, VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
 
 
 let mixer: THREE.AnimationMixer; // mixer 변수 선언
@@ -128,13 +71,13 @@ loader.load(
     vrm.scene.rotation.y = Math.PI; // Y축을 기준으로 180도 회전 (PI 라디안)
     scene.add(vrm.scene);
     currentVrm = vrm; // 현재 VRM 모델 저장
-    (window as any).currentVrm = vrm; // currentVrm을 window 객체에 노출
+    window.currentVrm = vrm; // currentVrm을 window 객체에 노출
 
     // 포즈 저장/로드 함수를 window 객체에 노출
-    (window as any).saveVrmPose = () => {
+    window.saveVrmPose = () => {
       if (!currentVrm) return null;
       const pose: { [key: string]: { position: number[], quaternion: number[], scale: number[] } } = {};
-      Object.values(currentVrm.humanoid.humanBones).forEach((bone: any) => {
+      Object.values(currentVrm.humanoid.humanBones).forEach((bone) => {
         if (bone.node) {
           pose[bone.node.name] = {
             position: bone.node.position.toArray(),
@@ -147,23 +90,29 @@ loader.load(
       return pose;
     };
 
-    (window as any).loadVrmPose = (pose: { [key: string]: { position: number[], quaternion: number[], scale: number[] } }) => {
+    window.loadVrmPose = (pose: { [key: string]: { position: number[], quaternion: number[], scale: number[] } }) => {
       if (!currentVrm || !pose) return;
-      Object.values(currentVrm.humanoid.humanBones).forEach((bone: any) => {
+      console.log('Attempting to load pose:', pose);
+      Object.values(currentVrm.humanoid.humanBones).forEach((bone) => {
         if (bone.node && pose[bone.node.name]) {
           const saved = pose[bone.node.name];
+          console.log(`Bone: ${bone.node.name}, Saved Data:`, saved);
+          console.log(`Before - Position: ${bone.node.position.toArray()}, Quaternion: ${bone.node.quaternion.toArray()}, Scale: ${bone.node.scale.toArray()}`);
           bone.node.position.fromArray(saved.position);
           bone.node.quaternion.fromArray(saved.quaternion);
           bone.node.scale.fromArray(saved.scale);
+          console.log(`After - Position: ${bone.node.position.toArray()}, Quaternion: ${bone.node.quaternion.toArray()}, Scale: ${bone.node.scale.toArray()}`);
         }
       });
+      currentVrm.humanoid.update(); // 휴머노이드 업데이트
+      currentVrm.scene.updateMatrixWorld(true); // 씬의 월드 행렬 업데이트 강제
       console.log('VRM Pose Loaded.');
     };
 
     // VRM 모델의 표정 목록을 전역 변수로 노출
       if (vrm.expressionManager) {
         const actualExpressionNames: string[] = [];
-        vrm.expressionManager.expressions.forEach((expressionObj, key) => {
+        vrm.expressionManager.expressions.forEach((expressionObj) => {
           // VRMExpression 객체의 name 속성을 사용
           actualExpressionNames.push(expressionObj.name);
         });
@@ -197,7 +146,7 @@ loader.load(
         // LLM에 전달할 표정 목록 (한국어 이름)
         window.vrmExpressionList = Object.keys(expressionMap);
 
-        (window as any).expressionMap = expressionMap; // expressionMap을 window 객체에 노출
+        window.expressionMap = expressionMap; // expressionMap을 window 객체에 노출
         console.log('VRM Expression List (Mapped for LLM):', window.vrmExpressionList);
         console.log('Type of vrm.expressionManager.expressions:', typeof vrm.expressionManager.expressions);
       }
@@ -207,7 +156,7 @@ loader.load(
 
     // VRM 모델에 애니메이션 클립이 있다면 재생
     console.log('GLTF Animations Length:', gltf.animations.length); // 이 줄을 추가합니다.
-    (window as any).vrmAnimationList = gltf.animations; // 애니메이션 클립을 window 객체에 노출
+    window.vrmAnimationList = gltf.animations; // 애니메이션 클립을 window 객체에 노출
 
     // 디버그 로그 추가: VRM 모델의 바운딩 박스 확인
     vrm.scene.updateMatrixWorld(true); // 월드 행렬 업데이트
@@ -261,6 +210,13 @@ function animate() {
 
   if (currentVrm) {
     currentVrm.update(delta); // VRM 모델 업데이트 추가
+
+    // 모든 SkinnedMesh의 스켈레톤 업데이트
+    currentVrm.scene.traverse(object => {
+      if ((object as THREE.SkinnedMesh).isSkinnedMesh) {
+        (object as THREE.SkinnedMesh).skeleton.update();
+      }
+    });
   }
 
   if (controls) {
@@ -272,5 +228,70 @@ function animate() {
 animate();
 
 console.log('👋 VRM 오버레이 로딩 완료');
+
+function animateExpression(expressionName: string, targetWeight: number, duration: number) {
+  if (!window.currentVrm || !window.currentVrm.expressionManager || !window.expressionMap) {
+    console.warn('VRM model or expressionManager not ready for animation.');
+    return;
+  }
+
+  const expressionManager = window.currentVrm.expressionManager;
+  const startWeight = expressionManager.getValue(expressionName) || 0.0;
+  const startTime = performance.now();
+
+  // Reset all other expressions to 0 before starting the animation
+  for (const mappedName in window.expressionMap) {
+    const vrmInternalName = window.expressionMap[mappedName];
+    if (vrmInternalName && vrmInternalName !== expressionName) {
+      expressionManager.setValue(vrmInternalName, 0.0);
+    }
+  }
+
+  function step(currentTime: number) {
+    const elapsedTime = currentTime - startTime;
+    const progress = Math.min(elapsedTime / (duration * 1000), 1); // progress from 0 to 1
+
+    const currentWeight = startWeight + (targetWeight - startWeight) * progress;
+    expressionManager.setValue(expressionName, currentWeight);
+    expressionManager.update();
+
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    }
+  }
+
+  requestAnimationFrame(step);
+}
+
+// 디버그용 랜덤 포즈 버튼 로직
+const randomPoseButton = document.getElementById('random-pose-button');
+if (randomPoseButton) {
+  randomPoseButton.onclick = () => {
+    if (currentVrm) {
+      // VRMHumanoid의 모든 본을 순회하며 무작위 회전 적용
+      const boneNames = Object.keys(currentVrm.humanoid.humanBones);
+      boneNames.forEach(boneName => {
+        const bone = currentVrm.humanoid.getNormalizedBoneNode(boneName as VRMHumanBoneName);
+        if (bone) {
+          console.log(`Applying random rotation to bone: ${bone.name}`);
+          const randomQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(
+            (Math.random() - 0.5) * Math.PI / 2,
+            (Math.random() - 0.5) * Math.PI / 2,
+            (Math.random() - 0.5) * Math.PI / 2
+          ));
+          bone.setRotationFromQuaternion(randomQuaternion);
+          bone.updateMatrixWorld(true); // 본의 월드 행렬 업데이트 강제
+        } else {
+          console.warn(`Bone node not found for: ${boneName}`);
+        }
+      });
+      currentVrm.humanoid.update(); // 휴머노이드 업데이트
+      currentVrm.scene.updateMatrixWorld(true); // 씬의 월드 행렬 업데이트 강제
+      console.log('Applied random pose.');
+    } else {
+      console.warn('VRM model not ready for random pose.');
+    }
+  };
+}
 
 

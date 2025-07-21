@@ -27,6 +27,8 @@
       <button id="save-pose-button" style="margin: 5px; padding: 10px; background-color: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">포즈 저장</button>
       <!-- 디버그용 포즈 로드 버튼 추가 -->
       <button id="load-pose-button" style="margin: 5px; padding: 10px; background-color: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">포즈 로드</button>
+      <!-- 디버그용 랜덤 포즈 버튼 추가 -->
+      <button id="random-pose-button" style="margin: 5px; padding: 10px; background-color: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer;">랜덤 포즈</button>
       <!-- 애니메이션 버튼들이 여기에 동적으로 추가될 것입니다. -->
     </div>
     <div id="chat-container">
@@ -152,6 +154,8 @@
           }
         };
       }
+
+      
       const chatForm = document.getElementById('chat-form');
       const chatInput = document.getElementById('chat-input');
       const chatMessages = document.getElementById('chat-messages');
