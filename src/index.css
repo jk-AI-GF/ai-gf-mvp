@@ -1,9 +1,13 @@
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  overflow: hidden; /* 스크롤바 제거 */
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
     Arial, sans-serif;
-  margin: auto;
-  max-width: 38rem;
-  padding: 2rem;
   background: rgba(34, 34, 34, 0.85); /* 약간 불투명한 검정색 */
   color: #fff; /* 흰색 글자 */
 }

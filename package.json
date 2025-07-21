@@ -46,6 +46,7 @@
   },
   "dependencies": {
     "@pixiv/three-vrm": "^3.4.2",
+    "@pixiv/three-vrm-animation": "^3.4.2",
     "@types/three": "^0.178.1",
     "electron-squirrel-startup": "^1.0.1",
     "react": "^19.1.0",
