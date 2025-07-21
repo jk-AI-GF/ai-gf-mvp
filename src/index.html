@@ -7,11 +7,90 @@
   </head>
   <body>
     <button id="close-overlay" style="position: fixed; top: 24px; right: 32px; z-index: 1000; background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.5rem; padding: 0.5rem 1rem; cursor: pointer;">×</button>
-    <div id="animation-buttons" style="position: fixed; top: 24px; left: 32px; z-index: 1000;"></div>
+    <button id="open-settings" style="position: fixed; top: 24px; right: 80px; z-index: 1000; background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.1rem; padding: 0.5rem 1rem; cursor: pointer;">설정</button>
+    <div id="settings-modal" style="display:none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.55); z-index: 2000; align-items: center; justify-content: center;">
+      <div class="settings-container">
+        <button id="close-settings" style="position: absolute; top: 18px; right: 24px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">×</button>
+        <h2>챗봇 LLM API 설정</h2>
+        <form id="llm-form">
+          <label for="llm-api-key">LLM API 키</label>
+          <input type="text" id="llm-api-key" name="llm-api-key" placeholder="API 키를 입력하세요" required />
+          <button type="submit">저장</button>
+        </form>
+        <div id="save-message" style="display:none; color:green; margin-top:10px;">저장되었습니다!</div>
+      </div>
+    </div>
+    <div id="animation-buttons" style="position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1000;"></div>
+    <div id="chat-container">
+      <div id="chat-messages"></div>
+      <form id="chat-form">
+        <input type="text" id="chat-input" placeholder="메시지를 입력하세요..." autocomplete="off" required />
+        <button type="submit">전송</button>
+      </form>
+    </div>
     <h1>💖 Hello World!</h1>
     <p>Welcome to your Electron application.</p>
     <script>
       document.getElementById('close-overlay').onclick = () => window.close();
+      document.getElementById('open-settings').onclick = () => {
+        document.getElementById('settings-modal').style.display = 'flex';
+      };
+      document.getElementById('close-settings').onclick = () => {
+        document.getElementById('settings-modal').style.display = 'none';
+      };
+      // LLM API 저장 로직
+      const form = document.getElementById('llm-form');
+      const saveMessage = document.getElementById('save-message');
+      form.onsubmit = (e) => {
+        e.preventDefault();
+        const apiKey = document.getElementById('llm-api-key').value;
+        localStorage.setItem('llmApiKey', apiKey);
+        saveMessage.style.display = 'block';
+        setTimeout(() => { saveMessage.style.display = 'none'; }, 2000);
+      };
+      document.getElementById('llm-api-key').value = localStorage.getItem('llmApiKey') || '';
+
+      // Gemini 채팅 기능
+      const chatForm = document.getElementById('chat-form');
+      const chatInput = document.getElementById('chat-input');
+      const chatMessages = document.getElementById('chat-messages');
+      let chatHistory = [];
+      function appendMessage(role, text) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'chat-message ' + role;
+        msgDiv.textContent = (role === 'user' ? '🙋‍♂️ ' : '🤖 ') + text;
+        chatMessages.appendChild(msgDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+      chatForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const userMsg = chatInput.value.trim();
+        if (!userMsg) return;
+        appendMessage('user', userMsg);
+        chatHistory.push({ role: 'user', parts: [{ text: userMsg }] });
+        chatInput.value = '';
+        // Gemini API 호출
+        const apiKey = localStorage.getItem('llmApiKey');
+        if (!apiKey) {
+          appendMessage('assistant', 'API 키가 설정되어 있지 않습니다. 설정에서 입력해 주세요.');
+          return;
+        }
+        try {
+          const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + apiKey, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: chatHistory.slice(-10), // 최근 10개만 보냄
+            })
+          });
+          const data = await res.json();
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '응답이 없습니다.';
+          appendMessage('assistant', text);
+          chatHistory.push({ role: 'model', parts: [{ text }] });
+        } catch (err) {
+          appendMessage('assistant', 'Gemini API 호출 실패: ' + err);
+        }
+      };
     </script>
   </body>
 </html>
