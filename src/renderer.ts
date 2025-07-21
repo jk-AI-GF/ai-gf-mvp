@@ -73,6 +73,10 @@ loader.load(
     currentVrm = vrm; // 현재 VRM 모델 저장
     window.currentVrm = vrm; // currentVrm을 window 객체에 노출
 
+    // VRM 모델의 눈과 목이 카메라를 따라가도록 설정
+
+    vrm.lookAt.target = camera;
+
     // 포즈 저장/로드 함수를 window 객체에 노출
     window.saveVrmPose = () => {
       if (!currentVrm) return null;
@@ -209,7 +213,26 @@ function animate() {
   }
 
   if (currentVrm) {
+
+    const head = currentVrm.humanoid.getNormalizedBoneNode('head');
+    
+    if (head) {
+      const camPos = new THREE.Vector3();
+      camera.getWorldPosition(camPos);
+
+      const headPos = new THREE.Vector3();
+      head.getWorldPosition(headPos);
+
+      const targetDir = new THREE.Vector3().subVectors(headPos, camPos).normalize();
+      targetDir.y *= -1;
+      const targetQuat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, -1), targetDir);
+
+      // 현재 회전에서 목표 회전으로 부드럽게 이동
+      head.quaternion.slerp(targetQuat, 0.1); // 0.1은 보간 비율, 더 작게 하면 더 느림
+    }
+
     currentVrm.update(delta); // VRM 모델 업데이트 추가
+
 
     // 모든 SkinnedMesh의 스켈레톤 업데이트
     currentVrm.scene.traverse(object => {
@@ -217,6 +240,7 @@ function animate() {
         (object as THREE.SkinnedMesh).skeleton.update();
       }
     });
+
   }
 
   if (controls) {

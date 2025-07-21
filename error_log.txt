@@ -1,6 +1,662 @@
-Uncaught runtime errors:
-×
-ERROR
-window.animateExpression is not a function
-TypeError: window.animateExpression is not a function
-    at smileDebugButton.onclick (webpack-internal:///./src/renderer.ts:255:24)
+index.html:65 animationButtonsContainer: <div id=​"animation-buttons" style=​"position:​ fixed;​ top:​ 50%;​ left:​ 20px;​ transform:​ translateY(-50%)​;​ z-index:​ 9999;​ display:​ flex;​ flex-direction:​ column;​ gap:​ 5px;​ background-color:​ rgba(0,0,0,0.3)​;​ padding:​ 10px;​ border-radius:​ 5px;​">​…​</div>​flex
+index.html:89 Animation list or VRM model/mixer not ready for animation buttons. Object
+(anonymous) @ index.html:89
+three.core.js:58574 WARNING: Multiple instances of Three.js being imported.
+eval @ three.core.js:58574
+renderer.ts:241 👋 VRM 오버레이 로딩 완료
+node:electron/js2c/renderer_init:2 Electron Security Warning (Disabled webSecurity) This renderer process has "webSecurity" disabled. This
+  exposes users of this app to severe security risks.
+
+For more information and help, consult
+https://electronjs.org/docs/tutorial/security.
+This warning will not show up
+once the app is packaged.
+(anonymous) @ node:electron/js2c/renderer_init:2
+logSecurityWarnings @ node:electron/js2c/renderer_init:2
+(anonymous) @ node:electron/js2c/renderer_init:2
+node:electron/js2c/renderer_init:2 Electron Security Warning (allowRunningInsecureContent) This renderer process has "allowRunningInsecureContent"
+  enabled. This exposes users of this app to severe security risks.
+
+  
+For more information and help, consult
+https://electronjs.org/docs/tutorial/security.
+This warning will not show up
+once the app is packaged.
+(anonymous) @ node:electron/js2c/renderer_init:2
+logSecurityWarnings @ node:electron/js2c/renderer_init:2
+(anonymous) @ node:electron/js2c/renderer_init:2
+node:electron/js2c/renderer_init:2 Electron Security Warning (Insecure Content-Security-Policy) This renderer process has either no Content Security
+  Policy set or a policy with "unsafe-eval" enabled. This exposes users of
+  this app to unnecessary security risks.
+
+For more information and help, consult
+https://electronjs.org/docs/tutorial/security.
+This warning will not show up
+once the app is packaged.
+warnAboutInsecureCSP @ node:electron/js2c/renderer_init:2
+logSecurityWarnings @ node:electron/js2c/renderer_init:2
+(anonymous) @ node:electron/js2c/renderer_init:2
+renderer.ts:122 Actual VRM Expression Names (from objects):  (21) ['VRMExpression_neutral', 'VRMExpression_aa', 'VRMExpression_ih', 'VRMExpression_ou', 'VRMExpression_ee', 'VRMExpression_oh', 'VRMExpression_blink', 'VRMExpression_happy', 'VRMExpression_angry', 'VRMExpression_sad', 'VRMExpression_relaxed', 'VRMExpression_lookUp', 'VRMExpression_lookDown', 'VRMExpression_lookLeft', 'VRMExpression_lookRight', 'VRMExpression_blinkLeft', 'VRMExpression_blinkRight', 'VRMExpression_ハート', 'VRMExpression_キラキラ', 'VRMExpression_あっかんべー', 'VRMExpression_じとめ']
+renderer.ts:153 VRM Expression List (Mapped for LLM): (21) ['기본', '아', '이', '우', '에', '오', '눈감음', '행복', '화남', '슬픔', '편안', '위보기', '아래보기', '왼쪽보기', '오른쪽보기', '왼쪽눈감음', '오른쪽눈감음', '하트', '반짝반짝', '메롱', '째려보기']
+renderer.ts:154 Type of vrm.expressionManager.expressions: object
+renderer.ts:161 GLTF Animations Length: 0
+renderer.ts:170 VRM Model Bounding Box: Box3 {isBox3: true, min: Vector3, max: Vector3}
+renderer.ts:171 VRM Model Size: Vector3 {x: 1.1097441366197633, y: 1.3235646787600932, z: 0.6001982702151261}
+renderer.ts:172 VRM Model Center: Vector3 {x: 0.0000013793700267550335, y: 0.6609340151459298, z: -0.11546838340871315}
+renderer.ts:173 VRM Model Position: Vector3 {x: 0, y: 0, z: 0}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0, y: 0.8000000000000002, z: 3.19}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0, y: 0.8000000000000002, z: 3.19}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0, y: 0.8000000000000002, z: 3.19}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0, y: 0.8000000000000002, z: 3.19}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0, y: 0.8000000000000002, z: 3.19}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0, y: 0.8000000000000002, z: 3.19}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0, y: 0.8000000000000002, z: 3.19}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0, y: 0.8000000000000002, z: 3.19}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0, y: 0.8000000000000002, z: 3.19}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0, y: 0.8000000000000002, z: 3.19}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0, y: 0.8000000000000002, z: 3.19}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0, y: 0.8000000000000002, z: 3.19}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0, y: 0.8000000000000002, z: 3.19}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0, y: 0.8000000000000002, z: 3.19}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.007724019385936021, y: 0.8000000000000002, z: 3.19}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.015448038771872043, y: 0.8000000000000002, z: 3.19}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.02317205815780806, y: 0.8000000000000002, z: 3.19}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.03604540415783767, y: 0.7950053989363822, z: 3.191252564530061}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.0386200969296801, y: 0.7925079840854827, z: 3.1918788754644556}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.043769423543773694, y: 0.7875133830218649, z: 3.1931314399945165}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.0643667889297393, y: 0.7725293511928302, z: 3.1968891909234283}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.07466550108751777, y: 0.7600426198956043, z: 3.200020659587309}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.0823895204734538, y: 0.752550603981087, z: 3.201899535051765}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.0978375592453258, y: 0.7425612875347606, z: 3.2044046927812513}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.11071090524535543, y: 0.7250798408548265, z: 3.2087887546445577}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.1235843101749763, y: 0.7150905244085001, z: 3.211293912374044}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.13130832956091232, y: 0.7026037931112743, z: 3.214425381037925}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.1338829634031635, y: 0.7001064925794653, z: 3.2150516633029556}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.13903234894684835, y: 0.7001064925794653, z: 3.2150516633029556}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.13903234894684835, y: 0.7001064925794653, z: 3.2150516633029556}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.15705502156097162, y: 0.692614476664948, z: 3.216930538767411}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.18537646526246462, y: 0.6751331443041042, z: 3.221314571961353}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.22399656219214478, y: 0.6651437135386873, z: 3.2238197583602037}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.27806469789369687, y: 0.6601491124750694, z: 3.2250723228902647}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.391350295910895, y: 0.6576516976241699, z: 3.2256986338246594}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.4273957000687328, y: 0.6576516976241698, z: 3.2256986338246594}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.24571612612001761, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.43511971945466876, y: 0.6576516976241698, z: 3.2256986338246594}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.4505677582265407, y: 0.6576516976241698, z: 3.2256986338246594}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.24571612612001761, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.4582917776124768, y: 0.6576516976241698, z: 3.2256986338246594}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.4582917776124768, y: 0.6576516976241698, z: 3.2256986338246594}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.47116518254209777, y: 0.677630444835913, z: 3.220688289696323}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.4788892019280338, y: 0.7200852397912082, z: 3.2100413191746187}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.4840385285421273, y: 0.762539920427413, z: 3.1993943773222786}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.48403852854212753, y: 0.7800213671073472, z: 3.195010315458972}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.48146386523508083, y: 0.822476047743552, z: 3.1843633736066326}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.471165182542098, y: 0.8474495103380035, z: 3.1781004362788705}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.41967168068279703, y: 0.9848030973311253, z: 3.1436543956536362}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.2457161261200177, _y: 0, _z: 0, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.3697184229536479, y: 0.93494112422849, z: 3.1553566948446106}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.23014232650804645, _y: -0.015189559159684465, _z: -0.00355866305723439, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.118821124206611, y: 0.8598102264501044, z: 3.15833134010631}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.20759730817104385, _y: -0.09160581613795835, _z: -0.019265746392732118, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -0.18217096993869064, y: 0.7843097050674747, z: 3.1308351036356914}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.18649861782781174, _y: -0.1840356317975126, _z: -0.03451653187448358, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -0.48124673758934433, y: 0.6831392433469203, z: 3.077131158684242}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.15821191450272987, _y: -0.27748387043263706, _z: -0.04367751625223819, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -0.7516895450301012, y: 0.5560047046991295, z: 3.0042645388190636}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.12108583386146507, _y: -0.3641642667201737, _z: -0.04331187143548717, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -0.9446402298930147, y: 0.4283055852551325, z: 2.9361800952974493}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.0814623701129367, _y: -0.4277645347682959, _z: -0.033855681242549986, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -1.1545125237026226, y: 0.24894917917071227, z: 2.8405089764817215}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: -0.022216404117034346, _y: -0.49911917799965566, _z: -0.010635283102125555, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -1.4583954447385805, y: 0.04376668125437849, z: 2.6497761662255335}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.05226321126757737, _y: -0.6077869545636947, _z: 0.029863340973438776, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -1.7059244936146682, y: -0.23729874634627465, z: 2.4274714740521506}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.16900021205772592, _y: -0.7027476248802419, _z: 0.10983574964217242, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -1.9104997837559434, y: -0.515259600705349, z: 2.1664158299554357}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.30641133551656274, _y: -0.7873997269467663, _z: 0.220513181515901, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -2.025889520105377, y: -0.7635338726956943, z: 1.9375867040956107}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.44590032880590097, _y: -0.8384482963061141, _z: 0.3415221430995238, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -2.091796498677053, y: -0.9098256490033269, z: 1.7731091193995256}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.5416132134270546, _y: -0.8689422475390643, _z: 0.43066694518668613, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -2.076873167123669, y: -1.0060419759475403, z: 1.7327698596803436}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.5898557202334564, _y: -0.8619429706795443, _z: 0.47011213383952954, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -2.076873167123669, y: -1.0060419759475403, z: 1.7327698596803436}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.5898557202334564, _y: -0.8619429706795443, _z: 0.47011213383952954, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -2.096599444777353, y: -1.029918014600087, z: 1.68828180331332}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.6109124012197211, _y: -0.8712072466253556, _z: 0.4918659524114771, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -2.0949403826562465, y: -1.1481628445210037, z: 1.6016920071091745}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.6800959592581246, _y: -0.8704241692780041, _z: 0.5538578082717305, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -2.1084069186188334, y: -1.2413068905846, z: 1.4999819476684624}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.7449760925874033, _y: -0.8768015897257182, _z: 0.616697834863627, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -2.083373411954419, y: -1.3783925676140036, z: 1.4053033123416752}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8223804644043899, _y: -0.8649846198132582, _z: 0.6865593753027384, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -2.078999541888425, y: -1.5339779814410555, z: 1.225870464074888}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.9336064322154355, _y: -0.8629367717039512, _z: 0.7984448056825416, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -2.071865708236403, y: -1.6844412300870422, z: 1.0092428969327798}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.0567265816266256, _y: -0.8596071766256494, _z: 0.9302378584444555, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -2.054252036997238, y: -1.8089911441248674, z: 0.8025277441792964}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.1682840341106202, _y: -0.8514408060842463, _z: 1.0557568541009104, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -2.067193573553187, y: -1.8089911441248683, z: 0.7638307530047781}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.1848286583239689, _y: -0.8574334952378591, _z: 1.0776929880268569, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -2.067193573553187, y: -1.8089911441248685, z: 0.7638307530047781}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.1848286583239689, _y: -0.8574334952378591, _z: 1.0776929880268569, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -2.067193573553187, y: -1.8089911441248685, z: 0.7638307530047781}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.1848286583239689, _y: -0.8574334952378591, _z: 1.0776929880268569, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -2.067193573553187, y: -1.8089911441248685, z: 0.7638307530047781}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.1848286583239689, _y: -0.8574334952378591, _z: 1.0776929880268569, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -2.067193573553187, y: -1.8089911441248685, z: 0.7638307530047781}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.1848286583239689, _y: -0.8574334952378591, _z: 1.0776929880268569, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -2.060798416897449, y: -1.8089911441248685, z: 0.7832040432017577}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.1765172753639253, _y: -0.8544670077495977, _z: 1.0666874237048802, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -2.0407087115625715, y: -1.8089911441248683, z: 0.8410172572787422}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.1520560860600484, _y: -0.8452130427993313, _z: 1.0341251156383267, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -1.7389387432345136, y: -2.006740347487723, z: 1.1171140499722199}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.0827463278340979, _y: -0.7159774760777825, _z: 0.8906886742400436, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -1.3134582180134546, y: -2.243719476186956, z: 1.3373591561275926}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.052899718185026, _y: -0.5550455153725387, _z: 0.7464025803915992, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -0.8173875905012117, y: -2.500899309212234, z: 1.393372056538901}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.0787127741611389, _y: -0.38563209456534975, _z: 0.6118489318680813, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -0.4206472464368669, y: -2.6536905960812986, z: 1.3864550283944221}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.1033360245543609, _y: -0.2583757220756635, _z: 0.46858493160766457, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -0.24759459812245088, y: -2.7282942096138805, z: 1.3265053684249697}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.1303969665088656, _y: -0.20430992875929163, _z: 0.4065385832701627, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -0.17522539183874652, y: -2.751751929163359, z: 1.3096934988786573}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.1381903673444465, _y: -0.1818878850927285, _z: 0.3733455252676137, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -0.12722180726011056, y: -2.7855968636032604, z: 1.255088829240932}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.1578535210907732, _y: -0.1670665756861874, _z: 0.36274689268892535, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -0.10822805844947403, y: -2.796518026093894, z: 1.2378452788341336}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.164069207993815, _y: -0.16121257510707712, _z: 0.35670439840762097, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -0.010420662610141962, y: -2.877302723896102, z: 1.0737564070111543}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.2201203979608493, _y: -0.13115114952104365, _z: 0.34335008866292066, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.08095361518111605, y: -2.9461673050944985, z: 0.9014910963766924}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.2768374070030974, _y: -0.10317483932185581, _z: 0.32792770302017693, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.11944440221722841, y: -2.968862043367485, z: 0.8370341337094835}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.297683684435309, _y: -0.09141550358412436, _z: 0.3150447435935423, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.12634403546666229, y: -2.968862043367485, z: 0.839349079443946}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.2970031702001326, _y: -0.08930898042606981, _z: 0.30750356681043595, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.12634403546666223, y: -2.968862043367485, z: 0.839349079443946}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.2970031702001326, _y: -0.08930898042606981, _z: 0.30750356681043595, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.12634403546666217, y: -2.968862043367485, z: 0.839349079443946}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.2970031702001326, _y: -0.0893089804260698, _z: 0.30750356681043595, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.12634403546666217, y: -2.968862043367485, z: 0.839349079443946}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.2970031702001326, _y: -0.0893089804260698, _z: 0.30750356681043595, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.12634403546666217, y: -2.968862043367485, z: 0.839349079443946}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.2970031702001326, _y: -0.0893089804260698, _z: 0.30750356681043595, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.12634403546666217, y: -2.968862043367485, z: 0.839349079443946}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.2970031702001326, _y: -0.0893089804260698, _z: 0.30750356681043595, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.12634403546666217, y: -2.968862043367485, z: 0.839349079443946}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.2970031702001326, _y: -0.0893089804260698, _z: 0.30750356681043595, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.12634403546666217, y: -2.968862043367485, z: 0.839349079443946}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.2970031702001326, _y: -0.0893089804260698, _z: 0.30750356681043595, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.11086279821040668, y: -2.9382206964853688, z: 0.9372495651020374}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.2656813315383832, _y: -0.0940361171076391, _z: 0.2897451471943905, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.06743445740052145, y: -2.8865686924179825, z: 1.0755742981724377}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.2205717641779867, _y: -0.10730839822622504, _z: 0.2852106712190141, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.014113184056460837, y: -2.7965180260938904, z: 1.281565034527363}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.151765886362204, _y: -0.1236303355121819, _z: 0.27009334131364804, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.0077119819171180826, y: -2.7041275141056174, z: 1.4703841437949003}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.0873381516187843, _y: -0.1255919193513104, _z: 0.2342092963241459, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -0.025530464042452572, y: -2.6004905374414333, z: 1.6448180241732278}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 1.0251170090502069, _y: -0.13578672428867328, _z: 0.2193622612539459, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -0.020480542628339815, y: -2.5008993092122322, z: 1.8001019588954206}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.9685021139556363, _y: -0.13423712428816628, _z: 0.19226078303321534, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -0.01839769236402311, y: -2.4091517954849304, z: 1.9273801208834747}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.9203591909825342, _y: -0.13359808330931797, _z: 0.1733024116965695, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -0.023811878422692112, y: -2.3283468293200382, z: 2.0281422309943067}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8807266363714764, _y: -0.13525932889434597, _z: 0.16193111527819168, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: -0.002678278776565679, y: -2.2780211497975005, z: 2.091928755856282}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8558190011045005, _y: -0.12877694797312722, _z: 0.14684850171689287, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.03773173410007247, y: -2.226346865296477, z: 2.157418841987531}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8303060568960969, _y: -0.11639674374653382, _z: 0.12638564589552992, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+renderer.ts:230 Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+renderer.ts:229 Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
+ Camera Position in animate: Vector3 {x: 0.031354920196643765, y: -2.1911617900849945, z: 2.1942125732717237}
+ Camera Rotation in animate: Euler {isEuler: true, _x: 0.8147206421878729, _y: -0.11834913506503149, _z: 0.1245604999697034, _order: 'XYZ', …}
