@@ -4,4 +4,6 @@ body {
   margin: auto;
   max-width: 38rem;
   padding: 2rem;
+  background: rgba(34, 34, 34, 0.85); /* 약간 불투명한 검정색 */
+  color: #fff; /* 흰색 글자 */
 }

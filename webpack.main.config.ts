@@ -2,6 +2,7 @@ import type { Configuration } from 'webpack';
 
 import { rules } from './webpack.rules';
 import { plugins } from './webpack.plugins';
+import CopyWebpackPlugin from 'copy-webpack-plugin';
 
 export const mainConfig: Configuration = {
   /**
@@ -13,7 +14,15 @@ export const mainConfig: Configuration = {
   module: {
     rules,
   },
-  plugins,
+  plugins: [
+    ...plugins,
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: 'assets/icon.png', to: 'assets/icon.png' },
+        { from: 'assets/Liqu.vrm', to: 'assets/Liqu.vrm' }
+      ]
+    })
+  ],
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css', '.json'],
   },
