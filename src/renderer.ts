@@ -263,6 +263,32 @@ function animateExpression(expressionName: string, targetWeight: number, duratio
   requestAnimationFrame(step);
 }
 
+window.animateExpression = animateExpression; // Expose to window object
+
+// 디버그용 '미소' 표정 버튼 로직 (점진적 변화 적용)
+const smileDebugButton = document.getElementById('smile-debug-button');
+if (smileDebugButton) {
+  let currentDebugExpressionIndex = 0; // 디버그 버튼용 인덱스
+  smileDebugButton.onclick = () => {
+    if (window.currentVrm && window.currentVrm.expressionManager && window.vrmExpressionList && window.vrmExpressionList.length > 0 && window.expressionMap) {
+      const nextMappedExpression = window.vrmExpressionList[currentDebugExpressionIndex];
+      const nextInternalExpression = window.expressionMap[nextMappedExpression];
+
+      if (nextInternalExpression) {
+        // animateExpression 함수를 사용하여 표정을 점진적으로 변경
+        window.animateExpression(nextInternalExpression, 1.0, 0.5); // 0.5초 동안 변경
+        console.log(`Debug: Applied expression: ${nextMappedExpression} (Internal: ${nextInternalExpression}) with animation`);
+      } else {
+        console.warn(`Debug: Internal VRM expression name not found for mapped expression: ${nextMappedExpression}`);
+      }
+
+      currentDebugExpressionIndex = (currentDebugExpressionIndex + 1) % window.vrmExpressionList.length;
+    } else {
+      console.warn('Debug: VRM model or expression list/map not ready.');
+    }
+  };
+}
+
 // 디버그용 랜덤 포즈 버튼 로직
 const randomPoseButton = document.getElementById('random-pose-button');
 if (randomPoseButton) {

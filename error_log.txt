@@ -1,0 +1,6 @@
+Uncaught runtime errors:
+×
+ERROR
+window.animateExpression is not a function
+TypeError: window.animateExpression is not a function
+    at smileDebugButton.onclick (webpack-internal:///./src/renderer.ts:255:24)

@@ -10,5 +10,6 @@ declare global {
     expressionMap?: { [key: string]: string };
     vrmAnimationList?: THREE.AnimationClip[];
     mixer?: THREE.AnimationMixer;
+    animateExpression?: (expressionName: string, targetWeight: number, duration: number) => void;
   }
 }

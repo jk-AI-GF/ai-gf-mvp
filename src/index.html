@@ -89,35 +89,7 @@
         console.warn('Animation list or VRM model/mixer not ready for animation buttons.', { animationButtonsContainer, vrmAnimationList: window.vrmAnimationList, currentVrm: window.currentVrm, mixer: window.mixer });
       }
 
-      // 디버그용 '미소' 표정 버튼 로직 (기존 로직 유지)
-      const smileDebugButton = document.getElementById('smile-debug-button');
-      if (smileDebugButton) {
-        let currentDebugExpressionIndex = 0; // 디버그 버튼용 인덱스
-        smileDebugButton.onclick = () => {
-          if (window.currentVrm && window.currentVrm.expressionManager && window.vrmExpressionList && window.vrmExpressionList.length > 0 && window.expressionMap) {
-            // 모든 표정 초기화
-            for (const mappedName in window.expressionMap) {
-              const vrmInternalName = window.expressionMap[mappedName];
-              window.currentVrm.expressionManager.setValue(vrmInternalName, 0.0);
-            }
-
-            const nextMappedExpression = window.vrmExpressionList[currentDebugExpressionIndex];
-            const nextInternalExpression = window.expressionMap[nextMappedExpression];
-
-            if (nextInternalExpression) {
-              window.currentVrm.expressionManager.setValue(nextInternalExpression, 1.0);
-              window.currentVrm.expressionManager.update(); // 변경 사항 적용
-              console.log(`Debug: Applied expression: ${nextMappedExpression} (Internal: ${nextInternalExpression})`);
-            } else {
-              console.warn(`Debug: Internal VRM expression name not found for mapped expression: ${nextMappedExpression}`);
-            }
-
-            currentDebugExpressionIndex = (currentDebugExpressionIndex + 1) % window.vrmExpressionList.length;
-          } else {
-            console.warn('Debug: VRM model or expression list/map not ready.');
-          }
-        };
-      }
+      
 
       // 디버그용 포즈 저장/로드 버튼 로직
       const savePoseButton = document.getElementById('save-pose-button');
@@ -216,26 +188,18 @@
             console.log('window.currentVrm:', window.currentVrm);
             console.log('window.currentVrm.expressionManager:', window.currentVrm.expressionManager);
 
-            // 모든 표정을 초기화 (선택 사항, 이전 표정을 끄기 위함)
-            for (const mappedName in window.expressionMap) {
-              const vrmInternalName = window.expressionMap[mappedName];
-              window.currentVrm.expressionManager.setValue(vrmInternalName, 0.0);
-            }
-
-            // LLM이 제안한 표정을 VRM 모델에 적용
+            // LLM이 제안한 표정을 VRM 모델에 점진적으로 적용
             if (window.vrmExpressionList.includes(expression)) { // LLM이 제안한 표정이 유효한지 다시 확인
               const vrmInternalName = window.expressionMap[expression];
               if (vrmInternalName) {
-                window.currentVrm.expressionManager.setValue(vrmInternalName, 1.0);
-                console.log(`Applying VRM expression: ${expression} (Internal: ${vrmInternalName})`);
+                window.animateExpression(vrmInternalName, 1.0, 0.5); // 0.5초 동안 점진적으로 변경
+                console.log(`Applying VRM expression: ${expression} (Internal: ${vrmInternalName}) with animation`);
               } else {
                 console.warn(`VRM internal name not found for mapped expression: ${expression}`);
               }
             } else {
               console.warn(`LLM proposed expression "${expression}" not found in VRM expression list. Not applying.`);
             }
-            // 표정 변경 사항을 적용하기 위해 update 호출
-            window.currentVrm.expressionManager.update();
             console.log('VRM expressionManager methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(window.currentVrm.expressionManager)));
           } else {
             console.warn('VRM model or expressionManager not ready for expression application.', { currentVrm: window.currentVrm, expressionManager: window.currentVrm?.expressionManager, expressionMap: window.expressionMap });
