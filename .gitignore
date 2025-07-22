@@ -1,3 +1,7 @@
+# 재욱
+.env
+backend/venv-py311/
+
 # Logs
 logs
 *.log
