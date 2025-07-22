@@ -111,6 +111,7 @@ loader.load(
       currentVrm.humanoid.update(); // 휴머노이드 업데이트
       currentVrm.scene.updateMatrixWorld(true); // 씬의 월드 행렬 업데이트 강제
       console.log('VRM Pose Loaded.');
+      createJointSliders(); // 포즈 로드 후 슬라이더 UI 갱신
     };
 
     // VRM 모델의 표정 목록을 전역 변수로 노출
@@ -337,6 +338,7 @@ if (randomPoseButton) {
       currentVrm.humanoid.update(); // 휴머노이드 업데이트
       currentVrm.scene.updateMatrixWorld(true); // 씬의 월드 행렬 업데이트 강제
       console.log('Applied random pose.');
+      createJointSliders(); // 랜덤 포즈 적용 후 슬라이더 UI 갱신
     } else {
       console.warn('VRM model not ready for random pose.');
     }
@@ -496,7 +498,9 @@ function createJointSliders() {
         slider.type = 'range';
         slider.min = '-180';
         slider.max = '180';
-        slider.value = '0';
+        // 현재 본의 해당 축 회전 값을 슬라이더 초기값으로 설정 (라디안을 도로 변환)
+        const currentEuler = new THREE.Euler().setFromQuaternion(bone.quaternion, 'XYZ');
+        slider.value = THREE.MathUtils.radToDeg(currentEuler[axis as 'x' | 'y' | 'z']).toFixed(0);
         slider.style.flexGrow = '1';
         slider.oninput = () => {
           const x = boneControl.querySelector<HTMLInputElement>('.slider-x').value;

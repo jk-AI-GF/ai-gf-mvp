@@ -1,4 +1,69 @@
+index.html:80 animationButtonsContainer: <div id=​"animation-buttons" style=​"position:​ fixed;​ top:​ 50%;​ left:​ 20px;​ transform:​ translateY(-50%)​;​ z-index:​ 9999;​ display:​ flex;​ flex-direction:​ column;​ gap:​ 5px;​ background-color:​ rgba(0,0,0,0.3)​;​ padding:​ 10px;​ border-radius:​ 5px;​">​…​</div>​flex
+index.html:104 Animation list or VRM model/mixer not ready for animation buttons. Object
+(anonymous) @ index.html:104
+three.core.js:58574 WARNING: Multiple instances of Three.js being imported.
+eval @ three.core.js:58574
+renderer.ts:255 👋 VRM 오버레이 로딩 완료
+node:electron/js2c/renderer_init:2 Electron Security Warning (Disabled webSecurity) This renderer process has "webSecurity" disabled. This
+  exposes users of this app to severe security risks.
 
-[26872:0722/182703.938:ERROR:CONSOLE:1] "Request Autofill.enable failed. {"code":-32601,"message":"'Autofill.enable' wasn't found"}", source: devtools://devtools/bundled/core/protocol_client/protocol_client.js (1)       
-[26872:0722/182703.939:ERROR:CONSOLE:1] "Request Autofill.setAddresses failed. {"code":-32601,"message":"'Autofill.setAddresses' wasn't found"}", source: devtools://devtools/bundled/core/protocol_client/protocol_client.js (1)
-PS C:\Projects\ai-gf\ai-gf-mvp> 
+For more information and help, consult
+https://electronjs.org/docs/tutorial/security.
+This warning will not show up
+once the app is packaged.
+(anonymous) @ node:electron/js2c/renderer_init:2
+logSecurityWarnings @ node:electron/js2c/renderer_init:2
+(anonymous) @ node:electron/js2c/renderer_init:2
+node:electron/js2c/renderer_init:2 Electron Security Warning (allowRunningInsecureContent) This renderer process has "allowRunningInsecureContent"
+  enabled. This exposes users of this app to severe security risks.
+
+  
+For more information and help, consult
+https://electronjs.org/docs/tutorial/security.
+This warning will not show up
+once the app is packaged.
+(anonymous) @ node:electron/js2c/renderer_init:2
+logSecurityWarnings @ node:electron/js2c/renderer_init:2
+(anonymous) @ node:electron/js2c/renderer_init:2
+node:electron/js2c/renderer_init:2 Electron Security Warning (Insecure Content-Security-Policy) This renderer process has either no Content Security
+  Policy set or a policy with "unsafe-eval" enabled. This exposes users of
+  this app to unnecessary security risks.
+
+For more information and help, consult
+https://electronjs.org/docs/tutorial/security.
+This warning will not show up
+once the app is packaged.
+warnAboutInsecureCSP @ node:electron/js2c/renderer_init:2
+logSecurityWarnings @ node:electron/js2c/renderer_init:2
+(anonymous) @ node:electron/js2c/renderer_init:2
+renderer.ts:124 Actual VRM Expression Names (from objects):  (21) ['VRMExpression_neutral', 'VRMExpression_aa', 'VRMExpression_ih', 'VRMExpression_ou', 'VRMExpression_ee', 'VRMExpression_oh', 'VRMExpression_blink', 'VRMExpression_happy', 'VRMExpression_angry', 'VRMExpression_sad', 'VRMExpression_relaxed', 'VRMExpression_lookUp', 'VRMExpression_lookDown', 'VRMExpression_lookLeft', 'VRMExpression_lookRight', 'VRMExpression_blinkLeft', 'VRMExpression_blinkRight', 'VRMExpression_ハート', 'VRMExpression_キラキラ', 'VRMExpression_あっかんべー', 'VRMExpression_じとめ']
+renderer.ts:155 VRM Expression List (Mapped for LLM): (21) ['기본', '아', '이', '우', '에', '오', '눈감음', '행복', '화남', '슬픔', '편안', '위보기', '아래보기', '왼쪽보기', '오른쪽보기', '왼쪽눈감음', '오른쪽눈감음', '하트', '반짝반짝', '메롱', '째려보기']
+renderer.ts:156 Type of vrm.expressionManager.expressions: object
+renderer.ts:163 GLTF Animations Length: 0
+renderer.ts:172 VRM Model Bounding Box: Box3 {isBox3: true, min: Vector3, max: Vector3}
+renderer.ts:173 VRM Model Size: Vector3 {x: 1.1097441366197633, y: 1.3235646787600932, z: 0.6001982702151261}
+renderer.ts:174 VRM Model Center: Vector3 {x: 0.0000013793700267550335, y: 0.06093401514592989, z: -0.11546838340871315}
+renderer.ts:175 VRM Model Position: Vector3 {x: 0, y: -0.6, z: 0}
+renderer.ts:502 Uncaught ReferenceError: currentEuler is not defined
+    at eval (renderer.ts:502:49)
+    at Array.forEach (<anonymous>)
+    at eval (renderer.ts:486:23)
+    at Array.forEach (<anonymous>)
+    at createJointSliders (renderer.ts:474:35)
+    at document.getElementById.onclick (index.html:60:18)
+eval @ renderer.ts:502
+eval @ renderer.ts:486
+createJointSliders @ renderer.ts:474
+document.getElementById.onclick @ index.html:60
+renderer.ts:364 AudioContext initialized.
+renderer.ts:502 Uncaught ReferenceError: currentEuler is not defined
+    at eval (renderer.ts:502:49)
+    at Array.forEach (<anonymous>)
+    at eval (renderer.ts:486:23)
+    at Array.forEach (<anonymous>)
+    at createJointSliders (renderer.ts:474:35)
+    at document.getElementById.onclick (index.html:60:18)
+eval @ renderer.ts:502
+eval @ renderer.ts:486
+createJointSliders @ renderer.ts:474
+document.getElementById.onclick @ index.html:60

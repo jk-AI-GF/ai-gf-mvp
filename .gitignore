@@ -1,6 +1,7 @@
 # 재욱
 .env
 backend/venv-py311/
+GEMINI.md
 
 # Logs
 logs
