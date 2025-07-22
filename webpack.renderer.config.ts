@@ -17,7 +17,8 @@ export const rendererConfig: Configuration = {
     ...plugins,
     new CopyWebpackPlugin({
       patterns: [
-        { from: 'public/Liqu.vrm', to: 'main_window/Liqu.vrm' }
+        { from: 'public', to: 'main_window' },
+        { from: 'assets', to: 'main_window/assets' }
       ]
     })
   ],

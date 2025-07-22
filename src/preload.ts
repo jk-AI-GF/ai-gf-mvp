@@ -1,2 +1,7 @@
-// See the Electron documentation for details on how to use preload scripts:
-// https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
+import { ipcRenderer } from 'electron';
+
+// Expose ipcRenderer directly to the window object
+// This is safe because nodeIntegration is true and contextIsolation is false
+(window as any).electronAPI = {
+  listDirectory: async (dirPath: string) => ipcRenderer.invoke('list-directory', dirPath),
+};

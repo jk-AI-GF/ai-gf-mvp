@@ -3,7 +3,7 @@ index.html:104 Animation list or VRM model/mixer not ready for animation buttons
 (anonymous) @ index.html:104
 three.core.js:58574 WARNING: Multiple instances of Three.js being imported.
 eval @ three.core.js:58574
-renderer.ts:255 👋 VRM 오버레이 로딩 완료
+renderer.ts:345 👋 VRM 오버레이 로딩 완료
 node:electron/js2c/renderer_init:2 Electron Security Warning (Disabled webSecurity) This renderer process has "webSecurity" disabled. This
   exposes users of this app to severe security risks.
 
@@ -36,34 +36,80 @@ once the app is packaged.
 warnAboutInsecureCSP @ node:electron/js2c/renderer_init:2
 logSecurityWarnings @ node:electron/js2c/renderer_init:2
 (anonymous) @ node:electron/js2c/renderer_init:2
+renderer.ts:627 --- VRM Humanoid Bone Names ---
+renderer.ts:630 HumanBoneName: hips, Node Name: Hips
+renderer.ts:630 HumanBoneName: leftUpperLeg, Node Name: LeftUpLeg
+renderer.ts:630 HumanBoneName: rightUpperLeg, Node Name: RightUpLeg
+renderer.ts:630 HumanBoneName: leftLowerLeg, Node Name: LeftLeg
+renderer.ts:630 HumanBoneName: rightLowerLeg, Node Name: RightLeg
+renderer.ts:630 HumanBoneName: leftFoot, Node Name: LeftFoot
+renderer.ts:630 HumanBoneName: rightFoot, Node Name: RightFoot
+renderer.ts:630 HumanBoneName: spine, Node Name: Spine
+renderer.ts:630 HumanBoneName: neck, Node Name: Neck
+renderer.ts:630 HumanBoneName: head, Node Name: Head
+renderer.ts:630 HumanBoneName: leftShoulder, Node Name: LeftShoulder
+renderer.ts:630 HumanBoneName: rightShoulder, Node Name: RightShoulder
+renderer.ts:630 HumanBoneName: leftUpperArm, Node Name: LeftArm
+renderer.ts:630 HumanBoneName: rightUpperArm, Node Name: RightArm
+renderer.ts:630 HumanBoneName: leftLowerArm, Node Name: LeftForeArm
+renderer.ts:630 HumanBoneName: rightLowerArm, Node Name: RightForeArm
+renderer.ts:630 HumanBoneName: leftHand, Node Name: LeftHand
+renderer.ts:630 HumanBoneName: rightHand, Node Name: RightHand
+renderer.ts:630 HumanBoneName: leftToes, Node Name: LeftToeBase
+renderer.ts:630 HumanBoneName: rightToes, Node Name: RightToeBase
+renderer.ts:630 HumanBoneName: leftEye, Node Name: LeftEye
+renderer.ts:630 HumanBoneName: rightEye, Node Name: RightEye
+renderer.ts:630 HumanBoneName: leftThumbMetacarpal, Node Name: LeftHandThumb1
+renderer.ts:630 HumanBoneName: leftThumbProximal, Node Name: LeftHandThumb2
+renderer.ts:630 HumanBoneName: leftThumbDistal, Node Name: LeftHandThumb3
+renderer.ts:630 HumanBoneName: leftIndexProximal, Node Name: LeftHandIndex1
+renderer.ts:630 HumanBoneName: leftIndexIntermediate, Node Name: LeftHandIndex2
+renderer.ts:630 HumanBoneName: leftIndexDistal, Node Name: LeftHandIndex3
+renderer.ts:630 HumanBoneName: leftMiddleProximal, Node Name: LeftHandMiddle1
+renderer.ts:630 HumanBoneName: leftMiddleIntermediate, Node Name: LeftHandMiddle2
+renderer.ts:630 HumanBoneName: leftMiddleDistal, Node Name: LeftHandMiddle3
+renderer.ts:630 HumanBoneName: leftRingProximal, Node Name: LeftHandRing1
+renderer.ts:630 HumanBoneName: leftRingIntermediate, Node Name: LeftHandRing2
+renderer.ts:630 HumanBoneName: leftRingDistal, Node Name: LeftHandRing3
+renderer.ts:630 HumanBoneName: leftLittleProximal, Node Name: LeftHandPinky1
+renderer.ts:630 HumanBoneName: leftLittleIntermediate, Node Name: LeftHandPinky2
+renderer.ts:630 HumanBoneName: leftLittleDistal, Node Name: LeftHandPinky3
+renderer.ts:630 HumanBoneName: rightThumbMetacarpal, Node Name: RightHandThumb1
+renderer.ts:630 HumanBoneName: rightThumbProximal, Node Name: RightHandThumb2
+renderer.ts:630 HumanBoneName: rightThumbDistal, Node Name: RightHandThumb3
+renderer.ts:630 HumanBoneName: rightIndexProximal, Node Name: RightHandIndex1
+renderer.ts:630 HumanBoneName: rightIndexIntermediate, Node Name: RightHandIndex2
+renderer.ts:630 HumanBoneName: rightIndexDistal, Node Name: RightHandIndex3
+renderer.ts:630 HumanBoneName: rightMiddleProximal, Node Name: RightHandMiddle1
+renderer.ts:630 HumanBoneName: rightMiddleIntermediate, Node Name: RightHandMiddle2
+renderer.ts:630 HumanBoneName: rightMiddleDistal, Node Name: RightHandMiddle3
+renderer.ts:630 HumanBoneName: rightRingProximal, Node Name: RightHandRing1
+renderer.ts:630 HumanBoneName: rightRingIntermediate, Node Name: RightHandRing2
+renderer.ts:630 HumanBoneName: rightRingDistal, Node Name: RightHandRing3
+renderer.ts:630 HumanBoneName: rightLittleProximal, Node Name: RightHandPinky1
+renderer.ts:630 HumanBoneName: rightLittleIntermediate, Node Name: RightHandPinky2
+renderer.ts:630 HumanBoneName: rightLittleDistal, Node Name: RightHandPinky3
+renderer.ts:630 HumanBoneName: chest, Node Name: Chest
+renderer.ts:635 -------------------------------
 renderer.ts:124 Actual VRM Expression Names (from objects):  (21) ['VRMExpression_neutral', 'VRMExpression_aa', 'VRMExpression_ih', 'VRMExpression_ou', 'VRMExpression_ee', 'VRMExpression_oh', 'VRMExpression_blink', 'VRMExpression_happy', 'VRMExpression_angry', 'VRMExpression_sad', 'VRMExpression_relaxed', 'VRMExpression_lookUp', 'VRMExpression_lookDown', 'VRMExpression_lookLeft', 'VRMExpression_lookRight', 'VRMExpression_blinkLeft', 'VRMExpression_blinkRight', 'VRMExpression_ハート', 'VRMExpression_キラキラ', 'VRMExpression_あっかんべー', 'VRMExpression_じとめ']
 renderer.ts:155 VRM Expression List (Mapped for LLM): (21) ['기본', '아', '이', '우', '에', '오', '눈감음', '행복', '화남', '슬픔', '편안', '위보기', '아래보기', '왼쪽보기', '오른쪽보기', '왼쪽눈감음', '오른쪽눈감음', '하트', '반짝반짝', '메롱', '째려보기']
 renderer.ts:156 Type of vrm.expressionManager.expressions: object
-renderer.ts:163 GLTF Animations Length: 0
-renderer.ts:172 VRM Model Bounding Box: Box3 {isBox3: true, min: Vector3, max: Vector3}
-renderer.ts:173 VRM Model Size: Vector3 {x: 1.1097441366197633, y: 1.3235646787600932, z: 0.6001982702151261}
-renderer.ts:174 VRM Model Center: Vector3 {x: 0.0000013793700267550335, y: 0.06093401514592989, z: -0.11546838340871315}
-renderer.ts:175 VRM Model Position: Vector3 {x: 0, y: -0.6, z: 0}
-renderer.ts:502 Uncaught ReferenceError: currentEuler is not defined
-    at eval (renderer.ts:502:49)
-    at Array.forEach (<anonymous>)
-    at eval (renderer.ts:486:23)
-    at Array.forEach (<anonymous>)
-    at createJointSliders (renderer.ts:474:35)
-    at document.getElementById.onclick (index.html:60:18)
-eval @ renderer.ts:502
-eval @ renderer.ts:486
-createJointSliders @ renderer.ts:474
-document.getElementById.onclick @ index.html:60
-renderer.ts:364 AudioContext initialized.
-renderer.ts:502 Uncaught ReferenceError: currentEuler is not defined
-    at eval (renderer.ts:502:49)
-    at Array.forEach (<anonymous>)
-    at eval (renderer.ts:486:23)
-    at Array.forEach (<anonymous>)
-    at createJointSliders (renderer.ts:474:35)
-    at document.getElementById.onclick (index.html:60:18)
-eval @ renderer.ts:502
-eval @ renderer.ts:486
-createJointSliders @ renderer.ts:474
-document.getElementById.onclick @ index.html:60
+renderer.ts:174 VRM Model Bounding Box: Box3 {isBox3: true, min: Vector3, max: Vector3}
+renderer.ts:175 VRM Model Size: Vector3 {x: 1.1097441366197633, y: 1.3235646787600932, z: 0.6001982702151261}
+renderer.ts:176 VRM Model Center: Vector3 {x: 0.0000013793700267550335, y: 0.06093401514592989, z: -0.11546838340871315}
+renderer.ts:177 VRM Model Position: Vector3 {x: 0, y: -0.6, z: 0}
+renderer.ts:278 Listing VRMA poses...
+renderer.ts:454 AudioContext initialized.
+renderer.ts:650 GLTF UserData after loading VRMA: {vrmAnimations: Array(1)}
+renderer.ts:667 Error loading VRMA pose from assets/Pose/pose_20250722234128990.vrma: Error: VRMAnimation data not found in loaded GLTF.
+    at eval (renderer.ts:654:13)
+    at Generator.next (<anonymous>)
+    at fulfilled (renderer.ts:27:4)
+eval @ renderer.ts:667
+fulfilled @ renderer.ts:27
+Promise.then
+step @ renderer.ts:27
+eval @ renderer.ts:27
+__awaiter @ renderer.ts:27
+loadVrmaPose @ renderer.ts:639
+button.onclick @ renderer.ts:257

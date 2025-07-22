@@ -1,5 +1,6 @@
-import { app, BrowserWindow, Tray, Menu, globalShortcut, dialog, session } from 'electron';
+import { app, BrowserWindow, Tray, Menu, globalShortcut, dialog, session, ipcMain } from 'electron';
 import * as path from 'path';
+import * as fs from 'fs';
 
 process.on('uncaughtException', (error) => {
   const message = error.stack || error.message || 'Unknown error';
@@ -36,7 +37,7 @@ const createOverlayWindow = (): void => {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       webSecurity: false, // 개발/디버깅용: 보안 검사 일시 비활성화
       nodeIntegration: true, // Node.js 통합 활성화
-      contextIsolation: false, // 컨텍스트 격리 비활성화
+      contextIsolation: true, // 컨텍스트 격리 활성화
       webgl: true, // WebGL 활성화
       
     },
@@ -100,6 +101,20 @@ app.on('ready', () => {
   createTray();
   globalShortcut.register('CommandOrControl+Shift+O', () => {
     toggleOverlayWindow();
+  });
+
+  // IPC handler for listing directories
+  ipcMain.handle('list-directory', async (event, dirPath: string) => {
+    try {
+      const fullPath = path.join(app.getAppPath(), dirPath);
+      const dirents = await fs.promises.readdir(fullPath, { withFileTypes: true });
+      const files = dirents.filter(dirent => dirent.isFile()).map(dirent => dirent.name);
+      const directories = dirents.filter(dirent => dirent.isDirectory()).map(dirent => dirent.name);
+      return { files, directories };
+    } catch (error) {
+      console.error(`Failed to list directory ${dirPath}:`, error);
+      return { files: [], directories: [], error: error.message };
+    }
   });
 
   // CSP 설정

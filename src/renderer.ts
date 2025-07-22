@@ -31,6 +31,8 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { VRMLoaderPlugin, VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
+import { VRMAnimationLoaderPlugin } from '@pixiv/three-vrm-animation';
+import { createVRMAnimationClip, VRMAnimation } from '@pixiv/three-vrm-animation';
 
 
 let mixer: THREE.AnimationMixer; // mixer 변수 선언
@@ -62,6 +64,7 @@ scene.add(ambientLight);
 
 const loader = new GLTFLoader();
 loader.register((parser) => new VRMLoaderPlugin(parser)); // VRMLoaderPlugin 등록
+loader.register((parser) => new VRMAnimationLoaderPlugin(parser));
 
 loader.load(
   'Liqu.vrm',
@@ -74,7 +77,7 @@ loader.load(
     window.currentVrm = vrm; // currentVrm을 window 객체에 노출
 
     // VRM 모델 로드 후 본 이름 목록을 로그
-    logVrmBoneNames();
+    window.logVrmBoneNames();
 
     // VRM 모델의 눈과 목이 카메라를 따라가도록 설정
 
@@ -156,9 +159,11 @@ loader.load(
     // 애니메이션 믹서 생성
     mixer = new THREE.AnimationMixer(vrm.scene);
 
-    // VRM 모델에 애니메이션 클립이 있다면 재생
-    console.log('GLTF Animations Length:', gltf.animations.length); // 이 줄을 추가합니다.
-    window.vrmAnimationList = gltf.animations; // 애니메이션 클립을 window 객체에 노출
+    if (gltf.animations && gltf.animations.length > 0) {
+      // VRM 모델에 애니메이션 클립이 있다면 재생
+      console.log('GLTF Animations Length:', gltf.animations.length); // 이 줄을 추가합니다.
+      window.vrmAnimationList = gltf.animations; // 애니메이션 클립을 window 객체에 노출
+    }
 
     // 디버그 로그 추가: VRM 모델의 바운딩 박스 확인
     vrm.scene.updateMatrixWorld(true); // 월드 행렬 업데이트
@@ -192,6 +197,94 @@ loader.load(
         console.log('Camera Rotation:', camera.rotation);
       };
       animationButtonsContainer.appendChild(debugButton);
+
+      // 포즈 파일 목록을 표시할 컨테이너
+      const poseListContainer = document.createElement('div');
+      poseListContainer.id = 'pose-list-container';
+      poseListContainer.style.position = 'fixed';
+      poseListContainer.style.top = '50%';
+      poseListContainer.style.marginLeft = '200px';
+      poseListContainer.style.transform = 'translate(-50%, -50%)';
+      poseListContainer.style.backgroundColor = 'rgba(0,0,0,0.8)';
+      poseListContainer.style.padding = '20px';
+      poseListContainer.style.borderRadius = '10px';
+      poseListContainer.style.zIndex = '10000';
+      poseListContainer.style.display = 'none'; // 초기에는 숨김
+      poseListContainer.style.flexDirection = 'column';
+      poseListContainer.style.gap = '10px';
+      poseListContainer.style.maxHeight = '80%';
+      poseListContainer.style.overflowY = 'auto';
+      document.body.appendChild(poseListContainer);
+
+      const closeButton = document.createElement('button');
+      closeButton.textContent = 'Close';
+      closeButton.style.marginBottom = '10px';
+      closeButton.style.padding = '8px';
+      closeButton.style.backgroundColor = '#dc3545';
+      closeButton.style.color = 'white';
+      closeButton.style.border = 'none';
+      closeButton.style.borderRadius = '5px';
+      closeButton.style.cursor = 'pointer';
+      closeButton.onclick = () => {
+        poseListContainer.style.display = 'none';
+      };
+      poseListContainer.appendChild(closeButton);
+
+      const createPoseButtons = (files: string[], type: 'json' | 'vrma') => {
+        poseListContainer.innerHTML = ''; // 기존 버튼 제거
+        poseListContainer.appendChild(closeButton); // 닫기 버튼 다시 추가
+
+        if (files.length === 0) {
+          const noFilesMessage = document.createElement('p');
+          noFilesMessage.textContent = `No ${type.toUpperCase()} pose files found.`;
+          noFilesMessage.style.color = 'white';
+          poseListContainer.appendChild(noFilesMessage);
+          return;
+        }
+
+        files.forEach(file => {
+          const button = document.createElement('button');
+          button.textContent = file;
+          button.style.padding = '8px';
+          button.style.backgroundColor = '#007bff';
+          button.style.color = 'white';
+          button.style.border = 'none';
+          button.style.borderRadius = '5px';
+          button.style.cursor = 'pointer';
+          button.onclick = () => {
+            const fullPath = `assets/Pose/${file}`;
+            if (type === 'vrma') {
+              window.loadVrmaPose(fullPath);
+            }
+            poseListContainer.style.display = 'none'; // 포즈 로드 후 컨테이너 숨김
+          };
+          poseListContainer.appendChild(button);
+        });
+        poseListContainer.style.display = 'flex'; // 컨테이너 표시
+      };
+
+      
+
+      const listVrmaButton = document.createElement('button');
+      listVrmaButton.textContent = 'List VRMA Poses';
+      listVrmaButton.style.margin = '5px';
+      listVrmaButton.style.padding = '10px';
+      listVrmaButton.style.backgroundColor = '#f44336'; // Red
+      listVrmaButton.style.color = 'white';
+      listVrmaButton.style.border = 'none';
+      listVrmaButton.style.borderRadius = '5px';
+      listVrmaButton.style.cursor = 'pointer';
+      listVrmaButton.onclick = async () => {
+        console.log('Listing VRMA poses...');
+        try {
+          const result = await window.electronAPI.listDirectory('assets/Pose');
+          const vrmaFiles = result.files.filter(file => file.endsWith('.vrma'));
+          createPoseButtons(vrmaFiles, 'vrma');
+        } catch (error) {
+          console.error('Failed to list VRMA poses:', error);
+        }
+      };
+      animationButtonsContainer.appendChild(listVrmaButton);
     }
   },
   undefined,
@@ -542,7 +635,43 @@ function logVrmBoneNames() {
   console.log('-------------------------------');
 }
 
+
+async function loadVrmaPose(vrmaPath: string) {
+  if (!currentVrm || !mixer) {
+    console.warn('VRM model or mixer not loaded. Cannot load VRMA pose.');
+    return;
+  }
+
+  try {
+    const vrmaLoader = new GLTFLoader();
+    vrmaLoader.register((parser) => new VRMAnimationLoaderPlugin(parser));
+
+    const gltf = await vrmaLoader.loadAsync(vrmaPath);
+    console.log('GLTF UserData after loading VRMA:', gltf.userData); // Add this line
+    const vrmAnimation = gltf.userData.vrmAnimations[0] as VRMAnimation;
+
+    if (!vrmAnimation) {
+      throw new Error('VRMAnimation data not found in loaded GLTF.');
+    }
+
+    const clip = createVRMAnimationClip(vrmAnimation, currentVrm);
+
+    // 기존 애니메이션 중지
+    mixer.stopAllAction();
+
+    // 새 애니메이션 재생
+    const action = mixer.clipAction(clip);
+    action.play();
+    console.log(`VRMA pose loaded from ${vrmaPath}`);
+  } catch (error) {
+    console.error(`Error loading VRMA pose from ${vrmaPath}:`, error);
+  }
+}
+
 window.logVrmBoneNames = logVrmBoneNames; // window 객체에 노출
+
+// JSON 및 VRMA 포즈 로드 함수를 window 객체에 노출
+window.loadVrmaPose = loadVrmaPose;
 
 
 
