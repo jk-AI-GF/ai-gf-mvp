@@ -1,7 +1,4 @@
-venv) PS C:\Projects\ai-gf\ai-gf-mvp\backend> pip install -r requirements.txt
-Collecting fastapi (from -r requirements.txt (line 1))
-  Using cached fastapi-0.116.1-py3-none-any.whl.metadata (28 kB)
-ERROR: Ignored the following versions that require a different python version: 0.22.1 Requires-Python <3.12,>=3.9.0; 0.23.0 Requires-Python <3.12,>=3.9.0; 0.23.1 Requires-Python <3.13,>=3.9.0; 0.24.0 Requires-Python <3.13,>=3.9; 0.24.1 Requires-Python <3.13,>=3.9; 0.24.2 Requires-Python <3.13,>=3.9; 0.24.3 Requires-Python <3.13,>=3.9; 0.25.0 Requires-Python <3.13,>=3.9; 0.25.1 Requires-Python <3.13,>=3.9; 0.25.2 Requires-Python <3.13,>=3.9; 0.25.3 Requires-Python <3.13,>=3.9; 0.26.0 Requires-Python <3.13,>=3.10; 0.26.1 
-Requires-Python <3.13,>=3.10; 0.26.2 Requires-Python <3.13,>=3.10; 0.27.0 Requires-Python <3.13,>=3.10
-ERROR: Could not find a version that satisfies the requirement coqui-tts (from versions: none)
-ERROR: No matching distribution found for coqui-tts
+
+[26872:0722/182703.938:ERROR:CONSOLE:1] "Request Autofill.enable failed. {"code":-32601,"message":"'Autofill.enable' wasn't found"}", source: devtools://devtools/bundled/core/protocol_client/protocol_client.js (1)       
+[26872:0722/182703.939:ERROR:CONSOLE:1] "Request Autofill.setAddresses failed. {"code":-32601,"message":"'Autofill.setAddresses' wasn't found"}", source: devtools://devtools/bundled/core/protocol_client/protocol_client.js (1)
+PS C:\Projects\ai-gf\ai-gf-mvp> 

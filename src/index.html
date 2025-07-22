@@ -8,6 +8,7 @@
   <body>
     <button id="close-overlay" style="position: fixed; top: 24px; right: 32px; z-index: 1000; background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.5rem; padding: 0.5rem 1rem; cursor: pointer;">×</button>
     <button id="open-settings" style="position: fixed; top: 24px; right: 80px; z-index: 1000; background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.1rem; padding: 0.5rem 1rem; cursor: pointer;">설정</button>
+    <button id="open-joint-control" style="position: fixed; top: 24px; right: 160px; z-index: 1000; background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.1rem; padding: 0.5rem 1rem; cursor: pointer;">관절 조절</button>
     <div id="settings-modal" style="display:none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.55); z-index: 2000; align-items: center; justify-content: center;">
       <div class="settings-container">
         <button id="close-settings" style="position: absolute; top: 18px; right: 24px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">×</button>
@@ -20,9 +21,14 @@
         <div id="save-message" style="display:none; color:green; margin-top:10px;">저장되었습니다!</div>
       </div>
     </div>
+    <div id="joint-control-panel" style="display:none; position: fixed; top: 80px; right: 20px; width: 300px; max-height: 70vh; background: rgba(20,20,20,0.8); z-index: 2000; padding: 20px; border-radius: 10px; color: #fff; overflow-y: auto;">
+      <button id="close-joint-control" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">×</button>
+      <h3>관절 조절</h3>
+      <div id="joint-sliders"></div>
+    </div>
     <div id="animation-buttons" style="position: fixed; top: 50%; left: 20px; transform: translateY(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 5px; background-color: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;">
-      <!-- 디버그용 '미소' 표정 버튼 추가 -->
-      <button id="smile-debug-button" style="margin: 5px; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">미소 표정</button>
+      <!-- 디버그용 표정 전환 버튼 추가 -->
+      <button id="smile-debug-button" style="margin: 5px; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">표정 전환</button>
       <!-- 디버그용 포즈 저장 버튼 추가 -->
       <button id="save-pose-button" style="margin: 5px; padding: 10px; background-color: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">포즈 저장</button>
       <!-- 디버그용 포즈 로드 버튼 추가 -->
@@ -31,8 +37,8 @@
       <button id="random-pose-button" style="margin: 5px; padding: 10px; background-color: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer;">랜덤 포즈</button>
       <!-- 애니메이션 버튼들이 여기에 동적으로 추가될 것입니다. -->
     </div>
-    <div id="chat-container">
-      <div id="chat-messages"></div>
+    <div id="chat-container" style="position: fixed; bottom: 8%; z-index: 9999; border-radius: 5px;">
+      <div id="chat-messages" style="margin: 0px;"></div>
       <form id="chat-form">
         <input type="text" id="chat-input" placeholder="메시지를 입력하세요..." autocomplete="off" required />
         <button type="submit">전송</button>
@@ -47,6 +53,15 @@
       };
       document.getElementById('close-settings').onclick = () => {
         document.getElementById('settings-modal').style.display = 'none';
+      };
+      document.getElementById('open-joint-control').onclick = () => {
+        document.getElementById('joint-control-panel').style.display = 'block';
+        if (window.createJointSliders) {
+          window.createJointSliders();
+        }
+      };
+      document.getElementById('close-joint-control').onclick = () => {
+        document.getElementById('joint-control-panel').style.display = 'none';
       };
       // LLM API 저장 로직
       const form = document.getElementById('llm-form');
@@ -206,6 +221,13 @@
           }
 
           appendMessage('assistant', text);
+          
+          // --- TTS 재생 호출 추가 ---
+          if (window.playTTS) {
+            window.playTTS(text);
+          }
+          // --- TTS 재생 호출 추가 끝 ---
+
           chatHistory.push({ role: 'model', parts: [{ text }] });
         } catch (err) {
           appendMessage('assistant', 'Gemini API 호출 실패: ' + err);

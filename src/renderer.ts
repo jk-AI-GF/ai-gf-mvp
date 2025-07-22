@@ -42,11 +42,11 @@ const height = window.innerHeight;
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(35, width / height, 0.1, 1000);
-camera.position.set(0.0, 0.8, 3.19);
+camera.position.set(0.0, 0.0, 3.0);
 camera.rotation.set(-0.08, 0.0, 0.0);
 
-const light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(1, 1, 1);
+const light = new THREE.DirectionalLight(0xffffff, 2);
+light.position.set(1, 0, 3);
 scene.add(light);
 
 const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
@@ -67,7 +67,7 @@ loader.load(
   'Liqu.vrm',
   (gltf) => {
     const vrm = gltf.userData.vrm as VRM; // vrm에 VRM 타입 명시
-    vrm.scene.position.set(0, 0, 0);
+    vrm.scene.position.set(0, -0.6, 0);
     vrm.scene.rotation.y = Math.PI; // Y축을 기준으로 180도 회전 (PI 라디안)
     scene.add(vrm.scene);
     currentVrm = vrm; // 현재 VRM 모델 저장
@@ -289,7 +289,7 @@ function animateExpression(expressionName: string, targetWeight: number, duratio
 
 window.animateExpression = animateExpression; // Expose to window object
 
-// 디버그용 '미소' 표정 버튼 로직 (점진적 변화 적용)
+// 디버그용 표정 전환 버튼 로직 (점진적 변화 적용)
 const smileDebugButton = document.getElementById('smile-debug-button');
 if (smileDebugButton) {
   let currentDebugExpressionIndex = 0; // 디버그 버튼용 인덱스
@@ -323,7 +323,6 @@ if (randomPoseButton) {
       boneNames.forEach(boneName => {
         const bone = currentVrm.humanoid.getNormalizedBoneNode(boneName as VRMHumanBoneName);
         if (bone) {
-          console.log(`Applying random rotation to bone: ${bone.name}`);
           const randomQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(
             (Math.random() - 0.5) * Math.PI / 2,
             (Math.random() - 0.5) * Math.PI / 2,
@@ -343,5 +342,186 @@ if (randomPoseButton) {
     }
   };
 }
+
+
+// --- TTS Integration Start ---
+
+// 오디오 컨텍스트를 저장할 변수
+let audioContext: AudioContext | null = null;
+// 현재 재생 중인 오디오 소스를 저장할 변수
+let currentAudioSource: AudioBufferSourceNode | null = null;
+
+/**
+ * 사용자의 첫 상호작용 시 오디오 컨텍스트를 초기화합니다.
+ * 브라우저의 자동 재생 정책을 준수하기 위해 필요합니다.
+ */
+function initAudioContext() {
+  if (!audioContext) {
+    try {
+      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      console.log("AudioContext initialized.");
+    } catch (e) {
+      console.error("Failed to initialize AudioContext:", e);
+    }
+  }
+}
+
+// 사용자가 클릭이나 탭을 할 때 오디오 컨텍스트를 초기화하도록 이벤트 리스너를 추가합니다.
+document.body.addEventListener('click', initAudioContext, { once: true });
+document.body.addEventListener('touchend', initAudioContext, { once: true });
+
+
+/**
+ * 주어진 텍스트에 대한 TTS 오디오를 요청하고 재생합니다.
+ * @param text 재생할 텍스트
+ */
+async function playTTS(text: string) {
+  if (!text) {
+    console.warn("TTS 요청 텍스트가 비어있습니다.");
+    return;
+  }
+
+  // 오디오 컨텍스트가 초기화되었는지 확인합니다.
+  if (!audioContext) {
+    console.warn("AudioContext가 아직 초기화되지 않았습니다. 사용자의 상호작용이 필요합니다.");
+    // 강제로 초기화를 시도할 수 있습니다.
+    initAudioContext();
+    if (!audioContext) {
+        alert("오디오를 재생하려면 화면을 한 번 클릭해주세요.");
+        return;
+    }
+  }
+
+  // 이전에 재생 중이던 오디오가 있다면 중지합니다.
+  if (currentAudioSource) {
+    currentAudioSource.stop();
+    currentAudioSource.disconnect();
+    currentAudioSource = null;
+    console.log("Previous audio stopped.");
+  }
+
+  console.log(`TTS 요청 전송: "${text}"`);
+
+  try {
+    // 백엔드 TTS API에 요청을 보냅니다.
+    const response = await fetch('http://localhost:8000/api/tts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text: text, engine: 'gtts' }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`TTS API 오류: ${response.status} - ${errorData.detail || 'Unknown error'}`);
+    }
+    console.log("TTS API 응답 수신 완료. 오디오 데이터 처리 시작...");
+
+    // 응답으로 받은 오디오 데이터를 ArrayBuffer로 변환합니다.
+    const audioData = await response.arrayBuffer();
+    console.log(`오디오 데이터 수신 완료 (크기: ${audioData.byteLength} 바이트). 디코딩 시작...`);
+
+    // ArrayBuffer를 디코딩하여 오디오 버퍼로 만듭니다.
+    const audioBuffer = await audioContext.decodeAudioData(audioData);
+    console.log("오디오 데이터 디코딩 완료.");
+
+    // 오디오 버퍼 소스를 생성합니다.
+    const source = audioContext.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(audioContext.destination);
+
+    // 오디오 재생을 시작합니다.
+    source.start(0);
+    console.log("오디오 재생 시작.");
+
+    // 현재 오디오 소스를 추적합니다.
+    currentAudioSource = source;
+
+    // 오디오 재생이 끝나면 소스를 null로 설정합니다.
+    source.onended = () => {
+      console.log("오디오 재생 완료.");
+      if (currentAudioSource === source) {
+        currentAudioSource = null;
+      }
+      source.disconnect();
+    };
+
+  } catch (error) {
+    console.error("TTS 오디오 재생 중 오류 발생:", error);
+    // 사용자에게 오류를 알릴 수 있습니다.
+    // alert(`TTS 오디오를 재생하는 데 실패했습니다: ${error.message}`);
+  }
+}
+
+// 다른 스크립트에서 playTTS 함수를 사용할 수 있도록 window 객체에 노출합니다.
+window.playTTS = playTTS;
+
+// --- TTS Integration End ---
+
+// --- Joint Control Start ---
+function createJointSliders() {
+  if (!currentVrm) return;
+
+  const slidersContainer = document.getElementById('joint-sliders');
+  if (!slidersContainer) return;
+
+  // Clear existing sliders
+  slidersContainer.innerHTML = '';
+
+  Object.values(VRMHumanBoneName).forEach(boneName => {
+    const bone = currentVrm.humanoid.getNormalizedBoneNode(boneName);
+    if (bone) {
+      const boneControl = document.createElement('div');
+      boneControl.style.marginBottom = '15px';
+
+      const label = document.createElement('label');
+      label.textContent = boneName;
+      label.style.display = 'block';
+      label.style.marginBottom = '5px';
+      boneControl.appendChild(label);
+
+      ['x', 'y', 'z'].forEach(axis => {
+        const sliderContainer = document.createElement('div');
+        sliderContainer.style.display = 'flex';
+        sliderContainer.style.alignItems = 'center';
+        sliderContainer.style.marginBottom = '5px';
+
+        const axisLabel = document.createElement('span');
+        axisLabel.textContent = axis.toUpperCase();
+        axisLabel.style.width = '20px';
+        sliderContainer.appendChild(axisLabel);
+
+        const slider = document.createElement('input');
+        slider.type = 'range';
+        slider.min = '-180';
+        slider.max = '180';
+        slider.value = '0';
+        slider.style.flexGrow = '1';
+        slider.oninput = () => {
+          const x = boneControl.querySelector<HTMLInputElement>('.slider-x').value;
+          const y = boneControl.querySelector<HTMLInputElement>('.slider-y').value;
+          const z = boneControl.querySelector<HTMLInputElement>('.slider-z').value;
+          
+          const euler = new THREE.Euler(
+            THREE.MathUtils.degToRad(parseFloat(x)),
+            THREE.MathUtils.degToRad(parseFloat(y)),
+            THREE.MathUtils.degToRad(parseFloat(z)),
+            'XYZ'
+          );
+          bone.setRotationFromEuler(euler);
+        };
+        slider.className = `slider-${axis}`;
+        sliderContainer.appendChild(slider);
+        boneControl.appendChild(sliderContainer);
+      });
+      slidersContainer.appendChild(boneControl);
+    }
+  });
+}
+
+window.createJointSliders = createJointSliders;
+// --- Joint Control End ---
+
 
 
