@@ -73,6 +73,9 @@ loader.load(
     currentVrm = vrm; // 현재 VRM 모델 저장
     window.currentVrm = vrm; // currentVrm을 window 객체에 노출
 
+    // VRM 모델 로드 후 본 이름 목록을 로그
+    logVrmBoneNames();
+
     // VRM 모델의 눈과 목이 카메라를 따라가도록 설정
 
     vrm.lookAt.target = camera;
@@ -80,35 +83,29 @@ loader.load(
     // 포즈 저장/로드 함수를 window 객체에 노출
     window.saveVrmPose = () => {
       if (!currentVrm) return null;
-      const pose: { [key: string]: { position: number[], quaternion: number[], scale: number[] } } = {};
-      Object.values(currentVrm.humanoid.humanBones).forEach((bone) => {
-        if (bone.node) {
-          pose[bone.node.name] = {
-            position: bone.node.position.toArray(),
-            quaternion: bone.node.quaternion.toArray(),
-            scale: bone.node.scale.toArray(),
-          };
-        }
-      });
-      console.log('VRM Pose Saved:', pose);
+      const pose = currentVrm.humanoid.getNormalizedPose();
+      if (pose[VRMHumanBoneName.Spine]) {
+        console.log('VRM Pose Saved (Spine bone only):', {
+          rotation: pose[VRMHumanBoneName.Spine].rotation,
+          position: pose[VRMHumanBoneName.Spine].position,
+        });
+      } else {
+        console.log('VRM Pose Saved: Spine bone data not found.');
+      }
       return pose;
     };
 
-    window.loadVrmPose = (pose: { [key: string]: { position: number[], quaternion: number[], scale: number[] } }) => {
+    window.loadVrmPose = (pose: any) => {
       if (!currentVrm || !pose) return;
-      console.log('Attempting to load pose:', pose);
-      Object.values(currentVrm.humanoid.humanBones).forEach((bone) => {
-        if (bone.node && pose[bone.node.name]) {
-          const saved = pose[bone.node.name];
-          console.log(`Bone: ${bone.node.name}, Saved Data:`, saved);
-          console.log(`Before - Position: ${bone.node.position.toArray()}, Quaternion: ${bone.node.quaternion.toArray()}, Scale: ${bone.node.scale.toArray()}`);
-          bone.node.position.fromArray(saved.position);
-          bone.node.quaternion.fromArray(saved.quaternion);
-          bone.node.scale.fromArray(saved.scale);
-          console.log(`After - Position: ${bone.node.position.toArray()}, Quaternion: ${bone.node.quaternion.toArray()}, Scale: ${bone.node.scale.toArray()}`);
-        }
-      });
-      currentVrm.humanoid.update(); // 휴머노이드 업데이트
+      if (pose[VRMHumanBoneName.Spine]) {
+        console.log('Attempting to load pose (Spine bone only):', {
+          rotation: pose[VRMHumanBoneName.Spine].rotation,
+          position: pose[VRMHumanBoneName.Spine].position,
+        });
+      } else {
+        console.log('Attempting to load pose: Spine bone data not found.');
+      }
+      currentVrm.humanoid.setNormalizedPose(pose);
       currentVrm.scene.updateMatrixWorld(true); // 씬의 월드 행렬 업데이트 강제
       console.log('VRM Pose Loaded.');
       createJointSliders(); // 포즈 로드 후 슬라이더 UI 갱신
@@ -526,6 +523,27 @@ function createJointSliders() {
 
 window.createJointSliders = createJointSliders;
 // --- Joint Control End ---
+
+// VRM 모델의 모든 본 이름을 콘솔에 로깅하는 함수
+function logVrmBoneNames() {
+  if (!currentVrm) {
+    console.warn('VRM model not loaded. Cannot log bone names.');
+    return;
+  }
+
+  console.log('--- VRM Humanoid Bone Names ---');
+  Object.entries(currentVrm.humanoid.humanBones).forEach(([boneName, bone]) => {
+    if (bone && bone.node) {
+      console.log(`HumanBoneName: ${boneName}, Node Name: ${bone.node.name}`);
+    } else {
+      console.log(`HumanBoneName: ${boneName}, Node: (null or undefined)`);
+    }
+  });
+  console.log('-------------------------------');
+}
+
+window.logVrmBoneNames = logVrmBoneNames; // window 객체에 노출
+
 
 
 
