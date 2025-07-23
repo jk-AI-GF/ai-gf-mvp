@@ -40,6 +40,12 @@ let mixer: THREE.AnimationMixer;
 let currentVrm: VRM | null = null;
 let controls: OrbitControls | null = null;
 
+if (!window.floatingMessages) {
+  window.floatingMessages = [];
+}
+const tempVector = new THREE.Vector3();
+const tempVector2 = new THREE.Vector3();
+
 const width = window.innerWidth;
 const height = window.innerHeight;
 
@@ -335,6 +341,37 @@ function animate() {
         (object as THREE.SkinnedMesh).skeleton.update();
       }
     });
+
+    // Update floating messages
+    const headPosition = currentVrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Head)?.getWorldPosition(tempVector);
+    if (headPosition) {
+      // Offset the message slightly above the head
+      headPosition.y += 0.2; // Adjust this value as needed
+      
+      // Project 3D world position to 2D screen position
+      headPosition.project(camera);
+
+      const x = (headPosition.x * 0.5 + 0.5) * renderer.domElement.clientWidth;
+      const y = (-headPosition.y * 0.5 + 0.5) * renderer.domElement.clientHeight;
+
+      const currentTime = performance.now();
+      for (let i = window.floatingMessages.length - 1; i >= 0; i--) {
+        const message = window.floatingMessages[i];
+        const age = currentTime - message.timestamp;
+        const duration = 5000; // Message visible for 5 seconds
+        const fadeDuration = 1000; // Fade out over 1 second
+
+        if (age > duration) {
+          message.element.remove();
+          window.floatingMessages.splice(i, 1);
+        } else if (age > (duration - fadeDuration)) {
+          message.element.style.opacity = String(1 - (age - (duration - fadeDuration)) / fadeDuration);
+        }
+
+        message.element.style.left = `${x}px`;
+        message.element.style.top = `${y}px`;
+      }
+    }
   }
   if (controls) controls.update();
   updateJointSliders();

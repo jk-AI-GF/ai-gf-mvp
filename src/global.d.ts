@@ -17,6 +17,7 @@ declare global {
     loadVrmaPose: (vrmaPath: string) => Promise<void>;
     loadAnimationFile: (url: string) => Promise<void>;
     setClearColor: (color: number) => void;
+    floatingMessages: { element: HTMLDivElement; timestamp: number; }[];
     electronAPI: {
       listDirectory: (dirPath: string) => Promise<{ files: string[]; directories: string[]; error?: string }>;
       openVrmFile: () => Promise<string | null>;
