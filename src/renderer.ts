@@ -48,19 +48,38 @@ camera.position.set(0.0, 0.0, 3.0);
 camera.rotation.set(-0.08, 0.0, 0.0);
 
 const light = new THREE.DirectionalLight(0xffffff, 2);
-light.position.set(1, 0, 3);
+light.position.set(2, 5, 3); // Adjusted position for better shadow casting
+light.castShadow = true;
+light.shadow.mapSize.width = 1024;
+light.shadow.mapSize.height = 1024;
+light.shadow.camera.near = 0.5;
+light.shadow.camera.far = 50;
+light.shadow.camera.left = -5;
+light.shadow.camera.right = 5;
+light.shadow.camera.top = 5;
+light.shadow.camera.bottom = -5;
 scene.add(light);
 
 const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
 renderer.setSize(width, height);
 renderer.setClearColor(0x000000, 0);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.shadowMap.enabled = true; // Enable shadow maps
 document.body.appendChild(renderer.domElement);
 
 controls = new OrbitControls(camera, renderer.domElement);
 
 const ambientLight = new THREE.AmbientLight(0x404040, 2);
 scene.add(ambientLight);
+
+// Add a ground plane for shadows
+const planeGeometry = new THREE.PlaneGeometry(10, 10);
+const planeMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc });
+const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+plane.rotation.x = -Math.PI / 2; // Rotate to be flat on XZ plane
+plane.position.y = -0.601; // Place it slightly below the VRM model's base
+plane.receiveShadow = true; // This plane will receive shadows
+scene.add(plane);
 
 const loader = new GLTFLoader();
 loader.register((parser) => new VRMLoaderPlugin(parser));
@@ -81,41 +100,20 @@ function loadVRM(url: string) {
       vrm.scene.rotation.y = Math.PI;
       scene.add(vrm.scene);
       currentVrm = vrm;
-      window.currentVrm = vrm;      
-
-      // window.logVrmBoneNames();
-
-      window.loadVrmPose = (pose: any) => {
-        if (!currentVrm || !pose) return;
-        currentVrm.humanoid.setNormalizedPose(pose);
-        currentVrm.scene.updateMatrixWorld(true);
-        createJointSliders();
-      };
-
-      if (vrm.expressionManager) {
-        console.log('VRM ExpressionManager initialized.', vrm.expressionManager);
-        const expressionMap: { [key: string]: string } = {};
-        const llmExpressionList: string[] = [];
-
-        vrm.expressionManager.expressions.forEach(exp => {
-            expressionMap[exp.name] = exp.name;
-            llmExpressionList.push(exp.name);
-        });
-
-        window.vrmExpressionList = llmExpressionList;
-        window.expressionMap = expressionMap;
-        console.log('VRM Expression List (Mapped for LLM):', window.vrmExpressionList);
-        console.log('Actual VRM Expressions:', vrm.expressionManager.expressions.map(exp => exp.name));
-        console.log('DEBUG: vrmExpressionList contents:', JSON.stringify(llmExpressionList));
-        console.log('DEBUG: expressionMap contents:', JSON.stringify(expressionMap));
-      } else {
-        console.warn('VRM ExpressionManager is not available on this VRM model.');
-      }
+      window.currentVrm = vrm;
 
       mixer = new THREE.AnimationMixer(vrm.scene);
 
-      // 애니메이션 버튼 생성 로직
-      const animationButtonsContainer = document.getElementById('animation-buttons');
+      // Enable shadows for all meshes in the VRM model
+      vrm.scene.traverse((object) => {
+        if ((object as THREE.Mesh).isMesh) {
+          object.castShadow = true;
+        }
+      });
+
+      // Load default pose
+      const defaultPosePath = 'assets/Pose/pose_stand_001.vrma';
+      window.loadVrmaFile(defaultPosePath);
     },
     undefined,
     (error: unknown) => {
