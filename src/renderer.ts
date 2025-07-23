@@ -494,8 +494,14 @@ async function playTTS(text: string) {
   try {
     const response = await fetch('http://localhost:8000/api/tts', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, engine: 'gtts' }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'audio/wav'      // (선택) 명시적으로 WAV 응답을 기대
+      },
+      body: JSON.stringify({
+        text,
+        engine: 'google',           // 언어 필드는 더 이상 필요 없음
+      }),
     });
     if (!response.ok) throw new Error(`TTS API error: ${response.status}`);
     const audioData = await response.arrayBuffer();

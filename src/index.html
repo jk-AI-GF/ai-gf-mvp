@@ -358,11 +358,9 @@
 
             appendMessage('assistant', text);
             
-            // --- TTS 재생 호출 추가 ---
             if (window.playTTS) {
               window.playTTS(text);
             }
-            // --- TTS 재생 호출 추가 끝 ---
 
             chatHistory.push({ role: 'model', parts: [{ text }] });
           } catch (err) {
