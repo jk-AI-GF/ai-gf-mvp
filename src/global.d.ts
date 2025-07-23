@@ -39,5 +39,6 @@ declare global {
     listVrmMeshes: () => string[];
     toggleVrmMeshVisibility: (meshName: string, visible: boolean) => void;
     createMeshList: () => void;
+    toggleCameraMode: () => void;
   }
 }

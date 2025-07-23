@@ -45,6 +45,10 @@ let mixer: THREE.AnimationMixer;
 let currentVrm: VRM | null = null;
 let controls: OrbitControls | null = null;
 let currentAction: THREE.AnimationAction | null = null; // 현재 재생 중인 애니메이션 액션
+const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0.0, 0.0, 3.0);
+const DEFAULT_CAMERA_ROTATION = new THREE.Euler(-0.08, 0.0, 0.0);
+let isFreeCameraMode = true; // 초기 카메라는 자유 모드
+
 const pluginManager = new PluginManager();
 window.pluginManager = pluginManager;
 
@@ -59,8 +63,14 @@ const height = window.innerHeight;
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(35, width / height, 0.1, 1000);
-camera.position.set(0.0, 0.0, 3.0);
-camera.rotation.set(-0.08, 0.0, 0.0);
+// 초기 카메라 위치와 회전은 자유 모드 여부에 따라 설정
+if (!isFreeCameraMode) {
+  camera.position.copy(DEFAULT_CAMERA_POSITION);
+  camera.rotation.copy(DEFAULT_CAMERA_ROTATION);
+} else {
+  camera.position.set(0.0, 0.0, 3.0);
+  camera.rotation.set(-0.08, 0.0, 0.0);
+}
 
 const light = new THREE.DirectionalLight(0xffffff, 2);
 light.position.set(2, 5, 3); // Adjusted position for better shadow casting
@@ -430,7 +440,25 @@ function animate() {
 animate();
 
 window.setClearColor = (color: number) => {
-  renderer.setClearColor(color, 1);
+  renderer.setClearColor(color, 0.1);
+};
+
+/**
+ * 카메라 모드를 토글합니다 (자유 카메라 <-> 고정 카메라).
+ */
+window.toggleCameraMode = function(): void {
+  isFreeCameraMode = !isFreeCameraMode;
+  if (isFreeCameraMode) {
+    if (controls) controls.enabled = true;
+    console.log('Camera mode: Free');
+  } else {
+    if (controls) controls.enabled = false;
+    // 고정 카메라 모드일 때 카메라 위치와 회전을 기본값으로 재설정
+    camera.position.copy(DEFAULT_CAMERA_POSITION);
+    camera.rotation.copy(DEFAULT_CAMERA_ROTATION);
+    camera.updateProjectionMatrix();
+    console.log('Camera mode: Fixed');
+  }
 };
 
 function onWindowResize() {
