@@ -263,6 +263,54 @@ if (loadPoseFileButton) {
         }
       };
 
+      document.getElementById('list-vrma-animation-button').onclick = async () => {
+        const animationSidePanel = document.getElementById('animation-side-panel');
+        if (animationSidePanel.style.display === 'flex') {
+          animationSidePanel.style.display = 'none';
+        } else {
+          animationSidePanel.style.display = 'flex';
+          try {
+            const result = await window.electronAPI.listDirectory('assets/Animation');
+            if (result.error) {
+              throw new Error(result.error);
+            }
+            const vrmaFiles = result.files.filter(file => file.endsWith('.vrma'));
+            
+            const animationListDisplay = document.getElementById('animation-list-display');
+            if (animationListDisplay) {
+              animationListDisplay.innerHTML = ''; // Clear previous list
+              if (vrmaFiles.length === 0) {
+                const noFilesMessage = document.createElement('p');
+                noFilesMessage.textContent = '저장된 애니메이션 파일(.vrma)이 없습니다.';
+                noFilesMessage.style.color = 'white';
+                animationListDisplay.appendChild(noFilesMessage);
+              } else {
+                vrmaFiles.forEach(file => {
+                  const button = document.createElement('button');
+                  button.textContent = file;
+                  Object.assign(button.style, {
+                    padding: '10px 15px', backgroundColor: 'transparent', color: 'white',
+                    border: 'none', borderRadius: '8px', cursor: 'pointer',
+                    marginBottom: '8px', width: '100%', textAlign: 'left',
+                    fontSize: '1rem', transition: 'background-color 0.2s ease'
+                  });
+                  button.onmouseover = () => { button.style.backgroundColor = 'rgba(0,123,255,0.2)'; };
+                  button.onmouseout = () => { button.style.backgroundColor = 'transparent'; };
+                  button.onclick = () => {
+                    const fullPath = `assets/Animation/${file}`;
+                    window.loadVrmaFile(fullPath);
+                  };
+                  animationListDisplay.appendChild(button);
+                });
+              }
+            }
+          } catch (error) {
+            console.error('Failed to list VRMA animations for panel:', error);
+            alert('애니메이션 목록을 불러오는 데 실패했습니다.');
+          }
+        }
+      };
+
 const clock = new THREE.Clock();
 
 function animate() {

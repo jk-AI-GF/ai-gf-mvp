@@ -30,6 +30,12 @@
       <button id="close-pose-panel" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">×</button>
       <div id="pose-list-display"></div>
     </div>
+
+    <div id="animation-side-panel" style="display:none; position: fixed; top: 0; right: 0; width: 300px; height: 100vh; background: rgba(30,30,30,0.95); z-index: 2000; padding: 25px; color: #fff; overflow-y: auto; box-shadow: -5px 0 15px rgba(0,0,0,0.5);">
+      <button id="close-animation-panel" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">×</button>
+      <h3 style="text-align: center;">저장된 애니메이션</h3>
+      <div id="animation-list-display"></div>
+    </div>
     <div id="animation-buttons" style="position: fixed; top: 50%; left: 20px; transform: translateY(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 5px; background-color: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;">
       <!-- 디버그용 포즈 저장 버튼 추가 -->
       <button id="save-pose-button" style="margin: 5px; padding: 10px; background-color: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">포즈 저장</button>
@@ -50,8 +56,6 @@
         <button type="submit">전송</button>
       </form>
     </div>
-    <h1>💖 Hello World!</h1>
-    <p>Welcome to your Electron application.</p>
     <script>
       document.getElementById('close-overlay').onclick = () => window.close();
       document.getElementById('open-settings').onclick = () => {
@@ -75,6 +79,9 @@
       };
       document.getElementById('close-pose-panel').onclick = () => {
         document.getElementById('pose-side-panel').style.display = 'none';
+      };
+      document.getElementById('close-animation-panel').onclick = () => {
+        document.getElementById('animation-side-panel').style.display = 'none';
       };
       // LLM API 저장 로직
       const form = document.getElementById('llm-form');
