@@ -25,6 +25,7 @@
       <button id="open-settings" style="background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.1rem; padding: 0.5rem 1rem; cursor: pointer;">설정</button>
       <button id="open-joint-control" style="background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.1rem; padding: 0.5rem 1rem; cursor: pointer;">관절 조절</button>
       <button id="open-expression-panel-button" style="background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.1rem; padding: 0.5rem 1rem; cursor: pointer;">표정</button>
+      <button id="open-plugins-panel-button" style="background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.1rem; padding: 0.5rem 1rem; cursor: pointer;">플러그인</button>
       <button id="close-overlay" style="background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.5rem; padding: 0.5rem 1rem; cursor: pointer;">×</button>
     </div>
     <div id="settings-modal" style="visibility:hidden; opacity:0; transition: opacity 0.3s ease, visibility 0.3s ease; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; height: 400px; background: rgba(20,20,20,0.95); z-index: 2001; padding: 20px; border-radius: 10px; color: #fff; overflow-y: auto; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
@@ -69,6 +70,11 @@
       <button id="close-expression-panel" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">×</button>
       <h3>표정 조절</h3>
       <div id="expression-sliders"></div>
+    </div>
+    <div id="plugin-control-panel" style="display:none; position: fixed; top: 80px; right: 20px; width: 300px; max-height: 70vh; background: rgba(20,20,20,0.8); z-index: 2000; padding: 20px; border-radius: 10px; color: #fff; overflow-y: auto;">
+      <button id="close-plugins-panel" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">×</button>
+      <h3>플러그인 관리</h3>
+      <div id="plugins-list"></div>
     </div>
     <div id="animation-buttons" style="position: fixed; top: 50%; left: 20px; transform: translateY(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 5px; background-color: rgba(0,0,0,0.3); padding: 10px; border-radius: 0px;">
       <!-- VRM 모델 관련 -->
@@ -170,6 +176,20 @@
         };
         document.getElementById('close-expression-panel').onclick = () => {
           document.getElementById('expression-control-panel').style.display = 'none';
+        };
+        document.getElementById('open-plugins-panel-button').onclick = () => {
+          const pluginControlPanel = document.getElementById('plugin-control-panel');
+          if (pluginControlPanel.style.display === 'block') {
+            pluginControlPanel.style.display = 'none';
+          } else {
+            pluginControlPanel.style.display = 'block';
+            if (window.pluginManager && window.createPluginList) {
+              window.createPluginList();
+            }
+          }
+        };
+        document.getElementById('close-plugins-panel').onclick = () => {
+          document.getElementById('plugin-control-panel').style.display = 'none';
         };
         // LLM API 저장 로직
         const form = document.getElementById('llm-form');
@@ -360,6 +380,54 @@
           }
            catch (err) {
             window.appendMessage('assistant', 'Gemini API 호출 실패: ' + err);
+          }
+        };
+
+        window.createPluginList = function() {
+          const pluginsListDiv = document.getElementById('plugins-list');
+          if (!pluginsListDiv) return;
+
+          pluginsListDiv.innerHTML = ''; // Clear existing list
+
+          if (!window.pluginManager) {
+            pluginsListDiv.textContent = '플러그인 관리자를 찾을 수 없습니다.';
+            return;
+          }
+
+          // Iterate over registered plugins
+          for (const plugin of window.pluginManager.plugins.values()) {
+            const pluginDiv = document.createElement('div');
+            pluginDiv.style.marginBottom = '10px';
+            pluginDiv.style.display = 'flex';
+            pluginDiv.style.alignItems = 'center';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `plugin-toggle-${plugin.name}`;
+            checkbox.checked = plugin.enabled;
+            checkbox.style.marginRight = '10px';
+            checkbox.style.width = '20px';
+            checkbox.style.height = '20px';
+            checkbox.style.cursor = 'pointer';
+
+            const label = document.createElement('label');
+            label.htmlFor = `plugin-toggle-${plugin.name}`;
+            label.textContent = plugin.name;
+            label.style.color = 'white';
+            label.style.fontSize = '1.1rem';
+            label.style.cursor = 'pointer';
+
+            checkbox.onchange = (event) => {
+              if (event.target.checked) {
+                window.pluginManager.enable(plugin.name);
+              } else {
+                window.pluginManager.disable(plugin.name);
+              }
+            };
+
+            pluginDiv.appendChild(checkbox);
+            pluginDiv.appendChild(label);
+            pluginsListDiv.appendChild(pluginDiv);
           }
         };
 

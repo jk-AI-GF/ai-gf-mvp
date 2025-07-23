@@ -1,5 +1,6 @@
 import { VRM, VRMExpression, VRMNormalizedPose } from '@pixiv/three-vrm';
 import * as THREE from 'three';
+import { PluginManager, IPlugin } from './plugins/plugin-manager';
 
 declare global {
   interface Window {
@@ -33,5 +34,7 @@ declare global {
     appendMessage: (role: string, text: string) => void;
     sendChatMessage: (message: string) => Promise<void>;
     personaText: string;
+    pluginManager: PluginManager;
+    createPluginList: () => void;
   }
 }

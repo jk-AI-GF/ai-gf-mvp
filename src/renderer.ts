@@ -46,6 +46,7 @@ let currentVrm: VRM | null = null;
 let controls: OrbitControls | null = null;
 let currentAction: THREE.AnimationAction | null = null; // 현재 재생 중인 애니메이션 액션
 const pluginManager = new PluginManager();
+window.pluginManager = pluginManager;
 
 if (!window.floatingMessages) {
   window.floatingMessages = [];

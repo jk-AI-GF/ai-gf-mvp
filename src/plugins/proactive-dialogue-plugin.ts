@@ -74,8 +74,6 @@ export class ProactiveDialoguePlugin implements IPlugin {
     const randomIndex = Math.floor(Math.random() * this.dialoguePhrases.length);
     const phrase = this.dialoguePhrases[randomIndex];
 
-    console.log(`Character says: "${phrase}"`);
-
     // window.appendMessage 함수를 사용하여 말풍선을 띄웁니다.
     if (window.appendMessage) {
       window.appendMessage('assistant', phrase);
