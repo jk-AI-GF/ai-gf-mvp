@@ -19,7 +19,9 @@ export const mainConfig: Configuration = {
     new CopyWebpackPlugin({
       patterns: [
         { from: 'assets/icon.png', to: 'assets/icon.png' },
-        { from: 'assets/Liqu.vrm', to: 'assets/Liqu.vrm' }
+        { from: 'assets/Liqu.vrm', to: 'assets/Liqu.vrm' },
+        { from: 'assets/Pose', to: 'assets/Pose' },
+        { from: 'assets/Animation', to: 'assets/Animation' }
       ]
     })
   ],

@@ -9,4 +9,5 @@ import { ipcRenderer } from 'electron';
   openVrmaFile: () => ipcRenderer.invoke('open-vrma-file'),
   savePersonaToFile: (persona: string) => ipcRenderer.invoke('save-persona-to-file', persona),
   openPersonaFile: () => ipcRenderer.invoke('open-persona-file'),
+  readFileContent: async (filePath: string) => ipcRenderer.invoke('read-file-content', filePath),
 };

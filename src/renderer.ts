@@ -203,10 +203,12 @@ if (loadPoseFileButton) {
           // The list will be populated by renderer.ts
           try {
             const result = await window.electronAPI.listDirectory('assets/Pose');
+            console.log('listDirectory result for assets/Pose:', result);
             if (result.error) {
               throw new Error(result.error);
             }
             const vrmaFiles = result.files.filter(file => file.endsWith('.vrma'));
+            console.log('Filtered VRMA files:', vrmaFiles);
             
             const poseListDisplay = document.getElementById('pose-list-display');
             if (poseListDisplay) {
@@ -531,11 +533,14 @@ window.logVrmBoneNames = logVrmBoneNames;
 async function loadVrmaFile(vrmaPath: string) {
   if (!currentVrm || !mixer) return;
 
+  // Remove 'file://' prefix if present and convert to relative path
+  const relativeVrmaPath = vrmaPath.startsWith('file://') ? vrmaPath.substring(7).replace(/\\/g, '/').replace(process.cwd().replace(/\\/g, '/'), '').replace(/^\//, '') : vrmaPath;
+
   try {
     // Try loading as GLTF first
     const gltf = await new Promise<any>((resolve, reject) => {
       loader.load(
-        vrmaPath,
+        relativeVrmaPath,
         resolve,
         undefined,
         reject
@@ -550,7 +555,7 @@ async function loadVrmaFile(vrmaPath: string) {
       action.setLoop(THREE.LoopOnce, 1); // Assuming animations are not looped by default
       action.clampWhenFinished = true;
       action.play();
-      console.log(`Loaded VRMA as animation from ${vrmaPath}`);
+      console.log(`Loaded VRMA as animation from ${relativeVrmaPath}`);
     } else {
       // If GLTF loaded but no animations, it might be a JSON pose or an empty GLTF
       throw new Error('No animation clips found in GLTF, trying as JSON pose.');
@@ -559,11 +564,11 @@ async function loadVrmaFile(vrmaPath: string) {
     console.warn(`Failed to load VRMA as GLTF: ${(gltfError as Error).message}. Trying as JSON pose.`);
     try {
       // If GLTF loading fails, try loading as JSON VRMPose
-      const response = await fetch(vrmaPath);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch file: ${response.statusText}`);
+      const fileContent = await window.electronAPI.readFileContent(relativeVrmaPath);
+      if (typeof fileContent === 'object' && 'error' in fileContent) {
+        throw new Error(fileContent.error);
       }
-      const poseData = await response.json() as VRMPose;
+      const poseData = JSON.parse(new TextDecoder().decode(fileContent as ArrayBuffer)) as VRMPose;
 
       if (!poseData) {
         throw new Error('Invalid VRMPose data structure in the loaded file.');
@@ -572,9 +577,9 @@ async function loadVrmaFile(vrmaPath: string) {
       currentVrm.humanoid.setNormalizedPose(poseData);
       currentVrm.scene.updateMatrixWorld(true);
       createJointSliders();
-      console.log(`Loaded VRMA as JSON pose from ${vrmaPath}`);
+      console.log(`Loaded VRMA as JSON pose from ${relativeVrmaPath}`);
     } catch (jsonError) {
-      console.error(`Error loading VRMA file from ${vrmaPath}:`, jsonError);
+      console.error(`Error loading VRMA file from ${relativeVrmaPath}:`, jsonError);
       alert(`VRMA 파일 로딩에 실패했습니다: ${(jsonError as Error).message}`);
     }
   }

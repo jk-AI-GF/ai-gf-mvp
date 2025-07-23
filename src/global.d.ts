@@ -25,6 +25,7 @@ declare global {
       openVrmaFile: () => Promise<string | null>;
       savePersonaToFile: (persona: string) => Promise<{ success: boolean; message: string }>;
       openPersonaFile: () => Promise<string | null>;
+      readFileContent: (filePath: string) => Promise<ArrayBuffer | { error: string }>;
     };
     loadVrmaAnimation: (url: string, isAnimation: boolean) => Promise<void>;
     loadVrmPoseFromFile: (url: string) => Promise<void>;

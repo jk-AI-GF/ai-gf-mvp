@@ -206,6 +206,20 @@ app.on('ready', () => {
     }
   });
 
+  ipcMain.handle('read-file-content', async (event, filePath: string) => {
+    try {
+      const fullPath = path.join(app.getAppPath(), filePath);
+      if (!fullPath.startsWith(app.getAppPath())) {
+        throw new Error('Attempted to read file outside application directory.');
+      }
+      const data = await fs.promises.readFile(fullPath);
+      return data.buffer;
+    } catch (error) {
+      console.error(`Failed to read file ${filePath}:`, error);
+      return { error: error.message };
+    }
+  });
+
   ipcMain.handle('save-persona-to-file', async (event, persona: string) => {
     const { canceled, filePath } = await dialog.showSaveDialog({
       title: 'Save Persona',
