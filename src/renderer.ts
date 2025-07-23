@@ -559,6 +559,35 @@ function createJointSliders() {
         sliderContainer.appendChild(slider);
         boneControl.appendChild(sliderContainer);
       });
+
+      // 초기화 버튼 추가
+      const resetButton = document.createElement('button');
+      resetButton.textContent = '초기화';
+      Object.assign(resetButton.style, {
+        marginTop: '5px',
+        padding: '5px 10px',
+        backgroundColor: '#dc3545',
+        color: 'white',
+        border: 'none',
+        borderRadius: '5px',
+        cursor: 'pointer',
+        fontSize: '0.8rem',
+      });
+      resetButton.onclick = () => {
+        if (bone) {
+          bone.quaternion.set(0, 0, 0, 1); // 쿼터니언 초기화 (회전 없음)
+          // 슬라이더 값도 초기화된 값으로 업데이트
+          const resetEuler = new THREE.Euler().setFromQuaternion(bone.quaternion, 'XYZ');
+          ['x', 'y', 'z'].forEach(axis => {
+            const slider = boneControl.querySelector<HTMLInputElement>(`.slider-${axis}`);
+            if (slider) {
+              slider.value = THREE.MathUtils.radToDeg(resetEuler[axis as 'x' | 'y' | 'z']).toFixed(0);
+            }
+          });
+        }
+      };
+      boneControl.appendChild(resetButton);
+
       slidersContainer.appendChild(boneControl);
     }
   });
