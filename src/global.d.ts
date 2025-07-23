@@ -11,6 +11,7 @@ declare global {
     vrmAnimationList: THREE.AnimationClip[];
     mixer: THREE.AnimationMixer;
     animateExpression: (expressionName: string, targetWeight: number, duration: number) => void;
+    animateExpressionAdditive: (expressionName: string, targetWeight: number, duration: number) => void;
     playTTS: (text: string) => Promise<void>;
     createJointSliders: () => void;
     loadJsonPose: (jsonPath: string) => Promise<void>;

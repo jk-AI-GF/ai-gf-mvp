@@ -35,10 +35,14 @@ import { VRMLoaderPlugin, VRM, VRMHumanBoneName, VRMPose, VRMExpressionPresetNam
 import { VRMAnimationLoaderPlugin } from '@pixiv/three-vrm-animation';
 import { createVRMAnimationClip, VRMAnimation } from '@pixiv/three-vrm-animation';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
+import { PluginManager } from './plugins/plugin-manager';
+import { LookAtCameraPlugin } from './plugins/look-at-camera-plugin';
+import { AutoBlinkPlugin } from './plugins/auto-blink-plugin';
 
 let mixer: THREE.AnimationMixer;
 let currentVrm: VRM | null = null;
 let controls: OrbitControls | null = null;
+const pluginManager = new PluginManager();
 
 if (!window.floatingMessages) {
   window.floatingMessages = [];
@@ -78,6 +82,13 @@ controls = new OrbitControls(camera, renderer.domElement);
 
 const ambientLight = new THREE.AmbientLight(0x404040, 2);
 scene.add(ambientLight);
+
+// Initialize and register plugins
+const lookAtCameraPlugin = new LookAtCameraPlugin(camera);
+pluginManager.register(lookAtCameraPlugin);
+
+const autoBlinkPlugin = new AutoBlinkPlugin();
+pluginManager.register(autoBlinkPlugin);
 
 // Add a ground plane for shadows
 const planeGeometry = new THREE.PlaneGeometry(10, 10);
@@ -318,26 +329,7 @@ function animate() {
   const delta = clock.getDelta();
   if (mixer) mixer.update(delta);
   if (currentVrm) {
-    const head = currentVrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Head);
-    if (head) {
-      const headForward = new THREE.Vector3();
-      head.getWorldDirection(headForward);
-      headForward.negate();
-      const camPos = new THREE.Vector3();
-      camera.getWorldPosition(camPos);
-      const headPos = new THREE.Vector3();
-      head.getWorldPosition(headPos);
-      const cameraDir = new THREE.Vector3().subVectors(camPos, headPos).normalize();
-      const lookAtOffset = new THREE.Quaternion().setFromUnitVectors(headForward, cameraDir);
-      const headWorldQuat = new THREE.Quaternion();
-      head.getWorldQuaternion(headWorldQuat);
-      const targetWorldQuat = new THREE.Quaternion().multiplyQuaternions(lookAtOffset, headWorldQuat);
-      const parentWorldQuat = new THREE.Quaternion();
-      head.parent.getWorldQuaternion(parentWorldQuat);
-      const parentWorldQuatInverse = parentWorldQuat.clone().invert();
-      const targetLocalQuat = targetWorldQuat.clone().premultiply(parentWorldQuatInverse);
-      head.quaternion.slerp(targetLocalQuat, 0.1);
-    }
+    pluginManager.update(delta, currentVrm);
     currentVrm.update(delta);
     
     currentVrm.scene.traverse(object => {
@@ -469,6 +461,42 @@ function animateExpression(expressionName: string, targetWeight: number, duratio
   requestAnimationFrame(step);
 }
 window.animateExpression = animateExpression;
+
+function animateExpressionAdditive(expressionName: string, targetWeight: number, duration: number) {
+  if (!window.currentVrm || !window.currentVrm.expressionManager) return;
+
+  const expressionManager = window.currentVrm.expressionManager;
+
+  // Ensure the target expression exists in the map
+  if (!expressionManager.expressionMap[expressionName]) {
+    console.error(`Additive Expression \"${expressionName}\" not found in the VRM model.`);
+    return;
+  }
+
+  const startWeight = expressionManager.getValue(expressionName) || 0.0;
+  const startTime = performance.now();
+
+  function step(currentTime: number) {
+    const elapsedTime = currentTime - startTime;
+    const progress = Math.min(elapsedTime / (duration * 1000), 1);
+    const currentWeight = startWeight + (targetWeight - startWeight) * progress;
+
+    expressionManager.setValue(expressionName, currentWeight);
+    expressionManager.update();
+
+    // Update the slider for the current expression
+    const slider = document.querySelector<HTMLInputElement>(`#expression-sliders [data-expression-name=\"${expressionName}\"] .expression-slider`);
+    if (slider) {
+      slider.value = (currentWeight * 100).toFixed(0);
+    }
+
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    }
+  }
+  requestAnimationFrame(step);
+}
+window.animateExpressionAdditive = animateExpressionAdditive;
 
 
 
