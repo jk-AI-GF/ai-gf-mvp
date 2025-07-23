@@ -89,10 +89,6 @@ plane.position.y = -0.601; // Place it slightly below the VRM model's base
 plane.receiveShadow = true; // This plane will receive shadows
 plane.material.depthWrite = false; // Important for transparent planes to receive shadows correctly
 scene.add(plane);
-plane.rotation.x = -Math.PI / 2; // Rotate to be flat on XZ plane
-plane.position.y = -0.601; // Place it slightly below the VRM model's base
-plane.receiveShadow = true; // This plane will receive shadows
-scene.add(plane);
 
 const loader = new GLTFLoader();
 loader.register((parser) => new VRMLoaderPlugin(parser));

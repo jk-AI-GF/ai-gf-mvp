@@ -37,7 +37,7 @@ const createOverlayWindow = (): void => {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       webSecurity: true, // 보안 검사 활성화
       nodeIntegration: true, // Node.js 통합 활성화
-      contextIsolation: false, // 컨텍스트 격리 활성화
+      contextIsolation: false, // 컨텍스트 격리 비활성화
       webgl: true, // WebGL 활성화
       
     },
