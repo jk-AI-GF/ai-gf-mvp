@@ -363,7 +363,8 @@
             }
 
             chatHistory.push({ role: 'model', parts: [{ text }] });
-          } catch (err) {
+          }
+           catch (err) {
             appendMessage('assistant', 'Gemini API 호출 실패: ' + err);
           }
         };

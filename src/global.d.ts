@@ -1,4 +1,4 @@
-import { VRM, VRMNormalizedPose } from '@pixiv/three-vrm';
+import { VRM, VRMExpression, VRMNormalizedPose } from '@pixiv/three-vrm';
 import * as THREE from 'three';
 
 declare global {
@@ -7,7 +7,7 @@ declare global {
     saveVrmPose: () => void;
     loadVrmPose: (pose: VRMNormalizedPose) => void;
     vrmExpressionList: string[];
-    expressionMap: { [key: string]: string };
+    expressionMap: { [key: string]: VRMExpression };
     vrmAnimationList: THREE.AnimationClip[];
     mixer: THREE.AnimationMixer;
     animateExpression: (expressionName: string, targetWeight: number, duration: number) => void;

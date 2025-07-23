@@ -31,7 +31,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { VRMLoaderPlugin, VRM, VRMHumanBoneName, VRMPose } from '@pixiv/three-vrm';
+import { VRMLoaderPlugin, VRM, VRMHumanBoneName, VRMPose, VRMExpressionPresetName } from '@pixiv/three-vrm';
 import { VRMAnimationLoaderPlugin } from '@pixiv/three-vrm-animation';
 import { createVRMAnimationClip, VRMAnimation } from '@pixiv/three-vrm-animation';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
@@ -132,6 +132,11 @@ function loadVRM(url: string) {
       // Load default pose
       const defaultPosePath = 'assets/Pose/pose_stand_001.vrma';
       window.loadAnimationFile(defaultPosePath);
+      
+      // Set default Expression
+      console.log(Object.keys(vrm.expressionManager.expressionMap));
+      console.log(vrm.expressionManager.expressionMap);
+      window.expressionMap = vrm.expressionManager.expressionMap;
     })
     .catch((error: unknown) => {
       console.error('VRM 로드 실패:', error);
@@ -418,21 +423,20 @@ function animateExpression(expressionName: string, targetWeight: number, duratio
   if (!window.currentVrm || !window.currentVrm.expressionManager || !window.expressionMap) return;
   
   const expressionManager = window.currentVrm.expressionManager;
-  const vrmInternalName = window.expressionMap[expressionName] || expressionName;
   
   // Ensure the target expression exists
-  const targetExpression = expressionManager.getExpression(vrmInternalName);
+  const targetExpression = expressionManager.getExpression(expressionName);
   if (!targetExpression) {
-    console.error(`Expression "${vrmInternalName}" not found in the VRM model.`);
+    console.error(`Expression "${expressionName}" not found in the VRM model.`);
     return;
   }
 
-  const startWeight = expressionManager.getValue(vrmInternalName) || 0.0;
+  const startWeight = expressionManager.getValue(expressionName) || 0.0;
   const startTime = performance.now();
 
   // Reset other expressions to 0
   expressionManager.expressions.forEach(exp => {
-    if (exp.name !== vrmInternalName) {
+    if (exp.name !== expressionName) {
       expressionManager.setValue(exp.name, 0.0);
     }
   });
@@ -442,7 +446,7 @@ function animateExpression(expressionName: string, targetWeight: number, duratio
     const progress = Math.min(elapsedTime / (duration * 1000), 1);
     const currentWeight = startWeight + (targetWeight - startWeight) * progress;
     
-    expressionManager.setValue(vrmInternalName, currentWeight);
+    expressionManager.setValue(expressionName, currentWeight);
     expressionManager.update();
 
     if (progress < 1) {
@@ -726,7 +730,9 @@ function createExpressionSliders() {
 
     slider.oninput = () => {
       const weight = parseFloat(slider.value) / 100;
-      window.currentVrm.expressionManager.setValue(expressionName, weight);
+      const presetName = expressionName.replace(/^VRMExpression_/, '') as VRMExpressionPresetName;
+
+      window.currentVrm.expressionManager.setValue(presetName, weight);
       window.currentVrm.expressionManager.update();
     };
     slider.className = 'expression-slider';
