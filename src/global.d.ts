@@ -13,7 +13,7 @@ declare global {
     animateExpression: (expressionName: string, targetWeight: number, duration: number) => void;
     playTTS: (text: string) => Promise<void>;
     createJointSliders: () => void;
-    
+    loadJsonPose: (jsonPath: string) => Promise<void>;
     loadVrmaPose: (vrmaPath: string) => Promise<void>;
   loadAndPlayAnimation: (animationPath: string) => Promise<void>;
     logVrmBoneNames: () => void;
@@ -21,5 +21,4 @@ declare global {
       listDirectory: (dirPath: string) => Promise<{ files: string[]; directories: string[]; error?: string }>;
     };
   }
-}
 }

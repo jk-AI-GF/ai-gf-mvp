@@ -181,29 +181,14 @@ loader.load(
     if (animationButtonsContainer) {
       // 기존 애니메이션 파일 로딩 로직 제거
 
-      // 디버그용 카메라 정보 로그 버튼 추가
-      const debugButton = document.createElement('button');
-      debugButton.textContent = 'Log Camera Info';
-      debugButton.style.margin = '5px';
-      debugButton.style.padding = '10px';
-      debugButton.style.backgroundColor = '#28a745'; // Green color
-      debugButton.style.color = 'white';
-      debugButton.style.border = 'none';
-      debugButton.style.borderRadius = '5px';
-      debugButton.style.cursor = 'pointer';
-
-      debugButton.onclick = () => {
-        console.log('Camera Position:', camera.position);
-        console.log('Camera Rotation:', camera.rotation);
-      };
-      animationButtonsContainer.appendChild(debugButton);
+      
 
       // 포즈 파일 목록을 표시할 컨테이너
       const poseListContainer = document.createElement('div');
       poseListContainer.id = 'pose-list-container';
       poseListContainer.style.position = 'fixed';
       poseListContainer.style.top = '50%';
-      poseListContainer.style.marginLeft = '200px';
+      poseListContainer.style.left = '50%';
       poseListContainer.style.transform = 'translate(-50%, -50%)';
       poseListContainer.style.backgroundColor = 'rgba(0,0,0,0.8)';
       poseListContainer.style.padding = '20px';
@@ -338,9 +323,34 @@ function animate() {
     controls.update();
   }
 
+  updateJointSliders(); // Add this line to update sliders continuously
+
   renderer.render(scene, camera);
 }
 animate();
+
+function updateJointSliders() {
+  if (!currentVrm) return;
+
+  const slidersContainer = document.getElementById('joint-sliders');
+  if (!slidersContainer) return;
+
+  Object.values(VRMHumanBoneName).forEach(boneName => {
+    const bone = currentVrm.humanoid.getNormalizedBoneNode(boneName);
+    if (bone) {
+      const boneControl = slidersContainer.querySelector(`div[data-bone-name="${boneName}"]`);
+      if (boneControl) {
+        const currentEuler = new THREE.Euler().setFromQuaternion(bone.quaternion, 'XYZ');
+        ['x', 'y', 'z'].forEach(axis => {
+          const slider = boneControl.querySelector<HTMLInputElement>(`.slider-${axis}`);
+          if (slider) {
+            slider.value = THREE.MathUtils.radToDeg(currentEuler[axis as 'x' | 'y' | 'z']).toFixed(0);
+          }
+        });
+      }
+    }
+  });
+}
 
 console.log('👋 VRM 오버레이 로딩 완료');
 
@@ -566,6 +576,7 @@ function createJointSliders() {
     if (bone) {
       const boneControl = document.createElement('div');
       boneControl.style.marginBottom = '15px';
+      boneControl.setAttribute('data-bone-name', boneName); // Add this line
 
       const label = document.createElement('label');
       label.textContent = boneName;

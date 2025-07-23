@@ -37,7 +37,7 @@ const createOverlayWindow = (): void => {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       webSecurity: false, // 개발/디버깅용: 보안 검사 일시 비활성화
       nodeIntegration: true, // Node.js 통합 활성화
-      contextIsolation: true, // 컨텍스트 격리 활성화
+      contextIsolation: false, // 컨텍스트 격리 활성화
       webgl: true, // WebGL 활성화
       
     },
@@ -56,6 +56,10 @@ const toggleOverlayWindow = (): void => {
     createOverlayWindow();
   }
 };
+
+
+
+
 
 const createTray = (): void => {
   const assetsPath = app.isPackaged
