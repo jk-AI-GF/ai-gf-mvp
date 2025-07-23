@@ -134,9 +134,12 @@ function loadVRM(url: string) {
       window.loadAnimationFile(defaultPosePath);
       
       // Set default Expression
-      console.log(Object.keys(vrm.expressionManager.expressionMap));
-      console.log(vrm.expressionManager.expressionMap);
       window.expressionMap = vrm.expressionManager.expressionMap;
+
+      // VRM 모델의 표정 목록을 가져와 window.vrmExpressionList에 할당
+      if (vrm.expressionManager) {
+        window.vrmExpressionList = Object.keys(vrm.expressionManager.expressionMap);
+      }
     })
     .catch((error: unknown) => {
       console.error('VRM 로드 실패:', error);
@@ -420,13 +423,12 @@ function updateJointSliders() {
 console.log('👋 VRM 오버레이 로딩 완료');
 
 function animateExpression(expressionName: string, targetWeight: number, duration: number) {
-  if (!window.currentVrm || !window.currentVrm.expressionManager || !window.expressionMap) return;
-  
+  if (!window.currentVrm || !window.currentVrm.expressionManager) return;
+
   const expressionManager = window.currentVrm.expressionManager;
-  
-  // Ensure the target expression exists
-  const targetExpression = expressionManager.getExpression(expressionName);
-  if (!targetExpression) {
+
+  // Ensure the target expression exists in the map
+  if (!expressionManager.expressionMap[expressionName]) {
     console.error(`Expression "${expressionName}" not found in the VRM model.`);
     return;
   }
@@ -434,20 +436,31 @@ function animateExpression(expressionName: string, targetWeight: number, duratio
   const startWeight = expressionManager.getValue(expressionName) || 0.0;
   const startTime = performance.now();
 
-  // Reset other expressions to 0
-  expressionManager.expressions.forEach(exp => {
-    if (exp.name !== expressionName) {
-      expressionManager.setValue(exp.name, 0.0);
-    }
-  });
-
   function step(currentTime: number) {
     const elapsedTime = currentTime - startTime;
     const progress = Math.min(elapsedTime / (duration * 1000), 1);
     const currentWeight = startWeight + (targetWeight - startWeight) * progress;
-    
+
     expressionManager.setValue(expressionName, currentWeight);
     expressionManager.update();
+
+    // Update the slider for the current expression
+    const slider = document.querySelector<HTMLInputElement>(`#expression-sliders [data-expression-name="${expressionName}"] .expression-slider`);
+    if (slider) {
+      slider.value = (currentWeight * 100).toFixed(0);
+    }
+
+    // Reset other expressions to 0 and update their sliders
+    // Iterate over expressionMap keys to ensure consistency with slider data attributes
+    for (const name in expressionManager.expressionMap) {
+      if (name !== expressionName) {
+        expressionManager.setValue(name, 0.0);
+        const slider = document.querySelector<HTMLInputElement>(`#expression-sliders [data-expression-name="${name}"] .expression-slider`);
+        if (slider) {
+          slider.value = '0';
+        }
+      }
+    }
 
     if (progress < 1) {
       requestAnimationFrame(step);
@@ -703,15 +716,16 @@ function createExpressionSliders() {
   }
   slidersContainer.innerHTML = ''; // Clear previous sliders
 
-  const targetExpressions = window.currentVrm.expressionManager.expressions;
+  const expressionManager = window.currentVrm.expressionManager;
+  const expressionMap = expressionManager.expressionMap;
 
-  if (targetExpressions.length === 0) {
+  if (!expressionMap || Object.keys(expressionMap).length === 0) {
     console.warn('createExpressionSliders: No expressions found in VRM model. Returning.');
     return;
   }
 
-  targetExpressions.forEach(expression => {
-    const expressionName = expression.name;
+  // `expressionMap`'s keys are the correct names for `setValue`
+  for (const expressionName in expressionMap) {
     const expressionControl = document.createElement('div');
     expressionControl.style.marginBottom = '15px';
     expressionControl.setAttribute('data-expression-name', expressionName);
@@ -725,20 +739,19 @@ function createExpressionSliders() {
     slider.type = 'range';
     slider.min = '0';
     slider.max = '100'; // 0.0 to 1.0, so 0 to 100 for slider
-    const initialValue = window.currentVrm.expressionManager.getValue(expressionName) || 0;
+    const initialValue = expressionManager.getValue(expressionName) || 0;
     slider.value = (initialValue * 100).toFixed(0);
 
     slider.oninput = () => {
       const weight = parseFloat(slider.value) / 100;
-      const presetName = expressionName.replace(/^VRMExpression_/, '') as VRMExpressionPresetName;
-
-      window.currentVrm.expressionManager.setValue(presetName, weight);
-      window.currentVrm.expressionManager.update();
+      // The key from expressionMap is the correct one to use.
+      expressionManager.setValue(expressionName, weight);
+      expressionManager.update();
     };
     slider.className = 'expression-slider';
     expressionControl.appendChild(slider);
     slidersContainer.appendChild(expressionControl);
-  });
+  }
 }
 window.createExpressionSliders = createExpressionSliders;
     
