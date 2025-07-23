@@ -135,7 +135,7 @@ function loadVRM(url: string) {
         loader.parse(fileContent as ArrayBuffer, '', resolve, reject);
       });
       const vrm = gltf.userData.vrm as VRM;
-      vrm.scene.position.set(0, -0.6, 0);
+      vrm.scene.position.set(0, 3.0, 0); // 모델을 공중으로 이동
       vrm.scene.rotation.y = Math.PI;
       scene.add(vrm.scene);
       currentVrm = vrm;
@@ -147,12 +147,23 @@ function loadVRM(url: string) {
       vrm.scene.traverse((object) => {
         if ((object as THREE.Mesh).isMesh) {
           object.castShadow = true;
+          object.frustumCulled = false; // 프러스텀 컬링 비활성화
         }
       });
 
-      // Load default pose
-      const defaultPosePath = 'assets/Pose/pose_stand_001.vrma';
-      window.loadAnimationFile(defaultPosePath);
+      // 모델 로딩 후 잠깐의 텀을 줍니다.
+      await new Promise(resolve => setTimeout(resolve, 500)); // 0.5초 지연
+
+      // 초기 애니메이션 재생: VRMA_02.vrma
+      window.loadAnimationFile('assets/Animation/VRMA_02.vrma');
+
+      // 모델을 바닥으로 떨어뜨리는 애니메이션 시작
+      await animateVrmDrop(vrm, 0.5, 3.0, -0.6); // 0.5초 동안 3.0에서 -0.6으로 이동
+
+      // 3초 후 VRMA_03.vrma 재생
+      setTimeout(() => {
+        window.loadAnimationFile('assets/Animation/VRMA_03.vrma');
+      }, 3000);
       
       // Set default Expression
       window.expressionMap = vrm.expressionManager.expressionMap;
@@ -333,6 +344,34 @@ if (loadPoseFileButton) {
       };
 
 const clock = new THREE.Clock();
+
+/**
+ * VRM 모델을 지정된 시간 동안 시작 Y 위치에서 목표 Y 위치로 부드럽게 이동시킵니다.
+ * @param vrm VRM 모델 인스턴스
+ * @param duration 애니메이션 지속 시간 (초)
+ * @param startY 시작 Y 위치
+ * @param endY 목표 Y 위치
+ */
+function animateVrmDrop(vrm: VRM, duration: number, startY: number, endY: number): Promise<void> {
+  return new Promise((resolve) => {
+    const startTime = performance.now();
+    const startPosition = vrm.scene.position.y;
+
+    function step() {
+      const elapsedTime = (performance.now() - startTime) / 1000; // 초 단위
+      const progress = Math.min(elapsedTime / duration, 1);
+
+      vrm.scene.position.y = startY + (endY - startY) * progress;
+
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        resolve();
+      }
+    }
+    requestAnimationFrame(step);
+  });
+}
 
 function animate() {
   requestAnimationFrame(animate);
