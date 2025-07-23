@@ -19,6 +19,7 @@ declare global {
     logVrmBoneNames: () => void;
     electronAPI: {
       listDirectory: (dirPath: string) => Promise<{ files: string[]; directories: string[]; error?: string }>;
+      openVrmFile: () => Promise<string | null>;
     };
   }
 }

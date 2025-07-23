@@ -5,4 +5,5 @@ import { ipcRenderer } from 'electron';
 (window as any).electronAPI = {
   listDirectory: async (dirPath: string) => ipcRenderer.invoke('list-directory', dirPath),
   saveVrmaPose: async (poseData: string) => ipcRenderer.invoke('save-vrma-pose', poseData),
+  openVrmFile: () => ipcRenderer.invoke('open-vrm-file'),
 };

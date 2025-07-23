@@ -144,13 +144,31 @@ app.on('ready', () => {
     }
   });
 
+  ipcMain.handle('open-vrm-file', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: 'Open VRM Model',
+      defaultPath: path.join(app.getAppPath(), 'assets/VRM'),
+      filters: [
+        { name: 'VRM Models', extensions: ['vrm'] },
+        { name: 'All Files', extensions: ['*'] },
+      ],
+      properties: ['openFile'],
+    });
+
+    if (canceled || filePaths.length === 0) {
+      return null;
+    }
+
+    return filePaths[0];
+  });
+
   // CSP 설정
   session.defaultSession.webRequest.onHeadersReceived((details: Electron.OnHeadersReceivedListenerDetails, callback: (response: { cancel?: boolean; responseHeaders?: Record<string, string[]> }) => void) => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
         'Content-Security-Policy': [
-          "default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob: https://generativelanguage.googleapis.com http://localhost:8000;"
+          "default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data: file:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob: https://generativelanguage.googleapis.com http://localhost:8000 file:;"
         ]
       }
     });
