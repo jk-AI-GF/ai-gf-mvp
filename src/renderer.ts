@@ -319,6 +319,18 @@ function animate() {
 }
 animate();
 
+function onWindowResize() {
+  const newWidth = window.innerWidth;
+  const newHeight = window.innerHeight;
+
+  camera.aspect = newWidth / newHeight;
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(newWidth, newHeight);
+}
+
+window.addEventListener('resize', onWindowResize);
+
 function updateJointSliders() {
   if (!currentVrm) return;
   const slidersContainer = document.getElementById('joint-sliders');
