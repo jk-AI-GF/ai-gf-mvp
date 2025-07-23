@@ -34,6 +34,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { VRMLoaderPlugin, VRM, VRMHumanBoneName, VRMPose } from '@pixiv/three-vrm';
 import { VRMAnimationLoaderPlugin } from '@pixiv/three-vrm-animation';
 import { createVRMAnimationClip, VRMAnimation } from '@pixiv/three-vrm-animation';
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 
 let mixer: THREE.AnimationMixer;
 let currentVrm: VRM | null = null;
@@ -91,6 +92,8 @@ const loader = new GLTFLoader();
 loader.register((parser) => new VRMLoaderPlugin(parser));
 loader.register((parser) => new VRMAnimationLoaderPlugin(parser));
 
+const fbxLoader = new FBXLoader();
+
 function loadVRM(url: string) {
   // 이전에 로드된 모델이 있다면 씬에서 제거
   if (currentVrm) {
@@ -126,7 +129,7 @@ function loadVRM(url: string) {
 
       // Load default pose
       const defaultPosePath = 'assets/Pose/pose_stand_001.vrma';
-      window.loadVrmaFile(defaultPosePath);
+      window.loadAnimationFile(defaultPosePath);
     })
     .catch((error: unknown) => {
       console.error('VRM 로드 실패:', error);
@@ -194,7 +197,7 @@ if (loadPoseFileButton) {
     const filePath = await window.electronAPI.openVrmaFile();
     if (filePath) {
       const url = `file://${filePath.replace(/\\/g, '/')}`;
-      window.loadVrmaFile(url);
+      window.loadAnimationFile(url);
     }
   };
 }
@@ -212,7 +215,7 @@ if (loadPoseFileButton) {
             if (result.error) {
               throw new Error(result.error);
             }
-            const vrmaFiles = result.files.filter(file => file.endsWith('.vrma'));
+            const vrmaFiles = result.files.filter((file: string) => file.endsWith('.vrma'));
             console.log('Filtered VRMA files:', vrmaFiles);
             
             const poseListDisplay = document.getElementById('pose-list-display');
@@ -224,7 +227,7 @@ if (loadPoseFileButton) {
                 noFilesMessage.style.color = 'white';
                 poseListDisplay.appendChild(noFilesMessage);
               } else {
-                vrmaFiles.forEach(file => {
+                vrmaFiles.forEach((file: string) => {
                   const button = document.createElement('button');
                   button.textContent = file;
                   Object.assign(button.style, {
@@ -237,7 +240,7 @@ if (loadPoseFileButton) {
                   button.onmouseout = () => { button.style.backgroundColor = 'transparent'; };
                   button.onclick = () => {
                     const fullPath = `assets/Pose/${file}`;
-                    window.loadVrmaFile(fullPath);
+                    window.loadAnimationFile(fullPath);
                   };
                   poseListDisplay.appendChild(button);
                 });
@@ -261,7 +264,7 @@ if (loadPoseFileButton) {
             if (result.error) {
               throw new Error(result.error);
             }
-            const vrmaFiles = result.files.filter(file => file.endsWith('.vrma'));
+            const vrmaFiles = result.files.filter(file => file.endsWith('.vrma') || file.endsWith('.fbx'));
             
             const animationListDisplay = document.getElementById('animation-list-display');
             if (animationListDisplay) {
@@ -272,7 +275,7 @@ if (loadPoseFileButton) {
                 noFilesMessage.style.color = 'white';
                 animationListDisplay.appendChild(noFilesMessage);
               } else {
-                vrmaFiles.forEach(file => {
+                vrmaFiles.forEach((file: string) => {
                   const button = document.createElement('button');
                   button.textContent = file;
                   Object.assign(button.style, {
@@ -285,7 +288,7 @@ if (loadPoseFileButton) {
                   button.onmouseout = () => { button.style.backgroundColor = 'transparent'; };
                   button.onclick = () => {
                     const fullPath = `assets/Animation/${file}`;
-                    window.loadVrmaFile(fullPath);
+                    window.loadAnimationFile(fullPath);
                   };
                   animationListDisplay.appendChild(button);
                 });
@@ -535,61 +538,86 @@ function logVrmBoneNames() {
 }
 window.logVrmBoneNames = logVrmBoneNames;
 
-async function loadVrmaFile(vrmaPath: string) {
+async function loadAnimationFile(filePath: string) {
   if (!currentVrm || !mixer) return;
 
   // Remove 'file://' prefix if present and convert to relative path
-  const relativeVrmaPath = vrmaPath.startsWith('file://') ? vrmaPath.substring(7).replace(/\\/g, '/').replace(process.cwd().replace(/\\/g, '/'), '').replace(/^\//, '') : vrmaPath;
+  const relativePath = filePath.startsWith('file://') ? filePath.substring(7).replace(/\\/g, '/').replace(process.cwd().replace(/\\/g, '/'), '').replace(/^\//, '') : filePath;
 
-  try {
-    // Try loading as GLTF first
-    const gltf = await new Promise<any>((resolve, reject) => {
-      loader.load(
-        relativeVrmaPath,
-        resolve,
-        undefined,
-        reject
-      );
-    });
-
-    if (gltf.animations && gltf.animations.length > 0) {
-      const clip = createVRMAnimationClip(gltf.userData.vrmAnimations[0], currentVrm);
-      
-      mixer.stopAllAction();
-      const action = mixer.clipAction(clip);
-      action.setLoop(THREE.LoopOnce, 1); // Assuming animations are not looped by default
-      action.clampWhenFinished = true;
-      action.play();
-      console.log(`Loaded VRMA as animation from ${relativeVrmaPath}`);
-    } else {
-      // If GLTF loaded but no animations, it might be a JSON pose or an empty GLTF
-      throw new Error('No animation clips found in GLTF, trying as JSON pose.');
-    }
-  } catch (gltfError) {
-    console.warn(`Failed to load VRMA as GLTF: ${(gltfError as Error).message}. Trying as JSON pose.`);
+  if (relativePath.endsWith('.vrma')) {
     try {
-      // If GLTF loading fails, try loading as JSON VRMPose
-      const fileContent = await window.electronAPI.readFileContent(relativeVrmaPath);
+      // Try loading as GLTF first
+      const gltf = await new Promise<any>((resolve, reject) => {
+        loader.load(
+          relativePath,
+          resolve,
+          undefined,
+          reject
+        );
+      });
+
+      if (gltf.animations && gltf.animations.length > 0) {
+        const clip = createVRMAnimationClip(gltf.userData.vrmAnimations[0], currentVrm);
+        
+        mixer.stopAllAction();
+        const action = mixer.clipAction(clip);
+        action.setLoop(THREE.LoopOnce, 1); // Assuming animations are not looped by default
+        action.clampWhenFinished = true;
+        action.play();
+        console.log(`Loaded VRMA as animation from ${relativePath}`);
+      } else {
+        // If GLTF loaded but no animations, it might be a JSON pose or an empty GLTF
+        throw new Error('No animation clips found in GLTF, trying as JSON pose.');
+      }
+    } catch (gltfError) {
+      console.warn(`Failed to load VRMA as GLTF: ${(gltfError as Error).message}. Trying as JSON pose.`);
+      try {
+        // If GLTF loading fails, try loading as JSON VRMPose
+        const fileContent = await window.electronAPI.readFileContent(relativePath);
+        if (typeof fileContent === 'object' && 'error' in fileContent) {
+          throw new Error(fileContent.error);
+        }
+        const poseData = JSON.parse(new TextDecoder().decode(fileContent as ArrayBuffer)) as VRMPose;
+
+        if (!poseData) {
+          throw new Error('Invalid VRMPose data structure in the loaded file.');
+        }
+
+        currentVrm.humanoid.setNormalizedPose(poseData);
+        currentVrm.scene.updateMatrixWorld(true);
+        createJointSliders();
+        console.log(`Loaded VRMA as JSON pose from ${relativePath}`);
+      } catch (jsonError) {
+        console.error(`Error loading VRMA file from ${relativePath}:`, jsonError);
+        alert(`VRMA 파일 로딩에 실패했습니다: ${(jsonError as Error).message}`);
+      }
+    }
+  } else if (relativePath.endsWith('.fbx')) {
+    try {
+      const fileContent = await window.electronAPI.readFileContent(relativePath);
       if (typeof fileContent === 'object' && 'error' in fileContent) {
         throw new Error(fileContent.error);
       }
-      const poseData = JSON.parse(new TextDecoder().decode(fileContent as ArrayBuffer)) as VRMPose;
-
-      if (!poseData) {
-        throw new Error('Invalid VRMPose data structure in the loaded file.');
+      const fbx = fbxLoader.parse(fileContent as ArrayBuffer, ''); // Pass empty path for parse
+      
+      if (fbx.animations && fbx.animations.length > 0) {
+        mixer.stopAllAction();
+        const action = mixer.clipAction(fbx.animations[0]);
+        action.setLoop(THREE.LoopOnce, 1);
+        action.clampWhenFinished = true;
+        action.play();
+        console.log(`Loaded FBX as animation from ${relativePath}`);
+      } else {
+        console.warn(`No animation clips found in FBX file: ${relativePath}`);
+        alert(`FBX 파일에 애니메이션 클립이 없습니다: ${relativePath}`);
       }
-
-      currentVrm.humanoid.setNormalizedPose(poseData);
-      currentVrm.scene.updateMatrixWorld(true);
-      createJointSliders();
-      console.log(`Loaded VRMA as JSON pose from ${relativeVrmaPath}`);
-    } catch (jsonError) {
-      console.error(`Error loading VRMA file from ${relativeVrmaPath}:`, jsonError);
-      alert(`VRMA 파일 로딩에 실패했습니다: ${(jsonError as Error).message}`);
+    } catch (error) {
+      console.error(`Error loading FBX file from ${relativePath}:`, error);
+      alert(`FBX 파일 로딩에 실패했습니다: ${(error as Error).message}`);
     }
   }
 }
-window.loadVrmaFile = loadVrmaFile;
+window.loadAnimationFile = loadAnimationFile;
 
 function createExpressionSliders() {
   if (!window.currentVrm || !window.currentVrm.expressionManager) {

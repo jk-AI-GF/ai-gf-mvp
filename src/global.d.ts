@@ -15,9 +15,8 @@ declare global {
     createJointSliders: () => void;
     loadJsonPose: (jsonPath: string) => Promise<void>;
     loadVrmaPose: (vrmaPath: string) => Promise<void>;
-  loadAndPlayAnimation: (animationPath: string) => Promise<void>;
-    logVrmBoneNames: () => void;
-    createExpressionSliders: () => void;
+    loadAnimationFile: (url: string) => Promise<void>;
+    setClearColor: (color: number) => void;
     electronAPI: {
       listDirectory: (dirPath: string) => Promise<{ files: string[]; directories: string[]; error?: string }>;
       openVrmFile: () => Promise<string | null>;
@@ -27,9 +26,7 @@ declare global {
       openPersonaFile: () => Promise<string | null>;
       readFileContent: (filePath: string) => Promise<ArrayBuffer | { error: string }>;
     };
-    loadVrmaAnimation: (url: string, isAnimation: boolean) => Promise<void>;
-    loadVrmPoseFromFile: (url: string) => Promise<void>;
-    loadVrmaFile: (url: string) => Promise<void>;
-    setClearColor: (color: number) => void;
+    logVrmBoneNames: () => void;
+    createExpressionSliders: () => void;
   }
 }
