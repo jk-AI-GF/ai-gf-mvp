@@ -31,8 +31,10 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { VRMLoaderPlugin, VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
-import { VRMAnimationLoaderPlugin } from '@pixiv/three-vrm-animation';
+import { VRMAnimationLoaderPlugin, createVRMAnimationHumanoidTracks } from '@pixiv/three-vrm-animation';
 import { createVRMAnimationClip, VRMAnimation } from '@pixiv/three-vrm-animation';
+import { QuaternionKeyframeTrack, VectorKeyframeTrack } from 'three';
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter';
 
 
 let mixer: THREE.AnimationMixer; // mixer 변수 선언

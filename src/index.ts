@@ -121,6 +121,29 @@ app.on('ready', () => {
     }
   });
 
+  ipcMain.handle('save-vrma-pose', async (event, vrmaData: string) => {
+    const { canceled, filePath } = await dialog.showSaveDialog({
+      title: 'Save VRMA Pose',
+      defaultPath: `pose_${Date.now()}.vrma`,
+      filters: [
+        { name: 'VRM Animation', extensions: ['vrma'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    });
+
+    if (canceled || !filePath) {
+      return { success: false, message: 'Save operation canceled.' };
+    }
+
+    try {
+      await fs.promises.writeFile(filePath, vrmaData);
+      return { success: true, message: `VRMA pose saved to ${filePath}` };
+    } catch (error) {
+      console.error('Failed to save VRMA pose:', error);
+      return { success: false, message: `Failed to save VRMA pose: ${error.message}` };
+    }
+  });
+
   // CSP 설정
   session.defaultSession.webRequest.onHeadersReceived((details: Electron.OnHeadersReceivedListenerDetails, callback: (response: { cancel?: boolean; responseHeaders?: Record<string, string[]> }) => void) => {
     callback({
