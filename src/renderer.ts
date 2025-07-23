@@ -31,7 +31,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { VRMLoaderPlugin, VRM, VRMHumanBoneName, VRMPose, VRMLookAtQuaternionProxy } from '@pixiv/three-vrm';
+import { VRMLoaderPlugin, VRM, VRMHumanBoneName, VRMPose } from '@pixiv/three-vrm';
 import { VRMAnimationLoaderPlugin } from '@pixiv/three-vrm-animation';
 import { createVRMAnimationClip, VRMAnimation } from '@pixiv/three-vrm-animation';
 
@@ -83,12 +83,6 @@ function loadVRM(url: string) {
       currentVrm = vrm;
       window.currentVrm = vrm;      
 
-      mixer = new THREE.AnimationMixer(vrm.scene); // Moved this line up
-
-      // 기본 포즈 로드
-      const defaultPosePath = 'assets/Pose/pose_stand_001.vrma';
-      window.loadVrmaFile(defaultPosePath);
-
       // window.logVrmBoneNames();
 
       window.loadVrmPose = (pose: any) => {
@@ -100,13 +94,28 @@ function loadVRM(url: string) {
 
       if (vrm.expressionManager) {
         console.log('VRM ExpressionManager initialized.', vrm.expressionManager);
+        const expressionMap: { [key: string]: string } = {};
+        const llmExpressionList: string[] = [];
+
+        vrm.expressionManager.expressions.forEach(exp => {
+            expressionMap[exp.name] = exp.name;
+            llmExpressionList.push(exp.name);
+        });
+
+        window.vrmExpressionList = llmExpressionList;
+        window.expressionMap = expressionMap;
+        console.log('VRM Expression List (Mapped for LLM):', window.vrmExpressionList);
+        console.log('Actual VRM Expressions:', vrm.expressionManager.expressions.map(exp => exp.name));
+        console.log('DEBUG: vrmExpressionList contents:', JSON.stringify(llmExpressionList));
+        console.log('DEBUG: expressionMap contents:', JSON.stringify(expressionMap));
       } else {
         console.warn('VRM ExpressionManager is not available on this VRM model.');
       }
 
+      mixer = new THREE.AnimationMixer(vrm.scene);
+
       // 애니메이션 버튼 생성 로직
       const animationButtonsContainer = document.getElementById('animation-buttons');
-      console.log('animationButtonsContainer:', animationButtonsContainer);
     },
     undefined,
     (error: unknown) => {
@@ -319,17 +328,9 @@ function animate() {
 }
 animate();
 
-function onWindowResize() {
-  const newWidth = window.innerWidth;
-  const newHeight = window.innerHeight;
-
-  camera.aspect = newWidth / newHeight;
-  camera.updateProjectionMatrix();
-
-  renderer.setSize(newWidth, newHeight);
-}
-
-window.addEventListener('resize', onWindowResize);
+window.setClearColor = (color: number) => {
+  renderer.setClearColor(color, 1);
+};
 
 function updateJointSliders() {
   if (!currentVrm) return;

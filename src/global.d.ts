@@ -27,5 +27,6 @@ declare global {
     loadVrmaAnimation: (url: string, isAnimation: boolean) => Promise<void>;
     loadVrmPoseFromFile: (url: string) => Promise<void>;
     loadVrmaFile: (url: string) => Promise<void>;
+    setClearColor: (color: number) => void;
   }
 }
