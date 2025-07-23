@@ -74,8 +74,14 @@ scene.add(ambientLight);
 
 // Add a ground plane for shadows
 const planeGeometry = new THREE.PlaneGeometry(10, 10);
-const planeMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc });
+const planeMaterial = new THREE.ShadowMaterial();
+planeMaterial.opacity = 0.7; // Increased opacity for better visibility
 const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+plane.rotation.x = -Math.PI / 2; // Rotate to be flat on XZ plane
+plane.position.y = -0.601; // Place it slightly below the VRM model's base
+plane.receiveShadow = true; // This plane will receive shadows
+plane.material.depthWrite = false; // Important for transparent planes to receive shadows correctly
+scene.add(plane);
 plane.rotation.x = -Math.PI / 2; // Rotate to be flat on XZ plane
 plane.position.y = -0.601; // Place it slightly below the VRM model's base
 plane.receiveShadow = true; // This plane will receive shadows
