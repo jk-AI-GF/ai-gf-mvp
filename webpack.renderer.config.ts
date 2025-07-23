@@ -18,7 +18,8 @@ export const rendererConfig: Configuration = {
     new CopyWebpackPlugin({
       patterns: [
         { from: 'public', to: 'main_window' },
-        { from: 'assets', to: 'main_window/assets' }
+        { from: 'assets', to: 'main_window/assets' },
+        { from: 'src/persona.txt', to: 'main_window/persona.txt' }
       ]
     })
   ],

@@ -27,6 +27,12 @@
         <input type="text" id="llm-api-key" name="llm-api-key" placeholder="API 키를 입력하세요" required style="padding: 10px; border: 1px solid #444; border-radius: 5px; background-color: #333; color: #eee; font-size: 1rem;" />
         <button type="submit" style="padding: 12px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1rem; transition: background-color 0.2s ease;">저장</button>
       </form>
+      <h2 style="margin-top: 20px; margin-bottom: 20px; font-size: 1.8rem; text-align: center;">페르소나 설정</h2>
+      <form id="persona-form" style="display: flex; flex-direction: column; gap: 15px;">
+        <label for="persona-text" style="font-size: 1.1rem; color: #ccc;">페르소나 텍스트</label>
+        <textarea id="persona-text" name="persona-text" rows="5" placeholder="페르소나를 입력하세요" style="padding: 10px; border: 1px solid #444; border-radius: 5px; background-color: #333; color: #eee; font-size: 1rem; resize: vertical;"></textarea>
+        <button type="submit" style="padding: 12px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1rem; transition: background-color 0.2s ease;">저장</button>
+      </form>
       <h2 style="margin-top: 20px; margin-bottom: 20px; font-size: 1.8rem; text-align: center;">배경 설정</h2>
       <form id="background-form" style="display: flex; flex-direction: column; gap: 15px;">
         <label for="background-color-picker" style="font-size: 1.1rem; color: #ccc;">배경 색상</label>
@@ -77,181 +83,215 @@
       </form>
     </div>
     <script>
-      document.getElementById('close-overlay').onclick = () => window.close();
-      document.getElementById('open-settings').onclick = () => {
-        const settingsModal = document.getElementById('settings-modal');
-        const settingsOverlay = document.getElementById('settings-modal-overlay');
-        settingsModal.style.display = 'block';
-        settingsModal.style.visibility = 'visible';
-        settingsModal.style.opacity = '1';
-        settingsOverlay.style.display = 'block';
-        settingsOverlay.style.pointerEvents = 'auto';
-      };
-      document.getElementById('close-settings').onclick = () => {
-        const settingsModal = document.getElementById('settings-modal');
-        const settingsOverlay = document.getElementById('settings-modal-overlay');
-        settingsModal.style.opacity = '0';
-        settingsModal.style.visibility = 'hidden';
-        settingsOverlay.style.display = 'none';
-        settingsOverlay.style.pointerEvents = 'none';
-        // Give time for the transition to complete before setting display to 'none'
-        setTimeout(() => {
-          settingsModal.style.display = 'none';
-        }, 300); // Matches the transition duration
-      };
-      document.getElementById('open-joint-control').onclick = () => {
-        document.getElementById('joint-control-panel').style.display = 'block';
-        if (window.createJointSliders) {
-          window.createJointSliders();
-        }
-      };
-      document.getElementById('close-joint-control').onclick = () => {
-        document.getElementById('joint-control-panel').style.display = 'none';
-      };
-      document.getElementById('open-pose-panel-button').onclick = () => {
-        document.getElementById('pose-side-panel').style.display = 'flex';
-        // The list will be populated by renderer.ts
-      };
-      document.getElementById('close-pose-panel').onclick = () => {
-        document.getElementById('pose-side-panel').style.display = 'none';
-      };
-      document.getElementById('close-animation-panel').onclick = () => {
-        document.getElementById('animation-side-panel').style.display = 'none';
-      };
-      document.getElementById('open-expression-panel-button').onclick = () => {
-        const expressionControlPanel = document.getElementById('expression-control-panel');
-        if (expressionControlPanel.style.display === 'block') {
-          expressionControlPanel.style.display = 'none';
+      document.addEventListener('DOMContentLoaded', async () => {
+        // Initial persona loading
+        const personaTextarea = document.getElementById('persona-text');
+        const saveMessage = document.getElementById('save-message'); // Get saveMessage here
+
+        const savedPersona = localStorage.getItem('userPersona');
+        if (savedPersona) {
+          personaTextarea.value = savedPersona;
+          window.personaText = savedPersona;
+          console.log('Persona loaded from localStorage:', window.personaText);
         } else {
-          expressionControlPanel.style.display = 'block';
-          if (window.createExpressionSliders) {
-            window.createExpressionSliders();
+          try {
+            const response = await fetch('/main_window/persona.txt');
+            const text = await response.text();
+            window.personaText = text.trim();
+            personaTextarea.value = window.personaText;
+            console.log('Persona loaded from file:', window.personaText);
+          } catch (error) {
+            console.error('Failed to load persona.txt:', error);
+            window.personaText = ''; // Fallback to empty string if loading fails
           }
         }
-      };
-      document.getElementById('close-expression-panel').onclick = () => {
-        document.getElementById('expression-control-panel').style.display = 'none';
-      };
-      // LLM API 저장 로직
-      const form = document.getElementById('llm-form');
-      const saveMessage = document.getElementById('save-message');
-      form.onsubmit = (e) => {
-        e.preventDefault();
-        const apiKey = document.getElementById('llm-api-key').value;
-        localStorage.setItem('llmApiKey', apiKey);
-        saveMessage.style.display = 'block';
-        setTimeout(() => { saveMessage.style.display = 'none'; }, 2000);
-      };
-      document.getElementById('llm-api-key').value = localStorage.getItem('llmApiKey') || '';
 
-      // Background color setting
-      const backgroundColorPicker = document.getElementById('background-color-picker');
-      const savedBackgroundColor = localStorage.getItem('backgroundColor');
-      if (savedBackgroundColor) {
-        backgroundColorPicker.value = savedBackgroundColor;
-        if (window.setClearColor) {
-          window.setClearColor(parseInt(savedBackgroundColor.replace('#', '0x')));
-        }
-      }
-
-      backgroundColorPicker.onchange = (e) => {
-        const color = e.target.value;
-        localStorage.setItem('backgroundColor', color);
-        if (window.setClearColor) {
-          window.setClearColor(parseInt(color.replace('#', '0x')));
-        }
-      };
-      
-      const chatForm = document.getElementById('chat-form');
-      const chatInput = document.getElementById('chat-input');
-      const chatMessages = document.getElementById('chat-messages');
-      let chatHistory = [];
-      function appendMessage(role, text) {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = 'chat-message ' + role;
-        msgDiv.textContent = (role === 'user' ? '🙋‍♂️ ' : '🤖 ') + text;
-        chatMessages.appendChild(msgDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      }
-      chatForm.onsubmit = async (e) => {
-        e.preventDefault();
-        const userMsg = chatInput.value.trim();
-        if (!userMsg) return;
-        appendMessage('user', userMsg);
-        chatHistory.push({ role: 'user', parts: [{ text: userMsg }] });
-        chatInput.value = '';
-        // Gemini API 호출
-        const apiKey = localStorage.getItem('llmApiKey');
-        if (!apiKey) {
-          appendMessage('assistant', 'API 키가 설정되어 있지 않습니다. 설정에서 입력해 주세요.');
-          return;
-        }
-        try {
-          const contentsToSend = [
-            { role: 'system', parts: [{ text: `모든 응답에 <표정: [표정_이름]> 형식의 표정 태그를 포함해 주세요. 표정_이름은 다음 목록 중 하나여야 합니다: ${window.vrmExpressionList ? window.vrmExpressionList.join(', ') : '기본, 행복, 슬픔'}. 예시: <표정: 행복> 안녕하세요!` }] },
-            ...chatHistory.slice(-10) // 최근 10개만 보냄
-          ];
-          console.log('Contents sent to Gemini API:', contentsToSend);
-          const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + apiKey, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              systemInstruction: { parts: [{ text: `모든 응답에 <표정: [표정_이름]> 형식의 표정 태그를 포함해 주세요. 표정_이름은 다음 목록 중 하나여야 합니다: ${window.vrmExpressionList ? window.vrmExpressionList.join(', ') : '기본, 행복, 슬픔'}. 예시: <표정: 행복> 안녕하세요!` }] },
-              contents: chatHistory.slice(-10), // 최근 10개만 보냄
-            })
-          });
-          const data = await res.json();
-          let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '응답이 없습니다.';
-          let expression = '기본'; // Default expression
-          const expressionMatch = text.match(/<표정:\s*(.*?)\s*>/);
-          if (expressionMatch && expressionMatch[1]) {
-            const proposedExpression = expressionMatch[1];
-            if (window.vrmExpressionList && window.vrmExpressionList.includes(proposedExpression)) {
-              expression = proposedExpression;
-            } else {
-              console.warn(`LLM proposed expression "${proposedExpression}" not found in VRM expression list. Using default "기본".`);
-            }
-            text = text.replace(/<표정:\s*(.*?)\s*>/, '').trim(); // Remove the expression tag from the text
+        document.getElementById('close-overlay').onclick = () => window.close();
+        document.getElementById('open-settings').onclick = () => {
+          const settingsModal = document.getElementById('settings-modal');
+          const settingsOverlay = document.getElementById('settings-modal-overlay');
+          settingsModal.style.display = 'block';
+          settingsModal.style.visibility = 'visible';
+          settingsModal.style.opacity = '1';
+          settingsOverlay.style.display = 'block';
+          settingsOverlay.style.pointerEvents = 'auto';
+        };
+        document.getElementById('close-settings').onclick = () => {
+          const settingsModal = document.getElementById('settings-modal');
+          const settingsOverlay = document.getElementById('settings-modal-overlay');
+          settingsModal.style.opacity = '0';
+          settingsModal.style.visibility = 'hidden';
+          settingsOverlay.style.display = 'none';
+          settingsOverlay.style.pointerEvents = 'none';
+          // Give time for the transition to complete before setting display to 'none'
+          setTimeout(() => {
+            settingsModal.style.display = 'none';
+          }, 300); // Matches the transition duration
+        };
+        document.getElementById('open-joint-control').onclick = () => {
+          document.getElementById('joint-control-panel').style.display = 'block';
+          if (window.createJointSliders) {
+            window.createJointSliders();
           }
-          console.log('LLM Response Text:', text);
-          console.log('LLM Expression:', expression);
-
-          // VRM 모델에 표정 적용
-          if (window.currentVrm && window.currentVrm.expressionManager && window.expressionMap) {
-            console.log('Attempting to apply VRM expression.');
-            console.log('window.currentVrm:', window.currentVrm);
-            console.log('window.currentVrm.expressionManager:', window.currentVrm.expressionManager);
-
-            // LLM이 제안한 표정을 VRM 모델에 점진적으로 적용
-            if (window.vrmExpressionList.includes(expression)) { // LLM이 제안한 표정이 유효한지 다시 확인
-              const vrmInternalName = window.expressionMap[expression];
-              if (vrmInternalName) {
-                window.animateExpression(vrmInternalName, 1.0, 0.5); // 0.5초 동안 점진적으로 변경
-                console.log(`Applying VRM expression: ${expression} (Internal: ${vrmInternalName}) with animation`);
-              } else {
-                console.warn(`VRM internal name not found for mapped expression: ${expression}`);
-              }
-            } else {
-              console.warn(`LLM proposed expression "${expression}" not found in VRM expression list. Not applying.`);
-            }
-            console.log('VRM expressionManager methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(window.currentVrm.expressionManager)));
+        };
+        document.getElementById('close-joint-control').onclick = () => {
+          document.getElementById('joint-control-panel').style.display = 'none';
+        };
+        document.getElementById('open-pose-panel-button').onclick = () => {
+          document.getElementById('pose-side-panel').style.display = 'flex';
+          // The list will be populated by renderer.ts
+        };
+        document.getElementById('close-pose-panel').onclick = () => {
+          document.getElementById('pose-side-panel').style.display = 'none';
+        };
+        document.getElementById('close-animation-panel').onclick = () => {
+          document.getElementById('animation-side-panel').style.display = 'none';
+        };
+        document.getElementById('open-expression-panel-button').onclick = () => {
+          const expressionControlPanel = document.getElementById('expression-control-panel');
+          if (expressionControlPanel.style.display === 'block') {
+            expressionControlPanel.style.display = 'none';
           } else {
-            console.warn('VRM model or expressionManager not ready for expression application.', { currentVrm: window.currentVrm, expressionManager: window.currentVrm?.expressionManager, expressionMap: window.expressionMap });
+            expressionControlPanel.style.display = 'block';
+            if (window.createExpressionSliders) {
+              window.createExpressionSliders();
+            }
           }
+        };
+        document.getElementById('close-expression-panel').onclick = () => {
+          document.getElementById('expression-control-panel').style.display = 'none';
+        };
+        // LLM API 저장 로직
+        const form = document.getElementById('llm-form');
+        form.onsubmit = (e) => {
+          e.preventDefault();
+          const apiKey = document.getElementById('llm-api-key').value;
+          localStorage.setItem('llmApiKey', apiKey);
+          saveMessage.style.display = 'block';
+          setTimeout(() => { saveMessage.style.display = 'none'; }, 2000);
+        };
+        document.getElementById('llm-api-key').value = localStorage.getItem('llmApiKey') || '';
 
-          appendMessage('assistant', text);
-          
-          // --- TTS 재생 호출 추가 ---
-          if (window.playTTS) {
-            window.playTTS(text);
+        // Persona setting
+        const personaForm = document.getElementById('persona-form');
+        personaForm.onsubmit = (e) => {
+          e.preventDefault();
+          const persona = personaTextarea.value.trim();
+          localStorage.setItem('userPersona', persona);
+          window.personaText = persona; // Update window.personaText on save
+          saveMessage.style.display = 'block';
+          setTimeout(() => { saveMessage.style.display = 'none'; }, 2000);
+        };
+
+        // Background color setting
+        const backgroundColorPicker = document.getElementById('background-color-picker');
+        const savedBackgroundColor = localStorage.getItem('backgroundColor');
+        if (savedBackgroundColor) {
+          backgroundColorPicker.value = savedBackgroundColor;
+          if (window.setClearColor) {
+            window.setClearColor(parseInt(savedBackgroundColor.replace('#', '0x')));
           }
-          // --- TTS 재생 호출 추가 끝 ---
-
-          chatHistory.push({ role: 'model', parts: [{ text }] });
-        } catch (err) {
-          appendMessage('assistant', 'Gemini API 호출 실패: ' + err);
         }
-      };
+
+        backgroundColorPicker.onchange = (e) => {
+          const color = e.target.value;
+          localStorage.setItem('backgroundColor', color);
+          if (window.setClearColor) {
+            window.setClearColor(parseInt(color.replace('#', '0x')));
+          }
+        };
+        
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatMessages = document.getElementById('chat-messages');
+        let chatHistory = [];
+        function appendMessage(role, text) {
+          const msgDiv = document.createElement('div');
+          msgDiv.className = 'chat-message ' + role;
+          msgDiv.textContent = (role === 'user' ? '🙋‍♂️ ' : '🤖 ') + text;
+          chatMessages.appendChild(msgDiv);
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        chatForm.onsubmit = async (e) => {
+          e.preventDefault();
+          const userMsg = chatInput.value.trim();
+          if (!userMsg) return;
+          appendMessage('user', userMsg);
+          chatHistory.push({ role: 'user', parts: [{ text: userMsg }] });
+          chatInput.value = '';
+          // Gemini API 호출
+          const apiKey = localStorage.getItem('llmApiKey');
+          if (!apiKey) {
+            appendMessage('assistant', 'API 키가 설정되어 있지 않습니다. 설정에서 입력해 주세요.');
+            return;
+          }
+          try {
+            const contentsToSend = [
+              { role: 'system', parts: [{ text: `${window.personaText}\n모든 응답에 <표정: [표정_이름]> 형식의 표정 태그를 포함해 주세요. 표정_이름은 다음 목록 중 하나여야 합니다: ${window.vrmExpressionList ? window.vrmExpressionList.join(', ') : '기본, 행복, 슬픔'}. 예시: <표정: 행복> 안녕하세요!` }] },
+              ...chatHistory.slice(-10) // 최근 10개만 보냄
+            ];
+            console.log('Contents sent to Gemini API:', contentsToSend);
+            const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + apiKey, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                systemInstruction: { parts: [{ text: `${window.personaText}\n모든 응답에 <표정: [표정_이름]> 형식의 표정 태그를 포함해 주세요. 표정_이름은 다음 목록 중 하나여야 합니다: ${window.vrmExpressionList ? window.vrmExpressionList.join(', ') : '기본, 행복, 슬픔'}. 예시: <표정: 행복> 안녕하세요!` }] },
+                contents: chatHistory.slice(-10), // 최근 10개만 보냄
+              })
+            });
+            const data = await res.json();
+            let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '응답이 없습니다.';
+            let expression = '기본'; // Default expression
+            const expressionMatch = text.match(/<표정:\s*(.*?)\s*>/);
+            if (expressionMatch && expressionMatch[1]) {
+              const proposedExpression = expressionMatch[1];
+              if (window.vrmExpressionList && window.vrmExpressionList.includes(proposedExpression)) {
+                expression = proposedExpression;
+              } else {
+                console.warn(`LLM proposed expression "${proposedExpression}" not found in VRM expression list. Using default "기본".`);
+              }
+              text = text.replace(/<표정:\s*(.*?)\s*>/, '').trim(); // Remove the expression tag from the text
+            }
+            console.log('LLM Response Text:', text);
+            console.log('LLM Expression:', expression);
+
+            // VRM 모델에 표정 적용
+            if (window.currentVrm && window.currentVrm.expressionManager && window.expressionMap) {
+              console.log('Attempting to apply VRM expression.');
+              console.log('window.currentVrm:', window.currentVrm);
+              console.log('window.currentVrm.expressionManager:', window.currentVrm.expressionManager);
+
+              // LLM이 제안한 표정을 VRM 모델에 점진적으로 적용
+              if (window.vrmExpressionList.includes(expression)) { // LLM이 제안한 표정이 유효한지 다시 확인
+                const vrmInternalName = window.expressionMap[expression];
+                if (vrmInternalName) {
+                  window.animateExpression(vrmInternalName, 1.0, 0.5); // 0.5초 동안 점진적으로 변경
+                  console.log(`Applying VRM expression: ${expression} (Internal: ${vrmInternalName}) with animation`);
+                } else {
+                  console.warn(`VRM internal name not found for mapped expression: ${expression}`);
+                }
+              } else {
+                console.warn(`LLM proposed expression "${expression}" not found in VRM expression list. Not applying.`);
+              }
+              console.log('VRM expressionManager methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(window.currentVrm.expressionManager)));
+            } else {
+              console.warn('VRM model or expressionManager not ready for expression application.', { currentVrm: window.currentVrm, expressionManager: window.currentVrm?.expressionManager, expressionMap: window.expressionMap });
+            }
+
+            appendMessage('assistant', text);
+            
+            // --- TTS 재생 호출 추가 ---
+            if (window.playTTS) {
+              window.playTTS(text);
+            }
+            // --- TTS 재생 호출 추가 끝 ---
+
+            chatHistory.push({ role: 'model', parts: [{ text }] });
+          } catch (err) {
+            appendMessage('assistant', 'Gemini API 호출 실패: ' + err);
+          }
+        };
+      });
     </script>
   </body>
 </html>
