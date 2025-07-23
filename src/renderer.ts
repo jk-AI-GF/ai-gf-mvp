@@ -351,8 +351,8 @@ function animate() {
       // Project 3D world position to 2D screen position
       headPosition.project(camera);
 
-      const x = (headPosition.x * 0.5 + 0.5) * renderer.domElement.clientWidth;
-      const y = (-headPosition.y * 0.5 + 0.5) * renderer.domElement.clientHeight;
+      const x = (headPosition.x * 0.5 + 0.64) * renderer.domElement.clientWidth;
+      const y = (-headPosition.y * 0.5 + 0.62) * renderer.domElement.clientHeight;
 
       const currentTime = performance.now();
       for (let i = window.floatingMessages.length - 1; i >= 0; i--) {

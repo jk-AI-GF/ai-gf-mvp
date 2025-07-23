@@ -10,6 +10,14 @@
       .settings-modal-visible {
         display: block;
       }
+      .floating-chat-message.assistant {
+        transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+        transform: translate(-50%, -100%); /* 최종 위치 */
+      }
+      .floating-chat-message.assistant.entering {
+        opacity: 0;
+        transform: translate(-60%, -100%); /* 왼쪽에서 시작 */
+      }
     </style>
   </head>
   <body>
@@ -251,7 +259,7 @@
             const floatingContainer = document.getElementById('floating-chat-messages-container');
             if (floatingContainer) {
               const msgDiv = document.createElement('div');
-              msgDiv.className = 'floating-chat-message assistant';
+              msgDiv.className = 'floating-chat-message assistant entering'; // entering 클래스 추가
               msgDiv.textContent = text;
               Object.assign(msgDiv.style, {
                 position: 'absolute',
@@ -262,14 +270,17 @@
                 maxWidth: '250px',
                 textAlign: 'center',
                 pointerEvents: 'none',
-                opacity: '1',
-                transition: 'opacity 0.5s ease-out',
-                transform: 'translate(-50%, -100%)', // Center above the head
                 whiteSpace: 'pre-wrap', // Preserve whitespace and allow wrapping
                 wordBreak: 'break-word', // Break long words
               });
               floatingContainer.appendChild(msgDiv);
-              window.floatingMessages.push({ element: msgDiv, timestamp: performance.now() }); // window.floatingMessages 사용
+              window.floatingMessages.push({ element: msgDiv, timestamp: performance.now() });
+
+              // 애니메이션 트리거
+              setTimeout(() => {
+                msgDiv.classList.remove('entering');
+                msgDiv.style.opacity = '1'; // opacity만 설정하여 CSS transition이 transform을 처리하도록 합니다.
+              }, 10); // 짧은 지연 후 클래스 제거
             }
           } else {
             const msgDiv = document.createElement('div');
