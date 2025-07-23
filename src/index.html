@@ -96,7 +96,7 @@
           console.log('Persona loaded from localStorage:', window.personaText);
         } else {
           try {
-            const response = await fetch('/main_window/persona.txt');
+            const response = await fetch('/main_window/assets/Persona/persona.txt');
             const text = await response.text();
             window.personaText = text.trim();
             personaTextarea.value = window.personaText;

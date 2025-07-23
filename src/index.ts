@@ -185,6 +185,7 @@ app.on('ready', () => {
   ipcMain.handle('open-persona-file', async () => {
     const { canceled, filePaths } = await dialog.showOpenDialog({
       title: 'Open Persona File',
+      defaultPath: path.join(app.getAppPath(), 'assets/Persona'),
       properties: ['openFile'],
       filters: [
         { name: 'Text Files', extensions: ['txt'] },
@@ -208,7 +209,7 @@ app.on('ready', () => {
   ipcMain.handle('save-persona-to-file', async (event, persona: string) => {
     const { canceled, filePath } = await dialog.showSaveDialog({
       title: 'Save Persona',
-      defaultPath: path.join(app.getAppPath(), 'src', 'persona.txt'),
+      defaultPath: path.join(app.getAppPath(), 'assets/Persona', 'persona.txt'),
       filters: [
         { name: 'Text Files', extensions: ['txt'] },
         { name: 'All Files', extensions: ['*'] }
