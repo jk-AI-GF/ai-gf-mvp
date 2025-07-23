@@ -98,9 +98,16 @@ function loadVRM(url: string) {
     currentVrm = null;
   }
 
-  loader.load(
-    url,
-    (gltf) => {
+  const relativeVrmPath = url.startsWith('file://') ? url.substring(7).replace(/\\/g, '/').replace(process.cwd().replace(/\\/g, '/'), '').replace(/^\//, '') : url;
+
+  window.electronAPI.readFileContent(relativeVrmPath)
+    .then(async (fileContent) => {
+      if (typeof fileContent === 'object' && 'error' in fileContent) {
+        throw new Error(fileContent.error);
+      }
+      const gltf = await new Promise<any>((resolve, reject) => {
+        loader.parse(fileContent as ArrayBuffer, '', resolve, reject);
+      });
       const vrm = gltf.userData.vrm as VRM;
       vrm.scene.position.set(0, -0.6, 0);
       vrm.scene.rotation.y = Math.PI;
@@ -120,14 +127,12 @@ function loadVRM(url: string) {
       // Load default pose
       const defaultPosePath = 'assets/Pose/pose_stand_001.vrma';
       window.loadVrmaFile(defaultPosePath);
-    },
-    undefined,
-    (error: unknown) => {
+    })
+    .catch((error: unknown) => {
       console.error('VRM 로드 실패:', error);
       const message = error instanceof Error ? error.message : String(error);
       alert(`VRM 모델 로드에 실패했습니다: ${message}`);
-    }
-  );
+    });
 }
 
 // 초기 모델 로드
