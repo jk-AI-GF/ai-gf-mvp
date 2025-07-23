@@ -263,7 +263,7 @@ if (loadPoseFileButton) {
         }
       };
 
-      document.getElementById('list-vrma-animation-button').onclick = async () => {
+      document.getElementById('open-animation-panel-button').onclick = async () => {
         const animationSidePanel = document.getElementById('animation-side-panel');
         if (animationSidePanel.style.display === 'flex') {
           animationSidePanel.style.display = 'none';
