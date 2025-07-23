@@ -30,5 +30,8 @@ declare global {
     };
     logVrmBoneNames: () => void;
     createExpressionSliders: () => void;
+    appendMessage: (role: string, text: string) => void;
+    sendChatMessage: (message: string) => Promise<void>;
+    personaText: string;
   }
 }

@@ -39,6 +39,7 @@ import { PluginManager } from './plugins/plugin-manager';
 import { LookAtCameraPlugin } from './plugins/look-at-camera-plugin';
 import { AutoBlinkPlugin } from './plugins/auto-blink-plugin';
 import { AutoIdleAnimationPlugin } from './plugins/auto-idle-animation-plugin';
+import { ProactiveDialoguePlugin } from './plugins/proactive-dialogue-plugin';
 
 let mixer: THREE.AnimationMixer;
 let currentVrm: VRM | null = null;
@@ -94,6 +95,9 @@ pluginManager.register(autoBlinkPlugin);
 
 const autoIdleAnimationPlugin = new AutoIdleAnimationPlugin();
 pluginManager.register(autoIdleAnimationPlugin);
+
+const proactiveDialoguePlugin = new ProactiveDialoguePlugin();
+pluginManager.register(proactiveDialoguePlugin);
 
 // Add a ground plane for shadows
 const planeGeometry = new THREE.PlaneGeometry(10, 10);
@@ -563,7 +567,11 @@ async function playTTS(text: string) {
     currentAudioSource = source;
     source.onended = () => { currentAudioSource = null; };
   } catch (error) {
-    console.error("TTS playback error:", error);
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      console.warn("TTS server is not running. Skipping TTS playback.");
+    } else {
+      console.error("TTS playback error:", error);
+    }
   }
 }
 window.playTTS = playTTS;

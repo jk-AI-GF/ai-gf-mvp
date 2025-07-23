@@ -252,8 +252,9 @@
         const chatForm = document.getElementById('chat-form');
         const chatInput = document.getElementById('chat-input');
         const chatMessages = document.getElementById('chat-messages');
-        let chatHistory = [];
-        function appendMessage(role, text) {
+        let chatHistory = []; // Make chatHistory a global variable within this script scope
+
+        window.appendMessage = function(role, text) {
           const chatMessages = document.getElementById('chat-messages');
           if (role === 'assistant') {
             const floatingContainer = document.getElementById('floating-chat-messages-container');
@@ -289,18 +290,20 @@
             chatMessages.appendChild(msgDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
           }
-        }
-        chatForm.onsubmit = async (e) => {
-          e.preventDefault();
-          const userMsg = chatInput.value.trim();
+        };
+
+        window.sendChatMessage = async function(message) {
+          const userMsg = message.trim();
           if (!userMsg) return;
-          appendMessage('user', userMsg);
+
+          window.appendMessage('user', userMsg);
           chatHistory.push({ role: 'user', parts: [{ text: userMsg }] });
-          chatInput.value = '';
+          if (chatInput) chatInput.value = ''; // Clear input only if it exists
+
           // Gemini API 호출
           const apiKey = localStorage.getItem('llmApiKey');
           if (!apiKey) {
-            appendMessage('assistant', 'API 키가 설정되어 있지 않습니다. 설정에서 입력해 주세요.');
+            window.appendMessage('assistant', 'API 키가 설정되어 있지 않습니다. 설정에서 입력해 주세요.');
             return;
           }
           try {
@@ -339,7 +342,7 @@
               // LLM이 제안한 표정을 VRM 모델에 점진적으로 적용
               if (window.vrmExpressionList.includes(expression)) { // LLM이 제안한 표정이 유효한지 다시 확인
                   window.animateExpression(expression, 1.0, 0.5); // 0.5초 동안 점진적으로 변경
-                
+
               } else {
                 console.warn(`LLM proposed expression "${expression}" not found in VRM expression list. Not applying.`);
               }
@@ -347,8 +350,8 @@
               console.warn('VRM model or expressionManager not ready for expression application.', { currentVrm: window.currentVrm, expressionManager: window.currentVrm?.expressionManager, expressionMap: window.expressionMap });
             }
 
-            appendMessage('assistant', text);
-            
+            window.appendMessage('assistant', text);
+
             if (window.playTTS) {
               window.playTTS(text);
             }
@@ -356,8 +359,13 @@
             chatHistory.push({ role: 'model', parts: [{ text }] });
           }
            catch (err) {
-            appendMessage('assistant', 'Gemini API 호출 실패: ' + err);
+            window.appendMessage('assistant', 'Gemini API 호출 실패: ' + err);
           }
+        };
+
+        chatForm.onsubmit = async (e) => {
+          e.preventDefault();
+          window.sendChatMessage(chatInput.value);
         };
       });
     </script>
