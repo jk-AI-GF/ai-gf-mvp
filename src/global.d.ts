@@ -16,7 +16,7 @@ declare global {
     createJointSliders: () => void;
     loadJsonPose: (jsonPath: string) => Promise<void>;
     loadVrmaPose: (vrmaPath: string) => Promise<void>;
-    loadAnimationFile: (url: string) => Promise<void>;
+    loadAnimationFile: (url: string, options?: { loop?: boolean; crossFadeDuration?: number }) => Promise<void>;
     setClearColor: (color: number) => void;
     floatingMessages: { element: HTMLDivElement; timestamp: number; }[];
     electronAPI: {

@@ -38,10 +38,12 @@ import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 import { PluginManager } from './plugins/plugin-manager';
 import { LookAtCameraPlugin } from './plugins/look-at-camera-plugin';
 import { AutoBlinkPlugin } from './plugins/auto-blink-plugin';
+import { AutoIdleAnimationPlugin } from './plugins/auto-idle-animation-plugin';
 
 let mixer: THREE.AnimationMixer;
 let currentVrm: VRM | null = null;
 let controls: OrbitControls | null = null;
+let currentAction: THREE.AnimationAction | null = null; // 현재 재생 중인 애니메이션 액션
 const pluginManager = new PluginManager();
 
 if (!window.floatingMessages) {
@@ -89,6 +91,9 @@ pluginManager.register(lookAtCameraPlugin);
 
 const autoBlinkPlugin = new AutoBlinkPlugin();
 pluginManager.register(autoBlinkPlugin);
+
+const autoIdleAnimationPlugin = new AutoIdleAnimationPlugin();
+pluginManager.register(autoIdleAnimationPlugin);
 
 // Add a ground plane for shadows
 const planeGeometry = new THREE.PlaneGeometry(10, 10);
@@ -651,83 +656,79 @@ function logVrmBoneNames() {
 }
 window.logVrmBoneNames = logVrmBoneNames;
 
-async function loadAnimationFile(filePath: string) {
+async function loadAnimationFile(filePath: string, options: { loop?: boolean; crossFadeDuration?: number } = {}) {
   if (!currentVrm || !mixer) return;
 
-  // Remove 'file://' prefix if present and convert to relative path
+  // loop의 기본값을 false로 설정합니다.
+  const { loop = false, crossFadeDuration = 0.5 } = options;
+
   const relativePath = filePath.startsWith('file://') ? filePath.substring(7).replace(/\\/g, '/').replace(process.cwd().replace(/\\/g, '/'), '').replace(/^\//, '') : filePath;
 
-  if (relativePath.endsWith('.vrma')) {
-    try {
-      // Try loading as GLTF first
+  let newClip: THREE.AnimationClip | null = null;
+
+  try {
+    if (relativePath.endsWith('.vrma')) {
       const gltf = await new Promise<any>((resolve, reject) => {
-        loader.load(
-          relativePath,
-          resolve,
-          undefined,
-          reject
-        );
+        loader.load(relativePath, resolve, undefined, reject);
       });
 
       if (gltf.animations && gltf.animations.length > 0) {
-        const clip = createVRMAnimationClip(gltf.userData.vrmAnimations[0], currentVrm);
-        
-        mixer.stopAllAction();
-        const action = mixer.clipAction(clip);
-        action.setLoop(THREE.LoopOnce, 1); // Assuming animations are not looped by default
-        action.clampWhenFinished = true;
-        action.play();
-        console.log(`Loaded VRMA as animation from ${relativePath}`);
+        newClip = createVRMAnimationClip(gltf.userData.vrmAnimations[0], currentVrm);
       } else {
-        // If GLTF loaded but no animations, it might be a JSON pose or an empty GLTF
-        throw new Error('No animation clips found in GLTF, trying as JSON pose.');
-      }
-    } catch (gltfError) {
-      console.warn(`Failed to load VRMA as GLTF: ${(gltfError as Error).message}. Trying as JSON pose.`);
-      try {
-        // If GLTF loading fails, try loading as JSON VRMPose
         const fileContent = await window.electronAPI.readFileContent(relativePath);
-        if (typeof fileContent === 'object' && 'error' in fileContent) {
-          throw new Error(fileContent.error);
-        }
+        if (typeof fileContent === 'object' && 'error' in fileContent) throw new Error(fileContent.error);
         const poseData = JSON.parse(new TextDecoder().decode(fileContent as ArrayBuffer)) as VRMPose;
+        if (!poseData) throw new Error('Invalid VRMPose data structure.');
 
-        if (!poseData) {
-          throw new Error('Invalid VRMPose data structure in the loaded file.');
+        // 포즈 적용 시, 현재 애니메이션을 정지하고 포즈를 설정합니다.
+        if (currentAction) {
+          currentAction.stop();
+          currentAction = null;
         }
-
+        mixer.stopAllAction(); // Ensure all actions are stopped before applying a pose
         currentVrm.humanoid.setNormalizedPose(poseData);
         currentVrm.scene.updateMatrixWorld(true);
         createJointSliders();
         console.log(`Loaded VRMA as JSON pose from ${relativePath}`);
-      } catch (jsonError) {
-        console.error(`Error loading VRMA file from ${relativePath}:`, jsonError);
-        alert(`VRMA 파일 로딩에 실패했습니다: ${(jsonError as Error).message}`);
+        return;
       }
-    }
-  } else if (relativePath.endsWith('.fbx')) {
-    try {
+    } else if (relativePath.endsWith('.fbx')) {
       const fileContent = await window.electronAPI.readFileContent(relativePath);
-      if (typeof fileContent === 'object' && 'error' in fileContent) {
-        throw new Error(fileContent.error);
-      }
-      const fbx = fbxLoader.parse(fileContent as ArrayBuffer, ''); // Pass empty path for parse
-      
+      if (typeof fileContent === 'object' && 'error' in fileContent) throw new Error(fileContent.error);
+      const fbx = fbxLoader.parse(fileContent as ArrayBuffer, '');
       if (fbx.animations && fbx.animations.length > 0) {
-        mixer.stopAllAction();
-        const action = mixer.clipAction(fbx.animations[0]);
-        action.setLoop(THREE.LoopOnce, 1);
-        action.clampWhenFinished = true;
-        action.play();
-        console.log(`Loaded FBX as animation from ${relativePath}`);
-      } else {
-        console.warn(`No animation clips found in FBX file: ${relativePath}`);
-        alert(`FBX 파일에 애니메이션 클립이 없습니다: ${relativePath}`);
+        newClip = fbx.animations[0];
       }
-    } catch (error) {
-      console.error(`Error loading FBX file from ${relativePath}:`, error);
-      alert(`FBX 파일 로딩에 실패했습니다: ${(error as Error).message}`);
     }
+
+    if (!newClip) {
+      console.warn(`No animation clip could be loaded from ${relativePath}`);
+      return;
+    }
+
+    const newAction = mixer.clipAction(newClip);
+    newAction.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 0);
+    if (!loop) {
+      newAction.clampWhenFinished = true;
+    }
+
+    if (currentAction && currentAction !== newAction) {
+      // 현재 재생 중인 액션이 있으면 부드럽게 전환합니다.
+      currentAction.crossFadeTo(newAction, crossFadeDuration, true);
+      newAction.play();
+    } else {
+      // 현재 재생 중인 액션이 없으면 그냥 재생합니다.
+      newAction.play();
+    }
+
+    // 새로운 액션을 현재 액션으로 설정합니다.
+    currentAction = newAction;
+
+    console.log(`Loaded animation from ${relativePath} with crossfade.`);
+
+  } catch (error) {
+    console.error(`Error loading animation file from ${relativePath}:`, error);
+    alert(`애니메이션 파일 로딩에 실패했습니다: ${(error as Error).message}`);
   }
 }
 window.loadAnimationFile = loadAnimationFile;
