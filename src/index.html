@@ -26,19 +26,23 @@
       <h3>관절 조절</h3>
       <div id="joint-sliders"></div>
     </div>
+    <div id="pose-side-panel" style="display:none; position: fixed; top: 0; right: 0; width: 300px; height: 100vh; background: rgba(30,30,30,0.95); z-index: 2000; padding: 25px; color: #fff; overflow-y: auto; box-shadow: -5px 0 15px rgba(0,0,0,0.5);">
+      <button id="close-pose-panel" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">×</button>
+      <div id="pose-list-display"></div>
+    </div>
     <div id="animation-buttons" style="position: fixed; top: 50%; left: 20px; transform: translateY(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 5px; background-color: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;">
-      <!-- 디버그용 표정 전환 버튼 추가 -->
-      <button id="smile-debug-button" style="margin: 5px; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">표정 전환</button>
       <!-- 디버그용 포즈 저장 버튼 추가 -->
       <button id="save-pose-button" style="margin: 5px; padding: 10px; background-color: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">포즈 저장</button>
-      <!-- 디버그용 포즈 로드 버튼 추가 -->
-      <button id="load-pose-button" style="margin: 5px; padding: 10px; background-color: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">포즈 로드</button>
+      <button id="open-pose-panel-button" style="margin: 5px; padding: 10px; background-color: #5a6268; color: white; border: none; border-radius: 5px; cursor: pointer;">포즈 열기</button>
+      <button id="load-pose-file-button" style="margin: 5px; padding: 10px; background-color: #17a2b8; color: white; border: none; border-radius: 5px; cursor: pointer;">포즈 파일 열기</button>
       <!-- 디버그용 랜덤 포즈 버튼 추가 -->
       <button id="random-pose-button" style="margin: 5px; padding: 10px; background-color: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer;">랜덤 포즈</button>
       <!-- VRM 로드 버튼 추가 -->
       <button id="load-vrm-button" style="margin: 5px; padding: 10px; background-color: #17a2b8; color: white; border: none; border-radius: 5px; cursor: pointer;">Load VRM Model</button>
       <!-- 애니메이션 버튼들이 여기에 동적으로 추가될 것입니다. -->
+      <button id="list-vrma-animation-button" style="margin: 5px; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">애니메이션 목록</button>
     </div>
+
     <div id="chat-container" style="position: fixed; bottom: 8%; z-index: 9999; border-radius: 5px;">
       <div id="chat-messages" style="margin: 0px;"></div>
       <form id="chat-form">
@@ -65,6 +69,13 @@
       document.getElementById('close-joint-control').onclick = () => {
         document.getElementById('joint-control-panel').style.display = 'none';
       };
+      document.getElementById('open-pose-panel-button').onclick = () => {
+        document.getElementById('pose-side-panel').style.display = 'flex';
+        // The list will be populated by renderer.ts
+      };
+      document.getElementById('close-pose-panel').onclick = () => {
+        document.getElementById('pose-side-panel').style.display = 'none';
+      };
       // LLM API 저장 로직
       const form = document.getElementById('llm-form');
       const saveMessage = document.getElementById('save-message');
@@ -76,73 +87,6 @@
         setTimeout(() => { saveMessage.style.display = 'none'; }, 2000);
       };
       document.getElementById('llm-api-key').value = localStorage.getItem('llmApiKey') || '';
-
-      // 애니메이션 버튼 생성 로직
-      const animationButtonsContainer = document.getElementById('animation-buttons');
-      console.log('animationButtonsContainer:', animationButtonsContainer);
-      if (animationButtonsContainer && window.vrmAnimationList && window.currentVrm && window.mixer) {
-        console.log('Creating animation buttons...');
-        window.vrmAnimationList.forEach((clip, index) => {
-          const button = document.createElement('button');
-          button.textContent = clip.name || `Animation ${index}`;
-          button.style.margin = '5px';
-          button.style.padding = '10px';
-          button.style.backgroundColor = '#007bff';
-          button.style.color = 'white';
-          button.style.border = 'none';
-          button.style.borderRadius = '5px';
-          button.style.cursor = 'pointer';
-
-          button.onclick = () => {
-            window.mixer.stopAllAction(); // 기존 애니메이션 중지
-            const action = window.mixer.clipAction(clip);
-            action.play();
-            console.log(`Applied animation: ${clip.name || `Animation ${index}`}`);
-          };
-          animationButtonsContainer.appendChild(button);
-          console.log(`Button created for: ${clip.name || `Animation ${index}`}`);
-        });
-      } else {
-        console.warn('Animation list or VRM model/mixer not ready for animation buttons.', { animationButtonsContainer, vrmAnimationList: window.vrmAnimationList, currentVrm: window.currentVrm, mixer: window.mixer });
-      }
-
-      
-
-      // 디버그용 포즈 저장/로드 버튼 로직
-      const savePoseButton = document.getElementById('save-pose-button');
-      const loadPoseButton = document.getElementById('load-pose-button');
-      let savedPose = null;
-
-      if (savePoseButton) {
-        savePoseButton.onclick = () => {
-          if (window.saveVrmPose) {
-            savedPose = window.saveVrmPose();
-            if (savedPose) {
-              localStorage.setItem('vrmSavedPose', JSON.stringify(savedPose));
-              console.log('Pose saved to localStorage.');
-            }
-          } else {
-            console.warn('saveVrmPose function not available.');
-          }
-        };
-      }
-
-      if (loadPoseButton) {
-        loadPoseButton.onclick = () => {
-          if (window.loadVrmPose) {
-            const storedPose = localStorage.getItem('vrmSavedPose');
-            if (storedPose) {
-              savedPose = JSON.parse(storedPose);
-              window.loadVrmPose(savedPose);
-              console.log('Pose loaded from localStorage.');
-            } else {
-              console.warn('No pose found in localStorage.');
-            }
-          } else {
-            console.warn('loadVrmPose function not available.');
-          }
-        };
-      }
 
       
       const chatForm = document.getElementById('chat-form');

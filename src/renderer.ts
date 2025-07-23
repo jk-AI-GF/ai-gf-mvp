@@ -29,8 +29,9 @@
 import './index.css';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { VRMLoaderPlugin, VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
+import { VRMLoaderPlugin, VRM, VRMHumanBoneName, VRMPose } from '@pixiv/three-vrm';
 import { VRMAnimationLoaderPlugin } from '@pixiv/three-vrm-animation';
 import { createVRMAnimationClip, VRMAnimation } from '@pixiv/three-vrm-animation';
 
@@ -69,9 +70,6 @@ function loadVRM(url: string) {
   // 이전에 로드된 모델이 있다면 씬에서 제거
   if (currentVrm) {
     scene.remove(currentVrm.scene);
-    // VRMUtils.deepDispose(currentVrm.scene); // three-vrm 0.x 방식
-    // For three-vrm 1.x, there is no built-in deepDispose.
-    // We need to traverse and dispose manually if needed, but for now, just removing from scene is enough for basic cleanup.
     currentVrm = null;
   }
 
@@ -85,12 +83,7 @@ function loadVRM(url: string) {
       currentVrm = vrm;
       window.currentVrm = vrm;
 
-      window.logVrmBoneNames();
-
-      window.saveVrmPose = () => {
-        if (!currentVrm) return null;
-        return currentVrm.humanoid.getNormalizedPose();
-      };
+      // window.logVrmBoneNames();
 
       window.loadVrmPose = (pose: any) => {
         if (!currentVrm || !pose) return;
@@ -100,45 +93,52 @@ function loadVRM(url: string) {
       };
 
       if (vrm.expressionManager) {
+        console.log('VRM ExpressionManager initialized.', vrm.expressionManager);
         const expressionMap: { [key: string]: string } = {};
-        vrm.expressionManager.expressions.forEach(exp => {
-            expressionMap[exp.name] = exp.name; // 실제 표정 이름을 그대로 사용
-        });
-        
-        // 한국어 매핑 (모델에 따라 커스터마이징 필요)
-        const koExpressionMap: { [key: string]: string } = {
-            '기본': 'neutral', '아': 'a', '이': 'i', '우': 'u', '에': 'e', '오': 'o',
-            '눈감음': 'blink', '행복': 'happy', '화남': 'angry', '슬픔': 'sad',
-            '편안': 'relaxed', '위보기': 'lookUp', '아래보기': 'lookDown',
-            '왼쪽보기': 'lookLeft', '오른쪽보기': 'lookRight'
-        };
-
-        const finalExpressionMap: { [key: string]: string } = {};
         const llmExpressionList: string[] = [];
 
-        for (const [ko, en] of Object.entries(koExpressionMap)) {
-            if (expressionMap[en]) {
-                finalExpressionMap[ko] = en;
-                llmExpressionList.push(ko);
-            }
-        }
-        
-        // 모델에만 있는 추가적인 표정들도 리스트에 추가
         vrm.expressionManager.expressions.forEach(exp => {
-            if (!Object.values(finalExpressionMap).includes(exp.name)) {
-                finalExpressionMap[exp.name] = exp.name;
-                llmExpressionList.push(exp.name);
-            }
+            expressionMap[exp.name] = exp.name;
+            llmExpressionList.push(exp.name);
         });
 
         window.vrmExpressionList = llmExpressionList;
-        window.expressionMap = finalExpressionMap;
+        window.expressionMap = expressionMap;
         console.log('VRM Expression List (Mapped for LLM):', window.vrmExpressionList);
+        console.log('Actual VRM Expressions:', vrm.expressionManager.expressions.map(exp => exp.name));
+      } else {
+        console.warn('VRM ExpressionManager is not available on this VRM model.');
       }
 
       mixer = new THREE.AnimationMixer(vrm.scene);
-      if (gltf.animations && gltf.animations.length > 0) {
-        window.vrmAnimationList = gltf.animations;
+
+      // 애니메이션 버튼 생성 로직
+      const animationButtonsContainer = document.getElementById('animation-buttons');
+      console.log('animationButtonsContainer:', animationButtonsContainer);
+      if (animationButtonsContainer && window.vrmAnimationList && window.currentVrm && window.mixer) {
+        console.log('Creating animation buttons...');
+        window.vrmAnimationList.forEach((clip, index) => {
+          const button = document.createElement('button');
+          button.textContent = clip.name || `Animation ${index}`;
+          button.style.margin = '5px';
+          button.style.padding = '10px';
+          button.style.backgroundColor = '#007bff';
+          button.style.color = 'white';
+          button.style.border = 'none';
+          button.style.borderRadius = '5px';
+          button.style.cursor = 'pointer';
+
+          button.onclick = () => {
+            window.mixer.stopAllAction(); // 기존 애니메이션 중지
+            const action = window.mixer.clipAction(clip);
+            action.play();
+            console.log(`Applied animation: ${clip.name || `Animation ${index}`}`);
+          };
+          animationButtonsContainer.appendChild(button);
+          console.log(`Button created for: ${clip.name || `Animation ${index}`}`);
+        });
+      } else {
+        console.warn('Animation list or VRM model/mixer not ready for animation buttons.', { animationButtonsContainer, vrmAnimationList: window.vrmAnimationList, currentVrm: window.currentVrm, mixer: window.mixer });
       }
     },
     undefined,
@@ -158,13 +158,110 @@ if (loadVrmButton) {
   loadVrmButton.onclick = async () => {
     const filePath = await window.electronAPI.openVrmFile();
     if (filePath) {
-      // Electron 경로를 웹 URL 형식으로 변환
       const url = `file://${filePath.replace(/\\/g, '/')}`;
       loadVRM(url);
     }
   };
 }
 
+// 포즈 저장 버튼 로직
+const savePoseButton = document.getElementById('save-pose-button');
+if (savePoseButton) {
+  savePoseButton.onclick = () => {
+    if (!currentVrm) {
+      alert('VRM 모델이 로드되지 않았습니다.');
+      return;
+    }
+
+    // 1. Get the current pose from the VRM model.
+    const pose: VRMPose = currentVrm.humanoid.getNormalizedPose();
+
+    // 2. Export the pose as a JSON Blob and save it.
+    const jsonString = JSON.stringify(pose, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    
+    // Create a temporary URL to pass to the main process for saving
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+        if (event.target?.result instanceof ArrayBuffer) {
+            const result = await window.electronAPI.saveVrmaPose(event.target.result);
+            if (result.success) {
+                console.log(`Pose saved successfully: ${result.message}`);
+            } else if (result.message !== 'Save operation canceled.') {
+                console.error(`Failed to save pose: ${result.message}`);
+            }
+        } else {
+            console.error('Failed to read blob as ArrayBuffer.');
+            alert('포즈 파일 변환에 실패했습니다.');
+        }
+    };
+    reader.onerror = (error) => {
+        console.error('FileReader error:', error);
+    };
+    reader.readAsArrayBuffer(blob);
+  };
+}
+
+// 포즈 불러오기 (파일) 버튼 로직
+const loadPoseFileButton = document.getElementById('load-pose-file-button');
+if (loadPoseFileButton) {
+  loadPoseFileButton.onclick = async () => {
+    const filePath = await window.electronAPI.openVrmaFile();
+    if (filePath) {
+      const url = `file://${filePath.replace(/\\/g, '/')}`;
+      window.loadVrmaFile(url);
+    }
+  };
+}
+
+      document.getElementById('open-pose-panel-button').onclick = async () => {
+        const poseSidePanel = document.getElementById('pose-side-panel');
+        if (poseSidePanel.style.display === 'flex') {
+          poseSidePanel.style.display = 'none';
+        } else {
+          poseSidePanel.style.display = 'flex';
+          // The list will be populated by renderer.ts
+          try {
+            const result = await window.electronAPI.listDirectory('assets/Pose');
+            if (result.error) {
+              throw new Error(result.error);
+            }
+            const vrmaFiles = result.files.filter(file => file.endsWith('.vrma'));
+            
+            const poseListDisplay = document.getElementById('pose-list-display');
+            if (poseListDisplay) {
+              poseListDisplay.innerHTML = ''; // Clear previous list
+              if (vrmaFiles.length === 0) {
+                const noFilesMessage = document.createElement('p');
+                noFilesMessage.textContent = '저장된 포즈 파일(.vrma)이 없습니다.';
+                noFilesMessage.style.color = 'white';
+                poseListDisplay.appendChild(noFilesMessage);
+              } else {
+                vrmaFiles.forEach(file => {
+                  const button = document.createElement('button');
+                  button.textContent = file;
+                  Object.assign(button.style, {
+                    padding: '10px 15px', backgroundColor: 'transparent', color: 'white',
+                    border: 'none', borderRadius: '8px', cursor: 'pointer',
+                    marginBottom: '8px', width: '100%', textAlign: 'left',
+                    fontSize: '1rem', transition: 'background-color 0.2s ease'
+                  });
+                  button.onmouseover = () => { button.style.backgroundColor = 'rgba(0,123,255,0.2)'; };
+                  button.onmouseout = () => { button.style.backgroundColor = 'transparent'; };
+                  button.onclick = () => {
+                    const fullPath = `assets/Pose/${file}`;
+                    window.loadVrmaFile(fullPath);
+                  };
+                  poseListDisplay.appendChild(button);
+                });
+              }
+            }
+          } catch (error) {
+            console.error('Failed to list VRMA poses for panel:', error);
+            alert('포즈 목록을 불러오는 데 실패했습니다.');
+          }
+        }
+      };
 
 const clock = new THREE.Clock();
 
@@ -231,43 +328,55 @@ console.log('👋 VRM 오버레이 로딩 완료');
 
 function animateExpression(expressionName: string, targetWeight: number, duration: number) {
   if (!window.currentVrm || !window.currentVrm.expressionManager || !window.expressionMap) return;
+  
   const expressionManager = window.currentVrm.expressionManager;
   const vrmInternalName = window.expressionMap[expressionName] || expressionName;
+  
+  console.log(`animateExpression called: expressionName=${expressionName}, targetWeight=${targetWeight}, duration=${duration}`);
+  console.log(`Mapped vrmInternalName: ${vrmInternalName}`);
+  console.log('ExpressionManager object:', expressionManager);
+
+  // Ensure the target expression exists
+  const targetExpression = expressionManager.getExpression(vrmInternalName);
+  if (!targetExpression) {
+    console.error(`Expression "${vrmInternalName}" not found in the VRM model.`);
+    return;
+  }
+  console.log(`Target expression found: ${targetExpression.name}`);
+
   const startWeight = expressionManager.getValue(vrmInternalName) || 0.0;
   const startTime = performance.now();
-  
-  // 다른 표정 초기화
-  for (const name in window.expressionMap) {
-      const internalName = window.expressionMap[name];
-      if (internalName && internalName !== vrmInternalName) {
-          expressionManager.setValue(internalName, 0.0);
-      }
-  }
+
+  console.log(`Initial weight for ${vrmInternalName}: ${startWeight}`);
+
+  // Reset other expressions to 0
+  expressionManager.expressions.forEach(exp => {
+    if (exp.name !== vrmInternalName) {
+      expressionManager.setValue(exp.name, 0.0);
+    }
+  });
 
   function step(currentTime: number) {
     const elapsedTime = currentTime - startTime;
     const progress = Math.min(elapsedTime / (duration * 1000), 1);
     const currentWeight = startWeight + (targetWeight - startWeight) * progress;
+    
+    console.log(`Before setValue, ${vrmInternalName} weight: ${expressionManager.getValue(vrmInternalName)?.toFixed(3)}`);
     expressionManager.setValue(vrmInternalName, currentWeight);
+    console.log(`After setValue, ${vrmInternalName} weight: ${expressionManager.getValue(vrmInternalName)?.toFixed(3)}`);
     expressionManager.update();
-    if (progress < 1) requestAnimationFrame(step);
+
+    console.log(`Updating ${vrmInternalName} to weight: ${currentWeight.toFixed(3)}. Current actual weight: ${expressionManager.getValue(vrmInternalName)?.toFixed(3)}`);
+
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    }
   }
   requestAnimationFrame(step);
 }
 window.animateExpression = animateExpression;
 
-const smileDebugButton = document.getElementById('smile-debug-button');
-if (smileDebugButton) {
-  let currentDebugExpressionIndex = 0;
-  smileDebugButton.onclick = () => {
-    if (window.currentVrm && window.vrmExpressionList?.length > 0) {
-      const nextMappedExpression = window.vrmExpressionList[currentDebugExpressionIndex];
-      window.animateExpression(nextMappedExpression, 1.0, 0.5);
-      console.log(`Debug: Applied expression: ${nextMappedExpression}`);
-      currentDebugExpressionIndex = (currentDebugExpressionIndex + 1) % window.vrmExpressionList.length;
-    }
-  };
-}
+
 
 const randomPoseButton = document.getElementById('random-pose-button');
 if (randomPoseButton) {
@@ -275,7 +384,7 @@ if (randomPoseButton) {
     if (currentVrm) {
       Object.values(VRMHumanBoneName).forEach(boneName => {
         const bone = currentVrm.humanoid.getNormalizedBoneNode(boneName);
-        if (bone && boneName !== VRMHumanBoneName.Head) { // 머리는 제외
+        if (bone && boneName !== VRMHumanBoneName.Head) {
           const randomQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(
             (Math.random() - 0.5) * Math.PI / 2,
             (Math.random() - 0.5) * Math.PI / 2,
@@ -385,20 +494,55 @@ function logVrmBoneNames() {
 }
 window.logVrmBoneNames = logVrmBoneNames;
 
-async function loadVrmaPose(vrmaPath: string) {
+async function loadVrmaFile(vrmaPath: string) {
   if (!currentVrm || !mixer) return;
+
   try {
-    const vrmaLoader = new GLTFLoader();
-    vrmaLoader.register((parser) => new VRMAnimationLoaderPlugin(parser));
-    const gltf = await vrmaLoader.loadAsync(vrmaPath);
-    const vrmAnimation = gltf.userData.vrmAnimations[0] as VRMAnimation;
-    if (!vrmAnimation) throw new Error('VRMAnimation data not found.');
-    const clip = createVRMAnimationClip(vrmAnimation, currentVrm);
-    mixer.stopAllAction();
-    const action = mixer.clipAction(clip);
-    action.play();
-  } catch (error) {
-    console.error(`Error loading VRMA pose from ${vrmaPath}:`, error);
+    // Try loading as GLTF first
+    const gltf = await new Promise<any>((resolve, reject) => {
+      loader.load(
+        vrmaPath,
+        resolve,
+        undefined,
+        reject
+      );
+    });
+
+    if (gltf.animations && gltf.animations.length > 0) {
+      const clip = createVRMAnimationClip(gltf.userData.vrmAnimations[0], currentVrm);
+      
+      mixer.stopAllAction();
+      const action = mixer.clipAction(clip);
+      action.setLoop(THREE.LoopOnce, 1); // Assuming animations are not looped by default
+      action.clampWhenFinished = true;
+      action.play();
+      console.log(`Loaded VRMA as animation from ${vrmaPath}`);
+    } else {
+      // If GLTF loaded but no animations, it might be a JSON pose or an empty GLTF
+      throw new Error('No animation clips found in GLTF, trying as JSON pose.');
+    }
+  } catch (gltfError) {
+    console.warn(`Failed to load VRMA as GLTF: ${(gltfError as Error).message}. Trying as JSON pose.`);
+    try {
+      // If GLTF loading fails, try loading as JSON VRMPose
+      const response = await fetch(vrmaPath);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch file: ${response.statusText}`);
+      }
+      const poseData = await response.json() as VRMPose;
+
+      if (!poseData) {
+        throw new Error('Invalid VRMPose data structure in the loaded file.');
+      }
+
+      currentVrm.humanoid.setNormalizedPose(poseData);
+      currentVrm.scene.updateMatrixWorld(true);
+      createJointSliders();
+      console.log(`Loaded VRMA as JSON pose from ${vrmaPath}`);
+    } catch (jsonError) {
+      console.error(`Error loading VRMA file from ${vrmaPath}:`, jsonError);
+      alert(`VRMA 파일 로딩에 실패했습니다: ${(jsonError as Error).message}`);
+    }
   }
 }
-window.loadVrmaPose = loadVrmaPose;
+window.loadVrmaFile = loadVrmaFile;

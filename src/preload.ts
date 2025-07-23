@@ -4,6 +4,7 @@ import { ipcRenderer } from 'electron';
 // This is safe because nodeIntegration is true and contextIsolation is false
 (window as any).electronAPI = {
   listDirectory: async (dirPath: string) => ipcRenderer.invoke('list-directory', dirPath),
-  saveVrmaPose: async (poseData: string) => ipcRenderer.invoke('save-vrma-pose', poseData),
+  saveVrmaPose: (poseData: ArrayBuffer) => ipcRenderer.invoke('save-vrma-pose', poseData),
   openVrmFile: () => ipcRenderer.invoke('open-vrm-file'),
+  openVrmaFile: () => ipcRenderer.invoke('open-vrma-file'),
 };

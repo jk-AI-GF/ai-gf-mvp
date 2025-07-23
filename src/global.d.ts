@@ -4,7 +4,7 @@ import * as THREE from 'three';
 declare global {
   interface Window {
     currentVrm: VRM | null;
-    saveVrmPose: () => VRMNormalizedPose | null;
+    saveVrmPose: () => void;
     loadVrmPose: (pose: VRMNormalizedPose) => void;
     vrmExpressionList: string[];
     expressionMap: { [key: string]: string };
@@ -20,6 +20,11 @@ declare global {
     electronAPI: {
       listDirectory: (dirPath: string) => Promise<{ files: string[]; directories: string[]; error?: string }>;
       openVrmFile: () => Promise<string | null>;
+      saveVrmaPose: (poseData: ArrayBuffer) => Promise<{ success: boolean; message: string }>;
+      openVrmaFile: () => Promise<string | null>;
     };
+    loadVrmaAnimation: (url: string, isAnimation: boolean) => Promise<void>;
+    loadVrmPoseFromFile: (url: string) => Promise<void>;
+    loadVrmaFile: (url: string) => Promise<void>;
   }
 }

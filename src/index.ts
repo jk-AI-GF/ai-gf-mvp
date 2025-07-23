@@ -121,10 +121,10 @@ app.on('ready', () => {
     }
   });
 
-  ipcMain.handle('save-vrma-pose', async (event, vrmaData: string) => {
+  ipcMain.handle('save-vrma-pose', async (event, vrmaData: ArrayBuffer) => {
     const { canceled, filePath } = await dialog.showSaveDialog({
       title: 'Save VRMA Pose',
-      defaultPath: `pose_${Date.now()}.vrma`,
+      defaultPath: path.join(app.getAppPath(), 'assets/Pose', `pose_${Date.now()}.vrma`),
       filters: [
         { name: 'VRM Animation', extensions: ['vrma'] },
         { name: 'All Files', extensions: ['*'] }
@@ -136,11 +136,13 @@ app.on('ready', () => {
     }
 
     try {
-      await fs.promises.writeFile(filePath, vrmaData);
+      const buffer = Buffer.from(vrmaData);
+      await fs.promises.writeFile(filePath, buffer);
       return { success: true, message: `VRMA pose saved to ${filePath}` };
     } catch (error) {
       console.error('Failed to save VRMA pose:', error);
-      return { success: false, message: `Failed to save VRMA pose: ${error.message}` };
+      const message = error instanceof Error ? error.message : String(error);
+      return { success: false, message: `Failed to save VRMA pose: ${message}` };
     }
   });
 
@@ -150,6 +152,24 @@ app.on('ready', () => {
       defaultPath: path.join(app.getAppPath(), 'assets/VRM'),
       filters: [
         { name: 'VRM Models', extensions: ['vrm'] },
+        { name: 'All Files', extensions: ['*'] },
+      ],
+      properties: ['openFile'],
+    });
+
+    if (canceled || filePaths.length === 0) {
+      return null;
+    }
+
+    return filePaths[0];
+  });
+
+  ipcMain.handle('open-vrma-file', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: 'Open VRMA Pose',
+      defaultPath: path.join(app.getAppPath(), 'assets/Pose'),
+      filters: [
+        { name: 'VRM Animation', extensions: ['vrma'] },
         { name: 'All Files', extensions: ['*'] },
       ],
       properties: ['openFile'],
