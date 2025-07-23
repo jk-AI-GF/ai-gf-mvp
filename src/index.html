@@ -26,6 +26,7 @@
       <button id="open-joint-control" style="background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.1rem; padding: 0.5rem 1rem; cursor: pointer;">관절 조절</button>
       <button id="open-expression-panel-button" style="background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.1rem; padding: 0.5rem 1rem; cursor: pointer;">표정</button>
       <button id="open-plugins-panel-button" style="background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.1rem; padding: 0.5rem 1rem; cursor: pointer;">플러그인</button>
+      <button id="open-mesh-panel-button" style="background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.1rem; padding: 0.5rem 1rem; cursor: pointer;">메쉬</button>
       <button id="close-overlay" style="background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.5rem; padding: 0.5rem 1rem; cursor: pointer;">×</button>
     </div>
     <div id="settings-modal" style="visibility:hidden; opacity:0; transition: opacity 0.3s ease, visibility 0.3s ease; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; height: 400px; background: rgba(20,20,20,0.95); z-index: 2001; padding: 20px; border-radius: 10px; color: #fff; overflow-y: auto; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
@@ -75,6 +76,11 @@
       <button id="close-plugins-panel" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">×</button>
       <h3>플러그인 관리</h3>
       <div id="plugins-list"></div>
+    </div>
+    <div id="mesh-control-panel" style="display:none; position: fixed; top: 80px; right: 20px; width: 300px; max-height: 70vh; background: rgba(20,20,20,0.8); z-index: 2000; padding: 20px; border-radius: 10px; color: #fff; overflow-y: auto;">
+      <button id="close-mesh-panel" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">×</button>
+      <h3>메쉬 관리</h3>
+      <div id="mesh-list"></div>
     </div>
     <div id="animation-buttons" style="position: fixed; top: 50%; left: 20px; transform: translateY(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 5px; background-color: rgba(0,0,0,0.3); padding: 10px; border-radius: 0px;">
       <!-- VRM 모델 관련 -->
@@ -190,6 +196,20 @@
         };
         document.getElementById('close-plugins-panel').onclick = () => {
           document.getElementById('plugin-control-panel').style.display = 'none';
+        };
+        document.getElementById('open-mesh-panel-button').onclick = () => {
+          const meshControlPanel = document.getElementById('mesh-control-panel');
+          if (meshControlPanel.style.display === 'block') {
+            meshControlPanel.style.display = 'none';
+          } else {
+            meshControlPanel.style.display = 'block';
+            if (window.listVrmMeshes && window.toggleVrmMeshVisibility && window.createMeshList) {
+              window.createMeshList();
+            }
+          }
+        };
+        document.getElementById('close-mesh-panel').onclick = () => {
+          document.getElementById('mesh-control-panel').style.display = 'none';
         };
         // LLM API 저장 로직
         const form = document.getElementById('llm-form');
@@ -429,6 +449,60 @@
             pluginDiv.appendChild(label);
             pluginsListDiv.appendChild(pluginDiv);
           }
+        };
+
+        window.createMeshList = function() {
+          const meshListDiv = document.getElementById('mesh-list');
+          if (!meshListDiv) return;
+
+          meshListDiv.innerHTML = ''; // Clear existing list
+
+          if (!window.listVrmMeshes || !window.toggleVrmMeshVisibility) {
+            meshListDiv.textContent = 'VRM 메시 관리 기능을 찾을 수 없습니다.';
+            return;
+          }
+
+          const meshNames = window.listVrmMeshes();
+
+          if (meshNames.length === 0) {
+            meshListDiv.textContent = '로드된 VRM 모델에 메시가 없습니다.';
+            return;
+          }
+
+          meshNames.forEach(meshName => {
+            const meshDiv = document.createElement('div');
+            meshDiv.style.marginBottom = '10px';
+            meshDiv.style.display = 'flex';
+            meshDiv.style.alignItems = 'center';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `mesh-toggle-${meshName}`;
+            // 초기 상태는 해당 메시의 현재 visible 상태를 반영해야 합니다.
+            // 이를 위해 currentVrm.scene.getObjectByName(meshName)?.visible을 사용해야 하지만,
+            // 현재는 직접 접근이 어려우므로, 기본적으로 true로 설정합니다.
+            // 실제 구현에서는 로드 시점의 visible 상태를 가져와야 합니다.
+            checkbox.checked = true; // 임시: 모든 메시가 기본적으로 보인다고 가정
+            checkbox.style.marginRight = '10px';
+            checkbox.style.width = '20px';
+            checkbox.style.height = '20px';
+            checkbox.style.cursor = 'pointer';
+
+            const label = document.createElement('label');
+            label.htmlFor = `mesh-toggle-${meshName}`;
+            label.textContent = meshName;
+            label.style.color = 'white';
+            label.style.fontSize = '1.1rem';
+            label.style.cursor = 'pointer';
+
+            checkbox.onchange = (event) => {
+              window.toggleVrmMeshVisibility(meshName, event.target.checked);
+            };
+
+            meshDiv.appendChild(checkbox);
+            meshDiv.appendChild(label);
+            meshListDiv.appendChild(meshDiv);
+          });
         };
 
         chatForm.onsubmit = async (e) => {

@@ -36,5 +36,8 @@ declare global {
     personaText: string;
     pluginManager: PluginManager;
     createPluginList: () => void;
+    listVrmMeshes: () => string[];
+    toggleVrmMeshVisibility: (meshName: string, visible: boolean) => void;
+    createMeshList: () => void;
   }
 }

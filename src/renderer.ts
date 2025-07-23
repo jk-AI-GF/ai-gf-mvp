@@ -141,6 +141,11 @@ function loadVRM(url: string) {
       currentVrm = vrm;
       window.currentVrm = vrm;
 
+      // 새 VRM 모델 로드 시 메쉬 목록 업데이트
+      if (window.createMeshList) {
+        window.createMeshList();
+      }
+
       mixer = new THREE.AnimationMixer(vrm.scene);
 
       // Enable shadows for all meshes in the VRM model
@@ -693,6 +698,47 @@ function createJointSliders() {
   });
 }
 window.createJointSliders = createJointSliders;
+
+/**
+ * 현재 로드된 VRM 모델의 모든 메시 이름을 배열로 반환합니다.
+ * @returns 메시 이름 배열
+ */
+window.listVrmMeshes = function(): string[] {
+  if (!currentVrm) {
+    console.warn('VRM model not loaded. Cannot list meshes.');
+    return [];
+  }
+  const meshNames: string[] = [];
+  currentVrm.scene.traverse((object) => {
+    if ((object as THREE.Mesh).isMesh) {
+      meshNames.push(object.name);
+    }
+  });
+  return meshNames;
+};
+
+/**
+ * 특정 이름의 VRM 메시의 가시성을 토글합니다.
+ * @param meshName 토글할 메시의 이름
+ * @param visible 메시를 보이게 할지 숨기게 할지 여부
+ */
+window.toggleVrmMeshVisibility = function(meshName: string, visible: boolean): void {
+  if (!currentVrm) {
+    console.warn('VRM model not loaded. Cannot toggle mesh visibility.');
+    return;
+  }
+  let found = false;
+  currentVrm.scene.traverse((object) => {
+    if ((object as THREE.Mesh).isMesh && object.name === meshName) {
+      object.visible = visible;
+      found = true;
+      console.log(`Mesh '${meshName}' visibility set to ${visible}`);
+    }
+  });
+  if (!found) {
+    console.warn(`Mesh '${meshName}' not found in VRM model.`);
+  }
+};
 
 function logVrmBoneNames() {
   if (!currentVrm) return;
