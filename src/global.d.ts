@@ -17,6 +17,7 @@ declare global {
     loadVrmaPose: (vrmaPath: string) => Promise<void>;
   loadAndPlayAnimation: (animationPath: string) => Promise<void>;
     logVrmBoneNames: () => void;
+    createExpressionSliders: () => void;
     electronAPI: {
       listDirectory: (dirPath: string) => Promise<{ files: string[]; directories: string[]; error?: string }>;
       openVrmFile: () => Promise<string | null>;

@@ -1,0 +1,77 @@
+index.js:217 WARNING: Multiple instances of Three.js being imported.
+eval @ three.core.js:58574
+./node_modules/three/build/three.core.js @ index.js:217
+__webpack_require__ @ index.js:514
+fn @ index.js:697
+eval @ GLTFLoader.js:5
+./node_modules/three/examples/jsm/loaders/GLTFLoader.js @ index.js:239
+__webpack_require__ @ index.js:514
+fn @ index.js:697
+eval @ renderer.ts:31
+./src/renderer.ts @ index.js:487
+__webpack_require__ @ index.js:514
+(anonymous) @ index.js:1554
+(anonymous) @ index.js:1556
+renderer.ts:343 👋 VRM 오버레이 로딩 완료
+node:electron/js2c/renderer_init:2 Electron Security Warning (Disabled webSecurity) This renderer process has "webSecurity" disabled. This
+  exposes users of this app to severe security risks.
+
+For more information and help, consult
+https://electronjs.org/docs/tutorial/security.
+This warning will not show up
+once the app is packaged.
+(anonymous) @ node:electron/js2c/renderer_init:2
+logSecurityWarnings @ node:electron/js2c/renderer_init:2
+(anonymous) @ node:electron/js2c/renderer_init:2
+node:electron/js2c/renderer_init:2 Electron Security Warning (allowRunningInsecureContent) This renderer process has "allowRunningInsecureContent"
+  enabled. This exposes users of this app to severe security risks.
+
+  
+For more information and help, consult
+https://electronjs.org/docs/tutorial/security.
+This warning will not show up
+once the app is packaged.
+(anonymous) @ node:electron/js2c/renderer_init:2
+logSecurityWarnings @ node:electron/js2c/renderer_init:2
+(anonymous) @ node:electron/js2c/renderer_init:2
+node:electron/js2c/renderer_init:2 Electron Security Warning (Insecure Content-Security-Policy) This renderer process has either no Content Security
+  Policy set or a policy with "unsafe-eval" enabled. This exposes users of
+  this app to unnecessary security risks.
+
+For more information and help, consult
+https://electronjs.org/docs/tutorial/security.
+This warning will not show up
+once the app is packaged.
+warnAboutInsecureCSP @ node:electron/js2c/renderer_init:2
+logSecurityWarnings @ node:electron/js2c/renderer_init:2
+(anonymous) @ node:electron/js2c/renderer_init:2
+renderer.ts:102 VRM ExpressionManager initialized. _VRMExpressionManager {blinkExpressionNames: Array(3), lookAtExpressionNames: Array(4), mouthExpressionNames: Array(5), _expressions: Array(21), _expressionMap: {…}}
+renderer.ts:109 animationButtonsContainer: <div id=​"animation-buttons" style=​"position:​ fixed;​ top:​ 50%;​ left:​ 20px;​ transform:​ translateY(-50%)​;​ z-index:​ 9999;​ display:​ flex;​ flex-direction:​ column;​ gap:​ 5px;​ background-color:​ rgba(0,0,0,0.3)​;​ padding:​ 10px;​ border-radius:​ 0px;​">​…​</div>​flex
+renderer.ts:530 Failed to load VRMA as GLTF: three_vrm_1.VRMLookAtQuaternionProxy is not a constructor. Trying as JSON pose.
+eval @ renderer.ts:530
+fulfilled @ renderer.ts:27
+Promise.then
+step @ renderer.ts:27
+eval @ renderer.ts:27
+__awaiter @ renderer.ts:27
+loadVrmaFile @ renderer.ts:502
+eval @ renderer.ts:90
+eval @ GLTFLoader.js:251
+eval @ GLTFLoader.js:2711
+Promise.then
+eval @ GLTFLoader.js:2703
+Promise.then
+parse @ GLTFLoader.js:2683
+parse @ GLTFLoader.js:474
+eval @ GLTFLoader.js:249
+eval @ three.core.js:44417
+Promise.then
+load @ three.core.js:44405
+load @ GLTFLoader.js:245
+loadVRM @ renderer.ts:76
+eval @ renderer.ts:121
+./src/renderer.ts @ index.js:487
+__webpack_require__ @ index.js:514
+(anonymous) @ index.js:1554
+(anonymous) @ index.js:1556
+renderer.ts:548 Error loading VRMA file from assets/Pose/pose_stand_001.vrma: SyntaxError: Unexpected token 'g', "glTF

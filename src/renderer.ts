@@ -31,7 +31,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { VRMLoaderPlugin, VRM, VRMHumanBoneName, VRMPose } from '@pixiv/three-vrm';
+import { VRMLoaderPlugin, VRM, VRMHumanBoneName, VRMPose, VRMLookAtQuaternionProxy } from '@pixiv/three-vrm';
 import { VRMAnimationLoaderPlugin } from '@pixiv/three-vrm-animation';
 import { createVRMAnimationClip, VRMAnimation } from '@pixiv/three-vrm-animation';
 
@@ -81,7 +81,13 @@ function loadVRM(url: string) {
       vrm.scene.rotation.y = Math.PI;
       scene.add(vrm.scene);
       currentVrm = vrm;
-      window.currentVrm = vrm;
+      window.currentVrm = vrm;      
+
+      mixer = new THREE.AnimationMixer(vrm.scene); // Moved this line up
+
+      // 기본 포즈 로드
+      const defaultPosePath = 'assets/Pose/pose_stand_001.vrma';
+      window.loadVrmaFile(defaultPosePath);
 
       // window.logVrmBoneNames();
 
@@ -94,52 +100,13 @@ function loadVRM(url: string) {
 
       if (vrm.expressionManager) {
         console.log('VRM ExpressionManager initialized.', vrm.expressionManager);
-        const expressionMap: { [key: string]: string } = {};
-        const llmExpressionList: string[] = [];
-
-        vrm.expressionManager.expressions.forEach(exp => {
-            expressionMap[exp.name] = exp.name;
-            llmExpressionList.push(exp.name);
-        });
-
-        window.vrmExpressionList = llmExpressionList;
-        window.expressionMap = expressionMap;
-        console.log('VRM Expression List (Mapped for LLM):', window.vrmExpressionList);
-        console.log('Actual VRM Expressions:', vrm.expressionManager.expressions.map(exp => exp.name));
       } else {
         console.warn('VRM ExpressionManager is not available on this VRM model.');
       }
 
-      mixer = new THREE.AnimationMixer(vrm.scene);
-
       // 애니메이션 버튼 생성 로직
       const animationButtonsContainer = document.getElementById('animation-buttons');
       console.log('animationButtonsContainer:', animationButtonsContainer);
-      if (animationButtonsContainer && window.vrmAnimationList && window.currentVrm && window.mixer) {
-        console.log('Creating animation buttons...');
-        window.vrmAnimationList.forEach((clip, index) => {
-          const button = document.createElement('button');
-          button.textContent = clip.name || `Animation ${index}`;
-          button.style.margin = '5px';
-          button.style.padding = '10px';
-          button.style.backgroundColor = '#007bff';
-          button.style.color = 'white';
-          button.style.border = 'none';
-          button.style.borderRadius = '5px';
-          button.style.cursor = 'pointer';
-
-          button.onclick = () => {
-            window.mixer.stopAllAction(); // 기존 애니메이션 중지
-            const action = window.mixer.clipAction(clip);
-            action.play();
-            console.log(`Applied animation: ${clip.name || `Animation ${index}`}`);
-          };
-          animationButtonsContainer.appendChild(button);
-          console.log(`Button created for: ${clip.name || `Animation ${index}`}`);
-        });
-      } else {
-        console.warn('Animation list or VRM model/mixer not ready for animation buttons.', { animationButtonsContainer, vrmAnimationList: window.vrmAnimationList, currentVrm: window.currentVrm, mixer: window.mixer });
-      }
     },
     undefined,
     (error: unknown) => {
@@ -339,6 +306,7 @@ function animate() {
       head.quaternion.slerp(targetLocalQuat, 0.1);
     }
     currentVrm.update(delta);
+    
     currentVrm.scene.traverse(object => {
       if ((object as THREE.SkinnedMesh).isSkinnedMesh) {
         (object as THREE.SkinnedMesh).skeleton.update();
@@ -380,22 +348,15 @@ function animateExpression(expressionName: string, targetWeight: number, duratio
   const expressionManager = window.currentVrm.expressionManager;
   const vrmInternalName = window.expressionMap[expressionName] || expressionName;
   
-  console.log(`animateExpression called: expressionName=${expressionName}, targetWeight=${targetWeight}, duration=${duration}`);
-  console.log(`Mapped vrmInternalName: ${vrmInternalName}`);
-  console.log('ExpressionManager object:', expressionManager);
-
   // Ensure the target expression exists
   const targetExpression = expressionManager.getExpression(vrmInternalName);
   if (!targetExpression) {
     console.error(`Expression "${vrmInternalName}" not found in the VRM model.`);
     return;
   }
-  console.log(`Target expression found: ${targetExpression.name}`);
 
   const startWeight = expressionManager.getValue(vrmInternalName) || 0.0;
   const startTime = performance.now();
-
-  console.log(`Initial weight for ${vrmInternalName}: ${startWeight}`);
 
   // Reset other expressions to 0
   expressionManager.expressions.forEach(exp => {
@@ -409,12 +370,8 @@ function animateExpression(expressionName: string, targetWeight: number, duratio
     const progress = Math.min(elapsedTime / (duration * 1000), 1);
     const currentWeight = startWeight + (targetWeight - startWeight) * progress;
     
-    console.log(`Before setValue, ${vrmInternalName} weight: ${expressionManager.getValue(vrmInternalName)?.toFixed(3)}`);
     expressionManager.setValue(vrmInternalName, currentWeight);
-    console.log(`After setValue, ${vrmInternalName} weight: ${expressionManager.getValue(vrmInternalName)?.toFixed(3)}`);
     expressionManager.update();
-
-    console.log(`Updating ${vrmInternalName} to weight: ${currentWeight.toFixed(3)}. Current actual weight: ${expressionManager.getValue(vrmInternalName)?.toFixed(3)}`);
 
     if (progress < 1) {
       requestAnimationFrame(step);
@@ -594,3 +551,54 @@ async function loadVrmaFile(vrmaPath: string) {
   }
 }
 window.loadVrmaFile = loadVrmaFile;
+
+function createExpressionSliders() {
+  if (!window.currentVrm || !window.currentVrm.expressionManager) {
+    console.warn('createExpressionSliders: currentVrm or expressionManager is not available. Returning.');
+    return;
+  }
+  const slidersContainer = document.getElementById('expression-sliders');
+  if (!slidersContainer) {
+    console.warn('createExpressionSliders: slidersContainer not found. Returning.');
+    return;
+  }
+  slidersContainer.innerHTML = ''; // Clear previous sliders
+
+  const targetExpressions = window.currentVrm.expressionManager.expressions;
+
+  if (targetExpressions.length === 0) {
+    console.warn('createExpressionSliders: No expressions found in VRM model. Returning.');
+    return;
+  }
+
+  targetExpressions.forEach(expression => {
+    const expressionName = expression.name;
+    const expressionControl = document.createElement('div');
+    expressionControl.style.marginBottom = '15px';
+    expressionControl.setAttribute('data-expression-name', expressionName);
+
+    const label = document.createElement('label');
+    label.textContent = expressionName;
+    label.style.display = 'block';
+    expressionControl.appendChild(label);
+
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.min = '0';
+    slider.max = '100'; // 0.0 to 1.0, so 0 to 100 for slider
+    const initialValue = window.currentVrm.expressionManager.getValue(expressionName) || 0;
+    slider.value = (initialValue * 100).toFixed(0);
+
+    slider.oninput = () => {
+      const weight = parseFloat(slider.value) / 100;
+      window.currentVrm.expressionManager.setValue(expressionName, weight);
+      window.currentVrm.expressionManager.update();
+    };
+    slider.className = 'expression-slider';
+    expressionControl.appendChild(slider);
+    slidersContainer.appendChild(expressionControl);
+  });
+}
+window.createExpressionSliders = createExpressionSliders;
+    
+    
