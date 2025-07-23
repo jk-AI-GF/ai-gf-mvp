@@ -182,6 +182,53 @@ app.on('ready', () => {
     return filePaths[0];
   });
 
+  ipcMain.handle('open-persona-file', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: 'Open Persona File',
+      properties: ['openFile'],
+      filters: [
+        { name: 'Text Files', extensions: ['txt'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    });
+
+    if (canceled || filePaths.length === 0) {
+      return null;
+    }
+
+    try {
+      const personaContent = await fs.promises.readFile(filePaths[0], 'utf8');
+      return personaContent;
+    } catch (error) {
+      console.error('Failed to read persona file:', error);
+      return null;
+    }
+  });
+
+  ipcMain.handle('save-persona-to-file', async (event, persona: string) => {
+    const { canceled, filePath } = await dialog.showSaveDialog({
+      title: 'Save Persona',
+      defaultPath: path.join(app.getAppPath(), 'src', 'persona.txt'),
+      filters: [
+        { name: 'Text Files', extensions: ['txt'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    });
+
+    if (canceled || !filePath) {
+      return { success: false, message: 'Save operation canceled.' };
+    }
+
+    try {
+      await fs.promises.writeFile(filePath, persona, 'utf8');
+      return { success: true, message: `Persona saved to ${filePath}` };
+    } catch (error) {
+      console.error('Failed to save persona:', error);
+      const message = error instanceof Error ? error.message : String(error);
+      return { success: false, message: `Failed to save persona: ${message}` };
+    }
+  });
+
   // CSP 설정
   session.defaultSession.webRequest.onHeadersReceived((details: Electron.OnHeadersReceivedListenerDetails, callback: (response: { cancel?: boolean; responseHeaders?: Record<string, string[]> }) => void) => {
     callback({

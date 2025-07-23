@@ -32,6 +32,7 @@
         <label for="persona-text" style="font-size: 1.1rem; color: #ccc;">페르소나 텍스트</label>
         <textarea id="persona-text" name="persona-text" rows="5" placeholder="페르소나를 입력하세요" style="padding: 10px; border: 1px solid #444; border-radius: 5px; background-color: #333; color: #eee; font-size: 1rem; resize: vertical;"></textarea>
         <button type="submit" style="padding: 12px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1rem; transition: background-color 0.2s ease;">저장</button>
+        <button type="button" id="load-persona-file-button" style="padding: 12px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1rem; transition: background-color 0.2s ease;">파일에서 불러오기</button>
       </form>
       <h2 style="margin-top: 20px; margin-bottom: 20px; font-size: 1.8rem; text-align: center;">배경 설정</h2>
       <form id="background-form" style="display: flex; flex-direction: column; gap: 15px;">
@@ -173,14 +174,52 @@
         document.getElementById('llm-api-key').value = localStorage.getItem('llmApiKey') || '';
 
         // Persona setting
+        // Persona setting
         const personaForm = document.getElementById('persona-form');
-        personaForm.onsubmit = (e) => {
+        const loadPersonaFileButton = document.getElementById('load-persona-file-button');
+
+        personaForm.onsubmit = async (e) => {
           e.preventDefault();
           const persona = personaTextarea.value.trim();
           localStorage.setItem('userPersona', persona);
           window.personaText = persona; // Update window.personaText on save
           saveMessage.style.display = 'block';
           setTimeout(() => { saveMessage.style.display = 'none'; }, 2000);
+
+          // Save persona to file via Electron main process
+          try {
+            const result = await window.electronAPI.savePersonaToFile(persona);
+            if (result.success) {
+              console.log(`Persona saved to file: ${result.message}`);
+            } else {
+              console.error(`Failed to save persona to file: ${result.message}`);
+            }
+          } catch (error) {
+            console.error('Error calling savePersonaToFile:', error);
+          }
+        };
+
+        loadPersonaFileButton.onclick = async () => {
+          try {
+            const personaContent = await window.electronAPI.openPersonaFile();
+            if (personaContent) {
+              personaTextarea.value = personaContent;
+              localStorage.setItem('userPersona', personaContent); // Also save to localStorage
+              window.personaText = personaContent; // Update window.personaText
+              saveMessage.textContent = '페르소나를 파일에서 불러왔습니다!';
+              saveMessage.style.display = 'block';
+              setTimeout(() => { saveMessage.style.display = 'none'; }, 2000);
+            } else {
+              saveMessage.textContent = '페르소나 파일 불러오기 취소됨.';
+              saveMessage.style.display = 'block';
+              setTimeout(() => { saveMessage.style.display = 'none'; }, 2000);
+            }
+          } catch (error) {
+            console.error('Error loading persona from file:', error);
+            saveMessage.textContent = `페르소나 파일 불러오기 실패: ${error.message}`;
+            saveMessage.style.display = 'block';
+            setTimeout(() => { saveMessage.style.display = 'none'; }, 2000);
+          }
         };
 
         // Background color setting

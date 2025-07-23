@@ -7,4 +7,6 @@ import { ipcRenderer } from 'electron';
   saveVrmaPose: (poseData: ArrayBuffer) => ipcRenderer.invoke('save-vrma-pose', poseData),
   openVrmFile: () => ipcRenderer.invoke('open-vrm-file'),
   openVrmaFile: () => ipcRenderer.invoke('open-vrma-file'),
+  savePersonaToFile: (persona: string) => ipcRenderer.invoke('save-persona-to-file', persona),
+  openPersonaFile: () => ipcRenderer.invoke('open-persona-file'),
 };
