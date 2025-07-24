@@ -200,7 +200,7 @@ export function updateExpressionSliderValue(expressionName: string, currentWeigh
   }
 }
 
-export function setupPosePanelButton(electronAPI: any, loadAnimationFile: (filePathOrUrl: string, options?: { loop?: boolean; crossFadeDuration?: number }) => Promise<void>) {
+export function setupPosePanelButton(electronAPI: any, onFileSelect: (filePath: string) => void) {
   const openPosePanelButton = document.getElementById('open-pose-panel-button');
   if (openPosePanelButton) {
     openPosePanelButton.onclick = async () => {
@@ -238,8 +238,7 @@ export function setupPosePanelButton(electronAPI: any, loadAnimationFile: (fileP
                 button.onmouseover = () => { button.style.backgroundColor = 'rgba(0,123,255,0.2)'; };
                 button.onmouseout = () => { button.style.backgroundColor = 'transparent'; };
                 button.onclick = () => {
-                  const fullPath = `Pose/${file}`;
-                  loadAnimationFile(fullPath);
+                  onFileSelect(file);
                 };
                 poseListDisplay.appendChild(button);
               });
@@ -254,7 +253,7 @@ export function setupPosePanelButton(electronAPI: any, loadAnimationFile: (fileP
   }
 }
 
-export function setupAnimationPanelButton(electronAPI: any, loadAnimationFile: (filePathOrUrl: string, options?: { loop?: boolean; crossFadeDuration?: number }) => Promise<void>) {
+export function setupAnimationPanelButton(electronAPI: any, onFileSelect: (filePath: string) => void) {
   const openAnimationPanelButton = document.getElementById('open-animation-panel-button');
   if (openAnimationPanelButton) {
     openAnimationPanelButton.onclick = async () => {
@@ -292,8 +291,7 @@ export function setupAnimationPanelButton(electronAPI: any, loadAnimationFile: (
                 button.onmouseover = () => { button.style.backgroundColor = 'rgba(0,123,255,0.2)'; };
                 button.onmouseout = () => { button.style.backgroundColor = 'transparent'; };
                 button.onclick = () => {
-                  const fullPath = `Animation/${file}`;
-                  loadAnimationFile(fullPath);
+                  onFileSelect(file);
                 };
                 animationListDisplay.appendChild(button);
               });
@@ -308,54 +306,30 @@ export function setupAnimationPanelButton(electronAPI: any, loadAnimationFile: (
   }
 }
 
-export function setupSavePoseButton(getVrm: () => VRM | null, electronAPI: any) {
+export function setupSavePoseButton(getVrm: () => VRM | null, electronAPI: any, vrmManager: any) {
   const savePoseButton = document.getElementById('save-pose-button');
   if (savePoseButton) {
-    savePoseButton.onclick = () => {
-      const currentVrm = getVrm(); // 함수를 호출하여 VRM 객체를 가져옵니다.
+    savePoseButton.onclick = async () => {
+      const currentVrm = getVrm();
       if (!currentVrm) {
         alert('VRM 모델이 로드되지 않았습니다.');
         return;
       }
 
-      // 1. Get the current pose from the VRM model.
-      const pose: VRMPose = currentVrm.humanoid.getNormalizedPose();
-
-      // 2. Export the pose as a JSON Blob and save it.
-      const jsonString = JSON.stringify(pose, null, 2);
-      const blob = new Blob([jsonString], { type: 'application/json' });
-      
-      // Create a temporary URL to pass to the main process for saving
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-          if (event.target?.result instanceof ArrayBuffer) {
-              const result = await electronAPI.saveVrmaPose(event.target.result);
-              if (result.success) {
-                  console.log(`Pose saved successfully: ${result.message}`);
-              } else if (result.message !== 'Save operation canceled.') {
-                  console.error(`Failed to save pose: ${result.message}`);
-              }
-          } else {
-              console.error('Failed to read blob as ArrayBuffer.');
-              alert('포즈 파일 변환에 실패했습니다.');
-          }
-      };
-      reader.onerror = (error) => {
-          console.error('FileReader error:', error);
-      };
-      reader.readAsArrayBuffer(blob);
+      // Call the new VRMManager method to save pose as .vrma
+      await vrmManager.savePoseAsVrma(currentVrm, electronAPI);
     };
   }
 }
 
-export function setupLoadPoseFileButton(electronAPI: any, loadAnimationFile: (filePathOrUrl: string, options?: { loop?: boolean; crossFadeDuration?: number }) => Promise<void>) {
+export function setupLoadPoseFileButton(electronAPI: any, onFileSelect: (filePath: string) => void) {
   const loadPoseFileButton = document.getElementById('load-pose-file-button');
   if (loadPoseFileButton) {
     loadPoseFileButton.onclick = async () => {
       const filePath = await electronAPI.openVrmaFile();
       if (filePath) {
         const url = `file://${filePath.replace(/\\/g, '/')}`;
-        loadAnimationFile(url);
+        onFileSelect(url);
       }
     };
   }

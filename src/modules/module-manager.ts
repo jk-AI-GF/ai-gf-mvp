@@ -29,6 +29,17 @@ export interface Imodule {
    * @param context 모듈이 앱과 상호작용할 수 있는 모든 API를 포함하는 객체
    */
   setModuleContext(context: ModuleContext): void;
+
+  /**
+   * 모듈이 처음 활성화되고 업데이트되기 직전에 한 번 호출됩니다.
+   * 초기화 로직에 사용될 수 있습니다.
+   */
+  onStart?(): void;
+
+  /**
+   * 모듈이 활성화될 때마다 호출됩니다.
+   */
+  onEnable?(): void;
 }
 
 /**
@@ -36,6 +47,7 @@ export interface Imodule {
  */
 export class ModuleManager {
   private modules: Map<string, Imodule> = new Map();
+  private startedModules: Set<string> = new Set();
   private context: ModuleContext;
 
   constructor(context: ModuleContext) {
@@ -76,6 +88,9 @@ export class ModuleManager {
     const module = this.modules.get(name);
     if (module) {
       module.enabled = true;
+      if (typeof module.onEnable === 'function') {
+        module.onEnable();
+      }
       console.log(`module enabled: ${name}`);
     }
   }
@@ -89,6 +104,13 @@ export class ModuleManager {
     if (!vrm) return;
     for (const module of this.modules.values()) {
       if (module.enabled) {
+        // 모듈이 처음 시작되는 경우 onStart를 호출합니다.
+        if (!this.startedModules.has(module.name)) {
+          if (typeof module.onStart === 'function') {
+            module.onStart();
+          }
+          this.startedModules.add(module.name);
+        }
         module.update(delta, vrm);
       }
     }

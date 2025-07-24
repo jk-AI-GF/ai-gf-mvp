@@ -15,6 +15,7 @@ import { LookAtCameramodule } from '../modules/look-at-camera-module';
 import { AutoBlinkmodule } from '../modules/auto-blink-module';
 import { AutoIdleAnimationmodule } from '../modules/auto-idle-animation-module';
 import { ProactiveDialoguemodule } from '../modules/proactive-dialogue-module';
+import { ActionTestModule } from '../modules/action-test-module'; // 테스트 모듈 import
 import { Actions } from '../module-api/actions';
 import { ModuleContext } from '../module-api/module-context';
 import { SystemControls } from '../module-api/system-controls';
@@ -31,14 +32,29 @@ let isTtsActive = false;
 
 // Actions implementation
 const actions: Actions = {
-  playAnimation: (animationName: string, loop?: boolean, crossFadeDuration?: number) => {
-    window.loadAnimationFile(animationName, { loop, crossFadeDuration });
+  playAnimation: async (animationName: string, loop?: boolean, crossFadeDuration?: number) => {
+    const result = await vrmManager.loadAndParseFile(animationName);
+    if (result?.type === 'animation') {
+      vrmManager.playAnimation(result.data, loop, crossFadeDuration);
+    } else if (result?.type === 'pose') {
+      console.warn(`[Action] playAnimation was called with a pose file: ${animationName}. Use setPose instead.`);
+      vrmManager.applyPose(result.data); // Apply pose even if playAnimation was called
+    }
   },
   showMessage: (message: string, duration?: number) => {
     window.appendMessage('assistant', message);
   },
   setExpression: (expressionName: string, weight: number, duration?: number) => {
-    window.animateExpression(expressionName, weight, duration);
+    vrmManager.animateExpression(expressionName, weight, duration);
+  },
+  setPose: async (poseName: string) => {
+    const result = await vrmManager.loadAndParseFile(`Pose/${poseName}`);
+    if (result?.type === 'pose') {
+      vrmManager.applyPose(result.data);
+    } else if (result?.type === 'animation') {
+      console.warn(`[Action] setPose was called with an animation file: ${poseName}. Use playAnimation instead.`);
+      vrmManager.playAnimation(result.data, false); // Play animation even if setPose was called
+    }
   },
 };
 
@@ -74,6 +90,9 @@ window.electronAPI.on('show-message-in-renderer', (message: string, duration: nu
 });
 window.electronAPI.on('set-expression-in-renderer', (expressionName: string, weight: number, duration: number) => {
   actions.setExpression(expressionName, weight, duration);
+});
+window.electronAPI.on('set-pose-in-renderer', (poseName: string) => {
+  actions.setPose(poseName);
 });
 
 if (!window.floatingMessages) {
@@ -119,6 +138,10 @@ const autoIdleAnimationmodule = new AutoIdleAnimationmodule();
 moduleManager.register(autoIdleAnimationmodule);
 const proactiveDialoguemodule = new ProactiveDialoguemodule();
 moduleManager.register(proactiveDialoguemodule);
+
+// Register the test module
+const actionTestModule = new ActionTestModule();
+moduleManager.register(actionTestModule);
 
 // Add a ground plane for shadows
 const planeGeometry = new THREE.PlaneGeometry(10, 10);
@@ -257,11 +280,23 @@ window.setMasterVolume = function(volume: number) {
   }
 };
 
-// Setup UI buttons and link them to the VRMManager instance
-setupPosePanelButton(window.electronAPI, (path, opt) => vrmManager.loadAnimationFile(path, opt));
-setupAnimationPanelButton(window.electronAPI, (path, opt) => vrmManager.loadAnimationFile(path, opt));
-setupSavePoseButton(() => vrmManager.currentVrm, window.electronAPI);
-setupLoadPoseFileButton(window.electronAPI, (path, opt) => vrmManager.loadAnimationFile(path, opt));
+// Setup UI buttons and link them to the new VRMManager methods
+async function handleFileSelectAndProcess(filePath: string, expectedType: 'pose' | 'animation') {
+    const result = await vrmManager.loadAndParseFile(filePath);
+    if (result?.type === 'pose' && expectedType === 'pose') {
+        vrmManager.applyPose(result.data);
+    } else if (result?.type === 'animation' && expectedType === 'animation') {
+        vrmManager.playAnimation(result.data, false); // loop is false by default for panel selections
+    } else if (result) {
+        console.warn(`[UI] Selected file was a ${result.type}, but expected a ${expectedType}.`);
+        alert(`선택한 파일은 ${expectedType} 타입이 아닙니다.`);
+    }
+}
+
+setupPosePanelButton(window.electronAPI, (path) => handleFileSelectAndProcess(`Pose/${path}`, 'pose'));
+setupAnimationPanelButton(window.electronAPI, (path) => handleFileSelectAndProcess(`Animation/${path}`, 'animation'));
+setupSavePoseButton(() => vrmManager.currentVrm, window.electronAPI, vrmManager);
+setupLoadPoseFileButton(window.electronAPI, (path) => handleFileSelectAndProcess(path, 'pose'));
 setupLoadVrmButton(window.electronAPI, (path) => vrmManager.loadVRM(path));
 
 window.listVrmMeshes = () => listVrmMeshes(vrmManager.currentVrm);

@@ -26,4 +26,10 @@ export interface Actions {
    * @param duration 표정 변경에 걸리는 시간 (초)
    */
   setExpression(expressionName: string, weight: number, duration?: number): void;
+
+  /**
+   * VRM 모델의 포즈를 설정합니다.
+   * @param poseName 설정할 포즈의 이름 (보통 .vrma 파일 이름)
+   */
+  setPose(poseName: string): void;
 }

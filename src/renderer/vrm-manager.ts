@@ -1,10 +1,59 @@
 
 import * as THREE from 'three';
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
-import { VRMLoaderPlugin, VRM, VRMPose } from '@pixiv/three-vrm';
+import { VRMLoaderPlugin, VRM, VRMHumanBoneName, VRMPose } from '@pixiv/three-vrm';
 import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-vrm-animation';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
-import { createJointSliders, createExpressionSliders, updateExpressionSliderValue, createMeshList } from './ui-manager';
+import { createJointSliders, createExpressionSliders, updateExpressionSliderValue, createMeshList, toggleVrmMeshVisibility } from './ui-manager';
+
+type ParsedFile = { type: 'pose'; data: THREE.AnimationClip } | { type: 'animation'; data: THREE.AnimationClip } | null;
+
+function createAnimationClipFromVRMPose(vrmPose: VRMPose, vrm: VRM): THREE.AnimationClip {
+    const tracks: THREE.KeyframeTrack[] = [];
+    const duration = 0; // Pose clips have 0 duration
+
+    // Iterate over each bone in the VRMPose
+    for (const boneName in vrmPose) {
+        const poseData = vrmPose[boneName as VRMHumanBoneName];
+        if (!poseData) continue;
+
+        const boneNode = vrm.humanoid.getNormalizedBoneNode(boneName as VRMHumanBoneName);
+            if (!boneNode) continue;
+
+            // Position track (if present)
+            if (poseData.position) {
+                const position = new THREE.Vector3().fromArray(poseData.position);
+
+                // Special handling for hips position
+                if (boneName === VRMHumanBoneName.Hips) {
+                    // If hips position is [0,0,0], set a default Y position to prevent sinking
+                    if (position.x === 0 && position.y === 0 && position.z === 0) {
+                        position.y = 0.9; // Default hip height for VRM models
+                    }
+                }
+
+                tracks.push(new THREE.VectorKeyframeTrack(
+                    `${boneNode.name}.position`,
+                    [0], // Time at 0
+                    position.toArray()
+                ));
+            }
+
+            // Rotation track (if present)
+            if (poseData.rotation) {
+                const rotation = new THREE.Quaternion().fromArray(poseData.rotation);
+                tracks.push(new THREE.QuaternionKeyframeTrack(
+                    `${boneNode.name}.quaternion`,
+                    [0], // Time at 0
+                    rotation.toArray()
+                ));
+            }
+
+        
+    }
+
+    return new THREE.AnimationClip('VRMPoseClip', duration, tracks);
+}
 
 export class VRMManager {
     public currentVrm: VRM | null = null;
@@ -24,31 +73,24 @@ export class VRMManager {
         this.fbxLoader = new FBXLoader();
 
         // Bind `this` to window functions that will be called from UI or other modules
-        window.loadAnimationFile = this.loadAnimationFile.bind(this);
         window.animateExpression = this.animateExpression.bind(this);
         window.animateExpressionAdditive = this.animateExpressionAdditive.bind(this);
+        // Note: window.loadAnimationFile is removed as it's now handled by the Actions API
     }
 
+    /**
+     * Loads a new VRM model into the scene.
+     */
     public async loadVRM(filePathOrUrl: string): Promise<void> {
         if (this.currentVrm) {
             this.scene.remove(this.currentVrm.scene);
             this.currentVrm = null;
         }
 
-        const isAbsolute = filePathOrUrl.startsWith('file://');
-        const promise = isAbsolute
-            ? window.electronAPI.readAbsoluteFile(filePathOrUrl.substring(7))
-            : window.electronAPI.readAssetFile(filePathOrUrl);
+        const fileContent = await this._readFile(filePathOrUrl);
+        if (!fileContent) return;
 
         try {
-            const fileContent = await promise;
-            if (!(fileContent instanceof ArrayBuffer)) {
-                if (typeof fileContent === 'object' && 'error' in fileContent) {
-                    throw new Error(fileContent.error);
-                }
-                throw new Error('Invalid file content received.');
-            }
-
             const gltf = await new Promise<GLTF>((resolve, reject) => {
                 this.loader.parse(fileContent, '', resolve, reject);
             });
@@ -58,7 +100,7 @@ export class VRMManager {
             vrm.scene.rotation.y = Math.PI;
             this.scene.add(vrm.scene);
             this.currentVrm = vrm;
-            window.currentVrm = vrm; // For legacy compatibility if needed
+            window.currentVrm = vrm;
 
             this.mixer = new THREE.AnimationMixer(vrm.scene);
 
@@ -70,12 +112,36 @@ export class VRMManager {
             });
 
             await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // 커스텀 애니메이션 부분
+            const customAnimationPath1 = 'Animation/VRMA_02.vrma';
+            try {
+                const animationResult1 = await this.loadAndParseFile(customAnimationPath1);
+                if (animationResult1?.type === 'animation') {
+                    this.playAnimation(animationResult1.data, true); // loop를 true로 설정하여 반복 재생
+                    console.log(`[VRMManager] Custom animation ${customAnimationPath1} played.`);
+                } else {
+                    console.warn(`[VRMManager] Failed to load or parse custom animation: ${customAnimationPath1}`);
+                }
+            } catch (error) {
+                console.error(`[VRMManager] Error playing custom animation ${customAnimationPath1}:`, error);
+            }
 
-            this.loadAnimationFile('Animation/VRMA_02.vrma');
             await this.animateVrmDrop(vrm, 0.5, 3.0, -0.6);
 
-            setTimeout(() => {
-                this.loadAnimationFile('Animation/VRMA_03.vrma');
+            setTimeout(async () => {
+                const customAnimationPath2 = 'Animation/VRMA_03.vrma';
+                try {
+                    const animationResult2 = await this.loadAndParseFile(customAnimationPath2);
+                    if (animationResult2?.type === 'animation') {
+                        this.playAnimation(animationResult2.data, true); // loop를 true로 설정하여 반복 재생
+                        console.log(`[VRMManager] Custom animation ${customAnimationPath2} played.`);
+                    } else {
+                        console.warn(`[VRMManager] Failed to load or parse custom animation: ${customAnimationPath2}`);
+                    }
+                } catch (error) {
+                    console.error(`[VRMManager] Error playing custom animation ${customAnimationPath2}:`, error);
+                }
             }, 3000);
 
             window.expressionMap = vrm.expressionManager.expressionMap;
@@ -84,14 +150,150 @@ export class VRMManager {
                 createExpressionSliders();
             }
             
-            // Update UI that depends on the new VRM
-            createMeshList(this.currentVrm, window.toggleVrmMeshVisibility);
+            createMeshList(this.currentVrm, toggleVrmMeshVisibility);
 
         } catch (error) {
             console.error('VRM load failed:', error);
             const message = error instanceof Error ? error.message : String(error);
             alert(`Failed to load VRM model: ${message}`);
         }
+    }
+
+    /**
+     * Reads a file from either an absolute path or a relative asset path.
+     */
+    private async _readFile(filePathOrUrl: string): Promise<ArrayBuffer | null> {
+        const isAbsolute = filePathOrUrl.startsWith('file://');
+        const promise = isAbsolute
+            ? window.electronAPI.readAbsoluteFile(filePathOrUrl.substring(7))
+            : window.electronAPI.readAssetFile(filePathOrUrl);
+        
+        try {
+            const fileContent = await promise;
+            if (!(fileContent instanceof ArrayBuffer)) {
+                throw new Error('Invalid file content received.');
+            }
+            return fileContent;
+        } catch (error) {
+            console.error(`Failed to read file ${filePathOrUrl}:`, error);
+            return null;
+        }
+    }
+
+    /**
+     * Loads and parses a file, determining if it's a pose or an animation.
+     * This is the central method for interpreting animation/pose files.
+     */
+    public async loadAndParseFile(filePath: string): Promise<ParsedFile> {
+        const fileContent = await this._readFile(filePath);
+        if (!fileContent) return null;
+
+        let clip: THREE.AnimationClip | null = null;
+
+        // 1. Try to parse as JSON (for VRMPose or other JSON-based formats)
+        try {
+            const jsonString = new TextDecoder().decode(fileContent);
+            const jsonParsed = JSON.parse(jsonString);
+
+            // Check if it's a VRMPose JSON
+            if (jsonParsed.hips && this.currentVrm) {
+                console.log(`[VRMManager] Interpreted ${filePath} as JSON VRMPose.`);
+                clip = createAnimationClipFromVRMPose(jsonParsed as VRMPose, this.currentVrm);
+            } else {
+                // If it's a JSON but not a VRMPose, we might handle other JSON formats here later
+                console.warn(`[VRMManager] JSON file ${filePath} is not a recognized VRMPose format.`);
+                return null; // Or handle other JSON formats if needed
+            }
+        } catch (e) {
+            // Not a valid JSON, or not a VRMPose JSON, proceed to binary parsing
+            // console.log(`[VRMManager] File ${filePath} is not a JSON. Attempting binary parse.`);
+        }
+
+        // 2. If not parsed as JSON, try to parse as binary animation/pose (.vrma, .fbx)
+        if (!clip) {
+            try {
+                if (filePath.endsWith('.vrma')) {
+                    const gltf = await this.loader.parseAsync(fileContent, '');
+                    const vrmAnim = gltf.userData.vrmAnimations?.[0];
+                    if (vrmAnim) {
+                        clip = createVRMAnimationClip(vrmAnim, this.currentVrm!);
+                        console.log(`[VRMManager] Interpreted ${filePath} as VRMA.`);
+                    }
+                } else if (filePath.endsWith('.fbx')) {
+                    const fbx = this.fbxLoader.parse(fileContent, '');
+                    clip = fbx.animations[0] || null;
+                    console.log(`[VRMManager] Interpreted ${filePath} as FBX.`);
+                }
+            } catch (error) {
+                console.error(`[VRMManager] Failed to parse binary file ${filePath}:`, error);
+            }
+        }
+
+        if (clip) {
+            if (clip.duration < 0.1) { // Threshold for considering it a pose
+                console.log(`[VRMManager] Final interpretation of ${filePath} as Pose (duration: ${clip.duration}).`);
+                return { type: 'pose', data: clip };
+            } else {
+                console.log(`[VRMManager] Final interpretation of ${filePath} as Animation (duration: ${clip.duration}).`);
+                return { type: 'animation', data: clip };
+            }
+        }
+
+        console.warn(`[VRMManager] Could not interpret file ${filePath} as pose or animation.`);
+        return null;
+    }
+
+    /**
+     * Applies a pose to the VRM model, stopping any current animation.
+     */
+    public applyPose(poseClip: THREE.AnimationClip): void {
+        if (!this.currentVrm || !this.mixer) return;
+        
+        console.log('[VRMManager] Applying pose.');
+        this.mixer.stopAllAction(); // Ensure all animations are stopped.
+        this.currentAction = null; // Clear current action
+
+        const newAction = this.mixer.clipAction(poseClip);
+        newAction.setLoop(THREE.LoopOnce, 0); // Play once
+        newAction.clampWhenFinished = true; // Hold the last frame
+        newAction.play();
+
+        // Update the model's matrix world to apply the pose immediately
+        this.currentVrm.scene.updateMatrixWorld(true);
+
+        // --- ADD THIS LOG FOR DEBUGGING ---
+        const hipsBone = this.currentVrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Hips);
+        if (hipsBone) {
+            const worldPosition = new THREE.Vector3();
+            hipsBone.getWorldPosition(worldPosition);
+            console.log(`[VRMManager] Hips World Position after applyPose: ${worldPosition.toArray()}`);
+        }
+        // --- END ADDITION ---
+
+        createJointSliders(); // Re-create sliders to reflect the new pose
+    }
+
+    /**
+     * Plays an animation clip on the VRM model.
+     */
+    public playAnimation(clip: THREE.AnimationClip, loop = false, crossFadeDuration = 0.5): void {
+        if (!this.currentVrm || !this.mixer) return;
+        console.log(`[VRMManager] Playing animation: ${clip.name}`);
+
+        const newAction = this.mixer.clipAction(clip);
+        newAction.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 0);
+        if (!loop) newAction.clampWhenFinished = true;
+
+        const canFade = this.currentAction && this.currentAction.getClip().duration > 0.1;
+
+        if (canFade && this.currentAction !== newAction) {
+            this.currentAction.crossFadeTo(newAction, crossFadeDuration, true);
+        } else {
+            this.currentAction?.stop();
+        }
+        
+        newAction.play();
+        this.currentAction = newAction;
     }
 
     private animateVrmDrop(vrm: VRM, duration: number, startY: number, endY: number): Promise<void> {
@@ -109,78 +311,6 @@ export class VRMManager {
             };
             requestAnimationFrame(step);
         });
-    }
-
-    public async loadAnimationFile(filePathOrUrl: string, options: { loop?: boolean; crossFadeDuration?: number } = {}): Promise<void> {
-        if (!this.currentVrm || !this.mixer) return;
-
-        const { loop = false, crossFadeDuration = 0.5 } = options;
-
-        const isAbsolute = filePathOrUrl.startsWith('file://');
-        const promise = isAbsolute
-            ? window.electronAPI.readAbsoluteFile(filePathOrUrl.substring(7))
-            : window.electronAPI.readAssetFile(filePathOrUrl);
-
-        let newClip: THREE.AnimationClip | null = null;
-
-        try {
-            const fileContent = await promise;
-            if (!(fileContent instanceof ArrayBuffer)) {
-                throw new Error('Invalid file content received.');
-            }
-
-            if (filePathOrUrl.endsWith('.vrma')) {
-                try {
-                    const poseData = JSON.parse(new TextDecoder().decode(fileContent)) as VRMPose;
-                    if (poseData.hips) {
-                        if (this.currentAction) {
-                            this.currentAction.stop();
-                            this.currentAction = null;
-                        }
-                        this.mixer.stopAllAction();
-                        this.currentVrm.humanoid.setNormalizedPose(poseData);
-                        this.currentVrm.scene.updateMatrixWorld(true);
-                        createJointSliders();
-                        console.log(`Loaded VRMA as JSON pose from ${filePathOrUrl}`);
-                        return;
-                    }
-                } catch (e) {
-                    // Not a pose, continue to load as animation
-                }
-
-                const gltf = await new Promise<GLTF>((resolve, reject) => {
-                    this.loader.parse(fileContent, '', resolve, reject);
-                });
-                if (gltf.userData.vrmAnimations && gltf.userData.vrmAnimations[0]) {
-                    newClip = createVRMAnimationClip(gltf.userData.vrmAnimations[0], this.currentVrm);
-                }
-            } else if (filePathOrUrl.endsWith('.fbx')) {
-                const fbx = this.fbxLoader.parse(fileContent, '');
-                if (fbx.animations && fbx.animations.length > 0) {
-                    newClip = fbx.animations[0];
-                }
-            }
-
-            if (!newClip) {
-                console.warn(`No animation clip could be loaded from ${filePathOrUrl}`);
-                return;
-            }
-
-            const newAction = this.mixer.clipAction(newClip);
-            newAction.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 0);
-            if (!loop) newAction.clampWhenFinished = true;
-
-            if (this.currentAction && this.currentAction !== newAction) {
-                this.currentAction.crossFadeTo(newAction, crossFadeDuration, true);
-            }
-            newAction.play();
-            this.currentAction = newAction;
-            console.log(`Loaded animation from ${filePathOrUrl}.`);
-
-        } catch (error) {
-            console.error(`Error loading animation file from ${filePathOrUrl}:`, error);
-            alert(`Failed to load animation file: ${(error as Error).message}`);
-        }
     }
 
     public animateExpression(expressionName: string, targetWeight: number, duration: number): void {

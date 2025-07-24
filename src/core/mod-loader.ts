@@ -97,6 +97,9 @@ export class ModLoader {
             setExpression: (expressionName: string, weight: number, duration?: number) => {
               this.sendToRenderer('set-expression', expressionName, weight, duration);
             },
+            setPose: (poseName: string) => {
+              this.sendToRenderer('set-pose', poseName);
+            },
           },
           system: {
             toggleTts: (enable: boolean) => {

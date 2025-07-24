@@ -147,6 +147,12 @@ app.on('ready', () => {
     }
   });
 
+  ipcMain.handle('set-pose', async (event, poseName: string) => {
+    if (overlayWindow) {
+      overlayWindow.webContents.send('set-pose-in-renderer', poseName);
+    }
+  });
+
   ipcMain.handle('list-directory', async (event, dirPath: string) => {
     try {
       const fullPath = path.join(assetsRoot, dirPath);
