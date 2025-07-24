@@ -98,6 +98,14 @@ export class ModLoader {
               this.sendToRenderer('set-expression', expressionName, weight, duration);
             },
           },
+          system: {
+            toggleTts: (enable: boolean) => {
+              this.sendToRenderer('toggle-tts', enable);
+            },
+            setMasterVolume: (volume: number) => {
+              this.sendToRenderer('set-master-volume', volume);
+            },
+          },
         };
         modModule.default(moduleContext);
         this.loadedMods.set(manifest.name, manifest);
