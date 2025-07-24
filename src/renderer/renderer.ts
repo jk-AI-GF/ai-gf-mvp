@@ -78,7 +78,6 @@ const systemControls: SystemControls = {
 };
 
 const eventBusImpl = new EventBusImpl();
-const triggerEngine = new TriggerEngine();
 
 const moduleContext: ModuleContext = {
   eventBus: eventBusImpl,
@@ -87,8 +86,12 @@ const moduleContext: ModuleContext = {
   system: systemControls,
 };
 
+const triggerEngine = new TriggerEngine();
+
 const moduleManager = new ModuleManager(moduleContext);
+
 window.moduleManager = moduleManager;
+
 // Main process로부터의 IPC 메시지 수신
 window.electronAPI.on('play-animation-in-renderer', (animationName: string, loop: boolean, crossFadeDuration: number) => {
   actions.playAnimation(animationName, loop, crossFadeDuration);
@@ -105,6 +108,7 @@ window.electronAPI.on('set-expression-in-renderer', (expressionName: string, wei
 if (!window.floatingMessages) {
   window.floatingMessages = [];
 }
+
 const tempVector = new THREE.Vector3();
 
 const width = window.innerWidth;
@@ -112,6 +116,7 @@ const height = window.innerHeight;
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(35, width / height, 0.1, 1000);
+
 // 초기 카메라 위치와 회전은 자유 모드 여부에 따라 설정
 if (!isFreeCameraMode) {
   camera.position.copy(DEFAULT_CAMERA_POSITION);
@@ -369,7 +374,6 @@ function onWindowResize() {
 window.addEventListener('resize', onWindowResize);
 
 
-
 console.log('👋 VRM 오버레이 로딩 완료');
 
 function animateExpression(expressionName: string, targetWeight: number, duration: number) {
@@ -506,13 +510,6 @@ window.setMasterVolume = function(volume: number) {
     console.log(`Master volume set to: ${masterGainNode.gain.value}`);
   }
 };
-
-
-
-
-
-
-
 
 
 async function loadAnimationFile(filePathOrUrl: string, options: { loop?: boolean; crossFadeDuration?: number } = {}) {
