@@ -45,5 +45,6 @@ declare global {
     toggleVrmMeshVisibility: (meshName: string, visible: boolean) => void;
     createMeshList: () => void;
     toggleCameraMode: () => void;
+    toggleTts: (enable: boolean) => void;
   }
 }

@@ -51,7 +51,6 @@ export class ProactiveDialoguemodule implements Imodule {
     this.timeSinceLastDialogue = 0.0;
     // 5초에서 15초 사이의 랜덤한 시간 후에 다음 대화를 시작합니다.
     this.nextDialogueTime = Math.random() * 10.0 + 8.0;
-    console.log(`Next dialogue in ${this.nextDialogueTime.toFixed(2)} seconds.`);
   }
 
   /**

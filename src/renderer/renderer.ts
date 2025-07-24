@@ -47,6 +47,7 @@ let currentAction: THREE.AnimationAction | null = null; // 현재 재생 중인 
 const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0.0, 0.0, 3.0);
 const DEFAULT_CAMERA_ROTATION = new THREE.Euler(-0.08, 0.0, 0.0);
 let isFreeCameraMode = true; // 초기 카메라는 자유 모드
+let isTtsActive = false; // TTS 활성화 여부를 제어하는 변수
 
 // Actions 구현체
 const actions: Actions = {
@@ -646,7 +647,7 @@ function initAudioContext() {
 document.body.addEventListener('click', initAudioContext, { once: true });
 
 async function playTTS(text: string) {
-  if (!text || !audioContext) return;
+  if (!text || !audioContext || !isTtsActive) return;
   if (currentAudioSource) currentAudioSource.stop();
   try {
     const response = await fetch('http://localhost:8000/api/tts', {
@@ -670,14 +671,17 @@ async function playTTS(text: string) {
     currentAudioSource = source;
     source.onended = () => { currentAudioSource = null; };
   } catch (error) {
-    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-      console.warn("TTS server is not running. Skipping TTS playback.");
-    } else {
+    if (!(error instanceof TypeError && error.message.includes('Failed to fetch'))) {
       console.error("TTS playback error:", error);
     }
   }
 }
 window.playTTS = playTTS;
+
+window.toggleTts = function(enable: boolean) {
+  isTtsActive = enable;
+  console.log(`TTS is now ${isTtsActive ? 'enabled' : 'disabled'}.`);
+};
 
 function createJointSliders() {
   if (!currentVrm) return;

@@ -6,7 +6,7 @@ import { Actions } from '../module-api/actions';
  */
 export class AutoIdleAnimationmodule implements Imodule {
   public readonly name = 'AutoIdleAnimation';
-  public enabled = true;
+  public enabled = false;
 
   private actions: Actions;
   private timeSinceLastIdle = 0.0;
