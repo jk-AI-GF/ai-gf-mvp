@@ -24,12 +24,17 @@ export class AutoBlinkPlugin implements IPlugin {
     this.nextBlinkTime = Math.random() * 6.0 + 1.5;
   }
 
+  public setup(vrm: VRM): void {
+    // Blink uses expressions, which are already part of the VRM.
+    // No specific setup is needed for this plugin.
+  }
+
   /**
    * 매 프레임마다 호출되어 깜빡임 로직을 처리합니다.
    * @param delta 마지막 프레임 이후의 시간 (초)
    * @param vrm VRM 모델 인스턴스
    */
-  public update(delta: number, vrm: VRM): void {
+  public update(delta: number): void {
     this.timeSinceLastBlink += delta;
 
     if (this.timeSinceLastBlink >= this.nextBlinkTime) {

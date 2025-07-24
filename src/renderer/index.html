@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>AiCompanion</title>
+    <style>
+      .settings-modal-hidden {
+        display: none;
+      }
+      .settings-modal-visible {
+        display: block;
+      }
+      .floating-chat-message.assistant {
+        transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+        transform: translate(-50%, -100%); /* 최종 위치 */
+      }
+      .floating-chat-message.assistant.entering {
+        opacity: 0;
+        transform: translate(-60%, -100%); /* 왼쪽에서 시작 */
+      }
+    </style>
+  </head>
+  <body>
+    <div id="top-buttons-container" style="position: fixed; top: 24px; right: 32px; z-index: 1000; display: flex; justify-content: flex-end; align-items: center; gap: 10px;">
+      <button id="open-settings" style="background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.1rem; padding: 0.5rem 1rem; cursor: pointer;">설정</button>
+      <button id="open-joint-control" style="background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.1rem; padding: 0.5rem 1rem; cursor: pointer;">관절 조절</button>
+      <button id="open-expression-panel-button" style="background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.1rem; padding: 0.5rem 1rem; cursor: pointer;">표정</button>
+      <button id="open-plugins-panel-button" style="background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.1rem; padding: 0.5rem 1rem; cursor: pointer;">플러그인</button>
+      <button id="open-mesh-panel-button" style="background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.1rem; padding: 0.5rem 1rem; cursor: pointer;">메쉬</button>
+      <button id="close-overlay" style="background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.5rem; padding: 0.5rem 1rem; cursor: pointer;">×</button>
+    </div>
+    <div id="settings-modal" style="visibility:hidden; opacity:0; transition: opacity 0.3s ease, visibility 0.3s ease; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; height: 400px; background: rgba(20,20,20,0.95); z-index: 2001; padding: 20px; border-radius: 10px; color: #fff; overflow-y: auto; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
+      <button id="close-settings" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">×</button>
+      <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 1.8rem; text-align: center;">챗봇 LLM API 설정</h2>
+      <form id="llm-form" style="display: flex; flex-direction: column; gap: 15px;">
+        <label for="llm-api-key" style="font-size: 1.1rem; color: #ccc;">LLM API 키</label>
+        <input type="text" id="llm-api-key" name="llm-api-key" placeholder="API 키를 입력하세요" required style="padding: 10px; border: 1px solid #444; border-radius: 5px; background-color: #333; color: #eee; font-size: 1rem;" />
+        <button type="submit" style="padding: 12px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1rem; transition: background-color 0.2s ease;">저장</button>
+      </form>
+      <h2 style="margin-top: 20px; margin-bottom: 20px; font-size: 1.8rem; text-align: center;">페르소나 설정</h2>
+      <form id="persona-form" style="display: flex; flex-direction: column; gap: 15px;">
+        <label for="persona-text" style="font-size: 1.1rem; color: #ccc;">페르소나 텍스트</label>
+        <textarea id="persona-text" name="persona-text" rows="5" placeholder="페르소나를 입력하세요" style="padding: 10px; border: 1px solid #444; border-radius: 5px; background-color: #333; color: #eee; font-size: 1rem; resize: vertical;"></textarea>
+        <button type="submit" style="padding: 12px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1rem; transition: background-color 0.2s ease;">저장</button>
+        <button type="button" id="load-persona-file-button" style="padding: 12px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1rem; transition: background-color 0.2s ease;">파일에서 불러오기</button>
+      </form>
+      <h2 style="margin-top: 20px; margin-bottom: 20px; font-size: 1.8rem; text-align: center;">배경 설정</h2>
+      <form id="background-form" style="display: flex; flex-direction: column; gap: 15px;">
+        <label for="background-color-picker" style="font-size: 1.1rem; color: #ccc;">배경 색상</label>
+        <input type="color" id="background-color-picker" name="background-color-picker" value="#36393f" style="width: 100%; height: 40px; border: none; padding: 0;" />
+      </form>
+      <div id="save-message" style="display:none; color:lightgreen; margin-top:15px; font-size: 0.9rem; text-align: center;">저장되었습니다!</div>
+    </div>
+    <div id="settings-modal-overlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; pointer-events: none;"></div>
+    <div id="joint-control-panel" style="display:none; position: fixed; top: 80px; right: 20px; width: 300px; max-height: 70vh; background: rgba(20,20,20,0.8); z-index: 2000; padding: 20px; border-radius: 10px; color: #fff; overflow-y: auto;">
+      <button id="close-joint-control" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">×</button>
+      <h3>관절 조절</h3>
+      <div id="joint-sliders"></div>
+    </div>
+    <div id="pose-side-panel" style="display:none; position: fixed; top: 0; right: 0; width: 300px; height: 100vh; background: rgba(30,30,30,0.95); z-index: 2000; padding: 25px; color: #fff; overflow-y: auto; box-shadow: -5px 0 15px rgba(0,0,0,0.5);">
+      <button id="close-pose-panel" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">×</button>
+      <div id="pose-list-display"></div>
+    </div>
+
+    <div id="animation-side-panel" style="display:none; position: fixed; top: 0; right: 0; width: 300px; height: 100vh; background: rgba(30,30,30,0.95); z-index: 2000; padding: 25px; color: #fff; overflow-y: auto; box-shadow: -5px 0 15px rgba(0,0,0,0.5);">
+      <button id="close-animation-panel" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">×</button>
+      <div id="animation-list-display"></div>
+    </div>
+
+    <div id="expression-control-panel" style="display:none; position: fixed; top: 80px; right: 20px; width: 300px; max-height: 70vh; background: rgba(20,20,20,0.8); z-index: 2000; padding: 20px; border-radius: 10px; color: #fff; overflow-y: auto;">
+      <button id="close-expression-panel" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">×</button>
+      <h3>표정 조절</h3>
+      <div id="expression-sliders"></div>
+    </div>
+    <div id="plugin-control-panel" style="display:none; position: fixed; top: 80px; right: 20px; width: 300px; max-height: 70vh; background: rgba(20,20,20,0.8); z-index: 2000; padding: 20px; border-radius: 10px; color: #fff; overflow-y: auto;">
+      <button id="close-plugins-panel" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">×</button>
+      <h3>플러그인 관리</h3>
+      <div id="plugins-list"></div>
+    </div>
+    <div id="mesh-control-panel" style="display:none; position: fixed; top: 80px; right: 20px; width: 300px; max-height: 70vh; background: rgba(20,20,20,0.8); z-index: 2000; padding: 20px; border-radius: 10px; color: #fff; overflow-y: auto;">
+      <button id="close-mesh-panel" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">×</button>
+      <h3>메쉬 관리</h3>
+      <div id="mesh-list"></div>
+    </div>
+    <div id="animation-buttons" style="position: fixed; top: 50%; left: 20px; transform: translateY(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 5px; background-color: rgba(0,0,0,0.3); padding: 10px; border-radius: 0px;">
+      <!-- VRM 모델 관련 -->
+      <button id="load-vrm-button" style="padding: 10px; background-color: #34495e; color: white; border: none; border-radius: 0px; cursor: pointer;">VRM 모델 로드</button>
+      
+      <!-- 포즈/애니메이션 패널 열기 -->
+      <button id="open-pose-panel-button" style="padding: 10px; background-color: #6a9955; color: white; border: none; border-radius: 0px; cursor: pointer;">포즈 열기</button>
+      <button id="open-animation-panel-button" style="padding: 10px; background-color: #6a9955; color: white; border: none; border-radius: 0px; cursor: pointer;">애니메이션 열기</button>
+
+      <!-- 포즈 관련 -->
+      <button id="save-pose-button" style="padding: 10px; background-color: #2c3e50; color: white; border: none; border-radius: 0px; cursor: pointer;">포즈 저장</button>
+      <button id="load-pose-file-button" style="padding: 10px; background-color: #2c3e50; color: white; border: none; border-radius: 0px; cursor: pointer;">포즈 파일 열기</button>
+      <button id="random-pose-button" style="padding: 10px; background-color: #cc6666; color: white; border: none; border-radius: 0px; cursor: pointer;">랜덤 포즈</button>
+    </div>
+
+    <div id="bottom-left-buttons-container" style="position: fixed; bottom: 24px; left: 32px; z-index: 9999; display: flex; flex-direction: column; gap: 5px;">
+      <button id="toggle-camera-mode-button" style="padding: 10px; background-color: #888888; color: white; border: none; border-radius: 4px; cursor: pointer;">자유카메라</button>
+    </div>
+
+    <div id="chat-container" style="position: fixed; bottom: 8%; z-index: 9999; border-radius: 5px;">
+      <div id="chat-messages" style="margin: 0px;"></div>
+      <form id="chat-form">
+        <input type="text" id="chat-input" placeholder="메시지를 입력하세요..." autocomplete="off" required />
+        <button type="submit">전송</button>
+      </form>
+    </div>
+    <div id="floating-chat-messages-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9998;"></div>
+    <script>
+      document.addEventListener('DOMContentLoaded', async () => {
+        // Initial persona loading
+        const personaTextarea = document.getElementById('persona-text');
+        const saveMessage = document.getElementById('save-message'); // Get saveMessage here
+
+        const savedPersona = localStorage.getItem('userPersona');
+        if (savedPersona) {
+          personaTextarea.value = savedPersona;
+          window.personaText = savedPersona;
+          console.log('Persona loaded from localStorage:', window.personaText);
+        } else {
+          try {
+            const response = await fetch('/main_window/assets/Persona/persona.txt');
+            const text = await response.text();
+            window.personaText = text.trim();
+            personaTextarea.value = window.personaText;
+            console.log('Persona loaded from file:', window.personaText);
+          } catch (error) {
+            console.error('Failed to load persona.txt:', error);
+            window.personaText = ''; // Fallback to empty string if loading fails
+          }
+        }
+
+        document.getElementById('close-overlay').onclick = () => window.close();
+        document.getElementById('open-settings').onclick = () => {
+          const settingsModal = document.getElementById('settings-modal');
+          const settingsOverlay = document.getElementById('settings-modal-overlay');
+          settingsModal.style.display = 'block';
+          settingsModal.style.visibility = 'visible';
+          settingsModal.style.opacity = '1';
+          settingsOverlay.style.display = 'block';
+          settingsOverlay.style.pointerEvents = 'auto';
+        };
+        document.getElementById('close-settings').onclick = () => {
+          const settingsModal = document.getElementById('settings-modal');
+          const settingsOverlay = document.getElementById('settings-modal-overlay');
+          settingsModal.style.opacity = '0';
+          settingsModal.style.visibility = 'hidden';
+          settingsOverlay.style.display = 'none';
+          settingsOverlay.style.pointerEvents = 'none';
+          // Give time for the transition to complete before setting display to 'none'
+          setTimeout(() => {
+            settingsModal.style.display = 'none';
+          }, 300); // Matches the transition duration
+        };
+        document.getElementById('open-joint-control').onclick = () => {
+          document.getElementById('joint-control-panel').style.display = 'block';
+          if (window.createJointSliders) {
+            window.createJointSliders();
+          }
+        };
+        document.getElementById('close-joint-control').onclick = () => {
+          document.getElementById('joint-control-panel').style.display = 'none';
+        };
+        // document.getElementById('open-pose-panel-button').onclick = () => {
+        //   document.getElementById('pose-side-panel').style.display = 'flex';
+        //   // The list will be populated by renderer.ts
+        // };
+        document.getElementById('close-pose-panel').onclick = () => {
+          document.getElementById('pose-side-panel').style.display = 'none';
+        };
+        document.getElementById('close-animation-panel').onclick = () => {
+          document.getElementById('animation-side-panel').style.display = 'none';
+        };
+        document.getElementById('open-expression-panel-button').onclick = () => {
+          const expressionControlPanel = document.getElementById('expression-control-panel');
+          if (expressionControlPanel.style.display === 'block') {
+            expressionControlPanel.style.display = 'none';
+          } else {
+            expressionControlPanel.style.display = 'block';
+            if (window.createExpressionSliders) {
+              window.createExpressionSliders();
+            }
+          }
+        };
+        document.getElementById('close-expression-panel').onclick = () => {
+          document.getElementById('expression-control-panel').style.display = 'none';
+        };
+        document.getElementById('open-plugins-panel-button').onclick = () => {
+          const pluginControlPanel = document.getElementById('plugin-control-panel');
+          if (pluginControlPanel.style.display === 'block') {
+            pluginControlPanel.style.display = 'none';
+          } else {
+            pluginControlPanel.style.display = 'block';
+            if (window.pluginManager && window.createPluginList) {
+              window.createPluginList();
+            }
+          }
+        };
+        document.getElementById('close-plugins-panel').onclick = () => {
+          document.getElementById('plugin-control-panel').style.display = 'none';
+        };
+        document.getElementById('open-mesh-panel-button').onclick = () => {
+          const meshControlPanel = document.getElementById('mesh-control-panel');
+          if (meshControlPanel.style.display === 'block') {
+            meshControlPanel.style.display = 'none';
+          } else {
+            meshControlPanel.style.display = 'block';
+            if (window.listVrmMeshes && window.toggleVrmMeshVisibility && window.createMeshList) {
+              window.createMeshList();
+            }
+          }
+        };
+        document.getElementById('close-mesh-panel').onclick = () => {
+          document.getElementById('mesh-control-panel').style.display = 'none';
+        };
+        // LLM API 저장 로직
+        const form = document.getElementById('llm-form');
+        form.onsubmit = (e) => {
+          e.preventDefault();
+          const apiKey = document.getElementById('llm-api-key').value;
+          localStorage.setItem('llmApiKey', apiKey);
+          saveMessage.style.display = 'block';
+          setTimeout(() => { saveMessage.style.display = 'none'; }, 2000);
+        };
+        document.getElementById('llm-api-key').value = localStorage.getItem('llmApiKey') || '';
+
+        // Persona setting
+        // Persona setting
+        const personaForm = document.getElementById('persona-form');
+        const loadPersonaFileButton = document.getElementById('load-persona-file-button');
+
+        personaForm.onsubmit = async (e) => {
+          e.preventDefault();
+          const persona = personaTextarea.value.trim();
+          localStorage.setItem('userPersona', persona);
+          window.personaText = persona; // Update window.personaText on save
+          saveMessage.style.display = 'block';
+          setTimeout(() => { saveMessage.style.display = 'none'; }, 2000);
+
+          // Save persona to file via Electron main process
+          try {
+            const result = await window.electronAPI.savePersonaToFile(persona);
+            if (result.success) {
+              console.log(`Persona saved to file: ${result.message}`);
+            } else {
+              console.error(`Failed to save persona to file: ${result.message}`);
+            }
+          } catch (error) {
+            console.error('Error calling savePersonaToFile:', error);
+          }
+        };
+
+        loadPersonaFileButton.onclick = async () => {
+          try {
+            const personaContent = await window.electronAPI.openPersonaFile();
+            if (personaContent) {
+              personaTextarea.value = personaContent;
+              localStorage.setItem('userPersona', personaContent); // Also save to localStorage
+              window.personaText = personaContent; // Update window.personaText
+              saveMessage.textContent = '페르소나를 파일에서 불러왔습니다!';
+              saveMessage.style.display = 'block';
+              setTimeout(() => { saveMessage.style.display = 'none'; }, 2000);
+            } else {
+              saveMessage.textContent = '페르소나 파일 불러오기 취소됨.';
+              saveMessage.style.display = 'block';
+              setTimeout(() => { saveMessage.style.display = 'none'; }, 2000);
+            }
+          } catch (error) {
+            console.error('Error loading persona from file:', error);
+            saveMessage.textContent = `페르소나 파일 불러오기 실패: ${error.message}`;
+            saveMessage.style.display = 'block';
+            setTimeout(() => { saveMessage.style.display = 'none'; }, 2000);
+          }
+        };
+
+        // Background color setting
+        const backgroundColorPicker = document.getElementById('background-color-picker');
+        const savedBackgroundColor = localStorage.getItem('backgroundColor');
+        if (savedBackgroundColor) {
+          backgroundColorPicker.value = savedBackgroundColor;
+          if (window.setClearColor) {
+            window.setClearColor(parseInt(savedBackgroundColor.replace('#', '0x')));
+          }
+        }
+
+        backgroundColorPicker.onchange = (e) => {
+          const color = e.target.value;
+          localStorage.setItem('backgroundColor', color);
+          if (window.setClearColor) {
+            window.setClearColor(parseInt(color.replace('#', '0x')));
+          }
+        };
+        
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatMessages = document.getElementById('chat-messages');
+        let chatHistory = []; // Make chatHistory a global variable within this script scope
+
+        window.appendMessage = function(role, text) {
+          const chatMessages = document.getElementById('chat-messages');
+          if (role === 'assistant') {
+            const floatingContainer = document.getElementById('floating-chat-messages-container');
+            if (floatingContainer) {
+              const msgDiv = document.createElement('div');
+              msgDiv.className = 'floating-chat-message assistant entering'; // entering 클래스 추가
+              msgDiv.textContent = text;
+              Object.assign(msgDiv.style, {
+                position: 'absolute',
+                background: 'rgba(0, 0, 0, 0.7)',
+                color: 'white',
+                padding: '8px 12px',
+                borderRadius: '15px',
+                maxWidth: '250px',
+                textAlign: 'center',
+                pointerEvents: 'none',
+                whiteSpace: 'pre-wrap', // Preserve whitespace and allow wrapping
+                wordBreak: 'break-word', // Break long words
+              });
+              floatingContainer.appendChild(msgDiv);
+              window.floatingMessages.push({ element: msgDiv, timestamp: performance.now() });
+
+              // 애니메이션 트리거
+              setTimeout(() => {
+                msgDiv.classList.remove('entering');
+                msgDiv.style.opacity = '1'; // opacity만 설정하여 CSS transition이 transform을 처리하도록 합니다.
+              }, 10); // 짧은 지연 후 클래스 제거
+            }
+          } else {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'chat-message ' + role;
+            msgDiv.textContent = (role === 'user' ? '🙋‍♂️ ' : '🤖 ') + text;
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+          }
+        };
+
+        window.sendChatMessage = async function(message) {
+          const userMsg = message.trim();
+          if (!userMsg) return;
+
+          window.appendMessage('user', userMsg);
+          chatHistory.push({ role: 'user', parts: [{ text: userMsg }] });
+          if (chatInput) chatInput.value = ''; // Clear input only if it exists
+
+          // Gemini API 호출
+          const apiKey = localStorage.getItem('llmApiKey');
+          if (!apiKey) {
+            window.appendMessage('assistant', 'API 키가 설정되어 있지 않습니다. 설정에서 입력해 주세요.');
+            return;
+          }
+          try {
+            const contentsToSend = [
+              { role: 'system', parts: [{ text: `${window.personaText}\n모든 응답에 <표정: [표정_이름]> 형식의 표정 태그를 포함해 주세요. 표정_이름은 다음 목록 중 하나여야 합니다: ${window.vrmExpressionList ? window.vrmExpressionList.join(', ') : '기본, 행복, 슬픔'}. 예시: <표정: 행복> 안녕하세요!` }] },
+              ...chatHistory.slice(-10) // 최근 10개만 보냄
+            ];
+            console.log('Contents sent to Gemini API:', contentsToSend);
+            const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + apiKey, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                systemInstruction: { parts: [{ text: `${window.personaText}\n모든 응답에 <표정: [표정_이름]> 형식의 표정 태그를 포함해 주세요. 표정_이름은 다음 목록 중 하나여야 합니다: ${window.vrmExpressionList ? window.vrmExpressionList.join(', ') : '기본, 행복, 슬픔'}. 예시: <표정: 행복> 안녕하세요!` }] },
+                contents: chatHistory.slice(-10), // 최근 10개만 보냄
+              })
+            });
+            const data = await res.json();
+            let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '응답이 없습니다.';
+            let expression = 'happy'; // Default expression
+            const expressionMatch = text.match(/<표정:\s*(.*?)\s*>/);
+            if (expressionMatch && expressionMatch[1]) {
+              const proposedExpression = expressionMatch[1];
+              if (window.vrmExpressionList && window.vrmExpressionList.includes(proposedExpression)) {
+                expression = proposedExpression;
+              } else {
+                console.warn(`LLM proposed expression "${proposedExpression}" not found in VRM expression list. Using default "기본".`);
+              }
+              text = text.replace(/<표정:\s*(.*?)\s*>/, '').trim(); // Remove the expression tag from the text
+            }
+            console.log('LLM Response Text:', text);
+            console.log('LLM Expression:', expression);
+
+            // VRM 모델에 표정 적용
+            if (window.currentVrm && window.currentVrm.expressionManager && window.expressionMap) {
+
+              // LLM이 제안한 표정을 VRM 모델에 점진적으로 적용
+              if (window.vrmExpressionList.includes(expression)) { // LLM이 제안한 표정이 유효한지 다시 확인
+                  window.animateExpression(expression, 1.0, 0.5); // 0.5초 동안 점진적으로 변경
+
+              } else {
+                console.warn(`LLM proposed expression "${expression}" not found in VRM expression list. Not applying.`);
+              }
+            } else {
+              console.warn('VRM model or expressionManager not ready for expression application.', { currentVrm: window.currentVrm, expressionManager: window.currentVrm?.expressionManager, expressionMap: window.expressionMap });
+            }
+
+            window.appendMessage('assistant', text);
+
+            if (window.playTTS) {
+              window.playTTS(text);
+            }
+
+            chatHistory.push({ role: 'model', parts: [{ text }] });
+          }
+           catch (err) {
+            window.appendMessage('assistant', 'Gemini API 호출 실패: ' + err);
+          }
+        };
+
+        window.createPluginList = function() {
+          const pluginsListDiv = document.getElementById('plugins-list');
+          if (!pluginsListDiv) return;
+
+          pluginsListDiv.innerHTML = ''; // Clear existing list
+
+          if (!window.pluginManager) {
+            pluginsListDiv.textContent = '플러그인 관리자를 찾을 수 없습니다.';
+            return;
+          }
+
+          // Iterate over registered plugins
+          for (const plugin of window.pluginManager.plugins.values()) {
+            const pluginDiv = document.createElement('div');
+            pluginDiv.style.marginBottom = '10px';
+            pluginDiv.style.display = 'flex';
+            pluginDiv.style.alignItems = 'center';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `plugin-toggle-${plugin.name}`;
+            checkbox.checked = plugin.enabled;
+            checkbox.style.marginRight = '10px';
+            checkbox.style.width = '20px';
+            checkbox.style.height = '20px';
+            checkbox.style.cursor = 'pointer';
+
+            const label = document.createElement('label');
+            label.htmlFor = `plugin-toggle-${plugin.name}`;
+            label.textContent = plugin.name;
+            label.style.color = 'white';
+            label.style.fontSize = '1.1rem';
+            label.style.cursor = 'pointer';
+
+            checkbox.onchange = (event) => {
+              if (event.target.checked) {
+                window.pluginManager.enable(plugin.name);
+              } else {
+                window.pluginManager.disable(plugin.name);
+              }
+            };
+
+            pluginDiv.appendChild(checkbox);
+            pluginDiv.appendChild(label);
+            pluginsListDiv.appendChild(pluginDiv);
+          }
+        };
+
+        window.createMeshList = function() {
+          const meshListDiv = document.getElementById('mesh-list');
+          if (!meshListDiv) return;
+
+          meshListDiv.innerHTML = ''; // Clear existing list
+
+          if (!window.listVrmMeshes || !window.toggleVrmMeshVisibility) {
+            meshListDiv.textContent = 'VRM 메시 관리 기능을 찾을 수 없습니다.';
+            return;
+          }
+
+          const meshNames = window.listVrmMeshes();
+
+          if (meshNames.length === 0) {
+            meshListDiv.textContent = '로드된 VRM 모델에 메시가 없습니다.';
+            return;
+          }
+
+          meshNames.forEach(meshName => {
+            const meshDiv = document.createElement('div');
+            meshDiv.style.marginBottom = '10px';
+            meshDiv.style.display = 'flex';
+            meshDiv.style.alignItems = 'center';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `mesh-toggle-${meshName}`;
+            // 초기 상태는 해당 메시의 현재 visible 상태를 반영해야 합니다.
+            // 이를 위해 currentVrm.scene.getObjectByName(meshName)?.visible을 사용해야 하지만,
+            // 현재는 직접 접근이 어려우므로, 기본적으로 true로 설정합니다.
+            // 실제 구현에서는 로드 시점의 visible 상태를 가져와야 합니다.
+            checkbox.checked = true; // 임시: 모든 메시가 기본적으로 보인다고 가정
+            checkbox.style.marginRight = '10px';
+            checkbox.style.width = '20px';
+            checkbox.style.height = '20px';
+            checkbox.style.cursor = 'pointer';
+
+            const label = document.createElement('label');
+            label.htmlFor = `mesh-toggle-${meshName}`;
+            label.textContent = meshName;
+            label.style.color = 'white';
+            label.style.fontSize = '1.1rem';
+            label.style.cursor = 'pointer';
+
+            checkbox.onchange = (event) => {
+              window.toggleVrmMeshVisibility(meshName, event.target.checked);
+            };
+
+            meshDiv.appendChild(checkbox);
+            meshDiv.appendChild(label);
+            meshListDiv.appendChild(meshDiv);
+          });
+        };
+
+        chatForm.onsubmit = async (e) => {
+          e.preventDefault();
+          window.sendChatMessage(chatInput.value);
+        };
+      });
+    </script>
+  </body>
+</html>

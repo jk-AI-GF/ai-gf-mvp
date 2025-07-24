@@ -16,5 +16,5 @@
     }
   },
   "include": ["src/**/*"],
-  "files": ["src/global.d.ts"]
+  "files": ["src/renderer/global.d.ts"]
 }

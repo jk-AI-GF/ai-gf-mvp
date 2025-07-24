@@ -1,5 +1,4 @@
 import { IPlugin } from './plugin-manager';
-import { VRM } from '@pixiv/three-vrm';
 
 /**
  * VRM 모델이 주기적으로 플레이어에게 말을 거는 플러그인입니다.
@@ -54,7 +53,7 @@ export class ProactiveDialoguePlugin implements IPlugin {
    * @param delta 마지막 프레임 이후의 시간 (초)
    * @param vrm VRM 모델 인스턴스 (이 플러그인에서는 직접 사용하지 않음)
    */
-  public update(delta: number, vrm: VRM): void {
+  public update(delta: number): void {
     if (!this.enabled) return;
 
     this.timeSinceLastDialogue += delta;

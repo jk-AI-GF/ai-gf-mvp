@@ -1,5 +1,4 @@
 import { VRM } from '@pixiv/three-vrm';
-import * as THREE from 'three';
 
 /**
  * 모든 플러그인이 구현해야 하는 인터페이스입니다.
