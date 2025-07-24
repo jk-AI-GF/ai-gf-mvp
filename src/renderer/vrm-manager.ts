@@ -27,9 +27,9 @@ function createAnimationClipFromVRMPose(vrmPose: VRMPose, vrm: VRM): THREE.Anima
                 // Special handling for hips position
                 if (boneName === VRMHumanBoneName.Hips) {
                     // If hips position is [0,0,0], set a default Y position to prevent sinking
-                    if (position.x === 0 && position.y === 0 && position.z === 0) {
-                        position.y = 0.9; // Default hip height for VRM models
-                    }
+                    
+                        position.y = 0.7; // Default hip height for VRM models
+
                 }
 
                 tracks.push(new THREE.VectorKeyframeTrack(
@@ -119,7 +119,7 @@ export class VRMManager {
                 const animationResult1 = await this.loadAndParseFile(customAnimationPath1);
                 if (animationResult1?.type === 'animation') {
                     this.playAnimation(animationResult1.data, true); // loop를 true로 설정하여 반복 재생
-                    console.log(`[VRMManager] Custom animation ${customAnimationPath1} played.`);
+                    // console.log(`[VRMManager] Custom animation ${customAnimationPath1} played.`);
                 } else {
                     console.warn(`[VRMManager] Failed to load or parse custom animation: ${customAnimationPath1}`);
                 }
@@ -135,7 +135,7 @@ export class VRMManager {
                     const animationResult2 = await this.loadAndParseFile(customAnimationPath2);
                     if (animationResult2?.type === 'animation') {
                         this.playAnimation(animationResult2.data, true); // loop를 true로 설정하여 반복 재생
-                        console.log(`[VRMManager] Custom animation ${customAnimationPath2} played.`);
+                        // console.log(`[VRMManager] Custom animation ${customAnimationPath2} played.`);
                     } else {
                         console.warn(`[VRMManager] Failed to load or parse custom animation: ${customAnimationPath2}`);
                     }
@@ -197,11 +197,11 @@ export class VRMManager {
 
             // Check if it's a VRMPose JSON
             if (jsonParsed.hips && this.currentVrm) {
-                console.log(`[VRMManager] Interpreted ${filePath} as JSON VRMPose.`);
+                // console.log(`[VRMManager] Interpreted ${filePath} as JSON VRMPose.`);
                 clip = createAnimationClipFromVRMPose(jsonParsed as VRMPose, this.currentVrm);
             } else {
                 // If it's a JSON but not a VRMPose, we might handle other JSON formats here later
-                console.warn(`[VRMManager] JSON file ${filePath} is not a recognized VRMPose format.`);
+                // console.warn(`[VRMManager] JSON file ${filePath} is not a recognized VRMPose format.`);
                 return null; // Or handle other JSON formats if needed
             }
         } catch (e) {
@@ -217,12 +217,12 @@ export class VRMManager {
                     const vrmAnim = gltf.userData.vrmAnimations?.[0];
                     if (vrmAnim) {
                         clip = createVRMAnimationClip(vrmAnim, this.currentVrm!);
-                        console.log(`[VRMManager] Interpreted ${filePath} as VRMA.`);
+                        // console.log(`[VRMManager] Interpreted ${filePath} as VRMA.`);
                     }
                 } else if (filePath.endsWith('.fbx')) {
                     const fbx = this.fbxLoader.parse(fileContent, '');
                     clip = fbx.animations[0] || null;
-                    console.log(`[VRMManager] Interpreted ${filePath} as FBX.`);
+                    // console.log(`[VRMManager] Interpreted ${filePath} as FBX.`);
                 }
             } catch (error) {
                 console.error(`[VRMManager] Failed to parse binary file ${filePath}:`, error);
@@ -231,10 +231,10 @@ export class VRMManager {
 
         if (clip) {
             if (clip.duration < 0.1) { // Threshold for considering it a pose
-                console.log(`[VRMManager] Final interpretation of ${filePath} as Pose (duration: ${clip.duration}).`);
+                // console.log(`[VRMManager] Final interpretation of ${filePath} as Pose (duration: ${clip.duration}).`);
                 return { type: 'pose', data: clip };
             } else {
-                console.log(`[VRMManager] Final interpretation of ${filePath} as Animation (duration: ${clip.duration}).`);
+                // console.log(`[VRMManager] Final interpretation of ${filePath} as Animation (duration: ${clip.duration}).`);
                 return { type: 'animation', data: clip };
             }
         }
@@ -249,7 +249,7 @@ export class VRMManager {
     public applyPose(poseClip: THREE.AnimationClip): void {
         if (!this.currentVrm || !this.mixer) return;
         
-        console.log('[VRMManager] Applying pose.');
+        // console.log('[VRMManager] Applying pose.');
         this.mixer.stopAllAction(); // Ensure all animations are stopped.
         this.currentAction = null; // Clear current action
 
@@ -266,7 +266,7 @@ export class VRMManager {
         if (hipsBone) {
             const worldPosition = new THREE.Vector3();
             hipsBone.getWorldPosition(worldPosition);
-            console.log(`[VRMManager] Hips World Position after applyPose: ${worldPosition.toArray()}`);
+            // console.log(`[VRMManager] Hips World Position after applyPose: ${worldPosition.toArray()}`);
         }
         // --- END ADDITION ---
 

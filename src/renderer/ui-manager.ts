@@ -306,18 +306,42 @@ export function setupAnimationPanelButton(electronAPI: any, onFileSelect: (fileP
   }
 }
 
-export function setupSavePoseButton(getVrm: () => VRM | null, electronAPI: any, vrmManager: any) {
+export function setupSavePoseButton(getVrm: () => VRM | null, electronAPI: any) {
   const savePoseButton = document.getElementById('save-pose-button');
   if (savePoseButton) {
-    savePoseButton.onclick = async () => {
-      const currentVrm = getVrm();
+    savePoseButton.onclick = () => {
+      const currentVrm = getVrm(); // 함수를 호출하여 VRM 객체를 가져옵니다.
       if (!currentVrm) {
         alert('VRM 모델이 로드되지 않았습니다.');
         return;
       }
 
-      // Call the new VRMManager method to save pose as .vrma
-      await vrmManager.savePoseAsVrma(currentVrm, electronAPI);
+      // 1. Get the current pose from the VRM model.
+      const pose: VRMPose = currentVrm.humanoid.getNormalizedPose();
+
+      // 2. Export the pose as a JSON Blob and save it.
+      const jsonString = JSON.stringify(pose, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      
+      // Create a temporary URL to pass to the main process for saving
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+          if (event.target?.result instanceof ArrayBuffer) {
+              const result = await electronAPI.saveVrmaPose(event.target.result);
+              if (result.success) {
+                  console.log(`Pose saved successfully: ${result.message}`);
+              } else if (result.message !== 'Save operation canceled.') {
+                  console.error(`Failed to save pose: ${result.message}`);
+              }
+          } else {
+              console.error('Failed to read blob as ArrayBuffer.');
+              alert('포즈 파일 변환에 실패했습니다.');
+          }
+      };
+      reader.onerror = (error) => {
+          console.error('FileReader error:', error);
+      };
+      reader.readAsArrayBuffer(blob);
     };
   }
 }

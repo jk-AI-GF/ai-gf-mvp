@@ -295,7 +295,7 @@ async function handleFileSelectAndProcess(filePath: string, expectedType: 'pose'
 
 setupPosePanelButton(window.electronAPI, (path) => handleFileSelectAndProcess(`Pose/${path}`, 'pose'));
 setupAnimationPanelButton(window.electronAPI, (path) => handleFileSelectAndProcess(`Animation/${path}`, 'animation'));
-setupSavePoseButton(() => vrmManager.currentVrm, window.electronAPI, vrmManager);
+setupSavePoseButton(() => vrmManager.currentVrm, window.electronAPI);
 setupLoadPoseFileButton(window.electronAPI, (path) => handleFileSelectAndProcess(path, 'pose'));
 setupLoadVrmButton(window.electronAPI, (path) => vrmManager.loadVRM(path));
 
