@@ -1,8 +1,6 @@
-# <AICompanion>  <!-- TODO: 프로젝트 공식 이름 -->
-
-> **한 줄 요약**:  
-> 눈·귀(센서) → 메모장(컨텍스트) → 조건표(트리거) → 행동(액션) 구조를 가진 AI Companion 코어.  
-> 개발자는 코드 모드로, 장인은 노코드 에디터로, 라이트 유저는 가져다 쓰는 생태계를 목표로 한다.
+# <AICompanion>
+ 
+> 자신만의 AI 친구를 만들어 보세요
 
 ---
 
@@ -10,17 +8,16 @@
 
 1. [개요](#개요)  
 2. [핵심 개념](#핵심-개념)  
-3. [아키텍처 다이어그램](#아키텍처-다이어그램)  
-4. [레포지토리 구조](#레포지토리-구조)  
-5. [빠른 시작](#빠른-시작)  
-6. [모드/팩 만들기](#모드팩-만들기)  
-7. [퍼미션 & 보안](#퍼미션--보안)  
-8. [JSON 스키마](#json-스키마)  
-9. [디버깅 & 도구](#디버깅--도구)  
-10. [추가 계획 / 로드맵](#추가-계획--로드맵)  
-11. [용어집](#용어집)  
-12. [라이선스](#라이선스)  
-13. [질문 / TODO](#질문--todo)
+3. [레포지토리 구조](#레포지토리-구조)  
+4. [빠른 시작](#빠른-시작)  
+5. [모드/팩 만들기](#모드팩-만들기)  
+6. [퍼미션 & 보안](#퍼미션--보안)  
+7. [JSON 스키마](#json-스키마)  
+8. [디버깅 & 도구](#디버깅--도구)  
+9. [추가 계획 / 로드맵](#추가-계획--로드맵)  
+10. [용어집](#용어집)  
+11. [라이선스](#라이선스)  
+12. [질문 / TODO](#질문--todo)
 
 ---
 
@@ -47,72 +44,6 @@
 
 ---
 
-## 아키텍처 다이어그램
-
-### 전체 런타임 흐름
-
-```mermaid
-flowchart TD
-
-subgraph Core[Core (Runtime)]
-  SENSORS_API[Sensor API]
-  CTX[Context Store / Memory]
-  TRIG[Trigger Engine]
-  QUEUE[Event Queue & Priority]
-  ACT[Action Executors]
-  UISET[Settings / Permission Layer]
-
-  SENSORS_API --> CTX
-  CTX --> TRIG
-  TRIG --> QUEUE
-  QUEUE --> ACT
-  ACT --> CTX
-end
-
-subgraph DevMod["Mod (Code Dev)"]
-  DEV_ENTRY[entry.js (activate)]
-  DEV_CODE[Custom Sensors / Triggers / Actions]
-  DEV_UI[Custom Settings UI (optional)]
-end
-
-subgraph ArtisanPack["Mod (Data Artisan)"]
-  DATA_JSON[Sequences / Triggers JSON]
-  NOCODE[Built-in No-Code Runner]
-end
-
-DEV_ENTRY --> DEV_CODE --> SENSORS_API
-DEV_CODE --> TRIG
-DEV_CODE --> ACT
-DEV_UI --> UISET
-
-DATA_JSON --> NOCODE --> TRIG
-NOCODE --> ACT
-Import/Load 시퀀스
-mermaid
-복사
-편집
-sequenceDiagram
-    autonumber
-    participant User
-    participant Loader as Core Loader
-    participant Sandbox as Sandbox(iframe/worker)
-    participant Plugin as Dev Mod(entry.js)
-    participant NoCode as No-code Runner
-
-    Note over User,Loader: 개발자 모드
-    User->>Loader: 모드 zip 드롭/URL
-    Loader->>Loader: mod.json 검증(스키마/퍼미션/API 버전)
-    Loader->>Sandbox: 샌드박스 생성 & PluginContext 전달
-    Sandbox->>Plugin: entry.js import / activate(ctx)
-    Plugin->>Sandbox: 센서/트리거/액션 등록
-    Sandbox->>Loader: Ready
-
-    Note over User,Loader: 장인 데이터 팩
-    User->>Loader: seqpack zip 드롭
-    Loader->>Loader: seqpack 스키마 검증
-    Loader->>NoCode: JSON 시퀀스/트리거 전달
-    NoCode->>Loader: 공개 API로 등록
-    Loader->>User: 활성화 완료
 레포지토리 구조
 모노레포 권장(pnpm/yarn workspaces). 예시:
 
