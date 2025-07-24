@@ -1,5 +1,5 @@
 import { Imodule } from './module-manager';
-import { Actions } from '../module-api/actions';
+import { ModuleContext } from '../module-api/module-context';
 
 /**
  * VRM 모델이 주기적으로 플레이어에게 말을 거는 모듈입니다.
@@ -8,7 +8,7 @@ export class ProactiveDialoguemodule implements Imodule {
   public readonly name = 'ProactiveDialogue';
   public enabled = true;
 
-  private actions: Actions;
+  private context: ModuleContext;
   private timeSinceLastDialogue = 0.0;
   private nextDialogueTime = 0.0;
   private readonly dialoguePhrases: string[];
@@ -40,8 +40,8 @@ export class ProactiveDialoguemodule implements Imodule {
     this.resetDialogueTimer();
   }
 
-  public setActions(actions: Actions): void {
-    this.actions = actions;
+  public setModuleContext(context: ModuleContext): void {
+    this.context = context;
   }
 
   /**
@@ -79,8 +79,8 @@ export class ProactiveDialoguemodule implements Imodule {
     const phrase = this.dialoguePhrases[randomIndex];
 
     // window.appendMessage 함수를 사용하여 말풍선을 띄웁니다.
-    if (this.actions) {
-      this.actions.showMessage(phrase);
+    if (this.context.actions) {
+      this.context.actions.showMessage(phrase);
     } else {
       console.warn('Actions object not set. Cannot display dialogue.');
     }

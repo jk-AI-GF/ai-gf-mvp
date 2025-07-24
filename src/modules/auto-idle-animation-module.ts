@@ -1,5 +1,5 @@
 import { Imodule } from './module-manager';
-import { Actions } from '../module-api/actions';
+import { ModuleContext } from '../module-api/module-context';
 
 /**
  * VRM 모델이 주기적으로 유휴 애니메이션을 재생하도록 하는 모듈입니다.
@@ -8,7 +8,7 @@ export class AutoIdleAnimationmodule implements Imodule {
   public readonly name = 'AutoIdleAnimation';
   public enabled = false;
 
-  private actions: Actions;
+  private context: ModuleContext;
   private timeSinceLastIdle = 0.0;
   private nextIdleTime = 0.0;
   private readonly idleAnimationFiles: string[];
@@ -27,8 +27,8 @@ export class AutoIdleAnimationmodule implements Imodule {
     this.resetIdleTimer();
   }
 
-  public setActions(actions: Actions): void {
-    this.actions = actions;
+  public setModuleContext(context: ModuleContext): void {
+    this.context = context;
   }
 
   /**
@@ -65,9 +65,9 @@ export class AutoIdleAnimationmodule implements Imodule {
 
     console.log(`Playing idle animation: ${animationFile}`);
 
-    if (this.actions) {
+    if (this.context.actions) {
       // 1.5초 동안 부드럽게 전환하도록 옵션을 전달합니다.
-      this.actions.playAnimation(animationFile, false, 1.5);
+      this.context.actions.playAnimation(animationFile, false, 1.5);
     }
   }
 }

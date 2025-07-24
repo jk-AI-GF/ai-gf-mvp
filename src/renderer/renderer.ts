@@ -39,6 +39,10 @@ import { AutoBlinkmodule } from '../modules/auto-blink-module';
 import { AutoIdleAnimationmodule } from '../modules/auto-idle-animation-module';
 import { ProactiveDialoguemodule } from '../modules/proactive-dialogue-module';
 import { Actions } from '../module-api/actions';
+import { ModuleContext } from '../module-api/module-context';
+import { SystemControls } from '../module-api/system-controls';
+import { EventBusImpl } from '../core/event-bus-impl';
+import { TriggerEngine } from '../core/trigger-engine';
 
 let mixer: THREE.AnimationMixer;
 let currentVrm: VRM | null = null;
@@ -62,7 +66,24 @@ const actions: Actions = {
   },
 };
 
-const moduleManager = new ModuleManager(actions);
+const systemControls: SystemControls = {
+  toggleTts: (enable: boolean) => {
+    isTtsActive = enable;
+    console.log(`TTS is now ${isTtsActive ? 'enabled' : 'disabled'}.`);
+  },
+};
+
+const eventBusImpl = new EventBusImpl();
+const triggerEngine = new TriggerEngine();
+
+const moduleContext: ModuleContext = {
+  eventBus: eventBusImpl,
+  registerTrigger: (trigger) => triggerEngine.registerTrigger(trigger),
+  actions: actions,
+  system: systemControls,
+};
+
+const moduleManager = new ModuleManager(moduleContext);
 window.moduleManager = moduleManager;
 // Main process로부터의 IPC 메시지 수신
 window.electronAPI.on('play-animation-in-renderer', (animationName: string, loop: boolean, crossFadeDuration: number) => {

@@ -2,6 +2,7 @@
 import { EventBus } from './event-bus';
 import { Trigger, Condition, Action } from './triggers';
 import { Actions } from './actions';
+import { SystemControls } from './system-controls';
 
 // 모드가 앱과 상호작용할 수 있는 모든 API를 정의하는 컨텍스트 객체입니다.
 export interface ModuleContext {
@@ -20,6 +21,11 @@ export interface ModuleContext {
    * 모드가 게임에 영향을 줄 수 있는 함수 호출을 제공합니다.
    */
   actions: Actions;
+
+  /**
+   * 모드가 시스템 수준의 기능을 제어할 수 있는 함수 호출을 제공합니다.
+   */
+  system: SystemControls;
 
   // 향후 추가될 API 예시:
   // getCurrentPersona(): Persona;

@@ -1,6 +1,6 @@
 import { Imodule } from './module-manager';
 import { VRM, VRMExpressionPresetName } from '@pixiv/three-vrm';
-import { Actions } from '../module-api/actions';
+import { ModuleContext } from '../module-api/module-context';
 
 /**
  * VRM 모델이 자동으로 눈을 깜빡이도록 하는 모듈입니다.
@@ -9,7 +9,7 @@ export class AutoBlinkmodule implements Imodule {
   public readonly name = 'AutoBlink';
   public enabled = true;
 
-  private actions: Actions;
+  private context: ModuleContext;
   private timeSinceLastBlink = 0.0;
   private nextBlinkTime = 0.0;
 
@@ -17,8 +17,8 @@ export class AutoBlinkmodule implements Imodule {
     this.resetBlinkTimer();
   }
 
-  public setActions(actions: Actions): void {
-    this.actions = actions;
+  public setModuleContext(context: ModuleContext): void {
+    this.context = context;
   }
 
   /**
@@ -47,13 +47,13 @@ export class AutoBlinkmodule implements Imodule {
       this.resetBlinkTimer();
 
       // 다른 표정에 영향을 주지 않는 animateExpressionAdditive 함수를 사용합니다.
-      if (this.actions) {
+      if (this.context.actions) {
         // 0.075초 동안 빠르게 눈을 감습니다.
-        this.actions.setExpression(VRMExpressionPresetName.Blink, 1.0, 0.075);
+        this.context.actions.setExpression(VRMExpressionPresetName.Blink, 1.0, 0.075);
 
         // 100ms 후에 0.15초 동안 천천히 눈을 뜹니다.
         setTimeout(() => {
-          this.actions.setExpression(VRMExpressionPresetName.Blink, 0.0, 0.15);
+          this.context.actions.setExpression(VRMExpressionPresetName.Blink, 0.0, 0.15);
         }, 100);
       }
     }
