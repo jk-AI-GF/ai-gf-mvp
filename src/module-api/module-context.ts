@@ -3,6 +3,15 @@ import { EventBus } from './event-bus';
 import { Trigger, Condition, Action } from './triggers';
 import { Actions } from './actions';
 import { SystemControls } from './system-controls';
+import { characterState } from '../core/character-state';
+
+/**
+ * 캐릭터 상태에 대한 인터페이스입니다.
+ * 메인 프로세스와 렌더러 프로세스 간에 공유됩니다.
+ */
+export interface ICharacterState {
+  curiosity: number;
+}
 
 // 모드가 앱과 상호작용할 수 있는 모든 API를 정의하는 컨텍스트 객체입니다.
 export interface ModuleContext {
@@ -26,6 +35,11 @@ export interface ModuleContext {
    * 모드가 시스템 수준의 기능을 제어할 수 있는 함수 호출을 제공합니다.
    */
   system: SystemControls;
+
+  /**
+   * 캐릭터의 현재 상태(예: 호기심 수준)에 접근합니다.
+   */
+  characterState: ICharacterState;
 
   // 향후 추가될 API 예시:
   // getCurrentPersona(): Persona;

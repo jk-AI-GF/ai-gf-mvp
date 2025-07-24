@@ -11,7 +11,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { VRMHumanBoneName } from '@pixiv/three-vrm';
 import { ModuleManager } from '../modules/module-manager';
-import { LookAtCameramodule } from '../modules/look-at-camera-module';
+
 import { AutoBlinkmodule } from '../modules/auto-blink-module';
 import { AutoIdleAnimationmodule } from '../modules/auto-idle-animation-module';
 import { ProactiveDialoguemodule } from '../modules/proactive-dialogue-module';
@@ -21,6 +21,7 @@ import { ModuleContext } from '../module-api/module-context';
 import { SystemControls } from '../module-api/system-controls';
 import { EventBusImpl } from '../core/event-bus-impl';
 import { TriggerEngine } from '../core/trigger-engine';
+import { characterState } from '../core/character-state';
 import { updateJointSliders, createJointSliders, setupPosePanelButton, setupAnimationPanelButton, setupSavePoseButton, setupLoadPoseFileButton, setupLoadVrmButton, listVrmMeshes, toggleVrmMeshVisibility, createMeshList, appendMessage } from './ui-manager';
 import { VRMManager } from './vrm-manager';
 
@@ -56,6 +57,15 @@ const actions: Actions = {
       vrmManager.playAnimation(result.data, false); // Play animation even if setPose was called
     }
   },
+  lookAt: (target: 'camera' | [number, number, number] | null) => {
+    if (target === 'camera') {
+      vrmManager.lookAt(camera);
+    } else if (Array.isArray(target)) {
+      vrmManager.lookAt(new THREE.Vector3(target[0], target[1], target[2]));
+    } else if (target === null) {
+      vrmManager.lookAt(null);
+    }
+  },
 };
 
 const systemControls: SystemControls = {
@@ -76,6 +86,7 @@ const moduleContext: ModuleContext = {
   registerTrigger: (trigger) => triggerEngine.registerTrigger(trigger),
   actions: actions,
   system: systemControls,
+  characterState: characterState,
 };
 
 const moduleManager = new ModuleManager(moduleContext);
@@ -93,6 +104,17 @@ window.electronAPI.on('set-expression-in-renderer', (expressionName: string, wei
 });
 window.electronAPI.on('set-pose-in-renderer', (poseName: string) => {
   actions.setPose(poseName);
+});
+window.electronAPI.on('look-at-in-renderer', (target: 'camera' | [number, number, number] | null) => {
+  actions.lookAt(target);
+});
+
+// IPC handlers for characterState
+window.electronAPI.on('get-character-state-curiosity', (event) => {
+  event.returnValue = characterState.curiosity;
+});
+window.electronAPI.on('set-character-state-curiosity', (value: number) => {
+  characterState.curiosity = value;
 });
 
 if (!window.floatingMessages) {
@@ -130,8 +152,6 @@ const vrmManager = new VRMManager(scene);
 window.vrmManager = vrmManager; // Make it globally accessible
 
 // Initialize and register modules
-const lookAtCameramodule = new LookAtCameramodule(camera);
-moduleManager.register(lookAtCameramodule);
 const autoBlinkmodule = new AutoBlinkmodule();
 moduleManager.register(autoBlinkmodule);
 const autoIdleAnimationmodule = new AutoIdleAnimationmodule();

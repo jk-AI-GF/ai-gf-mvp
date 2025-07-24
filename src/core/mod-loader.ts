@@ -1,7 +1,7 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { ModuleContext } from '../module-api/module-context';
+import { ModuleContext, ICharacterState } from '../module-api/module-context';
 import { EventBusImpl } from './event-bus-impl';
 import { TriggerEngine } from './trigger-engine';
 import { Trigger } from '../module-api/triggers';
@@ -100,6 +100,9 @@ export class ModLoader {
             setPose: (poseName: string) => {
               this.sendToRenderer('set-pose', poseName);
             },
+            lookAt: (target: 'camera' | [number, number, number] | null) => {
+              this.sendToRenderer('look-at', target);
+            },
           },
           system: {
             toggleTts: (enable: boolean) => {
@@ -109,6 +112,16 @@ export class ModLoader {
               this.sendToRenderer('set-master-volume', volume);
             },
           },
+          characterState: {
+            get curiosity(): number {
+              // 메인 프로세스에서 렌더러 프로세스로 curiosity 값을 요청
+              return this.sendToRenderer('get-character-state-curiosity');
+            },
+            set curiosity(value: number) {
+              // 메인 프로세스에서 렌더러 프로세스로 curiosity 값을 설정
+              this.sendToRenderer('set-character-state-curiosity', value);
+            },
+          } as ICharacterState,
         };
         modModule.default(moduleContext);
         this.loadedMods.set(manifest.name, manifest);

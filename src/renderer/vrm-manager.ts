@@ -62,6 +62,7 @@ export class VRMManager {
     private fbxLoader: FBXLoader;
     private mixer: THREE.AnimationMixer | null = null;
     private currentAction: THREE.AnimationAction | null = null;
+    private _lookAtTarget: THREE.Object3D | THREE.Vector3 | null = null;
 
     constructor(scene: THREE.Scene) {
         this.scene = scene;
@@ -118,7 +119,7 @@ export class VRMManager {
             try {
                 const animationResult1 = await this.loadAndParseFile(customAnimationPath1);
                 if (animationResult1?.type === 'animation') {
-                    this.playAnimation(animationResult1.data, true); // loop를 true로 설정하여 반복 재생
+                    this.playAnimation(animationResult1.data, false); // loop를 false로 설정하여 1회 재생
                     // console.log(`[VRMManager] Custom animation ${customAnimationPath1} played.`);
                 } else {
                     console.warn(`[VRMManager] Failed to load or parse custom animation: ${customAnimationPath1}`);
@@ -134,7 +135,7 @@ export class VRMManager {
                 try {
                     const animationResult2 = await this.loadAndParseFile(customAnimationPath2);
                     if (animationResult2?.type === 'animation') {
-                        this.playAnimation(animationResult2.data, true); // loop를 true로 설정하여 반복 재생
+                        this.playAnimation(animationResult2.data, false); // loop를 false로 설정하여 1회 재생
                         // console.log(`[VRMManager] Custom animation ${customAnimationPath2} played.`);
                     } else {
                         console.warn(`[VRMManager] Failed to load or parse custom animation: ${customAnimationPath2}`);
@@ -372,11 +373,57 @@ export class VRMManager {
         this.mixer?.update(delta);
         if (this.currentVrm) {
             this.currentVrm.update(delta);
+
+            // Look-at logic
+            if (this._lookAtTarget) {
+                const head = this.currentVrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Head);
+                if (head) {
+                    const headForward = new THREE.Vector3();
+                    head.getWorldDirection(headForward);
+                    headForward.negate();
+
+                    const targetPos = new THREE.Vector3();
+                    if (this._lookAtTarget instanceof THREE.Object3D) {
+                        this._lookAtTarget.getWorldPosition(targetPos);
+                    } else { // THREE.Vector3
+                        targetPos.copy(this._lookAtTarget);
+                    }
+
+                    const headPos = new THREE.Vector3();
+                    head.getWorldPosition(headPos);
+
+                    const lookDir = new THREE.Vector3().subVectors(targetPos, headPos).normalize();
+
+                    const lookAtOffset = new THREE.Quaternion().setFromUnitVectors(headForward, lookDir);
+                    const headWorldQuat = new THREE.Quaternion();
+                    head.getWorldQuaternion(headWorldQuat);
+
+                    const targetWorldQuat = new THREE.Quaternion().multiplyQuaternions(lookAtOffset, headWorldQuat);
+
+                    const parentWorldQuat = new THREE.Quaternion();
+                    head.parent.getWorldQuaternion(parentWorldQuat);
+                    const parentWorldQuatInverse = parentWorldQuat.clone().invert();
+
+                    const targetLocalQuat = targetWorldQuat.clone().premultiply(parentWorldQuatInverse);
+
+                    // Slerp for smooth transition
+                    head.quaternion.slerp(targetLocalQuat, 0.1);
+                }
+            }
+
             this.currentVrm.scene.traverse(object => {
                 if ((object as THREE.SkinnedMesh).isSkinnedMesh) {
                     (object as THREE.SkinnedMesh).skeleton.update();
                 }
             });
         }
+    }
+
+    /**
+     * Makes the VRM model look at a specific target (Object3D or Vector3).
+     * Set to null to stop looking at a target.
+     */
+    public lookAt(target: THREE.Object3D | THREE.Vector3 | null): void {
+        this._lookAtTarget = target;
     }
 }

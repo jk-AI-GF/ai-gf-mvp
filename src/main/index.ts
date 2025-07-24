@@ -153,6 +153,12 @@ app.on('ready', () => {
     }
   });
 
+  ipcMain.handle('look-at', async (event, target: 'camera' | [number, number, number] | null) => {
+    if (overlayWindow) {
+      overlayWindow.webContents.send('look-at-in-renderer', target);
+    }
+  });
+
   ipcMain.handle('list-directory', async (event, dirPath: string) => {
     try {
       const fullPath = path.join(assetsRoot, dirPath);
