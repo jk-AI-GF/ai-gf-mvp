@@ -43,7 +43,7 @@ import { ModuleContext } from '../module-api/module-context';
 import { SystemControls } from '../module-api/system-controls';
 import { EventBusImpl } from '../core/event-bus-impl';
 import { TriggerEngine } from '../core/trigger-engine';
-import { updateJointSliders, createJointSliders, createExpressionSliders, updateExpressionSliderValue, setupPosePanelButton, setupAnimationPanelButton, setupSavePoseButton, setupLoadPoseFileButton, setupLoadVrmButton, logVrmBoneNames, listVrmMeshes, toggleVrmMeshVisibility, createMeshList } from './ui-manager';  
+import { updateJointSliders, createJointSliders, createExpressionSliders, updateExpressionSliderValue, setupPosePanelButton, setupAnimationPanelButton, setupSavePoseButton, setupLoadPoseFileButton, setupLoadVrmButton, logVrmBoneNames, listVrmMeshes, toggleVrmMeshVisibility, createMeshList, appendMessage } from './ui-manager';  
 
 let mixer: THREE.AnimationMixer;
 let currentVrm: VRM | null = null;
@@ -611,3 +611,4 @@ setupLoadVrmButton(window.electronAPI, loadVRM);
 window.listVrmMeshes = () => listVrmMeshes(currentVrm);
 window.toggleVrmMeshVisibility = (meshName: string, visible: boolean) => toggleVrmMeshVisibility(currentVrm, meshName, visible);
 window.createMeshList = () => createMeshList(currentVrm, toggleVrmMeshVisibility);
+window.appendMessage = appendMessage;

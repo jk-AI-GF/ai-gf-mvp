@@ -4,6 +4,44 @@ import { VRM, VRMHumanBoneName, VRMPose } from '@pixiv/three-vrm';
 // currentVrm은 renderer.ts에서 전역으로 관리되므로, ui-manager.ts에서는 인자로 받거나,
 // window 객체를 통해 접근하도록 변경해야 합니다. 여기서는 일단 인자로 받는 형태로 작성합니다.
 // 실제 구현 시에는 window.currentVrm을 사용하거나, 더 나은 의존성 주입 방법을 고려해야 합니다.
+export function appendMessage(role: string, text: string) {
+  const chatMessages = document.getElementById('chat-messages');
+  if (role === 'assistant') {
+    const floatingContainer = document.getElementById('floating-chat-messages-container');
+    if (floatingContainer) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'floating-chat-message assistant entering'; // entering 클래스 추가
+      msgDiv.textContent = text;
+      Object.assign(msgDiv.style, {
+        position: 'absolute',
+        background: 'rgba(0, 0, 0, 0.7)',
+        color: 'white',
+        padding: '8px 12px',
+        borderRadius: '15px',
+        maxWidth: '250px',
+        textAlign: 'center',
+        pointerEvents: 'none',
+        whiteSpace: 'pre-wrap', // Preserve whitespace and allow wrapping
+        wordBreak: 'break-word', // Break long words
+      });
+      floatingContainer.appendChild(msgDiv);
+      (window as any).floatingMessages.push({ element: msgDiv, timestamp: performance.now() });
+
+      // 애니메이션 트리거
+      setTimeout(() => {
+        msgDiv.classList.remove('entering');
+        msgDiv.style.opacity = '1'; // opacity만 설정하여 CSS transition이 transform을 처리하도록 합니다.
+      }, 10); // 짧은 지연 후 클래스 제거
+    }
+  } else {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'chat-message ' + role;
+    msgDiv.textContent = (role === 'user' ? '🙋‍♂️ ' : '🤖 ') + text;
+    chatMessages.appendChild(msgDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+}
+
 export function updateJointSliders() {
   const currentVrm = (window as any).currentVrm;
   if (!currentVrm) return;
