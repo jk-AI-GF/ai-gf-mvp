@@ -46,5 +46,6 @@ declare global {
     createMeshList: () => void;
     toggleCameraMode: () => void;
     toggleTts: (enable: boolean) => void;
+    setMasterVolume: (volume: number) => void;
   }
 }

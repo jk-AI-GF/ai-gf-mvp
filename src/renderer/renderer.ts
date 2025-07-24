@@ -71,6 +71,9 @@ const systemControls: SystemControls = {
     isTtsActive = enable;
     console.log(`TTS is now ${isTtsActive ? 'enabled' : 'disabled'}.`);
   },
+  setMasterVolume: (volume: number) => {
+    window.setMasterVolume(volume);
+  },
 };
 
 const eventBusImpl = new EventBusImpl();
@@ -654,12 +657,15 @@ if (randomPoseButton) {
 }
 
 let audioContext: AudioContext | null = null;
+let masterGainNode: GainNode | null = null;
 let currentAudioSource: AudioBufferSourceNode | null = null;
 
 function initAudioContext() {
   if (!audioContext) {
     try {
       audioContext = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      masterGainNode = audioContext.createGain();
+      masterGainNode.connect(audioContext.destination);
     } catch (e) {
       console.error("Failed to initialize AudioContext:", e);
     }
@@ -668,7 +674,7 @@ function initAudioContext() {
 document.body.addEventListener('click', initAudioContext, { once: true });
 
 async function playTTS(text: string) {
-  if (!text || !audioContext || !isTtsActive) return;
+  if (!text || !audioContext || !isTtsActive || !masterGainNode) return;
   if (currentAudioSource) currentAudioSource.stop();
   try {
     const response = await fetch('http://localhost:8000/api/tts', {
@@ -687,7 +693,7 @@ async function playTTS(text: string) {
     const audioBuffer = await audioContext.decodeAudioData(audioData);
     const source = audioContext.createBufferSource();
     source.buffer = audioBuffer;
-    source.connect(audioContext.destination);
+    source.connect(masterGainNode);
     source.start(0);
     currentAudioSource = source;
     source.onended = () => { currentAudioSource = null; };
@@ -702,6 +708,13 @@ window.playTTS = playTTS;
 window.toggleTts = function(enable: boolean) {
   isTtsActive = enable;
   console.log(`TTS is now ${isTtsActive ? 'enabled' : 'disabled'}.`);
+};
+
+window.setMasterVolume = function(volume: number) {
+  if (masterGainNode) {
+    masterGainNode.gain.value = Math.max(0, Math.min(1, volume)); // Clamp between 0 and 1
+    console.log(`Master volume set to: ${masterGainNode.gain.value}`);
+  }
 };
 
 function createJointSliders() {

@@ -11,6 +11,12 @@ export interface SystemControls {
    * @param enable TTS 기능을 활성화할지(true) 비활성화할지(false) 여부.
    */
   toggleTts(enable: boolean): void;
+
+  /**
+   * 애플리케이션의 마스터 볼륨을 설정합니다.
+   * @param volume 볼륨 값 (0.0에서 1.0 사이).
+   */
+  setMasterVolume(volume: number): void;
 }
 ```
 
@@ -40,6 +46,13 @@ export class MyModule implements Imodule {
     // 예시: 다른 조건에서 TTS를 활성화
     if (anotherCondition) {
       this.context.system.toggleTts(true);
+    }
+
+    // 예시: 특정 조건에서 마스터 볼륨을 조절
+    if (lowHealth) {
+      this.context.system.setMasterVolume(0.5); // 볼륨을 절반으로 줄임
+    } else {
+      this.context.system.setMasterVolume(1.0); // 볼륨을 최대로 설정
     }
   }
 }
