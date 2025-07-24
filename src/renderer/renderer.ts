@@ -33,11 +33,11 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { VRMLoaderPlugin, VRM, VRMHumanBoneName, VRMPose } from '@pixiv/three-vrm';
 import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-vrm-animation';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
-import { PluginManager } from '../plugins/plugin-manager';
-import { LookAtCameraPlugin } from '../plugins/look-at-camera-plugin';
-import { AutoBlinkPlugin } from '../plugins/auto-blink-plugin';
-import { AutoIdleAnimationPlugin } from '../plugins/auto-idle-animation-plugin';
-import { ProactiveDialoguePlugin } from '../plugins/proactive-dialogue-plugin';
+import { ModuleManager } from '../modules/module-manager';
+import { LookAtCameramodule } from '../modules/look-at-camera-module';
+import { AutoBlinkmodule } from '../modules/auto-blink-module';
+import { AutoIdleAnimationmodule } from '../modules/auto-idle-animation-module';
+import { ProactiveDialoguemodule } from '../modules/proactive-dialogue-module';
 
 let mixer: THREE.AnimationMixer;
 let currentVrm: VRM | null = null;
@@ -47,8 +47,8 @@ const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0.0, 0.0, 3.0);
 const DEFAULT_CAMERA_ROTATION = new THREE.Euler(-0.08, 0.0, 0.0);
 let isFreeCameraMode = true; // 초기 카메라는 자유 모드
 
-const pluginManager = new PluginManager();
-window.pluginManager = pluginManager;
+const moduleManager = new ModuleManager();
+window.moduleManager = moduleManager;
 
 if (!window.floatingMessages) {
   window.floatingMessages = [];
@@ -94,18 +94,18 @@ controls = new OrbitControls(camera, renderer.domElement);
 const ambientLight = new THREE.AmbientLight(0x404040, 2);
 scene.add(ambientLight);
 
-// Initialize and register plugins
-const lookAtCameraPlugin = new LookAtCameraPlugin(camera);
-pluginManager.register(lookAtCameraPlugin);
+// Initialize and register modules
+const lookAtCameramodule = new LookAtCameramodule(camera);
+moduleManager.register(lookAtCameramodule);
 
-const autoBlinkPlugin = new AutoBlinkPlugin();
-pluginManager.register(autoBlinkPlugin);
+const autoBlinkmodule = new AutoBlinkmodule();
+moduleManager.register(autoBlinkmodule);
 
-const autoIdleAnimationPlugin = new AutoIdleAnimationPlugin();
-pluginManager.register(autoIdleAnimationPlugin);
+const autoIdleAnimationmodule = new AutoIdleAnimationmodule();
+moduleManager.register(autoIdleAnimationmodule);
 
-const proactiveDialoguePlugin = new ProactiveDialoguePlugin();
-pluginManager.register(proactiveDialoguePlugin);
+const proactiveDialoguemodule = new ProactiveDialoguemodule();
+moduleManager.register(proactiveDialoguemodule);
 
 // Add a ground plane for shadows
 const planeGeometry = new THREE.PlaneGeometry(10, 10);
@@ -397,7 +397,7 @@ function animate() {
   const delta = clock.getDelta();
   if (mixer) mixer.update(delta);
   if (currentVrm) {
-    pluginManager.update(delta, currentVrm);
+    moduleManager.update(delta, currentVrm);
     currentVrm.update(delta);
     
     currentVrm.scene.traverse(object => {

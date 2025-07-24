@@ -63,7 +63,7 @@ const toggleOverlayWindow = (): void => {
 
 const assetsRoot = app.isPackaged
   ? path.join(process.resourcesPath, 'assets')
-  : path.join(app.getAppPath(), 'data/assets');
+  : path.join(app.getAppPath(), 'assets');
 
 const createTray = (): void => {
   const iconPath = path.join(assetsRoot, 'icon.png');

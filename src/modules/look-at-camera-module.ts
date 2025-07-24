@@ -1,8 +1,8 @@
-import { IPlugin } from './plugin-manager';
+import { Imodule } from './module-manager';
 import { VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
 import * as THREE from 'three';
 
-export class LookAtCameraPlugin implements IPlugin {
+export class LookAtCameramodule implements Imodule {
   public readonly name = 'LookAtCamera';
   public enabled = true;
 

@@ -25,7 +25,7 @@
       <button id="open-settings" style="background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.1rem; padding: 0.5rem 1rem; cursor: pointer;">설정</button>
       <button id="open-joint-control" style="background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.1rem; padding: 0.5rem 1rem; cursor: pointer;">관절 조절</button>
       <button id="open-expression-panel-button" style="background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.1rem; padding: 0.5rem 1rem; cursor: pointer;">표정</button>
-      <button id="open-plugins-panel-button" style="background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.1rem; padding: 0.5rem 1rem; cursor: pointer;">플러그인</button>
+      <button id="open-modules-panel-button" style="background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.1rem; padding: 0.5rem 1rem; cursor: pointer;">모듈</button>
       <button id="open-mesh-panel-button" style="background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.1rem; padding: 0.5rem 1rem; cursor: pointer;">메쉬</button>
       <button id="close-overlay" style="background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 4px; font-size: 1.5rem; padding: 0.5rem 1rem; cursor: pointer;">×</button>
     </div>
@@ -72,10 +72,10 @@
       <h3>표정 조절</h3>
       <div id="expression-sliders"></div>
     </div>
-    <div id="plugin-control-panel" style="display:none; position: fixed; top: 80px; right: 20px; width: 300px; max-height: 70vh; background: rgba(20,20,20,0.8); z-index: 2000; padding: 20px; border-radius: 10px; color: #fff; overflow-y: auto;">
-      <button id="close-plugins-panel" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">×</button>
-      <h3>플러그인 관리</h3>
-      <div id="plugins-list"></div>
+    <div id="module-control-panel" style="display:none; position: fixed; top: 80px; right: 20px; width: 300px; max-height: 70vh; background: rgba(20,20,20,0.8); z-index: 2000; padding: 20px; border-radius: 10px; color: #fff; overflow-y: auto;">
+      <button id="close-modules-panel" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">×</button>
+      <h3>모듈 관리</h3>
+      <div id="modules-list"></div>
     </div>
     <div id="mesh-control-panel" style="display:none; position: fixed; top: 80px; right: 20px; width: 300px; max-height: 70vh; background: rgba(20,20,20,0.8); z-index: 2000; padding: 20px; border-radius: 10px; color: #fff; overflow-y: auto;">
       <button id="close-mesh-panel" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">×</button>
@@ -187,19 +187,19 @@
         document.getElementById('close-expression-panel').onclick = () => {
           document.getElementById('expression-control-panel').style.display = 'none';
         };
-        document.getElementById('open-plugins-panel-button').onclick = () => {
-          const pluginControlPanel = document.getElementById('plugin-control-panel');
+        document.getElementById('open-modules-panel-button').onclick = () => {
+          const pluginControlPanel = document.getElementById('module-control-panel');
           if (pluginControlPanel.style.display === 'block') {
             pluginControlPanel.style.display = 'none';
           } else {
             pluginControlPanel.style.display = 'block';
-            if (window.pluginManager && window.createPluginList) {
-              window.createPluginList();
+            if (window.moduleManager && window.createModuleList) {
+              window.createModuleList();
             }
           }
         };
-        document.getElementById('close-plugins-panel').onclick = () => {
-          document.getElementById('plugin-control-panel').style.display = 'none';
+        document.getElementById('close-modules-panel').onclick = () => {
+          document.getElementById('module-control-panel').style.display = 'none';
         };
         document.getElementById('open-mesh-panel-button').onclick = () => {
           const meshControlPanel = document.getElementById('mesh-control-panel');
@@ -407,51 +407,51 @@
           }
         };
 
-        window.createPluginList = function() {
-          const pluginsListDiv = document.getElementById('plugins-list');
+        window.createModuleList = function() {
+          const pluginsListDiv = document.getElementById('modules-list');
           if (!pluginsListDiv) return;
 
           pluginsListDiv.innerHTML = ''; // Clear existing list
 
-          if (!window.pluginManager) {
-            pluginsListDiv.textContent = '플러그인 관리자를 찾을 수 없습니다.';
+          if (!window.moduleManager) {
+            pluginsListDiv.textContent = '모듈 관리자를 찾을 수 없습니다.';
             return;
           }
 
           // Iterate over registered plugins
-          for (const plugin of window.pluginManager.plugins.values()) {
-            const pluginDiv = document.createElement('div');
-            pluginDiv.style.marginBottom = '10px';
-            pluginDiv.style.display = 'flex';
-            pluginDiv.style.alignItems = 'center';
+          for (const module of window.moduleManager.modules.values()) {
+            const moduleDiv = document.createElement('div');
+            moduleDiv.style.marginBottom = '10px';
+            moduleDiv.style.display = 'flex';
+            moduleDiv.style.alignItems = 'center';
 
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
-            checkbox.id = `plugin-toggle-${plugin.name}`;
-            checkbox.checked = plugin.enabled;
+            checkbox.id = `module-toggle-${module.name}`;
+            checkbox.checked = module.enabled;
             checkbox.style.marginRight = '10px';
             checkbox.style.width = '20px';
             checkbox.style.height = '20px';
             checkbox.style.cursor = 'pointer';
 
             const label = document.createElement('label');
-            label.htmlFor = `plugin-toggle-${plugin.name}`;
-            label.textContent = plugin.name;
+            label.htmlFor = `module-toggle-${module.name}`;
+            label.textContent = module.name;
             label.style.color = 'white';
             label.style.fontSize = '1.1rem';
             label.style.cursor = 'pointer';
 
             checkbox.onchange = (event) => {
               if (event.target.checked) {
-                window.pluginManager.enable(plugin.name);
+                window.moduleManager.enable(module.name);
               } else {
-                window.pluginManager.disable(plugin.name);
+                window.moduleManager.disable(module.name);
               }
             };
 
-            pluginDiv.appendChild(checkbox);
-            pluginDiv.appendChild(label);
-            pluginsListDiv.appendChild(pluginDiv);
+            moduleDiv.appendChild(checkbox);
+            moduleDiv.appendChild(label);
+            pluginsListDiv.appendChild(moduleDiv);
           }
         };
 

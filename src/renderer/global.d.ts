@@ -1,6 +1,6 @@
 import { VRM, VRMExpression, VRMNormalizedPose } from '@pixiv/three-vrm';
 import * as THREE from 'three';
-import { PluginManager } from '../plugins/plugin-manager';
+import { moduleManager } from '../modules/module-manager';
 
 declare global {
   interface Window {
@@ -35,8 +35,8 @@ declare global {
     appendMessage: (role: string, text: string) => void;
     sendChatMessage: (message: string) => Promise<void>;
     personaText: string;
-    pluginManager: PluginManager;
-    createPluginList: () => void;
+    moduleManager: moduleManager;
+    createmoduleList: () => void;
     listVrmMeshes: () => string[];
     toggleVrmMeshVisibility: (meshName: string, visible: boolean) => void;
     createMeshList: () => void;

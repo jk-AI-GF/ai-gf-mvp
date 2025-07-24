@@ -1,9 +1,9 @@
-import { IPlugin } from './plugin-manager';
+import { Imodule } from './module-manager';
 
 /**
  * VRM 모델이 주기적으로 유휴 애니메이션을 재생하도록 하는 플러그인입니다.
  */
-export class AutoIdleAnimationPlugin implements IPlugin {
+export class AutoIdleAnimationmodule implements Imodule {
   public readonly name = 'AutoIdleAnimation';
   public enabled = true;
 

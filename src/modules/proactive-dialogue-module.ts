@@ -1,9 +1,9 @@
-import { IPlugin } from './plugin-manager';
+import { Imodule } from './module-manager';
 
 /**
  * VRM 모델이 주기적으로 플레이어에게 말을 거는 플러그인입니다.
  */
-export class ProactiveDialoguePlugin implements IPlugin {
+export class ProactiveDialoguemodule implements Imodule {
   public readonly name = 'ProactiveDialogue';
   public enabled = true;
 
