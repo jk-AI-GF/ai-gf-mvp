@@ -1,26 +1,47 @@
 import { VRM, VRMExpression, VRMNormalizedPose } from '@pixiv/three-vrm';
 import * as THREE from 'three';
-import { moduleManager } from '../modules/module-manager';
+import { ModuleManager } from '../modules/module-manager';
+import { VRMManager } from './vrm-manager'; // VRMManager import 추가
 
 declare global {
   interface Window {
-    currentVrm: VRM | null;
-    saveVrmPose: () => void;
-    loadVrmPose: (pose: VRMNormalizedPose) => void;
-    vrmExpressionList: string[];
-    expressionMap: { [key: string]: VRMExpression };
-    vrmAnimationList: THREE.AnimationClip[];
-    mixer: THREE.AnimationMixer;
+    // --- Refactored ---
+    vrmManager: VRMManager; // vrmManager 추가
+    moduleManager: ModuleManager;
+
+    // --- UI Interaction Functions ---
     animateExpression: (expressionName: string, targetWeight: number, duration: number) => void;
     animateExpressionAdditive: (expressionName: string, targetWeight: number, duration: number) => void;
-    playTTS: (text: string) => Promise<void>;
+    loadAnimationFile: (url: string, options?: { loop?: boolean; crossFadeDuration?: number }) => Promise<void>;
+    appendMessage: (role: string, text: string) => void;
+    sendChatMessage: (message: string) => Promise<void>;
+    
+    // --- UI Creation/Update Functions ---
     updateJointSliders: () => void;
     createJointSliders: () => void;
-    loadJsonPose: (jsonPath: string) => Promise<void>;
-    loadVrmaPose: (vrmaPath: string) => Promise<void>;
-    loadAnimationFile: (url: string, options?: { loop?: boolean; crossFadeDuration?: number }) => Promise<void>;
+    createExpressionSliders: () => void;
+    createMeshList: () => void;
+    createmoduleList: () => void;
+
+    // --- System & Device Controls ---
+    playTTS: (text: string) => Promise<void>;
     setClearColor: (color: number) => void;
+    toggleCameraMode: () => void;
+    toggleTts: (enable: boolean) => void;
+    setMasterVolume: (volume: number) => void;
+    
+    // --- Data & State ---
     floatingMessages: { element: HTMLDivElement; timestamp: number; }[];
+    vrmExpressionList: string[];
+    expressionMap: { [key: string]: VRMExpression };
+    personaText: string;
+
+    // --- VRM specific direct access (should be minimized) ---
+    listVrmMeshes: () => string[];
+    toggleVrmMeshVisibility: (meshName: string, visible: boolean) => void;
+    currentVrm: VRM | null; // Still needed for some modules/UI parts
+
+    // --- Electron API ---
     electronAPI: {
       listDirectory: (dirPath: string) => Promise<{ files: string[]; directories: string[]; error?: string }>;
       openVrmFile: () => Promise<string | null>;
@@ -35,18 +56,5 @@ declare global {
       setExpression: (expressionName: string, weight: number, duration?: number) => Promise<void>;
       on: (channel: string, listener: (...args: any[]) => void) => void;
     };
-    logVrmBoneNames: () => void;
-    createExpressionSliders: () => void;
-    appendMessage: (role: string, text: string) => void;
-    sendChatMessage: (message: string) => Promise<void>;
-    personaText: string;
-    moduleManager: moduleManager;
-    createmoduleList: () => void;
-    listVrmMeshes: () => string[];
-    toggleVrmMeshVisibility: (meshName: string, visible: boolean) => void;
-    createMeshList: () => void;
-    toggleCameraMode: () => void;
-    toggleTts: (enable: boolean) => void;
-    setMasterVolume: (volume: number) => void;
   }
 }

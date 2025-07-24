@@ -4,6 +4,7 @@ import { VRM, VRMHumanBoneName, VRMPose } from '@pixiv/three-vrm';
 // currentVrm은 renderer.ts에서 전역으로 관리되므로, ui-manager.ts에서는 인자로 받거나,
 // window 객체를 통해 접근하도록 변경해야 합니다. 여기서는 일단 인자로 받는 형태로 작성합니다.
 // 실제 구현 시에는 window.currentVrm을 사용하거나, 더 나은 의존성 주입 방법을 고려해야 합니다.
+
 export function appendMessage(role: string, text: string) {
   const chatMessages = document.getElementById('chat-messages');
   if (role === 'assistant') {
@@ -307,10 +308,11 @@ export function setupAnimationPanelButton(electronAPI: any, loadAnimationFile: (
   }
 }
 
-export function setupSavePoseButton(currentVrm: VRM | null, electronAPI: any) {
+export function setupSavePoseButton(getVrm: () => VRM | null, electronAPI: any) {
   const savePoseButton = document.getElementById('save-pose-button');
   if (savePoseButton) {
     savePoseButton.onclick = () => {
+      const currentVrm = getVrm(); // 함수를 호출하여 VRM 객체를 가져옵니다.
       if (!currentVrm) {
         alert('VRM 모델이 로드되지 않았습니다.');
         return;
