@@ -93,7 +93,6 @@
       <!-- 포즈 관련 -->
       <button id="save-pose-button" style="padding: 10px; background-color: #2c3e50; color: white; border: none; border-radius: 0px; cursor: pointer;">포즈 저장</button>
       <button id="load-pose-file-button" style="padding: 10px; background-color: #2c3e50; color: white; border: none; border-radius: 0px; cursor: pointer;">포즈 파일 열기</button>
-      <button id="random-pose-button" style="padding: 10px; background-color: #cc6666; color: white; border: none; border-radius: 0px; cursor: pointer;">랜덤 포즈</button>
     </div>
 
     <div id="bottom-left-buttons-container" style="position: fixed; bottom: 24px; left: 32px; z-index: 9999; display: flex; flex-direction: column; gap: 5px;">
@@ -156,7 +155,7 @@
         };
         document.getElementById('open-joint-control').onclick = () => {
           document.getElementById('joint-control-panel').style.display = 'block';
-          if (window.createJointSliders) {
+          if (window.currentVrm && window.createJointSliders) {
             window.createJointSliders();
           }
         };
@@ -455,59 +454,7 @@
           }
         };
 
-        window.createMeshList = function() {
-          const meshListDiv = document.getElementById('mesh-list');
-          if (!meshListDiv) return;
-
-          meshListDiv.innerHTML = ''; // Clear existing list
-
-          if (!window.listVrmMeshes || !window.toggleVrmMeshVisibility) {
-            meshListDiv.textContent = 'VRM 메시 관리 기능을 찾을 수 없습니다.';
-            return;
-          }
-
-          const meshNames = window.listVrmMeshes();
-
-          if (meshNames.length === 0) {
-            meshListDiv.textContent = '로드된 VRM 모델에 메시가 없습니다.';
-            return;
-          }
-
-          meshNames.forEach(meshName => {
-            const meshDiv = document.createElement('div');
-            meshDiv.style.marginBottom = '10px';
-            meshDiv.style.display = 'flex';
-            meshDiv.style.alignItems = 'center';
-
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.id = `mesh-toggle-${meshName}`;
-            // 초기 상태는 해당 메시의 현재 visible 상태를 반영해야 합니다.
-            // 이를 위해 currentVrm.scene.getObjectByName(meshName)?.visible을 사용해야 하지만,
-            // 현재는 직접 접근이 어려우므로, 기본적으로 true로 설정합니다.
-            // 실제 구현에서는 로드 시점의 visible 상태를 가져와야 합니다.
-            checkbox.checked = true; // 임시: 모든 메시가 기본적으로 보인다고 가정
-            checkbox.style.marginRight = '10px';
-            checkbox.style.width = '20px';
-            checkbox.style.height = '20px';
-            checkbox.style.cursor = 'pointer';
-
-            const label = document.createElement('label');
-            label.htmlFor = `mesh-toggle-${meshName}`;
-            label.textContent = meshName;
-            label.style.color = 'white';
-            label.style.fontSize = '1.1rem';
-            label.style.cursor = 'pointer';
-
-            checkbox.onchange = (event) => {
-              window.toggleVrmMeshVisibility(meshName, event.target.checked);
-            };
-
-            meshDiv.appendChild(checkbox);
-            meshDiv.appendChild(label);
-            meshListDiv.appendChild(meshDiv);
-          });
-        };
+        
 
         chatForm.onsubmit = async (e) => {
           e.preventDefault();

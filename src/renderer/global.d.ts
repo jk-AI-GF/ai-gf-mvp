@@ -14,6 +14,7 @@ declare global {
     animateExpression: (expressionName: string, targetWeight: number, duration: number) => void;
     animateExpressionAdditive: (expressionName: string, targetWeight: number, duration: number) => void;
     playTTS: (text: string) => Promise<void>;
+    updateJointSliders: () => void;
     createJointSliders: () => void;
     loadJsonPose: (jsonPath: string) => Promise<void>;
     loadVrmaPose: (vrmaPath: string) => Promise<void>;

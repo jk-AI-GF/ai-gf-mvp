@@ -43,6 +43,7 @@ import { ModuleContext } from '../module-api/module-context';
 import { SystemControls } from '../module-api/system-controls';
 import { EventBusImpl } from '../core/event-bus-impl';
 import { TriggerEngine } from '../core/trigger-engine';
+import { updateJointSliders, createJointSliders, createExpressionSliders, updateExpressionSliderValue, setupPosePanelButton, setupAnimationPanelButton, setupSavePoseButton, setupLoadPoseFileButton, setupLoadVrmButton, logVrmBoneNames, listVrmMeshes, toggleVrmMeshVisibility, createMeshList } from './ui-manager';  
 
 let mixer: THREE.AnimationMixer;
 let currentVrm: VRM | null = null;
@@ -208,9 +209,7 @@ function loadVRM(filePathOrUrl: string) {
       window.currentVrm = vrm;
 
       // 새 VRM 모델 로드 시 메쉬 목록 업데이트
-      if (window.createMeshList) {
-        window.createMeshList();
-      }
+      
 
       mixer = new THREE.AnimationMixer(vrm.scene);
 
@@ -242,6 +241,7 @@ function loadVRM(filePathOrUrl: string) {
       // VRM 모델의 표정 목록을 가져와 window.vrmExpressionList에 할당
       if (vrm.expressionManager) {
         window.vrmExpressionList = Object.keys(vrm.expressionManager.expressionMap);
+        createExpressionSliders();
       }
     })
     .catch((error: unknown) => {
@@ -253,166 +253,6 @@ function loadVRM(filePathOrUrl: string) {
 
 // 초기 모델 로드
 loadVRM('VRM/Liqu.vrm');
-
-const loadVrmButton = document.getElementById('load-vrm-button');
-if (loadVrmButton) {
-  loadVrmButton.onclick = async () => {
-    const filePath = await window.electronAPI.openVrmFile();
-    if (filePath) {
-      const url = `file://${filePath.replace(/\\/g, '/')}`;
-      loadVRM(url);
-    }
-  };
-}
-
-// 포즈 저장 버튼 로직
-const savePoseButton = document.getElementById('save-pose-button');
-if (savePoseButton) {
-  savePoseButton.onclick = () => {
-    if (!currentVrm) {
-      alert('VRM 모델이 로드되지 않았습니다.');
-      return;
-    }
-
-    // 1. Get the current pose from the VRM model.
-    const pose: VRMPose = currentVrm.humanoid.getNormalizedPose();
-
-    // 2. Export the pose as a JSON Blob and save it.
-    const jsonString = JSON.stringify(pose, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    
-    // Create a temporary URL to pass to the main process for saving
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-        if (event.target?.result instanceof ArrayBuffer) {
-            const result = await window.electronAPI.saveVrmaPose(event.target.result);
-            if (result.success) {
-                console.log(`Pose saved successfully: ${result.message}`);
-            } else if (result.message !== 'Save operation canceled.') {
-                console.error(`Failed to save pose: ${result.message}`);
-            }
-        } else {
-            console.error('Failed to read blob as ArrayBuffer.');
-            alert('포즈 파일 변환에 실패했습니다.');
-        }
-    };
-    reader.onerror = (error) => {
-        console.error('FileReader error:', error);
-    };
-    reader.readAsArrayBuffer(blob);
-  };
-}
-
-// 포즈 불러오기 (파일) 버튼 로직
-const loadPoseFileButton = document.getElementById('load-pose-file-button');
-if (loadPoseFileButton) {
-  loadPoseFileButton.onclick = async () => {
-    const filePath = await window.electronAPI.openVrmaFile();
-    if (filePath) {
-      const url = `file://${filePath.replace(/\\/g, '/')}`;
-      window.loadAnimationFile(url);
-    }
-  };
-}
-
-      document.getElementById('open-pose-panel-button').onclick = async () => {
-        const poseSidePanel = document.getElementById('pose-side-panel');
-        if (poseSidePanel.style.display === 'flex') {
-          poseSidePanel.style.display = 'none';
-        } else {
-          poseSidePanel.style.display = 'flex';
-          // The list will be populated by renderer.ts
-          try {
-            const result = await window.electronAPI.listDirectory('Pose');
-            console.log('listDirectory result for Pose:', result);
-            if (result.error) {
-              throw new Error(result.error);
-            }
-            const vrmaFiles = result.files.filter((file: string) => file.endsWith('.vrma'));
-            console.log('Filtered VRMA files:', vrmaFiles);
-            
-            const poseListDisplay = document.getElementById('pose-list-display');
-            if (poseListDisplay) {
-              poseListDisplay.innerHTML = ''; // Clear previous list
-              if (vrmaFiles.length === 0) {
-                const noFilesMessage = document.createElement('p');
-                noFilesMessage.textContent = '저장된 포즈 파일(.vrma)이 없습니다.';
-                noFilesMessage.style.color = 'white';
-                poseListDisplay.appendChild(noFilesMessage);
-              } else {
-                vrmaFiles.forEach((file: string) => {
-                  const button = document.createElement('button');
-                  button.textContent = file;
-                  Object.assign(button.style, {
-                    padding: '10px 15px', backgroundColor: 'transparent', color: 'white',
-                    border: 'none', borderRadius: '8px', cursor: 'pointer',
-                    marginBottom: '8px', width: '100%', textAlign: 'left',
-                    fontSize: '1rem', transition: 'background-color 0.2s ease'
-                  });
-                  button.onmouseover = () => { button.style.backgroundColor = 'rgba(0,123,255,0.2)'; };
-                  button.onmouseout = () => { button.style.backgroundColor = 'transparent'; };
-                  button.onclick = () => {
-                    const fullPath = `Pose/${file}`;
-                    window.loadAnimationFile(fullPath);
-                  };
-                  poseListDisplay.appendChild(button);
-                });
-              }
-            }
-          } catch (error) {
-            console.error('Failed to list VRMA poses for panel:', error);
-            alert('포즈 목록을 불러오는 데 실패했습니다.');
-          }
-        }
-      };
-
-      document.getElementById('open-animation-panel-button').onclick = async () => {
-        const animationSidePanel = document.getElementById('animation-side-panel');
-        if (animationSidePanel.style.display === 'flex') {
-          animationSidePanel.style.display = 'none';
-        } else {
-          animationSidePanel.style.display = 'flex';
-          try {
-            const result = await window.electronAPI.listDirectory('Animation');
-            if (result.error) {
-              throw new Error(result.error);
-            }
-            const vrmaFiles = result.files.filter(file => file.endsWith('.vrma') || file.endsWith('.fbx'));
-            
-            const animationListDisplay = document.getElementById('animation-list-display');
-            if (animationListDisplay) {
-              animationListDisplay.innerHTML = ''; // Clear previous list
-              if (vrmaFiles.length === 0) {
-                const noFilesMessage = document.createElement('p');
-                noFilesMessage.textContent = '저장된 애니메이션 파일(.vrma)이 없습니다.';
-                noFilesMessage.style.color = 'white';
-                animationListDisplay.appendChild(noFilesMessage);
-              } else {
-                vrmaFiles.forEach((file: string) => {
-                  const button = document.createElement('button');
-                  button.textContent = file;
-                  Object.assign(button.style, {
-                    padding: '10px 15px', backgroundColor: 'transparent', color: 'white',
-                    border: 'none', borderRadius: '8px', cursor: 'pointer',
-                    marginBottom: '8px', width: '100%', textAlign: 'left',
-                    fontSize: '1rem', transition: 'background-color 0.2s ease'
-                  });
-                  button.onmouseover = () => { button.style.backgroundColor = 'rgba(0,123,255,0.2)'; };
-                  button.onmouseout = () => { button.style.backgroundColor = 'transparent'; };
-                  button.onclick = () => {
-                    const fullPath = `Animation/${file}`;
-                    window.loadAnimationFile(fullPath);
-                  };
-                  animationListDisplay.appendChild(button);
-                });
-              }
-            }
-          } catch (error) {
-            console.error('Failed to list VRMA animations for panel:', error);
-            alert('애니메이션 목록을 불러오는 데 실패했습니다.');
-          }
-        }
-      };
 
 const clock = new THREE.Clock();
 
@@ -528,26 +368,7 @@ function onWindowResize() {
 
 window.addEventListener('resize', onWindowResize);
 
-function updateJointSliders() {
-  if (!currentVrm) return;
-  const slidersContainer = document.getElementById('joint-sliders');
-  if (!slidersContainer) return;
-  Object.values(VRMHumanBoneName).forEach(boneName => {
-    const bone = currentVrm.humanoid.getNormalizedBoneNode(boneName);
-    if (bone) {
-      const boneControl = slidersContainer.querySelector(`div[data-bone-name="${boneName}"]`);
-      if (boneControl) {
-        const currentEuler = new THREE.Euler().setFromQuaternion(bone.quaternion, 'XYZ');
-        ['x', 'y', 'z'].forEach(axis => {
-          const slider = boneControl.querySelector<HTMLInputElement>(`.slider-${axis}`);
-          if (slider) {
-            slider.value = THREE.MathUtils.radToDeg(currentEuler[axis as 'x' | 'y' | 'z']).toFixed(0);
-          }
-        });
-      }
-    }
-  });
-}
+
 
 console.log('👋 VRM 오버레이 로딩 완료');
 
@@ -573,21 +394,14 @@ function animateExpression(expressionName: string, targetWeight: number, duratio
     expressionManager.setValue(expressionName, currentWeight);
     expressionManager.update();
 
-    // Update the slider for the current expression
-    const slider = document.querySelector<HTMLInputElement>(`#expression-sliders [data-expression-name="${expressionName}"] .expression-slider`);
-    if (slider) {
-      slider.value = (currentWeight * 100).toFixed(0);
-    }
+    updateExpressionSliderValue(expressionName, currentWeight);
 
     // Reset other expressions to 0 and update their sliders
     // Iterate over expressionMap keys to ensure consistency with slider data attributes
     for (const name in expressionManager.expressionMap) {
       if (name !== expressionName) {
         expressionManager.setValue(name, 0.0);
-        const slider = document.querySelector<HTMLInputElement>(`#expression-sliders [data-expression-name="${name}"] .expression-slider`);
-        if (slider) {
-          slider.value = '0';
-        }
+        updateExpressionSliderValue(name, 0.0);
       }
     }
 
@@ -621,11 +435,7 @@ function animateExpressionAdditive(expressionName: string, targetWeight: number,
     expressionManager.setValue(expressionName, currentWeight);
     expressionManager.update();
 
-    // Update the slider for the current expression
-    const slider = document.querySelector<HTMLInputElement>(`#expression-sliders [data-expression-name="${expressionName}"] .expression-slider`);
-    if (slider) {
-      slider.value = (currentWeight * 100).toFixed(0);
-    }
+    updateExpressionSliderValue(expressionName, currentWeight);
 
     if (progress < 1) {
       requestAnimationFrame(step);
@@ -635,26 +445,6 @@ function animateExpressionAdditive(expressionName: string, targetWeight: number,
 }
 window.animateExpressionAdditive = animateExpressionAdditive;
 
-
-
-const randomPoseButton = document.getElementById('random-pose-button');
-if (randomPoseButton) {
-  randomPoseButton.onclick = () => {
-    if (currentVrm) {
-      Object.values(VRMHumanBoneName).forEach(boneName => {
-        const bone = currentVrm.humanoid.getNormalizedBoneNode(boneName);
-        if (bone && boneName !== VRMHumanBoneName.Head) {
-          const randomQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(
-            (Math.random() - 0.5) * Math.PI / 2,
-            (Math.random() - 0.5) * Math.PI / 2,
-            (Math.random() - 0.5) * Math.PI / 2
-          ));
-          bone.quaternion.copy(randomQuaternion);
-        }
-      });
-    }
-  };
-}
 
 let audioContext: AudioContext | null = null;
 let masterGainNode: GainNode | null = null;
@@ -717,134 +507,13 @@ window.setMasterVolume = function(volume: number) {
   }
 };
 
-function createJointSliders() {
-  if (!currentVrm) return;
-  const slidersContainer = document.getElementById('joint-sliders');
-  if (!slidersContainer) return;
-  slidersContainer.innerHTML = '';
-  Object.values(VRMHumanBoneName).forEach(boneName => {
-    const bone = currentVrm.humanoid.getNormalizedBoneNode(boneName);
-    if (bone) {
-      const boneControl = document.createElement('div');
-      boneControl.style.marginBottom = '15px';
-      boneControl.setAttribute('data-bone-name', boneName);
-      const label = document.createElement('label');
-      label.textContent = boneName;
-      label.style.display = 'block';
-      boneControl.appendChild(label);
-      ['x', 'y', 'z'].forEach(axis => {
-        const sliderContainer = document.createElement('div');
-        sliderContainer.style.display = 'flex';
-        const axisLabel = document.createElement('span');
-        axisLabel.textContent = axis.toUpperCase();
-        sliderContainer.appendChild(axisLabel);
-        const slider = document.createElement('input');
-        slider.type = 'range';
-        slider.min = '-180';
-        slider.max = '180';
-        const currentEuler = new THREE.Euler().setFromQuaternion(bone.quaternion, 'XYZ');
-        slider.value = THREE.MathUtils.radToDeg(currentEuler[axis as 'x' | 'y' | 'z']).toFixed(0);
-        slider.oninput = () => {
-          const x = (boneControl.querySelector('.slider-x') as HTMLInputElement).value;
-          const y = (boneControl.querySelector('.slider-y') as HTMLInputElement).value;
-          const z = (boneControl.querySelector('.slider-z') as HTMLInputElement).value;
-          const euler = new THREE.Euler(
-            THREE.MathUtils.degToRad(parseFloat(x)),
-            THREE.MathUtils.degToRad(parseFloat(y)),
-            THREE.MathUtils.degToRad(parseFloat(z)),
-            'XYZ'
-          );
-          bone.setRotationFromEuler(euler);
-        };
-        slider.className = `slider-${axis}`;
-        sliderContainer.appendChild(slider);
-        boneControl.appendChild(sliderContainer);
-      });
 
-      // 초기화 버튼 추가
-      const resetButton = document.createElement('button');
-      resetButton.textContent = '초기화';
-      Object.assign(resetButton.style, {
-        marginTop: '5px',
-        padding: '5px 10px',
-        backgroundColor: '#dc3545',
-        color: 'white',
-        border: 'none',
-        borderRadius: '5px',
-        cursor: 'pointer',
-        fontSize: '0.8rem',
-      });
-      resetButton.onclick = () => {
-        if (bone) {
-          bone.quaternion.set(0, 0, 0, 1); // 쿼터니언 초기화 (회전 없음)
-          // 슬라이더 값도 초기화된 값으로 업데이트
-          const resetEuler = new THREE.Euler().setFromQuaternion(bone.quaternion, 'XYZ');
-          ['x', 'y', 'z'].forEach(axis => {
-            const slider = boneControl.querySelector<HTMLInputElement>(`.slider-${axis}`);
-            if (slider) {
-              slider.value = THREE.MathUtils.radToDeg(resetEuler[axis as 'x' | 'y' | 'z']).toFixed(0);
-            }
-          });
-        }
-      };
-      boneControl.appendChild(resetButton);
 
-      slidersContainer.appendChild(boneControl);
-    }
-  });
-}
-window.createJointSliders = createJointSliders;
 
-/**
- * 현재 로드된 VRM 모델의 모든 메시 이름을 배열로 반환합니다.
- * @returns 메시 이름 배열
- */
-window.listVrmMeshes = function(): string[] {
-  if (!currentVrm) {
-    console.warn('VRM model not loaded. Cannot list meshes.');
-    return [];
-  }
-  const meshNames: string[] = [];
-  currentVrm.scene.traverse((object) => {
-    if ((object as THREE.Mesh).isMesh) {
-      meshNames.push(object.name);
-    }
-  });
-  return meshNames;
-};
 
-/**
- * 특정 이름의 VRM 메시의 가시성을 토글합니다.
- * @param meshName 토글할 메시의 이름
- * @param visible 메시를 보이게 할지 숨기게 할지 여부
- */
-window.toggleVrmMeshVisibility = function(meshName: string, visible: boolean): void {
-  if (!currentVrm) {
-    console.warn('VRM model not loaded. Cannot toggle mesh visibility.');
-    return;
-  }
-  let found = false;
-  currentVrm.scene.traverse((object) => {
-    if ((object as THREE.Mesh).isMesh && object.name === meshName) {
-      object.visible = visible;
-      found = true;
-      console.log(`Mesh '${meshName}' visibility set to ${visible}`);
-    }
-  });
-  if (!found) {
-    console.warn(`Mesh '${meshName}' not found in VRM model.`);
-  }
-};
 
-function logVrmBoneNames() {
-  if (!currentVrm) return;
-  console.log('--- VRM Humanoid Bone Names ---');
-  Object.entries(currentVrm.humanoid.humanBones).forEach(([boneName, bone]) => {
-    if (bone?.node) console.log(`HumanBoneName: ${boneName}, Node Name: ${bone.node.name}`);
-  });
-  console.log('-------------------------------');
-}
-window.logVrmBoneNames = logVrmBoneNames;
+
+
 
 async function loadAnimationFile(filePathOrUrl: string, options: { loop?: boolean; crossFadeDuration?: number } = {}) {
   if (!currentVrm || !mixer) return;
@@ -928,57 +597,17 @@ async function loadAnimationFile(filePathOrUrl: string, options: { loop?: boolea
     alert(`애니메이션 파일 로딩에 실패했습니다: ${(error as Error).message}`);
   }
 }
+
 window.loadAnimationFile = loadAnimationFile;
 
-function createExpressionSliders() {
-  if (!window.currentVrm || !window.currentVrm.expressionManager) {
-    console.warn('createExpressionSliders: currentVrm or expressionManager is not available. Returning.');
-    return;
-  }
-  const slidersContainer = document.getElementById('expression-sliders');
-  if (!slidersContainer) {
-    console.warn('createExpressionSliders: slidersContainer not found. Returning.');
-    return;
-  }
-  slidersContainer.innerHTML = ''; // Clear previous sliders
+window.updateJointSliders = updateJointSliders;
+window.createJointSliders = createJointSliders;
 
-  const expressionManager = window.currentVrm.expressionManager;
-  const expressionMap = expressionManager.expressionMap;
-
-  if (!expressionMap || Object.keys(expressionMap).length === 0) {
-    console.warn('createExpressionSliders: No expressions found in VRM model. Returning.');
-    return;
-  }
-
-  // `expressionMap`'s keys are the correct names for `setValue`
-  for (const expressionName in expressionMap) {
-    const expressionControl = document.createElement('div');
-    expressionControl.style.marginBottom = '15px';
-    expressionControl.setAttribute('data-expression-name', expressionName);
-
-    const label = document.createElement('label');
-    label.textContent = expressionName;
-    label.style.display = 'block';
-    expressionControl.appendChild(label);
-
-    const slider = document.createElement('input');
-    slider.type = 'range';
-    slider.min = '0';
-    slider.max = '100'; // 0.0 to 1.0, so 0 to 100 for slider
-    const initialValue = expressionManager.getValue(expressionName) || 0;
-    slider.value = (initialValue * 100).toFixed(0);
-
-    slider.oninput = () => {
-      const weight = parseFloat(slider.value) / 100;
-      // The key from expressionMap is the correct one to use.
-      expressionManager.setValue(expressionName, weight);
-      expressionManager.update();
-    };
-    slider.className = 'expression-slider';
-    expressionControl.appendChild(slider);
-    slidersContainer.appendChild(expressionControl);
-  }
-}
-window.createExpressionSliders = createExpressionSliders;
-    
-    
+setupPosePanelButton(window.electronAPI, window.loadAnimationFile);
+setupAnimationPanelButton(window.electronAPI, window.loadAnimationFile);
+setupSavePoseButton(currentVrm, window.electronAPI);
+setupLoadPoseFileButton(window.electronAPI, window.loadAnimationFile);
+setupLoadVrmButton(window.electronAPI, loadVRM);
+window.listVrmMeshes = () => listVrmMeshes(currentVrm);
+window.toggleVrmMeshVisibility = (meshName: string, visible: boolean) => toggleVrmMeshVisibility(currentVrm, meshName, visible);
+window.createMeshList = () => createMeshList(currentVrm, toggleVrmMeshVisibility);
