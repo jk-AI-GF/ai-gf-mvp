@@ -14,13 +14,13 @@ export class AutoIdleAnimationPlugin implements IPlugin {
   constructor() {
     // 유휴 애니메이션 파일 목록을 정의합니다.
     this.idleAnimationFiles = [
-      'assets/Animation/VRMA_01.vrma',
-      'assets/Animation/VRMA_02.vrma',
-      'assets/Animation/VRMA_03.vrma',
-      'assets/Animation/VRMA_04.vrma',
-      'assets/Animation/VRMA_05.vrma',
-      'assets/Animation/VRMA_06.vrma',
-      'assets/Animation/VRMA_07.vrma',
+      'Animation/VRMA_01.vrma',
+      'Animation/VRMA_02.vrma',
+      'Animation/VRMA_03.vrma',
+      'Animation/VRMA_04.vrma',
+      'Animation/VRMA_05.vrma',
+      'Animation/VRMA_06.vrma',
+      'Animation/VRMA_07.vrma',
     ];
     this.resetIdleTimer();
   }

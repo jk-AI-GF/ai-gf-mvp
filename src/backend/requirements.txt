@@ -1,7 +1,0 @@
-fastapi
-uvicorn[standard]
-TTS
-gTTS
-hangul_romanize
-numpy
-scipy
