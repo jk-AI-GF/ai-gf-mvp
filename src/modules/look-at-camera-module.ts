@@ -1,15 +1,21 @@
 import { Imodule } from './module-manager';
 import { VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
 import * as THREE from 'three';
+import { Actions } from '../module-api/actions';
 
 export class LookAtCameramodule implements Imodule {
   public readonly name = 'LookAtCamera';
   public enabled = true;
 
   private camera: THREE.Camera;
+  private actions: Actions; // Add actions property
 
   constructor(camera: THREE.Camera) {
     this.camera = camera;
+  }
+
+  public setActions(actions: Actions): void {
+    this.actions = actions;
   }
 
   public update(delta: number, vrm: VRM): void {

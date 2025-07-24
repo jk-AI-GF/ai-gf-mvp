@@ -1,12 +1,14 @@
 import { Imodule } from './module-manager';
+import { Actions } from '../module-api/actions';
 
 /**
- * VRM 모델이 주기적으로 유휴 애니메이션을 재생하도록 하는 플러그인입니다.
+ * VRM 모델이 주기적으로 유휴 애니메이션을 재생하도록 하는 모듈입니다.
  */
 export class AutoIdleAnimationmodule implements Imodule {
   public readonly name = 'AutoIdleAnimation';
   public enabled = true;
 
+  private actions: Actions;
   private timeSinceLastIdle = 0.0;
   private nextIdleTime = 0.0;
   private readonly idleAnimationFiles: string[];
@@ -25,6 +27,10 @@ export class AutoIdleAnimationmodule implements Imodule {
     this.resetIdleTimer();
   }
 
+  public setActions(actions: Actions): void {
+    this.actions = actions;
+  }
+
   /**
    * 다음 애니메이션 재생까지의 시간을 랜덤으로 재설정합니다.
    */
@@ -37,7 +43,7 @@ export class AutoIdleAnimationmodule implements Imodule {
   /**
    * 매 프레임마다 호출되어 유휴 애니메이션 재생 로직을 처리합니다.
    * @param delta 마지막 프레임 이후의 시간 (초)
-   * @param vrm VRM 모델 인스턴스 (이 플러그인에서는 직접 사용하지 않음)
+   * @param vrm VRM 모델 인스턴스 (이 모듈에서는 직접 사용하지 않음)
    */
   public update(delta: number): void {
     this.timeSinceLastIdle += delta;
@@ -59,9 +65,9 @@ export class AutoIdleAnimationmodule implements Imodule {
 
     console.log(`Playing idle animation: ${animationFile}`);
 
-    if (window.loadAnimationFile) {
-      // 1.5초 동안 부드럽게 전환하도록 옵션을 전달합니다. (loop는 제거)
-      window.loadAnimationFile(animationFile, { crossFadeDuration: 1.5 });
+    if (this.actions) {
+      // 1.5초 동안 부드럽게 전환하도록 옵션을 전달합니다.
+      this.actions.playAnimation(animationFile, false, 1.5);
     }
   }
 }

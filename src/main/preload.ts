@@ -11,4 +11,10 @@ import { ipcRenderer } from 'electron';
   openPersonaFile: () => ipcRenderer.invoke('open-persona-file'),
   readAssetFile: async (filePath: string) => ipcRenderer.invoke('read-asset-file', filePath),
   readAbsoluteFile: async (filePath: string) => ipcRenderer.invoke('read-absolute-file', filePath),
+  playAnimation: (animationName: string, loop: boolean, crossFadeDuration: number) => ipcRenderer.invoke('play-animation', animationName, loop, crossFadeDuration),
+  showMessage: (message: string, duration: number) => ipcRenderer.invoke('show-message', message, duration),
+  setExpression: (expressionName: string, weight: number, duration: number) => ipcRenderer.invoke('set-expression', expressionName, weight, duration),
+  on: (channel: string, listener: (...args: any[]) => void) => {
+    ipcRenderer.on(channel, (event, ...args) => listener(...args));
+  },
 };

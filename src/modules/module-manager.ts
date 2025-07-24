@@ -1,4 +1,5 @@
 import { VRM } from '@pixiv/three-vrm';
+import { Actions } from '../module-api/actions';
 
 /**
  * 모든 모듈이 구현해야 하는 인터페이스입니다.
@@ -22,6 +23,12 @@ export interface Imodule {
    * @param vrm VRM 모델 인스턴스
    */
   update(delta: number, vrm: VRM): void;
+
+  /**
+   * 모듈에 Actions 객체를 설정합니다.
+   * @param actions 게임 내 액션들을 호출할 수 있는 객체
+   */
+  setActions(actions: Actions): void;
 }
 
 /**
@@ -29,6 +36,11 @@ export interface Imodule {
  */
 export class ModuleManager {
   private modules: Map<string, Imodule> = new Map();
+  private actions: Actions;
+
+  constructor(actions: Actions) {
+    this.actions = actions;
+  }
 
   /**
    * 새로운 모듈을 등록합니다.
@@ -40,6 +52,7 @@ export class ModuleManager {
       return;
     }
     this.modules.set(module.name, module);
+    module.setActions(this.actions);
     console.log(`module registered: ${module.name}`);
   }
 

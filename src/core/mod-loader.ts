@@ -23,8 +23,9 @@ export class ModLoader {
   private loadedMods: Map<string, ModManifest> = new Map();
   private eventBus: EventBusImpl;
   private triggerEngine: TriggerEngine;
+  private sendToRenderer: (channel: string, ...args: any[]) => void;
 
-  constructor(userDataPath: string, appPath: string, isPackaged: boolean, eventBus: EventBusImpl, triggerEngine: TriggerEngine) {
+  constructor(userDataPath: string, appPath: string, isPackaged: boolean, eventBus: EventBusImpl, triggerEngine: TriggerEngine, sendToRenderer: (channel: string, ...args: any[]) => void) {
     // 개발 환경에서는 프로젝트 루트의 userdata/mods를 사용하고,
     // 배포 환경에서는 Electron의 userData 경로를 사용합니다.
     this.modsDir = isPackaged 
@@ -32,6 +33,7 @@ export class ModLoader {
       : path.join(appPath, 'userdata', 'mods');
     this.eventBus = eventBus;
     this.triggerEngine = triggerEngine;
+    this.sendToRenderer = sendToRenderer;
     console.log(`[ModLoader] Initialized. Mods directory: ${this.modsDir}`);
   }
 
@@ -85,6 +87,17 @@ export class ModLoader {
         const moduleContext: ModuleContext = {
           eventBus: this.eventBus,
           registerTrigger: (trigger: Trigger) => this.triggerEngine.registerTrigger(trigger),
+          actions: {
+            playAnimation: (animationName: string, loop?: boolean, crossFadeDuration?: number) => {
+              this.sendToRenderer('play-animation', animationName, loop, crossFadeDuration);
+            },
+            showMessage: (message: string, duration?: number) => {
+              this.sendToRenderer('show-message', message, duration);
+            },
+            setExpression: (expressionName: string, weight: number, duration?: number) => {
+              this.sendToRenderer('set-expression', expressionName, weight, duration);
+            },
+          },
         };
         modModule.default(moduleContext);
         this.loadedMods.set(manifest.name, manifest);

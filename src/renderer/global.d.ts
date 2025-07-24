@@ -29,6 +29,10 @@ declare global {
       openPersonaFile: () => Promise<string | null>;
       readAssetFile: (filePath: string) => Promise<ArrayBuffer | { error: string }>;
       readAbsoluteFile: (filePath: string) => Promise<ArrayBuffer | { error: string }>;
+      playAnimation: (animationName: string, loop?: boolean, crossFadeDuration?: number) => Promise<void>;
+      showMessage: (message: string, duration?: number) => Promise<void>;
+      setExpression: (expressionName: string, weight: number, duration?: number) => Promise<void>;
+      on: (channel: string, listener: (...args: any[]) => void) => void;
     };
     logVrmBoneNames: () => void;
     createExpressionSliders: () => void;

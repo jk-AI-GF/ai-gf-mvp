@@ -1,6 +1,9 @@
 import { app, BrowserWindow, Tray, Menu, globalShortcut, dialog, session, ipcMain } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
+import { ModLoader } from '../core/mod-loader';
+import { EventBusImpl } from '../core/event-bus-impl';
+import { TriggerEngine } from '../core/trigger-engine';
 
 process.on('uncaughtException', (error) => {
   const message = error.stack || error.message || 'Unknown error';
@@ -108,7 +111,42 @@ app.on('ready', () => {
     toggleOverlayWindow();
   });
 
+  // Initialize ModLoader, EventBus, and TriggerEngine
+  const eventBus = new EventBusImpl();
+  const triggerEngine = new TriggerEngine();
+  const modLoader = new ModLoader(
+    app.getPath('userData'),
+    app.getAppPath(),
+    app.isPackaged,
+    eventBus,
+    triggerEngine,
+    (channel: string, ...args: any[]) => {
+      if (overlayWindow) {
+        overlayWindow.webContents.send(channel, ...args);
+      }
+    }
+  );
+  modLoader.loadMods();
+
   // IPC handler for listing directories
+  ipcMain.handle('play-animation', async (event, animationName: string, loop: boolean, crossFadeDuration: number) => {
+    if (overlayWindow) {
+      overlayWindow.webContents.send('play-animation-in-renderer', animationName, loop, crossFadeDuration);
+    }
+  });
+
+  ipcMain.handle('show-message', async (event, message: string, duration: number) => {
+    if (overlayWindow) {
+      overlayWindow.webContents.send('show-message-in-renderer', message, duration);
+    }
+  });
+
+  ipcMain.handle('set-expression', async (event, expressionName: string, weight: number, duration: number) => {
+    if (overlayWindow) {
+      overlayWindow.webContents.send('set-expression-in-renderer', expressionName, weight, duration);
+    }
+  });
+
   ipcMain.handle('list-directory', async (event, dirPath: string) => {
     try {
       const fullPath = path.join(assetsRoot, dirPath);

@@ -188,11 +188,11 @@
           document.getElementById('expression-control-panel').style.display = 'none';
         };
         document.getElementById('open-modules-panel-button').onclick = () => {
-          const pluginControlPanel = document.getElementById('module-control-panel');
-          if (pluginControlPanel.style.display === 'block') {
-            pluginControlPanel.style.display = 'none';
+          const moduleControlPanel = document.getElementById('module-control-panel');
+          if (moduleControlPanel.style.display === 'block') {
+            moduleControlPanel.style.display = 'none';
           } else {
-            pluginControlPanel.style.display = 'block';
+            moduleControlPanel.style.display = 'block';
             if (window.moduleManager && window.createModuleList) {
               window.createModuleList();
             }
@@ -408,17 +408,17 @@
         };
 
         window.createModuleList = function() {
-          const pluginsListDiv = document.getElementById('modules-list');
-          if (!pluginsListDiv) return;
+          const modulesListDiv = document.getElementById('modules-list');
+          if (!modulesListDiv) return;
 
-          pluginsListDiv.innerHTML = ''; // Clear existing list
+          modulesListDiv.innerHTML = ''; // Clear existing list
 
           if (!window.moduleManager) {
-            pluginsListDiv.textContent = '모듈 관리자를 찾을 수 없습니다.';
+            modulesListDiv.textContent = '모듈 관리자를 찾을 수 없습니다.';
             return;
           }
 
-          // Iterate over registered plugins
+          // Iterate over registered modules
           for (const module of window.moduleManager.modules.values()) {
             const moduleDiv = document.createElement('div');
             moduleDiv.style.marginBottom = '10px';
@@ -451,7 +451,7 @@
 
             moduleDiv.appendChild(checkbox);
             moduleDiv.appendChild(label);
-            pluginsListDiv.appendChild(moduleDiv);
+            modulesListDiv.appendChild(moduleDiv);
           }
         };
 

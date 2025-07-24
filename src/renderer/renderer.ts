@@ -38,6 +38,7 @@ import { LookAtCameramodule } from '../modules/look-at-camera-module';
 import { AutoBlinkmodule } from '../modules/auto-blink-module';
 import { AutoIdleAnimationmodule } from '../modules/auto-idle-animation-module';
 import { ProactiveDialoguemodule } from '../modules/proactive-dialogue-module';
+import { Actions } from '../module-api/actions';
 
 let mixer: THREE.AnimationMixer;
 let currentVrm: VRM | null = null;
@@ -47,8 +48,33 @@ const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0.0, 0.0, 3.0);
 const DEFAULT_CAMERA_ROTATION = new THREE.Euler(-0.08, 0.0, 0.0);
 let isFreeCameraMode = true; // 초기 카메라는 자유 모드
 
-const moduleManager = new ModuleManager();
+// Actions 구현체
+const actions: Actions = {
+  playAnimation: (animationName: string, loop?: boolean, crossFadeDuration?: number) => {
+    window.loadAnimationFile(animationName, { loop, crossFadeDuration });
+  },
+  showMessage: (message: string, duration?: number) => {
+    window.appendMessage('assistant', message); // Assuming showMessage is for assistant messages
+  },
+  setExpression: (expressionName: string, weight: number, duration?: number) => {
+    window.animateExpression(expressionName, weight, duration);
+  },
+};
+
+const moduleManager = new ModuleManager(actions);
 window.moduleManager = moduleManager;
+// Main process로부터의 IPC 메시지 수신
+window.electronAPI.on('play-animation-in-renderer', (animationName: string, loop: boolean, crossFadeDuration: number) => {
+  actions.playAnimation(animationName, loop, crossFadeDuration);
+});
+
+window.electronAPI.on('show-message-in-renderer', (message: string, duration: number) => {
+  actions.showMessage(message, duration);
+});
+
+window.electronAPI.on('set-expression-in-renderer', (expressionName: string, weight: number, duration: number) => {
+  actions.setExpression(expressionName, weight, duration);
+});
 
 if (!window.floatingMessages) {
   window.floatingMessages = [];

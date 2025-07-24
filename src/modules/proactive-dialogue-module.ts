@@ -1,12 +1,14 @@
 import { Imodule } from './module-manager';
+import { Actions } from '../module-api/actions';
 
 /**
- * VRM 모델이 주기적으로 플레이어에게 말을 거는 플러그인입니다.
+ * VRM 모델이 주기적으로 플레이어에게 말을 거는 모듈입니다.
  */
 export class ProactiveDialoguemodule implements Imodule {
   public readonly name = 'ProactiveDialogue';
   public enabled = true;
 
+  private actions: Actions;
   private timeSinceLastDialogue = 0.0;
   private nextDialogueTime = 0.0;
   private readonly dialoguePhrases: string[];
@@ -38,6 +40,10 @@ export class ProactiveDialoguemodule implements Imodule {
     this.resetDialogueTimer();
   }
 
+  public setActions(actions: Actions): void {
+    this.actions = actions;
+  }
+
   /**
    * 다음 대화까지의 시간을 랜덤으로 재설정합니다.
    */
@@ -51,7 +57,7 @@ export class ProactiveDialoguemodule implements Imodule {
   /**
    * 매 프레임마다 호출되어 대화 로직을 처리합니다.
    * @param delta 마지막 프레임 이후의 시간 (초)
-   * @param vrm VRM 모델 인스턴스 (이 플러그인에서는 직접 사용하지 않음)
+   * @param vrm VRM 모델 인스턴스 (이 모듈에서는 직접 사용하지 않음)
    */
   public update(delta: number): void {
     if (!this.enabled) return;
@@ -74,10 +80,10 @@ export class ProactiveDialoguemodule implements Imodule {
     const phrase = this.dialoguePhrases[randomIndex];
 
     // window.appendMessage 함수를 사용하여 말풍선을 띄웁니다.
-    if (window.appendMessage) {
-      window.appendMessage('assistant', phrase);
+    if (this.actions) {
+      this.actions.showMessage(phrase);
     } else {
-      console.warn('window.appendMessage is not defined. Cannot display dialogue.');
+      console.warn('Actions object not set. Cannot display dialogue.');
     }
 
     // window.playTTS 함수를 사용하여 음성을 재생합니다.
