@@ -22,6 +22,10 @@ if (require('electron-squirrel-startup')) {
 let tray: Tray | null = null;
 let overlayWindow: BrowserWindow | null = null;
 
+const assetsRoot = app.isPackaged
+  ? path.join(process.resourcesPath, 'assets')
+  : path.join(app.getAppPath(), 'assets');
+
 const createOverlayWindow = (): void => {
   if (overlayWindow) {
     overlayWindow.focus();
@@ -57,14 +61,6 @@ const toggleOverlayWindow = (): void => {
   }
 };
 
-
-
-
-
-const assetsRoot = app.isPackaged
-  ? path.join(process.resourcesPath, 'assets')
-  : path.join(app.getAppPath(), 'assets');
-
 const createTray = (): void => {
   const iconPath = path.join(assetsRoot, 'icon.png');
   tray = new Tray(iconPath);
@@ -79,8 +75,8 @@ const createTray = (): void => {
 const createWindow = (): void => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    height: 600,
-    width: 800,
+    height: 860,
+    width: 1400,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       webSecurity: true, // 보안 검사 활성화
@@ -125,7 +121,7 @@ app.on('ready', () => {
   );
   modLoader.loadMods();
 
-  // IPC handler for listing directories
+  // IPC handler
   ipcMain.handle('play-animation', async (event, animationName: string, loop: boolean, crossFadeDuration: number) => {
     if (overlayWindow) {
       overlayWindow.webContents.send('play-animation-in-renderer', animationName, loop, crossFadeDuration);

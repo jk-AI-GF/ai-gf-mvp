@@ -27,13 +27,16 @@ import { updateJointSliders, createJointSliders, setupPosePanelButton, setupAnim
 import { VRMManager } from './vrm-manager';
 
 let controls: OrbitControls | null = null;
+let isFreeCameraMode = true;
+let isTtsActive = false;
+
 const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0.0, -0.1, 3.5);
 const DEFAULT_CAMERA_ROTATION = new THREE.Euler(0.14, 0.0, 0.0);
 const DEFAULT_FREE_CAMERA_POSITION = new THREE.Vector3(0.0, 0.0, 3.0);
 const DEFAULT_FREE_CAMERA_ROTATION = new THREE.Euler(0.0, 0.0, 0.0);
 
-let isFreeCameraMode = true;
-let isTtsActive = false;
+const eventBusImpl = new EventBusImpl();
+const triggerEngine = new TriggerEngine();
 
 // Actions implementation
 const actions: Actions = {
@@ -83,9 +86,6 @@ const systemControls: SystemControls = {
     window.setMasterVolume(volume);
   },
 };
-
-const eventBusImpl = new EventBusImpl();
-const triggerEngine = new TriggerEngine();
 
 const moduleContext: ModuleContext = {
   eventBus: eventBusImpl,
