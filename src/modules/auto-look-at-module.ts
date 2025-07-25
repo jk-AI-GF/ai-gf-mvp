@@ -31,7 +31,7 @@ export class AutoLookAtModule implements Imodule {
         this.setNextChangeInterval();
 
         const targets = [null, 'camera', 'mouse'];
-        const randomIndex = Math.floor(Math.random() * targets.length);
+        const randomIndex = 2 //Math.floor(Math.random() * targets.length);
         const selectedTargetType = targets[randomIndex];
 
         if (selectedTargetType === 'camera') {

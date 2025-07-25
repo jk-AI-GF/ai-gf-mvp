@@ -118,35 +118,35 @@ export class VRMManager {
             await new Promise(resolve => setTimeout(resolve, 500));
             
             // 커스텀 애니메이션 부분
-            const customAnimationPath1 = 'Animation/VRMA_02.vrma';
-            try {
-                const animationResult1 = await this.loadAndParseFile(customAnimationPath1);
-                if (animationResult1?.type === 'animation') {
-                    this.playAnimation(animationResult1.data, false); // loop를 false로 설정하여 1회 재생
-                    // console.log(`[VRMManager] Custom animation ${customAnimationPath1} played.`);
-                } else {
-                    console.warn(`[VRMManager] Failed to load or parse custom animation: ${customAnimationPath1}`);
-                }
-            } catch (error) {
-                console.error(`[VRMManager] Error playing custom animation ${customAnimationPath1}:`, error);
-            }
+            // const customAnimationPath1 = 'Animation/VRMA_02.vrma';
+            // try {
+            //     const animationResult1 = await this.loadAndParseFile(customAnimationPath1);
+            //     if (animationResult1?.type === 'animation') {
+            //         this.playAnimation(animationResult1.data, false); // loop를 false로 설정하여 1회 재생
+            //         // console.log(`[VRMManager] Custom animation ${customAnimationPath1} played.`);
+            //     } else {
+            //         console.warn(`[VRMManager] Failed to load or parse custom animation: ${customAnimationPath1}`);
+            //     }
+            // } catch (error) {
+            //     console.error(`[VRMManager] Error playing custom animation ${customAnimationPath1}:`, error);
+            // }
 
             await this.animateVrmDrop(vrm, 0.5, 3.0, -0.6);
 
-            setTimeout(async () => {
-                const customAnimationPath2 = 'Animation/VRMA_03.vrma';
-                try {
-                    const animationResult2 = await this.loadAndParseFile(customAnimationPath2);
-                    if (animationResult2?.type === 'animation') {
-                        this.playAnimation(animationResult2.data, false); // loop를 false로 설정하여 1회 재생
-                        // console.log(`[VRMManager] Custom animation ${customAnimationPath2} played.`);
-                    } else {
-                        console.warn(`[VRMManager] Failed to load or parse custom animation: ${customAnimationPath2}`);
-                    }
-                } catch (error) {
-                    console.error(`[VRMManager] Error playing custom animation ${customAnimationPath2}:`, error);
-                }
-            }, 3000);
+            // setTimeout(async () => {
+            //     const customAnimationPath2 = 'Animation/VRMA_03.vrma';
+            //     try {
+            //         const animationResult2 = await this.loadAndParseFile(customAnimationPath2);
+            //         if (animationResult2?.type === 'animation') {
+            //             this.playAnimation(animationResult2.data, false); // loop를 false로 설정하여 1회 재생
+            //             // console.log(`[VRMManager] Custom animation ${customAnimationPath2} played.`);
+            //         } else {
+            //             console.warn(`[VRMManager] Failed to load or parse custom animation: ${customAnimationPath2}`);
+            //         }
+            //     } catch (error) {
+            //         console.error(`[VRMManager] Error playing custom animation ${customAnimationPath2}:`, error);
+            //     }
+            // }, 3000);
 
             window.expressionMap = vrm.expressionManager.expressionMap;
             if (vrm.expressionManager) {
@@ -379,25 +379,21 @@ export class VRMManager {
 
             // Look-at logic
             let lookAtTarget: THREE.Object3D | THREE.Vector3 | null = null;
-
+            
             if (this._lookAtMode === 'camera') {
                 lookAtTarget = this._camera;
             } else if (this._lookAtMode === 'mouse') {
-                // Get mouse position in NDC
-                const mouseX = (window.innerWidth / 2) / window.innerWidth * 2 - 1; // Center of screen for now
-                const mouseY = (window.innerHeight / 2) / window.innerHeight * 2 - 1; // Center of screen for now
-                lookAtTarget = window.get3DPointFromMouse(mouseX, mouseY);
+                if (window.mousePosition) {
+                    lookAtTarget = window.get3DPointFromMouse();
+                }
             } else if (this._lookAtMode === 'fixed') {
                 lookAtTarget = this._fixedLookAtTarget;
             }
-
+            
+            console.log(lookAtTarget)
             if (lookAtTarget) {
                 const head = this.currentVrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Head);
                 if (head) {
-                    const headForward = new THREE.Vector3();
-                    head.getWorldDirection(headForward);
-                    headForward.negate();
-
                     const targetPos = new THREE.Vector3();
                     if (lookAtTarget instanceof THREE.Object3D) {
                         lookAtTarget.getWorldPosition(targetPos);
@@ -408,18 +404,14 @@ export class VRMManager {
                     const headPos = new THREE.Vector3();
                     head.getWorldPosition(headPos);
 
-                    const lookDir = new THREE.Vector3().subVectors(targetPos, headPos).normalize();
+                    // Use a lookAt matrix to create a stable rotation, avoiding head roll
+                    const lookAtMatrix = new THREE.Matrix4().lookAt(headPos, targetPos, new THREE.Vector3(0, 1, 0));
+                    const targetWorldQuat = new THREE.Quaternion().setFromRotationMatrix(lookAtMatrix);
 
-                    const lookAtOffset = new THREE.Quaternion().setFromUnitVectors(headForward, lookDir);
-                    const headWorldQuat = new THREE.Quaternion();
-                    head.getWorldQuaternion(headWorldQuat);
-
-                    const targetWorldQuat = new THREE.Quaternion().multiplyQuaternions(lookAtOffset, headWorldQuat);
-
+                    // Convert the target world rotation to the bone's local space
                     const parentWorldQuat = new THREE.Quaternion();
                     head.parent.getWorldQuaternion(parentWorldQuat);
                     const parentWorldQuatInverse = parentWorldQuat.clone().invert();
-
                     const targetLocalQuat = targetWorldQuat.clone().premultiply(parentWorldQuatInverse);
 
                     // Slerp for smooth transition

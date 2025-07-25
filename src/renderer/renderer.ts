@@ -58,9 +58,11 @@ const actions: Actions = {
       vrmManager.playAnimation(result.data, false); // Play animation even if setPose was called
     }
   },
-  lookAt: (target: 'camera' | [number, number, number] | null) => {
+  lookAt: (target: 'camera' | 'mouse' | [number, number, number] | null) => {
     if (target === 'camera') {
       vrmManager.lookAt('camera');
+    } else if (target === 'mouse') {
+      vrmManager.lookAt('mouse');
     } else if (Array.isArray(target)) {
       vrmManager.lookAt(new THREE.Vector3(target[0], target[1], target[2]));
     } else if (target === null) {
@@ -230,18 +232,38 @@ animate();
  * @param mouseY Normalized device coordinates (NDC) Y (-1 to 1).
  * @returns A THREE.Vector3 representing the 3D point, or null if no intersection.
  */
-function get3DPointFromMouse(mouseX: number, mouseY: number): THREE.Vector3 | null {
+function get3DPointFromMouse(): THREE.Vector3 {
+  const mouse = new THREE.Vector2(window.mousePosition.x, window.mousePosition.y);
   const raycaster = new THREE.Raycaster();
-  const mouse = new THREE.Vector2(mouseX, mouseY);
-
   raycaster.setFromCamera(mouse, camera);
 
-  const intersects = raycaster.intersectObject(plane);
+  // Create a plane in front of the camera
+  const cameraDirection = new THREE.Vector3();
+  camera.getWorldDirection(cameraDirection);
+  const cameraPosition = new THREE.Vector3();
+  camera.getWorldPosition(cameraPosition);
 
+  const planeDistance = 2; // Distance of the plane from the camera
+  const planePoint = new THREE.Vector3().addVectors(cameraPosition, cameraDirection.multiplyScalar(planeDistance));
+  const dynamicPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(cameraDirection.negate(), planePoint);
+
+  const intersectionPoint = new THREE.Vector3();
+  const point = raycaster.ray.intersectPlane(dynamicPlane, intersectionPoint);
+
+  if (point) {
+    return point;
+  }
+
+  // Fallback: if no intersection, use the old ground plane method
+  const intersects = raycaster.intersectObject(plane); // `plane` is the ground plane mesh
   if (intersects.length > 0) {
     return intersects[0].point;
   }
-  return null;
+
+  // Final fallback: a point in front of the camera
+  const fallbackPoint = new THREE.Vector3();
+  raycaster.ray.at(10, fallbackPoint);
+  return fallbackPoint;
 }
 
 // --- Global Window Functions & UI Setup ---
@@ -267,6 +289,12 @@ function onWindowResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 window.addEventListener('resize', onWindowResize);
+
+window.mousePosition = { x: 0, y: 0 };
+document.addEventListener('mousemove', (event) => {
+  window.mousePosition.x = (event.clientX / window.innerWidth) * 2 - 1;
+  window.mousePosition.y = -(event.clientY / window.innerHeight) * 2 + 1;
+});
 
 let audioContext: AudioContext | null = null;
 let masterGainNode: GainNode | null = null;

@@ -22,7 +22,7 @@ declare global {
     createExpressionSliders: () => void;
     createMeshList: () => void;
     createmoduleList: () => void;
-    get3DPointFromMouse: (mouseX: number, mouseY: number) => THREE.Vector3 | null;
+    get3DPointFromMouse: () => THREE.Vector3;
 
     // --- System & Device Controls ---
     playTTS: (text: string) => Promise<void>;
@@ -32,6 +32,7 @@ declare global {
     setMasterVolume: (volume: number) => void;
     
     // --- Data & State ---
+    mousePosition: { x: number; y: number };
     floatingMessages: { element: HTMLDivElement; timestamp: number; }[];
     vrmExpressionList: string[];
     expressionMap: { [key: string]: VRMExpression };
