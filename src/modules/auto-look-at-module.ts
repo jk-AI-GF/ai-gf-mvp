@@ -16,7 +16,7 @@ export class AutoLookAtModule implements Imodule {
   }
 
   private setNextChangeInterval(): void {
-    this.nextChangeInterval = Math.random() * (10000 - 3000) + 3000; // Random between 3 to 10 seconds
+    this.nextChangeInterval = Math.random() * (10000 - 7000) + 500; // Random
   }
 
   public setModuleContext(context: ModuleContext): void {
@@ -31,7 +31,7 @@ export class AutoLookAtModule implements Imodule {
         this.setNextChangeInterval();
 
         const targets = [null, 'camera', 'mouse'];
-        const randomIndex = 2 //Math.floor(Math.random() * targets.length);
+        const randomIndex = Math.floor(Math.random() * targets.length);
         const selectedTargetType = targets[randomIndex];
 
         if (selectedTargetType === 'camera') {

@@ -243,7 +243,7 @@ function get3DPointFromMouse(): THREE.Vector3 {
   const cameraPosition = new THREE.Vector3();
   camera.getWorldPosition(cameraPosition);
 
-  const planeDistance = 2; // Distance of the plane from the camera
+  const planeDistance = 1.5; // Distance of the plane from the camera
   const planePoint = new THREE.Vector3().addVectors(cameraPosition, cameraDirection.multiplyScalar(planeDistance));
   const dynamicPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(cameraDirection.negate(), planePoint);
 

@@ -118,35 +118,35 @@ export class VRMManager {
             await new Promise(resolve => setTimeout(resolve, 500));
             
             // 커스텀 애니메이션 부분
-            // const customAnimationPath1 = 'Animation/VRMA_02.vrma';
-            // try {
-            //     const animationResult1 = await this.loadAndParseFile(customAnimationPath1);
-            //     if (animationResult1?.type === 'animation') {
-            //         this.playAnimation(animationResult1.data, false); // loop를 false로 설정하여 1회 재생
-            //         // console.log(`[VRMManager] Custom animation ${customAnimationPath1} played.`);
-            //     } else {
-            //         console.warn(`[VRMManager] Failed to load or parse custom animation: ${customAnimationPath1}`);
-            //     }
-            // } catch (error) {
-            //     console.error(`[VRMManager] Error playing custom animation ${customAnimationPath1}:`, error);
-            // }
+            const customAnimationPath1 = 'Animation/VRMA_02.vrma';
+            try {
+                const animationResult1 = await this.loadAndParseFile(customAnimationPath1);
+                if (animationResult1?.type === 'animation') {
+                    this.playAnimation(animationResult1.data, false); // loop를 false로 설정하여 1회 재생
+                    // console.log(`[VRMManager] Custom animation ${customAnimationPath1} played.`);
+                } else {
+                    console.warn(`[VRMManager] Failed to load or parse custom animation: ${customAnimationPath1}`);
+                }
+            } catch (error) {
+                console.error(`[VRMManager] Error playing custom animation ${customAnimationPath1}:`, error);
+            }
 
             await this.animateVrmDrop(vrm, 0.5, 3.0, -0.6);
 
-            // setTimeout(async () => {
-            //     const customAnimationPath2 = 'Animation/VRMA_03.vrma';
-            //     try {
-            //         const animationResult2 = await this.loadAndParseFile(customAnimationPath2);
-            //         if (animationResult2?.type === 'animation') {
-            //             this.playAnimation(animationResult2.data, false); // loop를 false로 설정하여 1회 재생
-            //             // console.log(`[VRMManager] Custom animation ${customAnimationPath2} played.`);
-            //         } else {
-            //             console.warn(`[VRMManager] Failed to load or parse custom animation: ${customAnimationPath2}`);
-            //         }
-            //     } catch (error) {
-            //         console.error(`[VRMManager] Error playing custom animation ${customAnimationPath2}:`, error);
-            //     }
-            // }, 3000);
+            setTimeout(async () => {
+                const customAnimationPath2 = 'Animation/VRMA_03.vrma';
+                try {
+                    const animationResult2 = await this.loadAndParseFile(customAnimationPath2);
+                    if (animationResult2?.type === 'animation') {
+                        this.playAnimation(animationResult2.data, false); // loop를 false로 설정하여 1회 재생
+                        // console.log(`[VRMManager] Custom animation ${customAnimationPath2} played.`);
+                    } else {
+                        console.warn(`[VRMManager] Failed to load or parse custom animation: ${customAnimationPath2}`);
+                    }
+                } catch (error) {
+                    console.error(`[VRMManager] Error playing custom animation ${customAnimationPath2}:`, error);
+                }
+            }, 3000);
 
             window.expressionMap = vrm.expressionManager.expressionMap;
             if (vrm.expressionManager) {
@@ -390,7 +390,6 @@ export class VRMManager {
                 lookAtTarget = this._fixedLookAtTarget;
             }
             
-            console.log(lookAtTarget)
             if (lookAtTarget) {
                 const head = this.currentVrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Head);
                 if (head) {
