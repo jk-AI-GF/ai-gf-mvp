@@ -12,6 +12,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { VRMHumanBoneName } from '@pixiv/three-vrm';
 import { ModuleManager } from '../modules/module-manager';
 
+import { AutoLookAtModule } from '../modules/auto-look-at-module';
 import { AutoBlinkmodule } from '../modules/auto-blink-module';
 import { AutoIdleAnimationmodule } from '../modules/auto-idle-animation-module';
 import { ProactiveDialoguemodule } from '../modules/proactive-dialogue-module';
@@ -59,7 +60,7 @@ const actions: Actions = {
   },
   lookAt: (target: 'camera' | [number, number, number] | null) => {
     if (target === 'camera') {
-      vrmManager.lookAt(camera);
+      vrmManager.lookAt('camera');
     } else if (Array.isArray(target)) {
       vrmManager.lookAt(new THREE.Vector3(target[0], target[1], target[2]));
     } else if (target === null) {
@@ -148,10 +149,12 @@ document.body.appendChild(renderer.domElement);
 controls = new OrbitControls(camera, renderer.domElement);
 
 // Initialize VRM Manager
-const vrmManager = new VRMManager(scene);
+const vrmManager = new VRMManager(scene, camera);
 window.vrmManager = vrmManager; // Make it globally accessible
 
 // Initialize and register modules
+const autoLookAtmodule = new AutoLookAtModule();
+moduleManager.register(autoLookAtmodule);
 const autoBlinkmodule = new AutoBlinkmodule();
 moduleManager.register(autoBlinkmodule);
 const autoIdleAnimationmodule = new AutoIdleAnimationmodule();
@@ -220,6 +223,26 @@ function animate() {
   renderer.render(scene, camera);
 }
 animate();
+
+/**
+ * Converts 2D mouse coordinates to a 3D point in the Three.js scene, intersecting with the ground plane.
+ * @param mouseX Normalized device coordinates (NDC) X (-1 to 1).
+ * @param mouseY Normalized device coordinates (NDC) Y (-1 to 1).
+ * @returns A THREE.Vector3 representing the 3D point, or null if no intersection.
+ */
+function get3DPointFromMouse(mouseX: number, mouseY: number): THREE.Vector3 | null {
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2(mouseX, mouseY);
+
+  raycaster.setFromCamera(mouse, camera);
+
+  const intersects = raycaster.intersectObject(plane);
+
+  if (intersects.length > 0) {
+    return intersects[0].point;
+  }
+  return null;
+}
 
 // --- Global Window Functions & UI Setup ---
 
@@ -325,5 +348,6 @@ window.createMeshList = () => createMeshList(vrmManager.currentVrm, toggleVrmMes
 window.appendMessage = appendMessage;
 window.updateJointSliders = updateJointSliders;
 window.createJointSliders = createJointSliders;
+window.get3DPointFromMouse = get3DPointFromMouse;
 
 console.log('👋 VRM Overlay loaded successfully.');

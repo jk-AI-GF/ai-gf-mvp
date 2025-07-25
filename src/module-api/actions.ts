@@ -35,7 +35,7 @@ export interface Actions {
 
   /**
    * VRM 모델이 특정 대상을 바라보도록 합니다.
-   * @param target 바라볼 대상. 'camera' 문자열 또는 [x, y, z] 형태의 좌표 배열이 될 수 있습니다. null을 전달하면 시선 처리를 중지합니다.
+   * @param target 바라볼 대상. 'camera', 'mouse' 문자열, [x, y, z] 형태의 좌표 배열이 될 수 있습니다. null을 전달하면 시선 처리를 중지합니다.
    */
-  lookAt(target: 'camera' | [number, number, number] | null): void;
+  lookAt(target: 'camera' | 'mouse' | [number, number, number] | null): void;
 }

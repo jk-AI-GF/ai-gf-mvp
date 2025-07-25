@@ -22,6 +22,7 @@ declare global {
     createExpressionSliders: () => void;
     createMeshList: () => void;
     createmoduleList: () => void;
+    get3DPointFromMouse: (mouseX: number, mouseY: number) => THREE.Vector3 | null;
 
     // --- System & Device Controls ---
     playTTS: (text: string) => Promise<void>;

@@ -62,9 +62,12 @@ export class VRMManager {
     private fbxLoader: FBXLoader;
     private mixer: THREE.AnimationMixer | null = null;
     private currentAction: THREE.AnimationAction | null = null;
-    private _lookAtTarget: THREE.Object3D | THREE.Vector3 | null = null;
+    private _lookAtMode: 'none' | 'camera' | 'mouse' | 'fixed' = 'none';
+    private _fixedLookAtTarget: THREE.Object3D | THREE.Vector3 | null = null;
+    private _camera: THREE.Camera;
 
-    constructor(scene: THREE.Scene) {
+    constructor(scene: THREE.Scene, camera: THREE.Camera) {
+        this._camera = camera;
         this.scene = scene;
 
         this.loader = new GLTFLoader();
@@ -375,7 +378,20 @@ export class VRMManager {
             this.currentVrm.update(delta);
 
             // Look-at logic
-            if (this._lookAtTarget) {
+            let lookAtTarget: THREE.Object3D | THREE.Vector3 | null = null;
+
+            if (this._lookAtMode === 'camera') {
+                lookAtTarget = this._camera;
+            } else if (this._lookAtMode === 'mouse') {
+                // Get mouse position in NDC
+                const mouseX = (window.innerWidth / 2) / window.innerWidth * 2 - 1; // Center of screen for now
+                const mouseY = (window.innerHeight / 2) / window.innerHeight * 2 - 1; // Center of screen for now
+                lookAtTarget = window.get3DPointFromMouse(mouseX, mouseY);
+            } else if (this._lookAtMode === 'fixed') {
+                lookAtTarget = this._fixedLookAtTarget;
+            }
+
+            if (lookAtTarget) {
                 const head = this.currentVrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Head);
                 if (head) {
                     const headForward = new THREE.Vector3();
@@ -383,10 +399,10 @@ export class VRMManager {
                     headForward.negate();
 
                     const targetPos = new THREE.Vector3();
-                    if (this._lookAtTarget instanceof THREE.Object3D) {
-                        this._lookAtTarget.getWorldPosition(targetPos);
+                    if (lookAtTarget instanceof THREE.Object3D) {
+                        lookAtTarget.getWorldPosition(targetPos);
                     } else { // THREE.Vector3
-                        targetPos.copy(this._lookAtTarget);
+                        targetPos.copy(lookAtTarget);
                     }
 
                     const headPos = new THREE.Vector3();
@@ -423,7 +439,19 @@ export class VRMManager {
      * Makes the VRM model look at a specific target (Object3D or Vector3).
      * Set to null to stop looking at a target.
      */
-    public lookAt(target: THREE.Object3D | THREE.Vector3 | null): void {
-        this._lookAtTarget = target;
+    public lookAt(target: 'camera' | 'mouse' | THREE.Vector3 | null): void {
+        if (target === 'camera') {
+            this._lookAtMode = 'camera';
+            this._fixedLookAtTarget = null;
+        } else if (target === 'mouse') {
+            this._lookAtMode = 'mouse';
+            this._fixedLookAtTarget = null;
+        } else if (target instanceof THREE.Vector3) {
+            this._lookAtMode = 'fixed';
+            this._fixedLookAtTarget = target;
+        } else if (target === null) {
+            this._lookAtMode = 'none';
+            this._fixedLookAtTarget = null;
+        }
     }
 }
