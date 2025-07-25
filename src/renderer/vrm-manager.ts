@@ -106,6 +106,8 @@ export class VRMManager {
             this.currentVrm = vrm;
             window.currentVrm = vrm;
 
+            // TODO: Set lookAt angle limits for natural movement
+
             this.mixer = new THREE.AnimationMixer(vrm.scene);
 
             vrm.scene.traverse((object) => {
@@ -377,6 +379,10 @@ export class VRMManager {
         if (this.currentVrm) {
             this.currentVrm.update(delta);
 
+            if (this.currentVrm.lookAt) {
+                this.currentVrm.lookAt.update(delta);
+            }
+
             // Look-at logic
             let lookAtTarget: THREE.Object3D | THREE.Vector3 | null = null;
             
@@ -415,6 +421,23 @@ export class VRMManager {
 
                     // Slerp for smooth transition
                     head.quaternion.slerp(targetLocalQuat, 0.1);
+                }
+            }
+            
+            if (this.currentVrm.lookAt) {
+                if (lookAtTarget) {
+                    let actualTarget: THREE.Object3D;
+                    if (lookAtTarget instanceof THREE.Vector3) {
+                        // Create a dummy Object3D for Vector3 targets
+                        const dummyObject = new THREE.Object3D();
+                        dummyObject.position.copy(lookAtTarget);
+                        actualTarget = dummyObject;
+                    } else {
+                        actualTarget = lookAtTarget;
+                    }
+                    this.currentVrm.lookAt.target = actualTarget;
+                } else {
+                    this.currentVrm.lookAt.target = undefined;
                 }
             }
 
