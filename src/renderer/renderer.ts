@@ -27,8 +27,11 @@ import { updateJointSliders, createJointSliders, setupPosePanelButton, setupAnim
 import { VRMManager } from './vrm-manager';
 
 let controls: OrbitControls | null = null;
-const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0.0, 0.0, 3.0);
-const DEFAULT_CAMERA_ROTATION = new THREE.Euler(-0.08, 0.0, 0.0);
+const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0.17, 0.60, 6.5);
+const DEFAULT_CAMERA_ROTATION = new THREE.Euler(0.5, 0.0, 0.0);
+const DEFAULT_FREE_CAMERA_POSITION = new THREE.Vector3(0.0, 0.0, 3.0);
+const DEFAULT_FREE_CAMERA_ROTATION = new THREE.Euler(0.0, 0.0, 0.0);
+
 let isFreeCameraMode = true;
 let isTtsActive = false;
 
@@ -128,8 +131,8 @@ const tempVector = new THREE.Vector3();
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0.0, 0.0, 3.0);
-camera.rotation.set(-0.08, 0.0, 0.0);
+camera.position.copy(DEFAULT_FREE_CAMERA_POSITION);
+camera.rotation.copy(DEFAULT_FREE_CAMERA_ROTATION);
 
 const light = new THREE.DirectionalLight(0xffffff, 2);
 light.position.set(2, 5, 3);
@@ -272,14 +275,33 @@ window.setClearColor = (color: number) => {
   renderer.setClearColor(color, 0.1);
 };
 
+const cameraModeButton = document.getElementById('toggle-camera-mode-button');
+if (cameraModeButton) {
+  cameraModeButton.addEventListener('click', () => {
+    window.toggleCameraMode();
+  });
+}
+
 window.toggleCameraMode = function(): void {
   isFreeCameraMode = !isFreeCameraMode;
+  console.log(camera.position)
+  console.log(camera.rotation)
+
+  console.log(camera.getFocalLength())
   if (controls) controls.enabled = isFreeCameraMode;
   if (!isFreeCameraMode) {
+    // Fixed camera mode
     camera.position.copy(DEFAULT_CAMERA_POSITION);
     camera.rotation.copy(DEFAULT_CAMERA_ROTATION);
-    camera.updateProjectionMatrix();
+    camera.fov = 20; // Set lower FOV for fixed mode
+    console.log(camera.rotation)
+  } else {
+    // Free camera mode
+    camera.position.copy(DEFAULT_FREE_CAMERA_POSITION);
+    camera.rotation.copy(DEFAULT_FREE_CAMERA_ROTATION);
+    camera.fov = 35; // Reset to default FOV for free mode
   }
+  camera.updateProjectionMatrix();
   console.log(`Camera mode: ${isFreeCameraMode ? 'Free' : 'Fixed'}`);
 };
 
