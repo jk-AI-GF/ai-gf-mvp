@@ -5,6 +5,7 @@ import { VRMLoaderPlugin, VRM, VRMHumanBoneName, VRMPose } from '@pixiv/three-vr
 import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-vrm-animation';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 import { createJointSliders, createExpressionSliders, updateExpressionSliderValue, createMeshList, toggleVrmMeshVisibility } from './ui-manager';
+import { get3DPointFromMouse } from './scene-utils';
 
 type ParsedFile = { type: 'pose'; data: THREE.AnimationClip } | { type: 'animation'; data: THREE.AnimationClip } | null;
 
@@ -64,11 +65,13 @@ export class VRMManager {
     private currentAction: THREE.AnimationAction | null = null;
     private _lookAtMode: 'none' | 'camera' | 'mouse' | 'fixed' = 'none';
     private _fixedLookAtTarget: THREE.Object3D | THREE.Vector3 | null = null;
-    private _camera: THREE.Camera;
+    private _camera: THREE.PerspectiveCamera; // Change Camera to PerspectiveCamera
+    private _plane: THREE.Mesh; // Add this line
 
-    constructor(scene: THREE.Scene, camera: THREE.Camera) {
+    constructor(scene: THREE.Scene, camera: THREE.PerspectiveCamera, plane: THREE.Mesh) { // Change Camera to PerspectiveCamera
         this._camera = camera;
         this.scene = scene;
+        this._plane = plane; // Store plane
 
         this.loader = new GLTFLoader();
         this.loader.register((parser) => new VRMLoaderPlugin(parser));
@@ -386,7 +389,7 @@ export class VRMManager {
                 lookAtTarget = this._camera;
             } else if (this._lookAtMode === 'mouse') {
                 if (window.mousePosition) {
-                    lookAtTarget = window.get3DPointFromMouse();
+                    lookAtTarget = get3DPointFromMouse(this._camera, this._plane);
                 }
             } else if (this._lookAtMode === 'fixed') {
                 lookAtTarget = this._fixedLookAtTarget;
