@@ -30,7 +30,7 @@ export class AutoLookAtModule implements Imodule {
         this.lastChangeTime = currentTime;
         this.setNextChangeInterval();
 
-        const targets = [null, 'camera', 'mouse'];
+        const targets = ['camera', 'mouse']; //null 임시 제거 
         const randomIndex = Math.floor(Math.random() * targets.length);
         const selectedTargetType = targets[randomIndex];
 

@@ -379,10 +379,6 @@ export class VRMManager {
         if (this.currentVrm) {
             this.currentVrm.update(delta);
 
-            if (this.currentVrm.lookAt) {
-                this.currentVrm.lookAt.update(delta);
-            }
-
             // Look-at logic
             let lookAtTarget: THREE.Object3D | THREE.Vector3 | null = null;
             
@@ -418,9 +414,19 @@ export class VRMManager {
                     head.parent.getWorldQuaternion(parentWorldQuat);
                     const parentWorldQuatInverse = parentWorldQuat.clone().invert();
                     const targetLocalQuat = targetWorldQuat.clone().premultiply(parentWorldQuatInverse);
+                    
+                    const e = new THREE.Euler().setFromQuaternion(targetLocalQuat, 'YXZ');
+
+                    // 4) yaw/pitch 클램프 (사전에 정의한 최대값)
+                    const maxYaw   = THREE.MathUtils.degToRad(30);
+                    const maxPitch = THREE.MathUtils.degToRad(20);
+                    e.y = THREE.MathUtils.clamp(e.y, -maxYaw,   maxYaw);
+                    e.x = THREE.MathUtils.clamp(e.x, -maxPitch, maxPitch);
+
+                    const clampedTargetLocalQuat = new THREE.Quaternion().setFromEuler(e);
 
                     // Slerp for smooth transition
-                    head.quaternion.slerp(targetLocalQuat, 0.1);
+                    head.quaternion.slerp(clampedTargetLocalQuat, 0.03);
                 }
             }
             
@@ -431,6 +437,7 @@ export class VRMManager {
                         // Create a dummy Object3D for Vector3 targets
                         const dummyObject = new THREE.Object3D();
                         dummyObject.position.copy(lookAtTarget);
+                        dummyObject.updateMatrixWorld(true);
                         actualTarget = dummyObject;
                     } else {
                         actualTarget = lookAtTarget;
@@ -439,6 +446,10 @@ export class VRMManager {
                 } else {
                     this.currentVrm.lookAt.target = undefined;
                 }
+            }
+
+            if (this.currentVrm.lookAt) {
+                this.currentVrm.lookAt.update(delta);
             }
 
             this.currentVrm.scene.traverse(object => {
