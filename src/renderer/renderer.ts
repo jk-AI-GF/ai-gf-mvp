@@ -184,6 +184,11 @@ scene.add(plane);
 // Initial model load
 vrmManager.loadVRM('VRM/Liqu.vrm');
 
+const vrmFollowButton = document.getElementById('vrm-follow-button') as HTMLElement;
+if (!vrmFollowButton) {
+  console.error('VRM follow button element not found!');
+}
+
 const clock = new THREE.Clock();
 
 function animate() {
@@ -199,11 +204,18 @@ function animate() {
     // Update floating messages
     const headPosition = currentVrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Head)?.getWorldPosition(tempVector);
     if (headPosition) {
-      headPosition.y += 0.2;
+      headPosition.y += 0.2; // Adjust height slightly above the head
       headPosition.project(camera);
-      const x = (headPosition.x * 0.5 + 0.64) * renderer.domElement.clientWidth;
-      const y = (-headPosition.y * 0.5 + 0.62) * renderer.domElement.clientHeight;
-      
+
+      // Convert to screen coordinates
+      const x = (headPosition.x * 0.5 + 0.5) * renderer.domElement.clientWidth;
+      const y = (-headPosition.y * 0.5 + 0.5) * renderer.domElement.clientHeight;
+
+      // Update button position
+      vrmFollowButton.style.left = `${x}px`;
+      vrmFollowButton.style.top = `${y}px`;
+      vrmFollowButton.style.display = 'block'; // Show the button when VRM is present
+
       const currentTime = performance.now();
       for (let i = window.floatingMessages.length - 1; i >= 0; i--) {
         const message = window.floatingMessages[i];
@@ -221,6 +233,8 @@ function animate() {
         message.element.style.top = `${y}px`;
       }
     }
+  } else {
+    vrmFollowButton.style.display = 'none'; // Hide the button if no VRM is loaded
   }
   
   if (isFreeCameraMode) {
@@ -306,7 +320,6 @@ window.toggleCameraMode = function(): void {
   camera.updateMatrix();
   console.log(`Camera mode: ${isFreeCameraMode ? 'Free' : 'Fixed'}`);
 };
-window.toggleCameraMode();
 
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
