@@ -29,7 +29,7 @@ import { VRMManager } from './vrm-manager';
 
 let controls: OrbitControls | null = null;
 let isFreeCameraMode = true;
-let isTtsActive = false;
+
 
 const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0.0, -0.1, 3.5);
 const DEFAULT_CAMERA_ROTATION = new THREE.Euler(0.14, 0.0, 0.0);
@@ -80,11 +80,10 @@ const actions: Actions = {
 
 const systemControls: SystemControls = {
   toggleTts: (enable: boolean) => {
-    isTtsActive = enable;
-    console.log(`TTS is now ${isTtsActive ? 'enabled' : 'disabled'}.`);
+    toggleTts(enable);
   },
   setMasterVolume: (volume: number) => {
-    window.setMasterVolume(volume);
+    setMasterVolume(volume);
   },
 };
 
@@ -335,60 +334,13 @@ document.addEventListener('mousemove', (event) => {
   window.mousePosition.y = -(event.clientY / window.innerHeight) * 2 + 1;
 });
 
-let audioContext: AudioContext | null = null;
-let masterGainNode: GainNode | null = null;
-let currentAudioSource: AudioBufferSourceNode | null = null;
+import { initAudioContext, playTTS, toggleTts, setMasterVolume } from './audio-service';
 
-function initAudioContext() {
-  if (!audioContext) {
-    try {
-      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      masterGainNode = audioContext.createGain();
-      masterGainNode.connect(audioContext.destination);
-    } catch (e) {
-      console.error("Failed to initialize AudioContext:", e);
-    }
-  }
-}
-document.body.addEventListener('click', initAudioContext, { once: true });
 
-async function playTTS(text: string) {
-  if (!text || !audioContext || !isTtsActive || !masterGainNode) return;
-  if (currentAudioSource) currentAudioSource.stop();
-  try {
-    const response = await fetch('http://localhost:8000/api/tts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'audio/wav' },
-      body: JSON.stringify({ text, engine: 'google' }),
-    });
-    if (!response.ok) throw new Error(`TTS API error: ${response.status}`);
-    const audioData = await response.arrayBuffer();
-    const audioBuffer = await audioContext.decodeAudioData(audioData);
-    const source = audioContext.createBufferSource();
-    source.buffer = audioBuffer;
-    source.connect(masterGainNode);
-    source.start(0);
-    currentAudioSource = source;
-    source.onended = () => { currentAudioSource = null; };
-  } catch (error) {
-    if (!(error instanceof TypeError && error.message.includes('Failed to fetch'))) {
-      console.error("TTS playback error:", error);
-    }
-  }
-}
-window.playTTS = playTTS;
 
-window.toggleTts = function(enable: boolean) {
-  isTtsActive = enable;
-  console.log(`TTS is now ${isTtsActive ? 'enabled' : 'disabled'}.`);
-};
 
-window.setMasterVolume = function(volume: number) {
-  if (masterGainNode) {
-    masterGainNode.gain.value = Math.max(0, Math.min(1, volume));
-    console.log(`Master volume set to: ${masterGainNode.gain.value}`);
-  }
-};
+
+
 
 // Setup UI buttons and link them to the new VRMManager methods
 async function handleFileSelectAndProcess(filePath: string, expectedType: 'pose' | 'animation') {
