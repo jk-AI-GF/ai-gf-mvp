@@ -20,6 +20,7 @@ export type AppEvents = {
 
   /** 캐릭터 상호작용 */
   'character_part_clicked': { partName: string };
+  'character_part_right_clicked': { partName: string };
 
   /** 공통 에러 */
   'error': { scope: string; error: Error };

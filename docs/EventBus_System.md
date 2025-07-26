@@ -23,7 +23,8 @@ EventBus는 애플리케이션의 여러 부분(모듈, UI, 3D 렌더러 등)이
 | ---------------------------- | ---------------------------------- | ---------------------------- | --------------------- |
 | `vrm:loaded`                 | 새 VRM 모델 로딩이 완료되었을 때.  | `{ vrm: VRM }`               | `VRMManager`          |
 | `vrm:unloaded`               | 기존 VRM 모델이 제거되었을 때.     | `void`                       | `VRMManager`          |
-| `character_part_clicked`     | 캐릭터의 특정 부위가 클릭되었을 때.| `{ partName: string }`       | `renderer.ts`         |
+| `character_part_clicked`     | 캐릭터의 특정 부위가 **좌클릭**되었을 때.| `{ partName: string }`       | `renderer.ts`         |
+| `character_part_right_clicked` | 캐릭터의 특정 부위가 **우클릭**되었을 때.| `{ partName: string }`       | `renderer.ts`         |
 | `action:play-expression`     | 표정을 재생하라는 명령.            | `{ name, weight, ... }`      | 모듈 (Action API)     |
 | `action:play-clip`           | 애니메이션 클립을 재생하라는 명령. | `{ clip: string }`           | 모듈 (Action API)     |
 | `scene:tick`                 | 매 프레임마다 발생하는 틱 이벤트.  | `{ dt, time }`               | `renderer.ts` (예정)  |

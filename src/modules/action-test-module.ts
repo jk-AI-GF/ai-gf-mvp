@@ -29,6 +29,15 @@ export class ActionTestModule implements Imodule {
       this.context?.actions.showMessage(message, 2);
     });
 
+    this.context.eventBus.on('character_part_right_clicked', ({ partName }) => {
+      if (!this.enabled) return;
+      
+      console.log(`[ActionTestModule] Event received: character_part_right_clicked, part: ${partName}`);
+      
+      const message = `${partName} 우클릭됨! 특별한 반응!`;
+      this.context?.actions.showMessage(message, 2);
+    });
+
     this.context.eventBus.on('vrm:loaded', ({ vrm }) => {
       if (!this.enabled) return;
       const modelName = 'name' in vrm.meta ? vrm.meta.name : (vrm.meta as any).title;

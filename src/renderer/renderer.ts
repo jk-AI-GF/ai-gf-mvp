@@ -172,11 +172,21 @@ renderer.domElement.addEventListener('mousedown', (event) => {
     const intersectedObject = getIntersectedObject(event, camera, vrmManager.hitboxes);
     if (intersectedObject) {
       const partName = intersectedObject.name.replace('hitbox_', '');
-      console.log(`Clicked on: ${partName}`, intersectedObject);
-      eventBus.emit('character_part_clicked', { partName });
+      
+      // 0: Left button, 1: Middle button, 2: Right button
+      if (event.button === 0) {
+        eventBus.emit('character_part_clicked', { partName });
+      } else if (event.button === 2) {
+        eventBus.emit('character_part_right_clicked', { partName });
+      }
     }
   }
 }, false);
+
+// Prevent the default context menu on right-click
+renderer.domElement.addEventListener('contextmenu', (event) => {
+  event.preventDefault();
+});
 
 
 // Initialize VRM Manager
