@@ -27,7 +27,7 @@ import { TriggerEngine } from '../core/trigger-engine';
 import { characterState } from '../core/character-state';
 import { updateJointSliders, createJointSliders, setupPosePanelButton, setupAnimationPanelButton, setupSavePoseButton, setupLoadPoseFileButton, setupLoadVrmButton, listVrmMeshes, toggleVrmMeshVisibility, createMeshList, appendMessage } from './ui-manager';
 import { VRMManager } from './vrm-manager';
-import { setClearColor, toggleCameraMode, onWindowResize, DEFAULT_FREE_CAMERA_POSITION, DEFAULT_FREE_CAMERA_ROTATION } from './scene-utils';
+import { setClearColor, toggleCameraMode, onWindowResize, DEFAULT_FREE_CAMERA_POSITION, DEFAULT_FREE_CAMERA_ROTATION, getIntersectedObject } from './scene-utils';
 import { initAudioContext, playTTS, toggleTts, setMasterVolume } from './audio-service';
 
 
@@ -165,6 +165,15 @@ document.body.appendChild(renderer.domElement);
 window.addEventListener('resize', () => onWindowResize(camera, renderer));
 
 controls = new OrbitControls(camera, renderer.domElement);
+
+// Add a click event listener to the renderer
+renderer.domElement.addEventListener('mousedown', (event) => {
+  const intersectedObject = getIntersectedObject(event, camera, scene);
+  if (intersectedObject) {
+    console.log(`Clicked on: ${intersectedObject.name}`, intersectedObject);
+  }
+}, false);
+
 
 // Initialize VRM Manager
 const vrmManager = new VRMManager(scene, camera, plane);
