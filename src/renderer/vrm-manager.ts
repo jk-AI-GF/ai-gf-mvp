@@ -150,14 +150,6 @@ export class VRMManager {
                 }
             }, 3000);
 
-            window.expressionMap = vrm.expressionManager.expressionMap;
-            if (vrm.expressionManager) {
-                window.vrmExpressionList = Object.keys(vrm.expressionManager.expressionMap);
-                createExpressionSliders();
-            }
-            
-            createMeshList(this.currentVrm, toggleVrmMeshVisibility);
-
             // Emit the loaded event at the end of successful loading
             this.eventBus.emit('vrm:loaded', { vrm: this.currentVrm });
 

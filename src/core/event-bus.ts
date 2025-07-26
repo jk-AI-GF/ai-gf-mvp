@@ -61,6 +61,16 @@ export function createEventBus<E extends Record<string, any>>(): TypedEventBus<E
   }
 
   function emit<K extends keyof E>(type: K, ...args: any[]): void {
+    // --- START: Logging/Debugging Enhancement ---
+    // In development mode, log the event type and its payload to the console.
+    // This is useful for tracing the event flow during development.
+    // The `process.env.NODE_ENV` is managed by Webpack and will be 'production'
+    // for production builds, automatically disabling these logs.
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[EventBus] Emit: %c${String(type)}`, 'color: #3498db; font-weight: bold;', args[0] || '');
+    }
+    // --- END: Logging/Debugging Enhancement ---
+
     const set = map.get(type);
     if (!set) return;
     // 복사본으로 순회(리스너 내부 off/once 안전)

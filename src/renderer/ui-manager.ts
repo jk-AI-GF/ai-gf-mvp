@@ -151,6 +151,13 @@ export function createJointSliders() {
   });
 }
 
+export function clearJointSliders() {
+  const slidersContainer = document.getElementById('joint-sliders');
+  if (slidersContainer) {
+    slidersContainer.innerHTML = '<p style="color: white;">VRM을 로드해주세요.</p>';
+  }
+}
+
 export function createExpressionSliders() {
   if (!window.currentVrm || !window.currentVrm.expressionManager) {
     console.warn('createExpressionSliders: currentVrm or expressionManager is not available. Returning.');
@@ -198,6 +205,13 @@ export function createExpressionSliders() {
     slider.className = 'expression-slider';
     expressionControl.appendChild(slider);
     slidersContainer.appendChild(expressionControl);
+  }
+}
+
+export function clearExpressionSliders() {
+  const slidersContainer = document.getElementById('expression-sliders');
+  if (slidersContainer) {
+    slidersContainer.innerHTML = '<p style="color: white;">VRM을 로드해주세요.</p>';
   }
 }
 
@@ -479,4 +493,11 @@ export function createMeshList(currentVrm: VRM | null, toggleVrmMeshVisibility: 
 
     meshListDisplay.appendChild(meshItem);
   });
+}
+
+export function clearMeshList() {
+  const meshListDisplay = document.getElementById('mesh-list');
+  if (meshListDisplay) {
+    meshListDisplay.innerHTML = '<p style="color: white;">VRM을 로드해주세요.</p>';
+  }
 }

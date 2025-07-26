@@ -25,7 +25,7 @@ import { SystemControls } from '../module-api/system-controls';
 import { createEventBus, AppEvents } from '../core/event-bus';
 import { TriggerEngine } from '../core/trigger-engine';
 import { characterState } from '../core/character-state';
-import { updateJointSliders, createJointSliders, setupPosePanelButton, setupAnimationPanelButton, setupSavePoseButton, setupLoadPoseFileButton, setupLoadVrmButton, listVrmMeshes, toggleVrmMeshVisibility, createMeshList, appendMessage } from './ui-manager';
+import { updateJointSliders, createJointSliders, setupPosePanelButton, setupAnimationPanelButton, setupSavePoseButton, setupLoadPoseFileButton, setupLoadVrmButton, listVrmMeshes, toggleVrmMeshVisibility, createMeshList, appendMessage, createExpressionSliders, clearExpressionSliders, clearMeshList, clearJointSliders } from './ui-manager';
 import { VRMManager } from './vrm-manager';
 import { setClearColor, toggleCameraMode, onWindowResize, DEFAULT_FREE_CAMERA_POSITION, DEFAULT_FREE_CAMERA_ROTATION, getIntersectedObject } from './scene-utils';
 import { initAudioContext, playTTS, toggleTts, setMasterVolume } from './audio-service';
@@ -201,6 +201,32 @@ moduleManager.register(proactiveDialoguemodule);
 // Register the test module
 const actionTestModule = new ActionTestModule();
 moduleManager.register(actionTestModule);
+
+// --- Event-driven UI Updates ---
+eventBus.on('vrm:loaded', ({ vrm }) => {
+  console.log('[Renderer] Event received: vrm:loaded. Updating UI.');
+  // Update global state for UI functions that might still depend on it (transitional)
+  window.currentVrm = vrm;
+  window.expressionMap = vrm.expressionManager.expressionMap;
+  window.vrmExpressionList = Object.keys(vrm.expressionManager.expressionMap);
+  
+  // Call UI update functions
+  createExpressionSliders();
+  createMeshList(vrm, toggleVrmMeshVisibility);
+  createJointSliders();
+});
+
+eventBus.on('vrm:unloaded', () => {
+  console.log('[Renderer] Event received: vrm:unloaded. Clearing UI.');
+  window.currentVrm = null;
+  window.expressionMap = {};
+  window.vrmExpressionList = [];
+  
+  clearExpressionSliders();
+  clearMeshList();
+  clearJointSliders();
+});
+
 
 // Initial model load
 vrmManager.loadVRM('VRM/Liqu.vrm');

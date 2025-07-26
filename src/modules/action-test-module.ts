@@ -31,7 +31,8 @@ export class ActionTestModule implements Imodule {
 
     this.context.eventBus.on('vrm:loaded', ({ vrm }) => {
       if (!this.enabled) return;
-      console.log(`[ActionTestModule] Event received: vrm:loaded. Model name: ${vrm.meta.name}`);
+      const modelName = 'name' in vrm.meta ? vrm.meta.name : (vrm.meta as any).title;
+      console.log(`[ActionTestModule] Event received: vrm:loaded. Model name: ${modelName}`);
     });
 
     this.context.eventBus.on('vrm:unloaded', () => {
