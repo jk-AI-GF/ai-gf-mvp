@@ -19,6 +19,7 @@ import { AutoBlinkmodule } from '../modules/auto-blink-module';
 import { AutoIdleAnimationmodule } from '../modules/auto-idle-animation-module';
 import { ProactiveDialoguemodule } from '../modules/proactive-dialogue-module';
 import { ActionTestModule } from '../modules/action-test-module'; // 테스트 모듈 import
+import { GrabVrmModule } from '../modules/grab-vrm-module'; // 새로 추가
 import { Actions } from '../module-api/actions';
 import { ModuleContext } from '../module-api/module-context';
 import { SystemControls } from '../module-api/system-controls';
@@ -211,6 +212,8 @@ moduleManager.register(proactiveDialoguemodule);
 // Register the test module
 const actionTestModule = new ActionTestModule();
 moduleManager.register(actionTestModule);
+const grabVrmModule = new GrabVrmModule();
+moduleManager.register(grabVrmModule);
 
 // --- Event-driven UI Updates ---
 eventBus.on('vrm:loaded', ({ vrm }) => {
