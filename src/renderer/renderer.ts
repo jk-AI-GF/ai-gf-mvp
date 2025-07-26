@@ -171,14 +171,16 @@ renderer.domElement.addEventListener('mousedown', (event) => {
   if (vrmManager.hitboxes.length > 0) {
     const intersectedObject = getIntersectedObject(event, camera, vrmManager.hitboxes);
     if (intersectedObject) {
-      console.log(`Clicked on: ${intersectedObject.name}`, intersectedObject);
+      const partName = intersectedObject.name.replace('hitbox_', '');
+      console.log(`Clicked on: ${partName}`, intersectedObject);
+      eventBus.emit('character_part_clicked', { partName });
     }
   }
 }, false);
 
 
 // Initialize VRM Manager
-const vrmManager = new VRMManager(scene, camera, plane);
+const vrmManager = new VRMManager(scene, camera, plane, eventBus);
 window.vrmManager = vrmManager; // Make it globally accessible
 
 // IMPORTANT: Expose expression animation function to the window object

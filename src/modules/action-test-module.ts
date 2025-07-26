@@ -14,6 +14,30 @@ export class ActionTestModule implements Imodule {
   setModuleContext(context: ModuleContext): void {
     this.context = context;
     console.log('[ActionTestModule] Initialized.');
+    this.setupEventListeners();
+  }
+
+  private setupEventListeners() {
+    if (!this.context) return;
+
+    this.context.eventBus.on('character_part_clicked', ({ partName }) => {
+      if (!this.enabled) return;
+      
+      console.log(`[ActionTestModule] Event received: character_part_clicked, part: ${partName}`);
+      
+      const message = `${partName} 클릭됨!`;
+      this.context?.actions.showMessage(message, 2);
+    });
+
+    this.context.eventBus.on('vrm:loaded', ({ vrm }) => {
+      if (!this.enabled) return;
+      console.log(`[ActionTestModule] Event received: vrm:loaded. Model name: ${vrm.meta.name}`);
+    });
+
+    this.context.eventBus.on('vrm:unloaded', () => {
+      if (!this.enabled) return;
+      console.log('[ActionTestModule] Event received: vrm:unloaded.');
+    });
   }
 
   onEnable(): void {

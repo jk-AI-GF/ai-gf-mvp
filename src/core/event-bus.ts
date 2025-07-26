@@ -1,7 +1,9 @@
+import { VRM } from '@pixiv/three-vrm';
+
 // src/core/event-bus.ts
 export type AppEvents = {
   /** VRM 로드/해제 */
-  'vrm:loaded': { expressions: Record<string, string>; meta?: unknown };
+  'vrm:loaded': { vrm: VRM };
   'vrm:unloaded': void;
 
   /** 액션/애니메이션 */
@@ -15,6 +17,9 @@ export type AppEvents = {
 
   /** IPC 브리지 예시 */
   'ipc:play-animation': { clip: string };
+
+  /** 캐릭터 상호작용 */
+  'character_part_clicked': { partName: string };
 
   /** 공통 에러 */
   'error': { scope: string; error: Error };

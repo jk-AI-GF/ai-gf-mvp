@@ -6,14 +6,14 @@ import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-v
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 import { createJointSliders, createExpressionSliders, updateExpressionSliderValue, createMeshList, toggleVrmMeshVisibility } from './ui-manager';
 import { get3DPointFromMouse } from './scene-utils';
+import { TypedEventBus, AppEvents } from '../core/event-bus';
 
 type ParsedFile = { type: 'pose'; data: THREE.AnimationClip } | { type: 'animation'; data: THREE.AnimationClip } | null;
 
 function createAnimationClipFromVRMPose(vrmPose: VRMPose, vrm: VRM): THREE.AnimationClip {
     const tracks: THREE.KeyframeTrack[] = [];
     const duration = 0; // Pose clips have 0 duration
-
-    // Iterate over each bone in the VRMPose
+    // ... (rest of the function is unchanged)
     for (const boneName in vrmPose) {
         const poseData = vrmPose[boneName as VRMHumanBoneName];
         if (!poseData) continue;
@@ -66,13 +66,15 @@ export class VRMManager {
     private currentAction: THREE.AnimationAction | null = null;
     private _lookAtMode: 'none' | 'camera' | 'mouse' | 'fixed' = 'none';
     private _fixedLookAtTarget: THREE.Object3D | THREE.Vector3 | null = null;
-    private _camera: THREE.PerspectiveCamera; // Change Camera to PerspectiveCamera
-    private _plane: THREE.Mesh; // Add this line
+    private _camera: THREE.PerspectiveCamera;
+    private _plane: THREE.Mesh;
+    private eventBus: TypedEventBus<AppEvents>;
 
-    constructor(scene: THREE.Scene, camera: THREE.PerspectiveCamera, plane: THREE.Mesh) { // Change Camera to PerspectiveCamera
+    constructor(scene: THREE.Scene, camera: THREE.PerspectiveCamera, plane: THREE.Mesh, eventBus: TypedEventBus<AppEvents>) {
         this._camera = camera;
         this.scene = scene;
-        this._plane = plane; // Store plane
+        this._plane = plane;
+        this.eventBus = eventBus;
 
         this.loader = new GLTFLoader();
         this.loader.register((parser) => new VRMLoaderPlugin(parser));
@@ -80,21 +82,17 @@ export class VRMManager {
 
         this.fbxLoader = new FBXLoader();
 
-        // Bind `this` to window functions that will be called from UI or other modules
         window.animateExpression = this.animateExpression.bind(this);
         window.animateExpressionAdditive = this.animateExpressionAdditive.bind(this);
-        // Note: window.loadAnimationFile is removed as it's now handled by the Actions API
     }
 
-    /**
-     * Loads a new VRM model into the scene.
-     */
     public async loadVRM(filePathOrUrl: string): Promise<void> {
         if (this.currentVrm) {
+            this.eventBus.emit('vrm:unloaded');
             this.scene.remove(this.currentVrm.scene);
             this.currentVrm = null;
         }
-        this.removeHitboxes(); // Remove old hitboxes
+        this.removeHitboxes();
 
         const fileContent = await this._readFile(filePathOrUrl);
         if (!fileContent) return;
@@ -111,8 +109,6 @@ export class VRMManager {
             this.currentVrm = vrm;
             window.currentVrm = vrm;
 
-            // TODO: Set lookAt angle limits for natural movement
-
             this.mixer = new THREE.AnimationMixer(vrm.scene);
 
             vrm.scene.traverse((object) => {
@@ -122,17 +118,15 @@ export class VRMManager {
                 }
             });
 
-            this.createHitboxes(vrm); // Create hitboxes for the new model
+            this.createHitboxes(vrm);
 
             await new Promise(resolve => setTimeout(resolve, 500));
             
-            // 커스텀 애니메이션 부분
             const customAnimationPath1 = 'Animation/VRMA_02.vrma';
             try {
                 const animationResult1 = await this.loadAndParseFile(customAnimationPath1);
                 if (animationResult1?.type === 'animation') {
-                    this.playAnimation(animationResult1.data, false); // loop를 false로 설정하여 1회 재생
-                    // console.log(`[VRMManager] Custom animation ${customAnimationPath1} played.`);
+                    this.playAnimation(animationResult1.data, false);
                 } else {
                     console.warn(`[VRMManager] Failed to load or parse custom animation: ${customAnimationPath1}`);
                 }
@@ -147,8 +141,7 @@ export class VRMManager {
                 try {
                     const animationResult2 = await this.loadAndParseFile(customAnimationPath2);
                     if (animationResult2?.type === 'animation') {
-                        this.playAnimation(animationResult2.data, false); // loop를 false로 설정하여 1회 재생
-                        // console.log(`[VRMManager] Custom animation ${customAnimationPath2} played.`);
+                        this.playAnimation(animationResult2.data, false);
                     } else {
                         console.warn(`[VRMManager] Failed to load or parse custom animation: ${customAnimationPath2}`);
                     }
@@ -165,12 +158,16 @@ export class VRMManager {
             
             createMeshList(this.currentVrm, toggleVrmMeshVisibility);
 
+            // Emit the loaded event at the end of successful loading
+            this.eventBus.emit('vrm:loaded', { vrm: this.currentVrm });
+
         } catch (error) {
             console.error('VRM load failed:', error);
             const message = error instanceof Error ? error.message : String(error);
             alert(`Failed to load VRM model: ${message}`);
         }
     }
+    // ... (rest of the file is unchanged)
 
     private removeHitboxes() {
         this.hitboxes.forEach(hitbox => {
