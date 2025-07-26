@@ -2,7 +2,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { ModuleContext, ICharacterState } from '../module-api/module-context';
-import { EventBusImpl } from './event-bus-impl';
+import { EventBus } from '../module-api/event-bus';
 import { TriggerEngine } from './trigger-engine';
 import { Trigger } from '../module-api/triggers';
 
@@ -21,11 +21,11 @@ type ModModule = {
 export class ModLoader {
   private modsDir: string;
   private loadedMods: Map<string, ModManifest> = new Map();
-  private eventBus: EventBusImpl;
+  private eventBus: EventBus;
   private triggerEngine: TriggerEngine;
   private sendToRenderer: (channel: string, ...args: any[]) => void;
 
-  constructor(userDataPath: string, appPath: string, isPackaged: boolean, eventBus: EventBusImpl, triggerEngine: TriggerEngine, sendToRenderer: (channel: string, ...args: any[]) => void) {
+  constructor(userDataPath: string, appPath: string, isPackaged: boolean, eventBus: EventBus, triggerEngine: TriggerEngine, sendToRenderer: (channel: string, ...args: any[]) => void) {
     // 개발 환경에서는 프로젝트 루트의 userdata/mods를 사용하고,
     // 배포 환경에서는 Electron의 userData 경로를 사용합니다.
     this.modsDir = isPackaged 

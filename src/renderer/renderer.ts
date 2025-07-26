@@ -22,7 +22,7 @@ import { ActionTestModule } from '../modules/action-test-module'; // 테스트 �
 import { Actions } from '../module-api/actions';
 import { ModuleContext } from '../module-api/module-context';
 import { SystemControls } from '../module-api/system-controls';
-import { EventBusImpl } from '../core/event-bus-impl';
+import { createEventBus, AppEvents } from '../core/event-bus';
 import { TriggerEngine } from '../core/trigger-engine';
 import { characterState } from '../core/character-state';
 import { updateJointSliders, createJointSliders, setupPosePanelButton, setupAnimationPanelButton, setupSavePoseButton, setupLoadPoseFileButton, setupLoadVrmButton, listVrmMeshes, toggleVrmMeshVisibility, createMeshList, appendMessage } from './ui-manager';
@@ -35,7 +35,7 @@ let isFreeCameraMode = true;
 
 
 
-const eventBusImpl = new EventBusImpl();
+const eventBus = createEventBus<AppEvents>();
 const triggerEngine = new TriggerEngine();
 
 // Actions implementation
@@ -87,7 +87,7 @@ const systemControls: SystemControls = {
 };
 
 const moduleContext: ModuleContext = {
-  eventBus: eventBusImpl,
+  eventBus: eventBus,
   registerTrigger: (trigger) => triggerEngine.registerTrigger(trigger),
   actions: actions,
   system: systemControls,

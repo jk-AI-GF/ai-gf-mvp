@@ -2,7 +2,7 @@ import { app, BrowserWindow, Tray, Menu, globalShortcut, dialog, session, ipcMai
 import * as path from 'path';
 import * as fs from 'fs';
 import { ModLoader } from '../core/mod-loader';
-import { EventBusImpl } from '../core/event-bus-impl';
+import { createEventBus, AppEvents } from '../core/event-bus';
 import { TriggerEngine } from '../core/trigger-engine';
 
 process.on('uncaughtException', (error) => {
@@ -105,7 +105,7 @@ app.on('ready', () => {
   });
 
   // Initialize ModLoader, EventBus, and TriggerEngine
-  const eventBus = new EventBusImpl();
+  const eventBus = createEventBus<AppEvents>();
   const triggerEngine = new TriggerEngine();
   const modLoader = new ModLoader(
     app.getPath('userData'),
