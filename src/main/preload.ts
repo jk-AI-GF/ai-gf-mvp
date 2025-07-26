@@ -18,4 +18,14 @@ import { ipcRenderer } from 'electron';
   on: (channel: string, listener: (...args: any[]) => void) => {
     ipcRenderer.on(channel, (event, ...args) => listener(...args));
   },
+  send: (channel: string, ...args: any[]) => {
+    ipcRenderer.send(channel, ...args);
+  },
+  invoke: (channel: string, ...args: any[]) => {
+    return ipcRenderer.invoke(channel, ...args);
+  },
+  // --- Mod Management ---
+  getAllMods: () => ipcRenderer.invoke('get-all-mods'),
+  getModSettings: () => ipcRenderer.invoke('get-mod-settings'),
+  setModEnabled: (modName: string, isEnabled: boolean) => ipcRenderer.invoke('set-mod-enabled', modName, isEnabled),
 };

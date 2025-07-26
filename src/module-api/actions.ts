@@ -1,4 +1,5 @@
 
+
 /**
  * 모드가 게임에 영향을 줄 수 있는 함수 호출을 정의하는 인터페이스입니다.
  * 이 인터페이스의 구현체는 ModuleContext를 통해 모드에 노출됩니다.
@@ -38,4 +39,25 @@ export interface Actions {
    * @param target 바라볼 대상. 'camera', 'mouse' 문자열, [x, y, z] 형태의 좌표 배열이 될 수 있습니다. null을 전달하면 시선 처리를 중지합니다.
    */
   lookAt(target: 'camera' | 'mouse' | [number, number, number] | null): void;
+
+  /**
+   * ContextStore에 키-값 데이터를 저장합니다.
+   * @param key 저장할 데이터의 키
+   * @param value 저장할 데이터. JSON으로 직렬화 가능해야 합니다.
+   */
+  setContext(key: string, value: any): void;
+
+  /**
+   * 애플리케이션의 배경 이미지를 변경합니다.
+   * @param imagePath userdata/mods/{mod_name}/assets/ 폴더 기준의 상대 경로 또는 전체 URL
+   */
+  changeBackground(imagePath: string): void;
+
+  /**
+   * ContextStore에서 키에 해당하는 값을 가져옵니다.
+   * @param key 가져올 데이터의 키
+   * @returns 저장된 값. 키가 없으면 undefined를 반환합니다.
+   */
+  getContext(key: string): any;
 }
+

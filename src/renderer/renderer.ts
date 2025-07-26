@@ -30,6 +30,7 @@ import { updateJointSliders, createJointSliders, setupPosePanelButton, setupAnim
 import { VRMManager } from './vrm-manager';
 import { setClearColor, toggleCameraMode, onWindowResize, DEFAULT_FREE_CAMERA_POSITION, DEFAULT_FREE_CAMERA_ROTATION, getIntersectedObject } from './scene-utils';
 import { initAudioContext, playTTS, toggleTts, setMasterVolume } from './audio-service';
+import { setupModManagementUI } from './ui-mod-manager';
 
 
 let controls: OrbitControls | null = null;
@@ -78,6 +79,24 @@ const actions: Actions = {
       vrmManager.lookAt(null);
     }
   },
+  setContext: (key: string, value: any) => {
+    // This action is handled in the main process, but we need a placeholder
+    // for the renderer-side module context. It sends the data to the main process.
+    window.electronAPI.send('context:set', key, value);
+  },
+  changeBackground: (imagePath: string) => {
+    // Set the body's background image and ensure the background color is transparent
+    document.body.style.backgroundImage = `url('${imagePath}')`;
+    document.body.style.backgroundColor = 'transparent';
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundPosition = 'center';
+    
+    // Make the renderer canvas transparent to show the body background
+    renderer.setClearAlpha(0);
+  },
+  getContext: async (key: string): Promise<any> => {
+    return window.electronAPI.invoke('context:get', key);
+  },
 };
 
 const systemControls: SystemControls = {
@@ -115,6 +134,10 @@ window.electronAPI.on('set-pose-in-renderer', (poseName: string) => {
 });
 window.electronAPI.on('look-at-in-renderer', (target: 'camera' | [number, number, number] | null) => {
   actions.lookAt(target);
+});
+window.electronAPI.on('change-background', (imagePath: string) => {
+  console.log('[Renderer] Received change-background command:', imagePath);
+  actions.changeBackground(imagePath);
 });
 
 // IPC handlers for characterState
@@ -331,6 +354,7 @@ setupAnimationPanelButton(window.electronAPI, (path) => handleFileSelectAndProce
 setupSavePoseButton(() => vrmManager.currentVrm, window.electronAPI);
 setupLoadPoseFileButton(window.electronAPI, (path) => handleFileSelectAndProcess(path, 'pose'));
 setupLoadVrmButton(window.electronAPI, (path) => vrmManager.loadVRM(path));
+setupModManagementUI(); // 모드 관리 UI 초기화
 
 window.listVrmMeshes = () => listVrmMeshes(vrmManager.currentVrm);
 window.toggleVrmMeshVisibility = (meshName: string, visible: boolean) => toggleVrmMeshVisibility(vrmManager.currentVrm, meshName, visible);

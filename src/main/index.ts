@@ -4,6 +4,8 @@ import * as fs from 'fs';
 import { ModLoader } from '../core/mod-loader';
 import { createEventBus, AppEvents } from '../core/event-bus';
 import { TriggerEngine } from '../core/trigger-engine';
+import { ContextStore } from '../core/context-store';
+import { ModSettingsManager } from '../core/mod-settings-manager';
 
 process.on('uncaughtException', (error) => {
   const message = error.stack || error.message || 'Unknown error';
@@ -40,7 +42,7 @@ const createOverlayWindow = (): void => {
     alwaysOnTop: true,
     show: false, // Start hidden
     webPreferences: {
-      // No preload script for overlay
+      preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY, // Add preload script
       webSecurity: true,
       nodeIntegration: true,
       contextIsolation: false,
@@ -115,7 +117,26 @@ const createWindow = (): void => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', () => {
+app.on('ready', async () => {
+  // CSP 설정
+  const policy = [
+    "default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data: file:",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: file:",
+    "connect-src 'self' blob: data: https://generativelanguage.googleapis.com http://localhost:8000 file:"
+  ].join("; ");
+
+  // 윈도우 만들기 전에 defaultSession에 적용
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        "Content-Security-Policy": [policy],
+      },
+    });
+  });
+
   createWindow();
   createOverlayWindow(); // Create both windows on startup
   createTray();
@@ -123,18 +144,28 @@ app.on('ready', () => {
     toggleOverlayWindow();
   });
 
-  // Initialize ModLoader, EventBus, and TriggerEngine
+  // Initialize core components
   const eventBus = createEventBus<AppEvents>();
   const triggerEngine = new TriggerEngine();
+  const contextStore = new ContextStore();
+  const modSettingsManager = new ModSettingsManager(app.getPath('userData'));
+  await modSettingsManager.loadSettings(); // Load settings before initializing mods
+
   const modLoader = new ModLoader(
     app.getPath('userData'),
     app.getAppPath(),
     app.isPackaged,
     eventBus,
     triggerEngine,
+    contextStore,
+    modSettingsManager, // Pass the settings manager
     (channel: string, ...args: any[]) => {
+      // Send to both windows to ensure the active one receives the message
       if (overlayWindow) {
         overlayWindow.webContents.send(channel, ...args);
+      }
+      if (mainWindow) {
+        mainWindow.webContents.send(channel, ...args);
       }
     }
   );
@@ -326,16 +357,58 @@ app.on('ready', () => {
     app.quit();
   });
 
-  // CSP 설정
-  session.defaultSession.webRequest.onHeadersReceived((details: Electron.OnHeadersReceivedListenerDetails, callback: (response: { cancel?: boolean; responseHeaders?: Record<string, string[]> }) => void) => {
-    callback({
-      responseHeaders: {
-        ...details.responseHeaders,
-        'Content-Security-Policy': [
-          "default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data: file:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob: https://generativelanguage.googleapis.com http://localhost:8000 file:;"
-        ]
+  ipcMain.on('context:set', (event, key: string, value: any) => {
+    contextStore.set(key, value);
+  });
+
+  ipcMain.handle('context:get', (event, key: string) => {
+    return contextStore.get(key);
+  });
+
+  // --- Mod Settings IPC Handlers ---
+
+  ipcMain.handle('get-mod-settings', () => {
+    return modSettingsManager.getSettings();
+  });
+
+  ipcMain.handle('set-mod-enabled', async (event, modName: string, isEnabled: boolean) => {
+    await modSettingsManager.setModEnabled(modName, isEnabled);
+    return { success: true };
+  });
+
+  ipcMain.handle('get-all-mods', async () => {
+    const modsDir = app.isPackaged 
+      ? path.join(app.getPath('userData'), 'mods') 
+      : path.join(app.getAppPath(), 'userdata', 'mods');
+    
+    try {
+      const modFolders = await fs.promises.readdir(modsDir, { withFileTypes: true });
+      const modDetails = [];
+
+      for (const dirent of modFolders) {
+        if (dirent.isDirectory()) {
+          const modPath = path.join(modsDir, dirent.name);
+          const manifestPath = path.join(modPath, 'mod.json');
+          try {
+            const manifestContent = await fs.promises.readFile(manifestPath, 'utf-8');
+            const manifest = JSON.parse(manifestContent);
+            if (manifest.name) {
+              modDetails.push({
+                name: manifest.name,
+                version: manifest.version || 'N/A',
+                path: modPath,
+              });
+            }
+          } catch (e) {
+            // mod.json이 없거나 잘못된 폴더는 무시
+          }
+        }
       }
-    });
+      return modDetails;
+    } catch (error) {
+      console.error('[IPC] Failed to get all mods:', error);
+      return [];
+    }
   });
 });
 

@@ -1,10 +1,13 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import mime from 'mime';
 import { ModuleContext, ICharacterState } from '../module-api/module-context';
 import { EventBus } from '../module-api/event-bus';
 import { TriggerEngine } from './trigger-engine';
 import { Trigger } from '../module-api/triggers';
+import { ContextStore } from './context-store';
+import { ModSettingsManager } from './mod-settings-manager';
 
 // 모드 메타데이터 인터페이스
 interface ModManifest {
@@ -23,9 +26,20 @@ export class ModLoader {
   private loadedMods: Map<string, ModManifest> = new Map();
   private eventBus: EventBus;
   private triggerEngine: TriggerEngine;
+  private contextStore: ContextStore;
+  private modSettingsManager: ModSettingsManager;
   private sendToRenderer: (channel: string, ...args: any[]) => void;
 
-  constructor(userDataPath: string, appPath: string, isPackaged: boolean, eventBus: EventBus, triggerEngine: TriggerEngine, sendToRenderer: (channel: string, ...args: any[]) => void) {
+  constructor(
+    userDataPath: string, 
+    appPath: string, 
+    isPackaged: boolean, 
+    eventBus: EventBus, 
+    triggerEngine: TriggerEngine, 
+    contextStore: ContextStore, 
+    modSettingsManager: ModSettingsManager,
+    sendToRenderer: (channel: string, ...args: any[]) => void
+  ) {
     // 개발 환경에서는 프로젝트 루트의 userdata/mods를 사용하고,
     // 배포 환경에서는 Electron의 userData 경로를 사용합니다.
     this.modsDir = isPackaged 
@@ -33,6 +47,8 @@ export class ModLoader {
       : path.join(appPath, 'userdata', 'mods');
     this.eventBus = eventBus;
     this.triggerEngine = triggerEngine;
+    this.contextStore = contextStore;
+    this.modSettingsManager = modSettingsManager;
     this.sendToRenderer = sendToRenderer;
     console.log(`[ModLoader] Initialized. Mods directory: ${this.modsDir}`);
   }
@@ -70,6 +86,12 @@ export class ModLoader {
         return;
       }
 
+      // Check if the mod is enabled before proceeding
+      if (!this.modSettingsManager.isModEnabled(manifest.name)) {
+        console.log(`[ModLoader] Skipping disabled mod: ${manifest.name}`);
+        return;
+      }
+
       console.log(`[ModLoader] Loading mod: ${manifest.name} v${manifest.name}`);
 
       // 2. 모드 진입점(entry) 실행
@@ -102,6 +124,32 @@ export class ModLoader {
             },
             lookAt: (target: 'camera' | [number, number, number] | null) => {
               this.sendToRenderer('look-at', target);
+            },
+            setContext: (key: string, value: any) => {
+              this.contextStore.set(key, value);
+            },
+            changeBackground: async (imagePath: string) => {
+              try {
+                // 모드 폴더 내의 상대 경로로만 작동하도록 설계
+                const fullPath = path.join(modPath, imagePath);
+
+                // 보안 검사: 모드 폴더 외부로 접근하는 것을 방지
+                if (!fullPath.startsWith(modPath)) {
+                  console.error(`[ModLoader] Security violation: Mod ${manifest.name} attempted to access file outside its directory: ${imagePath}`);
+                  return;
+                }
+
+                const fileBuffer = await fs.readFile(fullPath);
+                const mimeType = mime.getType(fullPath) || 'application/octet-stream';
+                const dataUrl = `data:${mimeType};base64,${fileBuffer.toString('base64')}`;
+                
+                this.sendToRenderer('change-background', dataUrl);
+              } catch (error) {
+                console.error(`[ModLoader] Error in changeBackground for mod ${manifest.name}:`, error);
+              }
+            },
+            getContext: (key: string): any => {
+              return this.contextStore.get(key);
             },
           },
           system: {
