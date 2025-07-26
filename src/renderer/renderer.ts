@@ -7,7 +7,7 @@
  */
 
 import './index.css';
-import './main-ui';
+import './app-main';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
