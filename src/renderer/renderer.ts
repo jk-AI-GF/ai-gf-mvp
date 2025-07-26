@@ -28,6 +28,8 @@ import { characterState } from '../core/character-state';
 import { updateJointSliders, createJointSliders, setupPosePanelButton, setupAnimationPanelButton, setupSavePoseButton, setupLoadPoseFileButton, setupLoadVrmButton, listVrmMeshes, toggleVrmMeshVisibility, createMeshList, appendMessage } from './ui-manager';
 import { VRMManager } from './vrm-manager';
 import { setClearColor, toggleCameraMode, onWindowResize, DEFAULT_FREE_CAMERA_POSITION, DEFAULT_FREE_CAMERA_ROTATION } from './scene-utils';
+import { initAudioContext, playTTS, toggleTts, setMasterVolume } from './audio-service';
+
 
 let controls: OrbitControls | null = null;
 let isFreeCameraMode = true;
@@ -252,30 +254,12 @@ function animate() {
 }
 animate();
 
-
-
-// --- Global Window Functions & UI Setup ---
-
-
-
-
-
-
-
-
-
-import { initAudioContext, playTTS, toggleTts, setMasterVolume } from './audio-service';
-
-
-
-
 const cameraModeButton = document.getElementById('toggle-camera-mode-button');
 if (cameraModeButton) {
   cameraModeButton.addEventListener('click', () => {
     toggleCameraMode(camera, controls);
   });
 }
-
 
 // Setup UI buttons and link them to the new VRMManager methods
 async function handleFileSelectAndProcess(filePath: string, expectedType: 'pose' | 'animation') {
