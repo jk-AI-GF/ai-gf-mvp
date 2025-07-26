@@ -23,10 +23,12 @@ export class ChatService {
   private setupFormListener(): void {
     if (!this.chatForm) return;
 
-    this.chatForm.onsubmit = async (e) => {
+    this.chatForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      this.sendChatMessage(this.chatInput.value);
-    };
+      if (this.chatInput) {
+        this.sendChatMessage(this.chatInput.value);
+      }
+    });
   }
 
   public async sendChatMessage(message: string): Promise<void> {

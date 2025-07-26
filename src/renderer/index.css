@@ -92,8 +92,8 @@ body {
 .control-panel {
   display:none; 
   position: fixed; 
-  top: 80px; 
-  right: 20px; 
+  top: 10px; 
+  left: 210px; 
   width: 300px; 
   max-height: 70vh; 
   background: rgba(20,20,20,0.8); 

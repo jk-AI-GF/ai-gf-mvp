@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // UI Panel Logic
   document.getElementById('quit-app-button')!.onclick = () => (window as any).electronAPI.quitApp();
+  
   document.getElementById('open-settings')!.onclick = () => {
     const settingsModal = document.getElementById('settings-modal') as HTMLDivElement;
     const settingsOverlay = document.getElementById('settings-modal-overlay') as HTMLDivElement;

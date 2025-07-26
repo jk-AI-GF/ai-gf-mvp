@@ -216,8 +216,8 @@ function animate() {
       headPosition.project(camera);
 
       // Convert to screen coordinates
-      const x = (headPosition.x * 0.5 + 0.5) * renderer.domElement.clientWidth;
-      const y = (-headPosition.y * 0.5 + 0.5) * renderer.domElement.clientHeight;
+      const x = (headPosition.x * 0.5 + 0.65) * renderer.domElement.clientWidth;
+      const y = (-headPosition.y * 0.5 + 0.65) * renderer.domElement.clientHeight;
 
       // Update button position
       vrmFollowButton.style.left = `${x}px`;

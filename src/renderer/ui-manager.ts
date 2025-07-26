@@ -10,11 +10,17 @@ export function appendMessage(role: string, text: string) {
   if (role === 'assistant') {
     const floatingContainer = document.getElementById('floating-chat-messages-container');
     if (floatingContainer) {
+      // Clear any existing floating messages
+      if (window.floatingMessages && window.floatingMessages.length > 0) {
+        window.floatingMessages.forEach(msg => msg.element.remove());
+        window.floatingMessages = []; // Clear the array
+      }
+
       const msgDiv = document.createElement('div');
-      msgDiv.className = 'floating-chat-message assistant entering'; // entering 클래스 추가
+      msgDiv.className = 'floating-chat-message assistant entering';
       msgDiv.textContent = text;
       Object.assign(msgDiv.style, {
-        position: 'absolute',
+        position: 'absolute', // Position is set in the animation loop
         background: 'rgba(0, 0, 0, 0.7)',
         color: 'white',
         padding: '8px 12px',
@@ -22,17 +28,19 @@ export function appendMessage(role: string, text: string) {
         maxWidth: '250px',
         textAlign: 'center',
         pointerEvents: 'none',
-        whiteSpace: 'pre-wrap', // Preserve whitespace and allow wrapping
-        wordBreak: 'break-word', // Break long words
+        whiteSpace: 'pre-wrap',
+        wordBreak: 'break-word',
       });
       floatingContainer.appendChild(msgDiv);
-      (window as any).floatingMessages.push({ element: msgDiv, timestamp: performance.now() });
+      
+      // Add the new message to the global array so the renderer can position it
+      window.floatingMessages.push({ element: msgDiv, timestamp: performance.now() });
 
-      // 애니메이션 트리거
+      // Animation trigger
       setTimeout(() => {
         msgDiv.classList.remove('entering');
-        msgDiv.style.opacity = '1'; // opacity만 설정하여 CSS transition이 transform을 처리하도록 합니다.
-      }, 10); // 짧은 지연 후 클래스 제거
+        msgDiv.style.opacity = '1';
+      }, 10);
     }
   } else {
     const msgDiv = document.createElement('div');
