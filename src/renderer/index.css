@@ -60,12 +60,17 @@ body {
   flex-direction: column;
   gap: 4px;
   transform: translateX(-100%); /* 기본적으로 숨김 */
-  transition: transform 0.3s ease-in-out; /* 부드러운 슬라이드 효과 */
+  visibility: hidden; /* 처음엔 완전히 숨김 */
   box-shadow: 2px 0 5px rgba(0,0,0,0.2); /* 그림자 추가 */
+  /* 사라질 때 visibility를 지연시킴 */
+  transition: transform 0.3s ease-in-out, visibility 0s linear 0.3s;
 }
 
 #sidebar-container:hover #sidebar {
   transform: translateX(0); /* 호버 시 나타남 */
+  visibility: visible; /* 호버 시 보이게 함 */
+  /* 나타날 때는 모든 지연을 제거 */
+  transition-delay: 0s;
 }
 
 .menu-button {
