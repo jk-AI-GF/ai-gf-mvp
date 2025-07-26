@@ -1,5 +1,6 @@
 import { SettingsService } from './settings-service';
 import { ChatService } from './chat-service';
+import { makePanelsDraggable } from './draggable-panels';
 
 document.addEventListener('DOMContentLoaded', async () => {
   // Initialize services
@@ -8,6 +9,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   settingsService.setupEventListeners();
 
   new ChatService(); // This will handle all chat functionality
+
+  // Make control panels draggable
+  makePanelsDraggable();
 
   // UI Panel Logic
   document.getElementById('close-overlay')!.onclick = () => (window as any).close();
@@ -33,9 +37,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, 300); // Matches the transition duration
   };
   document.getElementById('open-joint-control')!.onclick = () => {
-    (document.getElementById('joint-control-panel') as HTMLDivElement).style.display = 'block';
-    if ((window as any).currentVrm && (window as any).createJointSliders) {
-      (window as any).createJointSliders();
+    const jointControlPanel = document.getElementById('joint-control-panel') as HTMLDivElement;
+    if (jointControlPanel.style.display === 'block') {
+      jointControlPanel.style.display = 'none';
+    } else {
+      jointControlPanel.style.display = 'block';
+      if ((window as any).currentVrm && (window as any).createJointSliders) {
+        (window as any).createJointSliders();
+      }
     }
   };
   document.getElementById('close-joint-control')!.onclick = () => {

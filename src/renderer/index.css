@@ -38,19 +38,34 @@ body {
   background: #888;
 }
 
-#sidebar {
+#sidebar-container {
   position: fixed;
   top: 0;
   left: 0;
-  width: 200px;         /* 너비 */
   height: 100vh;
-  background: #f5f5f5;
+  width: 20px; /* 마우스 호버를 감지할 영역의 너비 */
+  z-index: 3000;
+}
+
+#sidebar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200px;
+  height: 100vh;
+  background: rgba(245, 245, 245, 0.9); /* 약간 투명하게 변경 */
   padding: 4px;
   box-sizing: border-box;
-
   display: flex;
-  flex-direction: column;  /* 세로로 배치 */
-  gap: 4px;                /* 버튼 간격 */
+  flex-direction: column;
+  gap: 4px;
+  transform: translateX(-100%); /* 기본적으로 숨김 */
+  transition: transform 0.3s ease-in-out; /* 부드러운 슬라이드 효과 */
+  box-shadow: 2px 0 5px rgba(0,0,0,0.2); /* 그림자 추가 */
+}
+
+#sidebar-container:hover #sidebar {
+  transform: translateX(0); /* 호버 시 나타남 */
 }
 
 .menu-button {

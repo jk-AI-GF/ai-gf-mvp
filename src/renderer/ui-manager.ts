@@ -120,7 +120,7 @@ export function createJointSliders() {
         color: 'white',
         border: 'none',
         borderRadius: '5px',
-        cursor: 'pointer',
+        cursor: 'pointer', 
         fontSize: '0.8rem',
       });
       resetButton.onclick = () => {

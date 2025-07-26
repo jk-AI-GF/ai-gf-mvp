@@ -21,13 +21,15 @@
     </style>
   </head>
   <body>
-    <div id="sidebar">
-      <button class="menu-button" id="open-settings">설정</button>
-      <button class="menu-button" id="open-joint-control">관절 조절</button>
-      <button class="menu-button" id="open-expression-panel-button" >표정</button>
-      <button class="menu-button" id="open-modules-panel-button" >모듈</button>
-      <button class="menu-button" id="open-mesh-panel-button">메쉬</button>
-      <button class="menu-button" id="close-overlay">×</button>
+    <div id="sidebar-container">
+      <div id="sidebar">
+        <button class="menu-button" id="open-settings">설정</button>
+        <button class="menu-button" id="open-joint-control">관절 조절</button>
+        <button class="menu-button" id="open-expression-panel-button" >표정</button>
+        <button class="menu-button" id="open-modules-panel-button" >모듈</button>
+        <button class="menu-button" id="open-mesh-panel-button">메쉬</button>
+        <button class="menu-button" id="close-overlay">×</button>
+      </div>
     </div>
     <div id="settings-modal" style="visibility:hidden; opacity:0; transition: opacity 0.3s ease, visibility 0.3s ease; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; height: 400px; background: rgba(20,20,20,0.95); z-index: 2001; padding: 20px; border-radius: 10px; color: #fff; overflow-y: auto; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
       <button id="close-settings" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">×</button>
