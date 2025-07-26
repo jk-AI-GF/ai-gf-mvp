@@ -1,6 +1,8 @@
 import { SettingsService } from './settings-service';
 import { ChatService } from './chat-service';
 import { makePanelsDraggable } from './draggable-panels';
+import { createJointSliders, createExpressionSliders, createMeshList, createModList, toggleVrmMeshVisibility } from './ui-manager';
+
 
 document.addEventListener('DOMContentLoaded', async () => {
   // Initialize services
@@ -43,8 +45,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       jointControlPanel.style.display = 'none';
     } else {
       jointControlPanel.style.display = 'block';
-      if ((window as any).currentVrm && (window as any).createJointSliders) {
-        (window as any).createJointSliders();
+      if ((window as any).currentVrm) {
+        createJointSliders();
       }
     }
   };
@@ -63,9 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       expressionControlPanel.style.display = 'none';
     } else {
       expressionControlPanel.style.display = 'block';
-      if ((window as any).createExpressionSliders) {
-        (window as any).createExpressionSliders();
-      }
+      createExpressionSliders();
     }
   };
   document.getElementById('close-expression-panel')!.onclick = () => {
@@ -77,8 +77,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       moduleControlPanel.style.display = 'none';
     } else {
       moduleControlPanel.style.display = 'block';
-      if ((window as any).moduleManager && (window as any).createModuleList) {
-        (window as any).createModuleList();
+      if ((window as any).moduleManager) {
+        createModuleList();
       }
     }
   };
@@ -91,61 +91,71 @@ document.addEventListener('DOMContentLoaded', async () => {
       meshControlPanel.style.display = 'none';
     } else {
       meshControlPanel.style.display = 'block';
-      if ((window as any).listVrmMeshes && (window as any).toggleVrmMeshVisibility && (window as any).createMeshList) {
-        (window as any).createMeshList();
-      }
+      createMeshList((window as any).vrmManager.currentVrm, toggleVrmMeshVisibility);
     }
   };
   document.getElementById('close-mesh-panel')!.onclick = () => {
     (document.getElementById('mesh-control-panel') as HTMLDivElement).style.display = 'none';
   };
-
-  // This function creates the list of modules in the UI
-  (window as any).createModuleList = function() {
-    const modulesListDiv = document.getElementById('modules-list') as HTMLDivElement;
-    if (!modulesListDiv) return;
-
-    modulesListDiv.innerHTML = ''; // Clear existing list
-
-    if (!(window as any).moduleManager) {
-      modulesListDiv.textContent = '모듈 관리자를 찾을 수 없습니다.';
-      return;
+  document.getElementById('open-mod-management-panel-button')!.onclick = () => {
+    const modManagementPanel = document.getElementById('mod-management-panel') as HTMLDivElement;
+    if (modManagementPanel.style.display === 'block') {
+      modManagementPanel.style.display = 'none';
+    } else {
+      modManagementPanel.style.display = 'block';
+      createModList();
     }
-
-    // Iterate over registered modules
-    for (const module of (window as any).moduleManager.modules.values()) {
-      const moduleDiv = document.createElement('div');
-      moduleDiv.style.marginBottom = '10px';
-      moduleDiv.style.display = 'flex';
-      moduleDiv.style.alignItems = 'center';
-
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.id = `module-toggle-${module.name}`;
-      checkbox.checked = module.enabled;
-      checkbox.style.marginRight = '10px';
-      checkbox.style.width = '20px';
-      checkbox.style.height = '20px';
-      checkbox.style.cursor = 'pointer';
-
-      const label = document.createElement('label');
-      label.htmlFor = `module-toggle-${module.name}`;
-      label.textContent = module.name;
-      label.style.color = 'white';
-      label.style.fontSize = '1.1rem';
-      label.style.cursor = 'pointer';
-
-      checkbox.onchange = (event) => {
-        if ((event.target as HTMLInputElement).checked) {
-          (window as any).moduleManager.enable(module.name);
-        } else {
-          (window as any).moduleManager.disable(module.name);
-        }
-      };
-
-      moduleDiv.appendChild(checkbox);
-      moduleDiv.appendChild(label);
-      modulesListDiv.appendChild(moduleDiv);
-    }
+  };  
+  document.getElementById('close-mod-management-panel')!.onclick = () => {
+    (document.getElementById('mod-management-panel') as HTMLDivElement).style.display = 'none';
   };
 });
+
+// This function creates the list of modules in the UI
+function createModuleList() {
+  const modulesListDiv = document.getElementById('modules-list') as HTMLDivElement;
+  if (!modulesListDiv) return;
+
+  modulesListDiv.innerHTML = ''; // Clear existing list
+
+  if (!(window as any).moduleManager) {
+    modulesListDiv.textContent = '모듈 관리자를 찾을 수 없습니다.';
+    return;
+  }
+
+  // Iterate over registered modules
+  for (const module of (window as any).moduleManager.modules.values()) {
+    const moduleDiv = document.createElement('div');
+    moduleDiv.style.marginBottom = '10px';
+    moduleDiv.style.display = 'flex';
+    moduleDiv.style.alignItems = 'center';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = `module-toggle-${module.name}`;
+    checkbox.checked = module.enabled;
+    checkbox.style.marginRight = '10px';
+    checkbox.style.width = '20px';
+    checkbox.style.height = '20px';
+    checkbox.style.cursor = 'pointer';
+
+    const label = document.createElement('label');
+    label.htmlFor = `module-toggle-${module.name}`;
+    label.textContent = module.name;
+    label.style.color = 'white';
+    label.style.fontSize = '1.1rem';
+    label.style.cursor = 'pointer';
+
+    checkbox.onchange = (event) => {
+      if ((event.target as HTMLInputElement).checked) {
+        (window as any).moduleManager.enable(module.name);
+      } else {
+        (window as any).moduleManager.disable(module.name);
+      }
+    };
+
+    moduleDiv.appendChild(checkbox);
+    moduleDiv.appendChild(label);
+    modulesListDiv.appendChild(moduleDiv);
+  }
+}

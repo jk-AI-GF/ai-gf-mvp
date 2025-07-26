@@ -28,6 +28,8 @@
         <button class="menu-button" id="open-expression-panel-button" >표정</button>
         <button class="menu-button" id="open-modules-panel-button" >모듈</button>
         <button class="menu-button" id="open-mesh-panel-button">메쉬</button>
+        <button class="menu-button" id="open-mod-management-panel-button">모드 관리</button>
+
       </div>
     </div>
     <div id="settings-modal" style="visibility:hidden; opacity:0; transition: opacity 0.3s ease, visibility 0.3s ease; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; height: 400px; background: rgba(20,20,20,0.95); z-index: 2001; padding: 20px; border-radius: 10px; color: #fff; overflow-y: auto; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
@@ -61,23 +63,36 @@
       <h3>관절 조절</h3>
       <div id="joint-sliders"></div>
     </div>    
+
     <div class="control-panel" id="expression-control-panel">
       <button class="control-panel-minimize-button">-</button>
       <button class="control-panel-close-button" id="close-expression-panel">×</button>
       <h3>표정 조절</h3>
       <div id="expression-sliders"></div>
     </div>    
+    
     <div class="control-panel" id="module-control-panel">
       <button class="control-panel-minimize-button">-</button>
       <button class="control-panel-close-button" id="close-modules-panel">×</button>
       <h3>모듈 관리</h3>
       <div id="modules-list"></div>
     </div>
+    
     <div class="control-panel" id="mesh-control-panel">
       <button class="control-panel-minimize-button">-</button>
       <button class="control-panel-close-button" id="close-mesh-panel">×</button>
       <h3>메쉬 관리</h3>
       <div id="mesh-list"></div>
+    </div>
+
+    <div id="mod-management-panel" class="control-panel">
+      <button class="control-panel-minimize-button">-</button>
+      <button id="close-mod-management-panel" class="control-panel-close-button">&times;</button>
+      <h2>모드 관리</h2>
+      <p style="font-size: 12px; color: #ccc;">변경사항을 적용하려면 앱을 재시작해야 합니다.</p>
+      <div id="mod-list-container" style="margin-top: 15px;">
+        <!-- 모드 목록이 여기에 동적으로 추가됩니다 -->
+      </div>
     </div>
 
     <div id="pose-side-panel" style="display:none; position: fixed; top: 0; right: 0; width: 300px; height: 100vh; background: rgba(30,30,30,0.95); z-index: 2000; padding: 25px; color: #fff; overflow-y: auto; box-shadow: -5px 0 15px rgba(0,0,0,0.5);">

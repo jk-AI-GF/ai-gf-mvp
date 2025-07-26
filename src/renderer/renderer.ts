@@ -26,11 +26,10 @@ import { SystemControls } from '../module-api/system-controls';
 import { createEventBus, AppEvents } from '../core/event-bus';
 import { TriggerEngine } from '../core/trigger-engine';
 import { characterState } from '../core/character-state';
-import { updateJointSliders, createJointSliders, setupPosePanelButton, setupAnimationPanelButton, setupSavePoseButton, setupLoadPoseFileButton, setupLoadVrmButton, listVrmMeshes, toggleVrmMeshVisibility, createMeshList, appendMessage, createExpressionSliders, clearExpressionSliders, clearMeshList, clearJointSliders } from './ui-manager';
+import { updateJointSliders, createJointSliders, setupPosePanelButton, setupAnimationPanelButton, setupSavePoseButton, setupLoadPoseFileButton, setupLoadVrmButton, listVrmMeshes, toggleVrmMeshVisibility, createMeshList, appendMessage, createExpressionSliders, clearExpressionSliders, clearMeshList, clearJointSliders, createModList } from './ui-manager';
 import { VRMManager } from './vrm-manager';
 import { setClearColor, toggleCameraMode, onWindowResize, DEFAULT_FREE_CAMERA_POSITION, DEFAULT_FREE_CAMERA_ROTATION, getIntersectedObject } from './scene-utils';
 import { initAudioContext, playTTS, toggleTts, setMasterVolume } from './audio-service';
-import { setupModManagementUI } from './ui-mod-manager';
 
 
 let controls: OrbitControls | null = null;
@@ -54,7 +53,7 @@ const actions: Actions = {
     }
   },
   showMessage: (message: string, duration?: number) => {
-    window.appendMessage('assistant', message);
+    appendMessage('assistant', message);
   },
   setExpression: (expressionName: string, weight: number, duration?: number) => {
     vrmManager.animateExpression(expressionName, weight, duration);
@@ -354,13 +353,20 @@ setupAnimationPanelButton(window.electronAPI, (path) => handleFileSelectAndProce
 setupSavePoseButton(() => vrmManager.currentVrm, window.electronAPI);
 setupLoadPoseFileButton(window.electronAPI, (path) => handleFileSelectAndProcess(path, 'pose'));
 setupLoadVrmButton(window.electronAPI, (path) => vrmManager.loadVRM(path));
-setupModManagementUI(); // 모드 관리 UI 초기화
-
-window.listVrmMeshes = () => listVrmMeshes(vrmManager.currentVrm);
-window.toggleVrmMeshVisibility = (meshName: string, visible: boolean) => toggleVrmMeshVisibility(vrmManager.currentVrm, meshName, visible);
-window.createMeshList = () => createMeshList(vrmManager.currentVrm, toggleVrmMeshVisibility);
-window.appendMessage = appendMessage;
-window.updateJointSliders = updateJointSliders;
-window.createJointSliders = createJointSliders;
 
 console.log('👋 VRM Overlay loaded successfully.');
+
+
+// Initialize audio context on user interaction
+document.addEventListener('click', initAudioContext, { once: true });
+
+// TTS IPC handler
+window.electronAPI.on('tts-speak', (text: string) => {
+  playTTS(text);
+});
+
+// Expose functions to window for UI interaction
+window.setMasterVolume = setMasterVolume;
+window.toggleTts = toggleTts;
+
+

@@ -22,6 +22,7 @@ declare global {
     createExpressionSliders: () => void;
     createMeshList: () => void;
     createmoduleList: () => void;
+    createModList: () => void;
     get3DPointFromMouse: () => THREE.Vector3;
 
     // --- System & Device Controls ---
