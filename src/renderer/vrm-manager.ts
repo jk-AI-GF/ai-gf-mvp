@@ -58,6 +58,7 @@ function createAnimationClipFromVRMPose(vrmPose: VRMPose, vrm: VRM): THREE.Anima
 
 export class VRMManager {
     public currentVrm: VRM | null = null;
+    public hitboxes: THREE.Mesh[] = [];
     private scene: THREE.Scene;
     private loader: GLTFLoader;
     private fbxLoader: FBXLoader;
@@ -93,6 +94,7 @@ export class VRMManager {
             this.scene.remove(this.currentVrm.scene);
             this.currentVrm = null;
         }
+        this.removeHitboxes(); // Remove old hitboxes
 
         const fileContent = await this._readFile(filePathOrUrl);
         if (!fileContent) return;
@@ -119,6 +121,8 @@ export class VRMManager {
                     object.frustumCulled = false;
                 }
             });
+
+            this.createHitboxes(vrm); // Create hitboxes for the new model
 
             await new Promise(resolve => setTimeout(resolve, 500));
             
@@ -166,6 +170,57 @@ export class VRMManager {
             const message = error instanceof Error ? error.message : String(error);
             alert(`Failed to load VRM model: ${message}`);
         }
+    }
+
+    private removeHitboxes() {
+        this.hitboxes.forEach(hitbox => {
+            hitbox.parent?.remove(hitbox);
+            hitbox.geometry.dispose();
+            if (Array.isArray(hitbox.material)) {
+                hitbox.material.forEach(m => m.dispose());
+            } else {
+                hitbox.material.dispose();
+            }
+        });
+        this.hitboxes = [];
+    }
+
+    private createHitboxes(vrm: VRM) {
+        this.removeHitboxes(); // Clear existing hitboxes first
+
+        const hitboxMaterial = new THREE.MeshBasicMaterial({
+            visible: false, // Make them invisible
+            // visible: true, wireframe: true // For debugging
+        });
+
+        const bonesToTarget: { [key in VRMHumanBoneName]?: { size: THREE.Vector3, position?: THREE.Vector3 } } = {
+            [VRMHumanBoneName.Head]: { size: new THREE.Vector3(0.3, 0.4, 0.3) },
+            [VRMHumanBoneName.Spine]: { size: new THREE.Vector3(0.35, 0.5, 0.3) },
+            [VRMHumanBoneName.Hips]: { size: new THREE.Vector3(0.35, 0.3, 0.3), position: new THREE.Vector3(0, 0.05, 0) },
+            [VRMHumanBoneName.LeftUpperArm]: { size: new THREE.Vector3(0.15, 0.3, 0.15), position: new THREE.Vector3(0, -0.15, 0) },
+            [VRMHumanBoneName.RightUpperArm]: { size: new THREE.Vector3(0.15, 0.3, 0.15), position: new THREE.Vector3(0, -0.15, 0) },
+            [VRMHumanBoneName.LeftLowerArm]: { size: new THREE.Vector3(0.15, 0.3, 0.15), position: new THREE.Vector3(0, -0.15, 0) },
+            [VRMHumanBoneName.RightLowerArm]: { size: new THREE.Vector3(0.15, 0.3, 0.15), position: new THREE.Vector3(0, -0.15, 0) },
+            [VRMHumanBoneName.LeftUpperLeg]: { size: new THREE.Vector3(0.2, 0.4, 0.2), position: new THREE.Vector3(0, -0.2, 0) },
+            [VRMHumanBoneName.RightUpperLeg]: { size: new THREE.Vector3(0.2, 0.4, 0.2), position: new THREE.Vector3(0, -0.2, 0) },
+            [VRMHumanBoneName.LeftLowerLeg]: { size: new THREE.Vector3(0.15, 0.4, 0.15), position: new THREE.Vector3(0, -0.2, 0) },
+            [VRMHumanBoneName.RightLowerLeg]: { size: new THREE.Vector3(0.15, 0.4, 0.15), position: new THREE.Vector3(0, -0.2, 0) },
+        };
+
+        for (const [boneName, config] of Object.entries(bonesToTarget)) {
+            const boneNode = vrm.humanoid.getNormalizedBoneNode(boneName as VRMHumanBoneName);
+            if (boneNode) {
+                const hitboxGeo = new THREE.BoxGeometry(config.size.x, config.size.y, config.size.z);
+                const hitbox = new THREE.Mesh(hitboxGeo, hitboxMaterial);
+                hitbox.name = `hitbox_${boneName}`;
+                if (config.position) {
+                    hitbox.position.copy(config.position);
+                }
+                boneNode.add(hitbox);
+                this.hitboxes.push(hitbox);
+            }
+        }
+        console.log('[VRMManager] Created hitboxes:', this.hitboxes.map(h => h.name));
     }
 
     /**
@@ -483,3 +538,18 @@ export class VRMManager {
         }
     }
 }
+
+
+// --- Global window functions ---
+declare global {
+    interface Window {
+        vrmManager: VRMManager;
+        currentVrm: VRM | null;
+        vrmExpressionList: string[];
+        expressionMap: { [name: string]: any };
+        animateExpression: (expressionName: string, targetWeight: number, duration: number) => void;
+        animateExpressionAdditive: (expressionName: string, targetWeight: number, duration: number) => void;
+        // loadAnimationFile: (filePath: string, loop: boolean) => void; // Removed
+    }
+}
+

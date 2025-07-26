@@ -98,13 +98,13 @@ export function getIsFreeCameraMode() {
 const raycaster = new THREE.Raycaster();
 
 /**
- * Checks for intersections between a mouse click and objects in the scene.
+ * Checks for intersections between a mouse click and a specific list of objects.
  * @param event The mouse event.
  * @param camera The Three.js camera.
- * @param scene The Three.js scene.
+ * @param objects The array of THREE.Object3D to test for intersection.
  * @returns The first intersected object, or null if no intersection.
  */
-export function getIntersectedObject(event: MouseEvent, camera: THREE.PerspectiveCamera, scene: THREE.Scene): THREE.Object3D | null {
+export function getIntersectedObject(event: MouseEvent, camera: THREE.PerspectiveCamera, objects: THREE.Object3D[]): THREE.Object3D | null {
   // Calculate mouse position in normalized device coordinates (-1 to +1) for both components
   const mouse = new THREE.Vector2();
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -113,8 +113,8 @@ export function getIntersectedObject(event: MouseEvent, camera: THREE.Perspectiv
   // Update the picking ray with the camera and mouse position
   raycaster.setFromCamera(mouse, camera);
 
-  // Calculate objects intersecting the picking ray
-  const intersects = raycaster.intersectObjects(scene.children, true);
+  // Calculate objects intersecting the picking ray from the provided list
+  const intersects = raycaster.intersectObjects(objects, true);
 
   if (intersects.length > 0) {
     // Return the first intersected object (closest to the camera)

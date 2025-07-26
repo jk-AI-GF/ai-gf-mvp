@@ -168,9 +168,11 @@ controls = new OrbitControls(camera, renderer.domElement);
 
 // Add a click event listener to the renderer
 renderer.domElement.addEventListener('mousedown', (event) => {
-  const intersectedObject = getIntersectedObject(event, camera, scene);
-  if (intersectedObject) {
-    console.log(`Clicked on: ${intersectedObject.name}`, intersectedObject);
+  if (vrmManager.hitboxes.length > 0) {
+    const intersectedObject = getIntersectedObject(event, camera, vrmManager.hitboxes);
+    if (intersectedObject) {
+      console.log(`Clicked on: ${intersectedObject.name}`, intersectedObject);
+    }
   }
 }, false);
 
