@@ -6,9 +6,18 @@ export function makePanelsDraggable() {
     let isDragging = false;
     let offsetX: number, offsetY: number;
 
+    const header = panel.querySelector('h3');
+    const minimizeButton = panel.querySelector('.control-panel-minimize-button');
+
+    if (minimizeButton) {
+      minimizeButton.addEventListener('click', () => {
+        panel.classList.toggle('collapsed');
+      });
+    }
+
     const onMouseDown = (e: MouseEvent) => {
-      // Only drag when clicking on the panel itself, not its children (buttons, sliders, etc.)
-      if (e.target !== panel && e.target !== panel.querySelector('h3')) {
+      // Only drag when clicking on the panel header
+      if (e.target !== header) {
         return;
       }
       

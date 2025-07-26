@@ -322,6 +322,10 @@ app.on('ready', () => {
     }
   });
 
+  ipcMain.on('quit-app', () => {
+    app.quit();
+  });
+
   // CSP 설정
   session.defaultSession.webRequest.onHeadersReceived((details: Electron.OnHeadersReceivedListenerDetails, callback: (response: { cancel?: boolean; responseHeaders?: Record<string, string[]> }) => void) => {
     callback({

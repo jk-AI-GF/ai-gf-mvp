@@ -8,8 +8,8 @@ html, body {
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
     Arial, sans-serif;
-  background: #222222; /* 불투명한 어두운 회색 */
-  color: #fff; /* 흰색 글자 */
+  background: #f4f7f6; /* 부드러운 오프-화이트 */
+  color: #333333; /* 진한 회색 글자 */
   position: absolute;
   width: 100%;
   height: 100%;
@@ -53,7 +53,7 @@ body {
   left: 0;
   width: 200px;
   height: 100vh;
-  background: rgba(245, 245, 245, 0.9); /* 약간 투명하게 변경 */
+  background: rgba(40, 44, 52, 0.95); /* 진한 차콜 색상 */
   padding: 4px;
   box-sizing: border-box;
   display: flex;
@@ -81,10 +81,12 @@ body {
   font-size: 14px;
   cursor: pointer;
   border-radius: 4px;
+  color: #EAEAEA; /* 밝은 흰색 글자 */
 }
 
 .menu-button:hover {
-  background-color: #ddd; /* 마우스 올렸을 때 강조 */
+  background-color: rgba(255, 255, 255, 0.1); /* 마우스 올렸을 때 약간 밝아짐 */
+  color: #FFFFFF;
 }
 
 .control-panel {
@@ -99,7 +101,16 @@ body {
   padding: 10px; 
   color: #fff; 
   overflow-y: auto;
+  user-select: none; /* Prevent text selection when dragging */
 }
+
+/* Re-enable text selection for interactive elements inside the panel */
+.control-panel input,
+.control-panel textarea,
+.control-panel button {
+  user-select: auto;
+}
+
 
 .control-panel-close-button {
   position: absolute; 
@@ -110,6 +121,28 @@ body {
   color: #fff; 
   font-size: 1.5rem; 
   cursor: pointer;
+}
+
+.control-panel-minimize-button {
+  position: absolute;
+  top: 10px;
+  right: 40px; /* close button 옆에 위치 */
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  line-height: 1; /* 버튼 세로 정렬을 위해 추가 */
+  cursor: pointer;
+}
+
+/* 패널이 접혔을 때의 스타일 */
+.control-panel.collapsed {
+  max-height: 45px; /* 제목 표시줄 높이에 맞춤 */
+  overflow: hidden; /* 내용이 넘치지 않도록 */
+}
+
+.control-panel.collapsed > div {
+  display: none; /* 내용 숨기기 */
 }
 
 #save-message {

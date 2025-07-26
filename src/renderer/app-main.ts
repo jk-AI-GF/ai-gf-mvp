@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   makePanelsDraggable();
 
   // UI Panel Logic
-  document.getElementById('close-overlay')!.onclick = () => (window as any).close();
+  document.getElementById('quit-app-button')!.onclick = () => (window as any).electronAPI.quitApp();
   document.getElementById('open-settings')!.onclick = () => {
     const settingsModal = document.getElementById('settings-modal') as HTMLDivElement;
     const settingsOverlay = document.getElementById('settings-modal-overlay') as HTMLDivElement;
