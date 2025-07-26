@@ -1,0 +1,7 @@
+/* Styles for the overlay window */
+body {
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    text-align: center;
+    padding-top: 40vh;
+}

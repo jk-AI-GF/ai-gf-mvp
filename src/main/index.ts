@@ -13,6 +13,7 @@ process.on('uncaughtException', (error) => {
 
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
+declare const OVERLAY_WINDOW_WEBPACK_ENTRY: string;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -21,43 +22,54 @@ if (require('electron-squirrel-startup')) {
 
 let tray: Tray | null = null;
 let overlayWindow: BrowserWindow | null = null;
+let mainWindow: BrowserWindow | null = null;
 
 const assetsRoot = app.isPackaged
   ? path.join(process.resourcesPath, 'assets')
   : path.join(app.getAppPath(), 'assets');
 
 const createOverlayWindow = (): void => {
-  if (overlayWindow) {
-    overlayWindow.focus();
-    return;
-  }
+  // Create the browser window.
   overlayWindow = new BrowserWindow({
+    height: 860,
+    width: 1400,
     fullscreen: true,
     skipTaskbar: true,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
+    show: false, // Start hidden
     webPreferences: {
-      preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
-      webSecurity: true, // 보안 검사 활성화
-      nodeIntegration: true, // Node.js 통합 활성화
-      contextIsolation: false, // 컨텍스트 격리 비활성화
-      webgl: true, // WebGL 활성화
-      
+      // No preload script for overlay
+      webSecurity: true,
+      nodeIntegration: true,
+      contextIsolation: false,
+      webgl: true,
     },
   });
-  overlayWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
+
+  // and load the overlay.html of the app.
+  overlayWindow.loadURL(OVERLAY_WINDOW_WEBPACK_ENTRY);
+
   overlayWindow.on('closed', () => {
     overlayWindow = null;
   });
 };
 
 const toggleOverlayWindow = (): void => {
-  if (overlayWindow) {
-    overlayWindow.close();
-    overlayWindow = null;
+  if (!overlayWindow) {
+    // If it doesn't exist, it's created by the 'ready' event, so we shouldn't get here.
+    // But as a fallback, we could create it. For now, we'll assume it exists.
+    console.log('Overlay window does not exist.');
+    return;
+  }
+
+  if (overlayWindow.isVisible()) {
+    overlayWindow.hide();
+    mainWindow?.show(); // Show the main window when hiding the overlay
   } else {
-    createOverlayWindow();
+    overlayWindow.show();
+    mainWindow?.hide(); // Hide the main window when showing the overlay
   }
 };
 
@@ -65,7 +77,7 @@ const createTray = (): void => {
   const iconPath = path.join(assetsRoot, 'icon.png');
   tray = new Tray(iconPath);
   const contextMenu = Menu.buildFromTemplate([
-    { label: 'Show Overlay', click: () => createOverlayWindow() },
+    { label: 'Toggle Overlay', click: () => toggleOverlayWindow() },
     { label: 'Quit', click: () => app.quit() },
   ]);
   tray.setToolTip('AI-GF MVP');
@@ -74,7 +86,7 @@ const createTray = (): void => {
 
 const createWindow = (): void => {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     height: 860,
     width: 1400,
     webPreferences: {
@@ -83,7 +95,6 @@ const createWindow = (): void => {
       nodeIntegration: true, // Node.js 통합 활성화
       contextIsolation: false, // 컨텍스트 격리 비활성화
       webgl: true, // WebGL 활성화
-      
     },
   });
 
@@ -92,6 +103,10 @@ const createWindow = (): void => {
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
 };
 
 // This method will be called when Electron has finished
@@ -99,6 +114,7 @@ const createWindow = (): void => {
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
   createWindow();
+  createOverlayWindow(); // Create both windows on startup
   createTray();
   globalShortcut.register('CommandOrControl+Shift+O', () => {
     toggleOverlayWindow();
