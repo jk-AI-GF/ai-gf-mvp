@@ -1,19 +1,19 @@
 
-import { Imodule } from './module-manager';
-import { ModuleContext } from '../module-api/module-context';
+import { IPlugin } from './plugin-manager';
+import { PluginContext } from '../plugin-api/plugin-context';
 
 /**
- * Actions API의 기능을 테스트하기 위한 간단한 모듈입니다.
+ * Actions API의 기능을 테스트하기 위한 간단한 플러그인입니다.
  * 앱 시작 후 순차적으로 여러 액션을 실행하여 API가 올바르게 작동하는지 확인합니다.
  */
-export class ActionTestModule implements Imodule {
+export class ActionTestPlugin implements IPlugin {
   public readonly name = 'ActionTest';
   public enabled = true;
-  private context: ModuleContext | null = null;
+  private context: PluginContext | null = null;
 
-  setModuleContext(context: ModuleContext): void {
+  setPluginContext(context: PluginContext): void {
     this.context = context;
-    console.log('[ActionTestModule] Initialized.');
+    console.log('[ActionTestPlugin] Initialized.');
     this.setupEventListeners();
   }
 
@@ -23,7 +23,7 @@ export class ActionTestModule implements Imodule {
     this.context.eventBus.on('character_part_clicked', ({ partName }) => {
       if (!this.enabled) return;
       
-      console.log(`[ActionTestModule] Event received: character_part_clicked, part: ${partName}`);
+      console.log(`[ActionTestPlugin] Event received: character_part_clicked, part: ${partName}`);
       
       const message = `${partName} 클릭됨!`;
       this.context?.actions.showMessage(message, 2);
@@ -32,7 +32,7 @@ export class ActionTestModule implements Imodule {
     this.context.eventBus.on('character_part_right_clicked', ({ partName }) => {
       if (!this.enabled) return;
       
-      console.log(`[ActionTestModule] Event received: character_part_right_clicked, part: ${partName}`);
+      console.log(`[ActionTestPlugin] Event received: character_part_right_clicked, part: ${partName}`);
       
       const message = `${partName} 우클릭됨! 특별한 반응!`;
       this.context?.actions.showMessage(message, 2);
@@ -41,12 +41,12 @@ export class ActionTestModule implements Imodule {
     this.context.eventBus.on('vrm:loaded', ({ vrm }) => {
       if (!this.enabled) return;
       const modelName = 'name' in vrm.meta ? vrm.meta.name : (vrm.meta as any).title;
-      console.log(`[ActionTestModule] Event received: vrm:loaded. Model name: ${modelName}`);
+      console.log(`[ActionTestPlugin] Event received: vrm:loaded. Model name: ${modelName}`);
     });
 
     this.context.eventBus.on('vrm:unloaded', () => {
       if (!this.enabled) return;
-      console.log('[ActionTestModule] Event received: vrm:unloaded.');
+      console.log('[ActionTestPlugin] Event received: vrm:unloaded.');
     });
   }
 
@@ -54,7 +54,7 @@ export class ActionTestModule implements Imodule {
     if (!this.context) return;
     const actions = this.context.actions;
 
-    console.log('[ActionTestModule] Starting action sequence test on enable...');
+    console.log('[ActionTestPlugin] Starting action sequence test on enable...');
 
     // 1. Show start message
     actions.showMessage('Action 테스트를 시작합니다.', 3);
@@ -84,6 +84,6 @@ export class ActionTestModule implements Imodule {
   }
 
   update(deltaTime: number): void {
-    // This module does not need to do anything on update
+    // This plugin does not need to do anything on update
   }
 }

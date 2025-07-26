@@ -1,13 +1,13 @@
-import { Imodule } from './module-manager';
+import { IPlugin } from './plugin-manager';
 import { VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
 import * as THREE from 'three';
-import { ModuleContext } from '../module-api/module-context';
+import { PluginContext } from '../plugin-api/plugin-context';
 
-export class AutoLookAtModule implements Imodule {
+export class AutoLookAtPlugin implements IPlugin {
   public readonly name = 'AutoLookAt';
   public enabled = true;
 
-  private context: ModuleContext; // Add context property
+  private context: PluginContext; // Add context property
   private lastChangeTime: number = 0;
   private nextChangeInterval: number = 0; // In milliseconds
 
@@ -19,7 +19,7 @@ export class AutoLookAtModule implements Imodule {
     this.nextChangeInterval = Math.random() * (10000 - 7000) + 500; // Random
   }
 
-  public setModuleContext(context: ModuleContext): void {
+  public setPluginContext(context: PluginContext): void {
     this.context = context;
   }
 
@@ -36,13 +36,13 @@ export class AutoLookAtModule implements Imodule {
 
         if (selectedTargetType === 'camera') {
             this.context.actions.lookAt('camera');
-            console.log('[AutoLookAtModule] Looking at camera.');
+            console.log('[AutoLookAtPlugin] Looking at camera.');
         } else if (selectedTargetType === 'mouse') {
             this.context.actions.lookAt('mouse');
-            console.log('[AutoLookAtModule] Looking at mouse.');
+            console.log('[AutoLookAtPlugin] Looking at mouse.');
         } else { // null
             this.context.actions.lookAt(null);
-            console.log('[AutoLookAtModule] Looking at null.');
+            console.log('[AutoLookAtPlugin] Looking at null.');
         }
     }
   }

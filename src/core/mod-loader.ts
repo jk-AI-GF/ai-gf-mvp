@@ -2,10 +2,10 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import mime from 'mime';
-import { ModuleContext, ICharacterState } from '../module-api/module-context';
-import { EventBus } from '../module-api/event-bus';
+import { PluginContext, ICharacterState } from '../plugin-api/plugin-context';
+import { EventBus } from '../plugin-api/event-bus';
 import { TriggerEngine } from './trigger-engine';
-import { Trigger } from '../module-api/triggers';
+import { Trigger } from '../plugin-api/triggers';
 import { ContextStore } from './context-store';
 import { ModSettingsManager } from './mod-settings-manager';
 
@@ -16,9 +16,9 @@ interface ModManifest {
   entry: string;
 }
 
-// 모듈의 기본 내보내기 타입 정의
-type ModModule = {
-  default?: (ctx: ModuleContext) => void;
+// 모드의 기본 내보내기 타입 정의
+type ModExport = {
+  default?: (ctx: PluginContext) => void;
 };
 
 export class ModLoader {
@@ -95,18 +95,18 @@ export class ModLoader {
       console.log(`[ModLoader] Loading mod: ${manifest.name} v${manifest.name}`);
 
       // 2. 모드 진입점(entry) 실행
-      // Node.js의 require를 사용하여 외부 모듈을 로드합니다.
+      // Node.js의 require를 사용하여 외부 파일을 로드합니다.
       const entryPath = path.join(modPath, manifest.entry);
       console.log(`[ModLoader] Attempting to require: ${entryPath}`);
       // Webpack이 require를 번들링하지 않도록 eval을 사용합니다.
-      const modModule: ModModule = eval('require')(entryPath);
-      console.log(`[ModLoader] Successfully required module from: ${entryPath}`);
+      const modExport: ModExport = eval('require')(entryPath);
+      console.log(`[ModLoader] Successfully required file from: ${entryPath}`);
 
       // 3. 모드 등록 (export default 함수 실행)
-      if (typeof modModule.default === 'function') {
+      if (typeof modExport.default === 'function') {
         console.log(`[ModLoader] Found default export function for ${manifest.name}. Calling it.`);
         // PluginContext 객체 생성
-        const moduleContext: ModuleContext = {
+        const pluginContext: PluginContext = {
           eventBus: this.eventBus,
           registerTrigger: (trigger: Trigger) => this.triggerEngine.registerTrigger(trigger),
           actions: {
@@ -171,7 +171,7 @@ export class ModLoader {
             },
           } as ICharacterState,
         };
-        modModule.default(moduleContext);
+        modExport.default(pluginContext);
         this.loadedMods.set(manifest.name, manifest);
         console.log(`[ModLoader] Successfully registered mod: ${manifest.name}`);
       } else {

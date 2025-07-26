@@ -13,8 +13,8 @@ export interface ICharacterState {
   curiosity: number;
 }
 
-// 모드가 앱과 상호작용할 수 있는 모든 API를 정의하는 컨텍스트 객체입니다.
-export interface ModuleContext {
+// 플러그인과 모드가 앱과 상호작용할 수 있는 모든 API를 정의하는 컨텍스트 객체입니다.
+export interface PluginContext {
   /**
    * 앱의 중앙 이벤트 버스에 접근하여 이벤트를 발행하거나 구독할 수 있습니다.
    */
@@ -27,12 +27,12 @@ export interface ModuleContext {
   registerTrigger(trigger: Trigger): void;
 
   /**
-   * 모드가 게임에 영향을 줄 수 있는 함수 호출을 제공합니다.
+   * 플러그인/모드가 게임에 영향을 줄 수 있는 함수 호출을 제공합니다.
    */
   actions: Actions;
 
   /**
-   * 모드가 시스템 수준의 기능을 제어할 수 있는 함수 호출을 제공합니다.
+   * 플러그인/모드가 시스템 수준의 기능을 제어할 수 있는 함수 호출을 제공합니다.
    */
   system: SystemControls;
 

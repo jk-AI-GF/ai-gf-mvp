@@ -1,15 +1,15 @@
-import { Imodule } from './module-manager';
+import { IPlugin } from './plugin-manager';
 import { VRM, VRMExpressionPresetName } from '@pixiv/three-vrm';
-import { ModuleContext } from '../module-api/module-context';
+import { PluginContext } from '../plugin-api/plugin-context';
 
 /**
- * VRM 모델이 자동으로 눈을 깜빡이도록 하는 모듈입니다.
+ * VRM 모델이 자동으로 눈을 깜빡이도록 하는 플러그인입니다.
  */
-export class AutoBlinkmodule implements Imodule {
+export class AutoBlinkPlugin implements IPlugin {
   public readonly name = 'AutoBlink';
   public enabled = true;
 
-  private context: ModuleContext;
+  private context: PluginContext;
   private timeSinceLastBlink = 0.0;
   private nextBlinkTime = 0.0;
 
@@ -17,7 +17,7 @@ export class AutoBlinkmodule implements Imodule {
     this.resetBlinkTimer();
   }
 
-  public setModuleContext(context: ModuleContext): void {
+  public setPluginContext(context: PluginContext): void {
     this.context = context;
   }
 
@@ -32,7 +32,7 @@ export class AutoBlinkmodule implements Imodule {
 
   public setup(vrm: VRM): void {
     // Blink uses expressions, which are already part of the VRM.
-    // No specific setup is needed for this module.
+    // No specific setup is needed for this plugin.
   }
 
   /**

@@ -1,6 +1,6 @@
 
 /**
- * A simple key-value store for modules to share state.
+ * A simple key-value store for plugins/mods to share state.
  */
 export class ContextStore {
   private store: Map<string, any> = new Map();

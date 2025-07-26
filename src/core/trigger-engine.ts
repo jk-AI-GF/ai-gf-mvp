@@ -1,5 +1,5 @@
 
-import { Trigger, Context } from '../module-api/triggers';
+import { Trigger, Context } from '../plugin-api/triggers';
 
 export class TriggerEngine {
   private triggers: Trigger[] = [];
@@ -11,7 +11,7 @@ export class TriggerEngine {
 
   /**
    * 새로운 트리거를 등록합니다.
-   * 이 메서드는 PluginContext를 통해 모드에 노출됩니다.
+   * 이 메서드는 PluginContext를 통해 플러그인/모드에 노출됩니다.
    * @param trigger 등록할 트리거 객체
    */
   public registerTrigger(trigger: Trigger): void {

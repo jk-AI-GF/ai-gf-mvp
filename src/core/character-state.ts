@@ -1,6 +1,6 @@
 // src/core/character-state.ts
 
-import { ICharacterState } from '../module-api/module-context';
+import { ICharacterState } from '../plugin-api/plugin-context';
 
 class CharacterState implements ICharacterState {
     private _curiosity: number = 0.5; // Default value, can be adjusted

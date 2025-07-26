@@ -1,17 +1,17 @@
 import * as THREE from 'three';
-import { Imodule } from './module-manager';
-import { ModuleContext } from '../module-api/module-context';
+import { IPlugin } from './plugin-manager';
+import { PluginContext } from '../plugin-api/plugin-context';
 import { VRM } from '@pixiv/three-vrm';
 
 /**
- * A module that allows the user to grab and drag the VRM character.
+ * A plugin that allows the user to grab and drag the VRM character.
  * The drag action is initiated by clicking and holding the 'hips' hitbox.
  */
-export class GrabVrmModule implements Imodule {
+export class GrabVrmPlugin implements IPlugin {
   public readonly name = 'GrabVrm';
   public enabled = true;
   
-  private context: ModuleContext | null = null;
+  private context: PluginContext | null = null;
   private isDragging = false;
   private currentVrm: VRM | null = null;
 
@@ -26,10 +26,10 @@ export class GrabVrmModule implements Imodule {
   private onMouseMove = this.handleMouseMove.bind(this);
   private onMouseUp = this.handleMouseUp.bind(this);
 
-  setModuleContext(context: ModuleContext): void {
+  setPluginContext(context: PluginContext): void {
     this.context = context;
     this.setupEventListeners();
-    console.log('[GrabVrmModule] Initialized.');
+    console.log('[GrabVrmPlugin] Initialized.');
   }
 
   private setupEventListeners(): void {
@@ -76,7 +76,7 @@ export class GrabVrmModule implements Imodule {
       document.addEventListener('mousemove', this.onMouseMove);
       document.addEventListener('mouseup', this.onMouseUp, { once: true }); // `once` ensures it's automatically removed
 
-      console.log('[GrabVrmModule] Started dragging character.');
+      console.log('[GrabVrmPlugin] Started dragging character.');
       
       // Disable orbit controls to prevent camera movement while dragging
       const controls = (window.vrmManager as any)._camera.parent?.children.find((c: any) => c.constructor.name === 'OrbitControls');
@@ -114,7 +114,7 @@ export class GrabVrmModule implements Imodule {
     // No need to remove mouseup listener if `once: true` is used, but doesn't hurt to be explicit
     document.removeEventListener('mouseup', this.onMouseUp);
 
-    console.log('[GrabVrmModule] Stopped dragging character.');
+    console.log('[GrabVrmPlugin] Stopped dragging character.');
 
     // Re-enable orbit controls
     const controls = (window.vrmManager as any)._camera.parent?.children.find((c: any) => c.constructor.name === 'OrbitControls');
@@ -122,15 +122,15 @@ export class GrabVrmModule implements Imodule {
   }
 
   onEnable(): void {
-    // This module is enabled by default and controlled by internal state.
+    // This plugin is enabled by default and controlled by internal state.
   }
 
   onDisable(): void {
-    // If the module is disabled mid-drag, ensure we clean up.
+    // If the plugin is disabled mid-drag, ensure we clean up.
     this.handleMouseUp();
   }
 
   update(deltaTime: number): void {
-    // Most logic is event-driven, so update is not needed for this module.
+    // Most logic is event-driven, so update is not needed for this plugin.
   }
 }

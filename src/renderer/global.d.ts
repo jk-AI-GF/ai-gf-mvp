@@ -1,13 +1,13 @@
 import { VRM, VRMExpression, VRMNormalizedPose } from '@pixiv/three-vrm';
 import * as THREE from 'three';
-import { ModuleManager } from '../modules/module-manager';
+import { PluginManager } from '../plugins/plugin-manager';
 import { VRMManager } from './vrm-manager'; // VRMManager import 추가
 
 declare global {
   interface Window {
     // --- Refactored ---
     vrmManager: VRMManager; // vrmManager 추가
-    moduleManager: ModuleManager;
+    pluginManager: PluginManager;
 
     // --- UI Interaction Functions ---
     animateExpression: (expressionName: string, targetWeight: number, duration: number) => void;
@@ -21,7 +21,7 @@ declare global {
     createJointSliders: () => void;
     createExpressionSliders: () => void;
     createMeshList: () => void;
-    createmoduleList: () => void;
+    createPluginList: () => void;
     createModList: () => void;
     get3DPointFromMouse: () => THREE.Vector3;
 
@@ -42,7 +42,7 @@ declare global {
     // --- VRM specific direct access (should be minimized) ---
     listVrmMeshes: () => string[];
     toggleVrmMeshVisibility: (meshName: string, visible: boolean) => void;
-    currentVrm: VRM | null; // Still needed for some modules/UI parts
+    currentVrm: VRM | null; // Still needed for some Plugins/UI parts
 
     // --- Electron API ---
     electronAPI: {

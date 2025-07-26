@@ -2,7 +2,7 @@
 
 /**
  * 모드가 게임에 영향을 줄 수 있는 함수 호출을 정의하는 인터페이스입니다.
- * 이 인터페이스의 구현체는 ModuleContext를 통해 모드에 노출됩니다.
+ * 이 인터페이스의 구현체는 PluginContext를 통해 모드에 노출됩니다.
  */
 export interface Actions {
   /**

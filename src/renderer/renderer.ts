@@ -12,21 +12,21 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 import { VRMHumanBoneName } from '@pixiv/three-vrm';
-import { ModuleManager } from '../modules/module-manager';
+import { PluginManager } from '../plugins/plugin-manager';
 
-import { AutoLookAtModule } from '../modules/auto-look-at-module';
-import { AutoBlinkmodule } from '../modules/auto-blink-module';
-import { AutoIdleAnimationmodule } from '../modules/auto-idle-animation-module';
-import { ProactiveDialoguemodule } from '../modules/proactive-dialogue-module';
-import { ActionTestModule } from '../modules/action-test-module'; // 테스트 모듈 import
-import { GrabVrmModule } from '../modules/grab-vrm-module'; // 새로 추가
-import { Actions } from '../module-api/actions';
-import { ModuleContext } from '../module-api/module-context';
-import { SystemControls } from '../module-api/system-controls';
+import { AutoLookAtPlugin } from '../plugins/auto-look-at-plugin';
+import { AutoBlinkPlugin } from '../plugins/auto-blink-plugin';
+import { AutoIdleAnimationPlugin } from '../plugins/auto-idle-animation-plugin';
+import { ProactiveDialoguePlugin } from '../plugins/proactive-dialogue-plugin';
+import { ActionTestPlugin } from '../plugins/action-test-plugin'; // 테스트 플러그인 import
+import { GrabVrmPlugin } from '../plugins/grab-vrm-plugin'; // 새로 추가
+import { Actions } from '../plugin-api/actions';
+import { PluginContext } from '../plugin-api/plugin-context';
+import { SystemControls } from '../plugin-api/system-controls';
 import { createEventBus, AppEvents } from '../core/event-bus';
 import { TriggerEngine } from '../core/trigger-engine';
 import { characterState } from '../core/character-state';
-import { updateJointSliders, createJointSliders, setupPosePanelButton, setupAnimationPanelButton, setupSavePoseButton, setupLoadPoseFileButton, setupLoadVrmButton, listVrmMeshes, toggleVrmMeshVisibility, createMeshList, appendMessage, createExpressionSliders, clearExpressionSliders, clearMeshList, clearJointSliders, createModList } from './ui-manager';
+import { updateJointSliders, createJointSliders, setupPosePanelButton, setupAnimationPanelButton, setupSavePoseButton, setupLoadPoseFileButton, setupLoadVrmButton, createMeshList, appendMessage, createExpressionSliders, clearExpressionSliders, clearMeshList, clearJointSliders, toggleVrmMeshVisibility } from './ui-manager';
 import { VRMManager } from './vrm-manager';
 import { setClearColor, toggleCameraMode, onWindowResize, DEFAULT_FREE_CAMERA_POSITION, DEFAULT_FREE_CAMERA_ROTATION, getIntersectedObject } from './scene-utils';
 import { initAudioContext, playTTS, toggleTts, setMasterVolume } from './audio-service';
@@ -34,9 +34,6 @@ import { initAudioContext, playTTS, toggleTts, setMasterVolume } from './audio-s
 
 let controls: OrbitControls | null = null;
 let isFreeCameraMode = true;
-
-
-
 
 const eventBus = createEventBus<AppEvents>();
 const triggerEngine = new TriggerEngine();
@@ -80,7 +77,7 @@ const actions: Actions = {
   },
   setContext: (key: string, value: any) => {
     // This action is handled in the main process, but we need a placeholder
-    // for the renderer-side module context. It sends the data to the main process.
+    // for the renderer-side plugin context. It sends the data to the main process.
     window.electronAPI.send('context:set', key, value);
   },
   changeBackground: (imagePath: string) => {
@@ -107,7 +104,7 @@ const systemControls: SystemControls = {
   },
 };
 
-const moduleContext: ModuleContext = {
+const pluginContext: PluginContext = {
   eventBus: eventBus,
   registerTrigger: (trigger) => triggerEngine.registerTrigger(trigger),
   actions: actions,
@@ -115,8 +112,8 @@ const moduleContext: ModuleContext = {
   characterState: characterState,
 };
 
-const moduleManager = new ModuleManager(moduleContext);
-window.moduleManager = moduleManager;
+const pluginManager = new PluginManager(pluginContext);
+window.pluginManager = pluginManager;
 
 // IPC message handlers from main process
 window.electronAPI.on('play-animation-in-renderer', (animationName: string, loop: boolean, crossFadeDuration: number) => {
@@ -221,21 +218,21 @@ window.vrmManager = vrmManager; // Make it globally accessible
 window.animateExpression = vrmManager.animateExpression.bind(vrmManager);
 
 
-// Initialize and register modules
-const autoLookAtmodule = new AutoLookAtModule();
-moduleManager.register(autoLookAtmodule);
-const autoBlinkmodule = new AutoBlinkmodule();
-moduleManager.register(autoBlinkmodule);
-const autoIdleAnimationmodule = new AutoIdleAnimationmodule();
-moduleManager.register(autoIdleAnimationmodule);
-const proactiveDialoguemodule = new ProactiveDialoguemodule();
-moduleManager.register(proactiveDialoguemodule);
+// Initialize and register plugins
+const autoLookAtPlugin = new AutoLookAtPlugin();
+pluginManager.register(autoLookAtPlugin);
+const autoBlinkPlugin = new AutoBlinkPlugin();
+pluginManager.register(autoBlinkPlugin);
+const autoIdleAnimationPlugin = new AutoIdleAnimationPlugin();
+pluginManager.register(autoIdleAnimationPlugin);
+const proactiveDialoguePlugin = new ProactiveDialoguePlugin();
+pluginManager.register(proactiveDialoguePlugin);
 
-// Register the test module
-const actionTestModule = new ActionTestModule();
-moduleManager.register(actionTestModule);
-const grabVrmModule = new GrabVrmModule();
-moduleManager.register(grabVrmModule);
+// Register the test plugin
+const actionTestPlugin = new ActionTestPlugin();
+pluginManager.register(actionTestPlugin);
+const grabVrmPlugin = new GrabVrmPlugin();
+pluginManager.register(grabVrmPlugin);
 
 // --- Event-driven UI Updates ---
 eventBus.on('vrm:loaded', ({ vrm }) => {
@@ -281,7 +278,7 @@ function animate() {
   
   const currentVrm = vrmManager.currentVrm;
   if (currentVrm) {
-    moduleManager.update(delta, currentVrm);
+    pluginManager.update(delta, currentVrm);
     
     // Update floating messages
     const headPosition = currentVrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Head)?.getWorldPosition(tempVector);
@@ -367,6 +364,7 @@ window.electronAPI.on('tts-speak', (text: string) => {
 
 // Expose functions to window for UI interaction
 window.setMasterVolume = setMasterVolume;
+window.appendMessage = appendMessage;
 window.toggleTts = toggleTts;
 
 
