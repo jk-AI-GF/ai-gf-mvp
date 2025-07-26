@@ -168,6 +168,11 @@ controls = new OrbitControls(camera, renderer.domElement);
 const vrmManager = new VRMManager(scene, camera, plane);
 window.vrmManager = vrmManager; // Make it globally accessible
 
+// IMPORTANT: Expose expression animation function to the window object
+// so that ChatService can call it.
+window.animateExpression = vrmManager.animateExpression.bind(vrmManager);
+
+
 // Initialize and register modules
 const autoLookAtmodule = new AutoLookAtModule();
 moduleManager.register(autoLookAtmodule);
