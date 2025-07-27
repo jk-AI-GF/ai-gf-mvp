@@ -3,7 +3,7 @@ import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 import { VRMLoaderPlugin, VRM, VRMHumanBoneName, VRMPose } from '@pixiv/three-vrm';
 import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-vrm-animation';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
-import { createMeshList, toggleVrmMeshVisibility } from './ui-manager';
+
 import { get3DPointFromMouse } from './scene-utils';
 import eventBus, { AppEvents, TypedEventBus } from '../core/event-bus';
 

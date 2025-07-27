@@ -19,20 +19,17 @@ body {
 ::-webkit-scrollbar {
   width: 8px;           /* 스크롤바 너비 */
 }
-
 /* 스크롤 트랙 (바탕) */
 ::-webkit-scrollbar-track {
   background: #2b2b2b;  /* 배경 색 */
   border-radius: 4px;
 }
-
 /* 스크롤바 막대 */
 ::-webkit-scrollbar-thumb {
   background: #666;      /* 막대 색 */
   border-radius: 4px;
   
 }
-
 /* 마우스 올렸을 때 */
 ::-webkit-scrollbar-thumb:hover {
   background: #888;
@@ -103,8 +100,6 @@ body {
   overflow-y: auto;
   user-select: none; /* Prevent text selection when dragging */
 }
-
-/* Re-enable text selection for interactive elements inside the panel */
 .control-panel input,
 .control-panel textarea,
 .control-panel button {
@@ -244,7 +239,66 @@ body {
   pointer-events: none;
 }
 
-/* ...but enable them for actual UI elements inside the root. */
-#root > * {
+/* ...but enable them for all descendants. */
+#root * {
   pointer-events: auto;
 }
+
+/* --- New Unified Panel Styles --- */
+.panel-container {
+  position: absolute;
+  width: 350px;
+  max-height: calc(100vh - 90px);
+  background: rgba(20, 20, 20, 0.9);
+  border-radius: 8px;
+  color: white;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.panel-close-button {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.panel-content {
+  overflow-y: auto;
+  flex-grow: 1;
+  padding-right: 10px; /* for scrollbar */
+}
+
+.panel-content .empty-message {
+  color: #888;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.panel-container.collapsed > .panel-content,
+.panel-container.collapsed > p /* For ModManagementPanel's restart message */ {
+  display: none;
+}
+
+.panel-container.collapsed {
+  max-height: 45px; /* Header height */
+  overflow: hidden;
+}
+

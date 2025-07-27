@@ -16,7 +16,12 @@ import { ipcRenderer } from 'electron';
   showMessage: (message: string, duration: number) => ipcRenderer.invoke('show-message', message, duration),
   setExpression: (expressionName: string, weight: number, duration: number) => ipcRenderer.invoke('set-expression', expressionName, weight, duration),
   on: (channel: string, listener: (...args: any[]) => void) => {
-    ipcRenderer.on(channel, (event, ...args) => listener(...args));
+    const subscription = (event: any, ...args: any[]) => listener(...args);
+    ipcRenderer.on(channel, subscription);
+    
+    return () => {
+      ipcRenderer.removeListener(channel, subscription);
+    };
   },
   send: (channel: string, ...args: any[]) => {
     ipcRenderer.send(channel, ...args);

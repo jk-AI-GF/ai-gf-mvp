@@ -58,7 +58,7 @@ declare global {
       playAnimation: (animationName: string, loop?: boolean, crossFadeDuration?: number) => Promise<void>;
       showMessage: (message: string, duration?: number) => Promise<void>;
       setExpression: (expressionName: string, weight: number, duration?: number) => Promise<void>;
-      on: (channel: string, listener: (...args: any[]) => void) => void;
+      on: (channel: string, listener: (...args: any[]) => void) => () => void;
       send: (channel: string, ...args: any[]) => void;
       invoke: (channel: string, ...args: any[]) => Promise<any>;
       // --- Mod Management ---

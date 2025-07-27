@@ -10,10 +10,10 @@ import './index.css';
 import './app-main';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-
 import { VRMHumanBoneName } from '@pixiv/three-vrm';
-import { PluginManager } from '../plugins/plugin-manager';
 
+// Import Plugins
+import { PluginManager } from '../plugins/plugin-manager';
 import { AutoLookAtPlugin } from '../plugins/auto-look-at-plugin';
 import { AutoBlinkPlugin } from '../plugins/auto-blink-plugin';
 import { AutoIdleAnimationPlugin } from '../plugins/auto-idle-animation-plugin';
@@ -26,7 +26,7 @@ import { SystemControls } from '../plugin-api/system-controls';
 import eventBus from '../core/event-bus';
 import { TriggerEngine } from '../core/trigger-engine';
 import { characterState } from '../core/character-state';
-import { setupPosePanelButton, setupAnimationPanelButton, setupSavePoseButton, setupLoadPoseFileButton, setupLoadVrmButton, createMeshList, appendMessage, clearMeshList, toggleVrmMeshVisibility } from './ui-manager';
+import { setupPosePanelButton, setupAnimationPanelButton, setupSavePoseButton, setupLoadPoseFileButton, setupLoadVrmButton, appendMessage } from './ui-manager';
 import { VRMManager } from './vrm-manager';
 import { setClearColor, toggleCameraMode, onWindowResize, DEFAULT_FREE_CAMERA_POSITION, DEFAULT_FREE_CAMERA_ROTATION, getIntersectedObject } from './scene-utils';
 import { initAudioContext, playTTS, toggleTts, setMasterVolume } from './audio-service';
@@ -244,7 +244,7 @@ eventBus.on('vrm:loaded', ({ vrm }) => {
   window.vrmExpressionList = Object.keys(vrm.expressionManager.expressionMap);
   
   // Call UI update functions
-  createMeshList(vrm, toggleVrmMeshVisibility);
+  
 });
 
 eventBus.on('vrm:unloaded', () => {
@@ -253,7 +253,7 @@ eventBus.on('vrm:unloaded', () => {
   window.expressionMap = {};
   window.vrmExpressionList = [];
   
-  clearMeshList();
+  
 });
 
 

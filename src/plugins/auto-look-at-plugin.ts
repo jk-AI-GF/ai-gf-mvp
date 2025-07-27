@@ -5,7 +5,7 @@ import { PluginContext } from '../plugin-api/plugin-context';
 
 export class AutoLookAtPlugin implements IPlugin {
   public readonly name = 'AutoLookAt';
-  public enabled = true;
+  public enabled = false;
 
   private context: PluginContext; // Add context property
   private lastChangeTime: number = 0;
