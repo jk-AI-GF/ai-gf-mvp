@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { VRM } from '@pixiv/three-vrm';
-import { useDraggable } from '../hooks/useDraggable';
+import Panel from './Panel'; // Import the generic Panel component
 
 interface ExpressionPanelProps {
   onClose: () => void;
@@ -16,9 +16,6 @@ type ExpressionInfo = {
 const ExpressionPanel: React.FC<ExpressionPanelProps> = ({ onClose, initialPos, onDragEnd }) => {
   const [expressions, setExpressions] = useState<ExpressionInfo[]>([]);
   const [vrm, setVrm] = useState<VRM | null>(null);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const handleRef = useRef<HTMLDivElement>(null);
-  const { x, y } = useDraggable({ handleRef, initialPos, onDragEnd });
 
   useEffect(() => {
     const currentVrm = (window as any).currentVrm as VRM | undefined;
@@ -43,34 +40,25 @@ const ExpressionPanel: React.FC<ExpressionPanelProps> = ({ onClose, initialPos, 
   };
 
   return (
-    <div className={`panel-container ${isCollapsed ? 'collapsed' : ''}`} style={{ top: y, left: x }}>
-      <div className="panel-header" ref={handleRef} style={{ cursor: 'move' }}>
-        <h3 className="panel-title">표정 조절</h3>
-        <div>
-          <button onClick={() => setIsCollapsed(!isCollapsed)} className="panel-close-button" style={{ right: '40px' }}>{isCollapsed ? '□' : '−'}</button>
-          <button onClick={onClose} className="panel-close-button">×</button>
-        </div>
-      </div>
-      <div className="panel-content">
-        {!vrm ? (
-          <p className="empty-message">VRM 모델을 로드해주세요.</p>
-        ) : (
-          expressions.map(({ name, value }) => (
-            <div key={name} style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px' }}>{name}</label>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={value}
-                onChange={(e) => handleSliderChange(name, parseInt(e.target.value))}
-                style={{ width: '100%' }}
-              />
-            </div>
-          ))
-        )}
-      </div>
-    </div>
+    <Panel title="표정 조절" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
+      {!vrm ? (
+        <p className="empty-message">VRM 모델을 로드해주세요.</p>
+      ) : (
+        expressions.map(({ name, value }) => (
+          <div key={name} style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '5px' }}>{name}</label>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={value}
+              onChange={(e) => handleSliderChange(name, parseInt(e.target.value))}
+              style={{ width: '100%' }}
+            />
+          </div>
+        ))
+      )}
+    </Panel>
   );
 };
 

@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import { VRM } from '@pixiv/three-vrm';
-import { useDraggable } from '../hooks/useDraggable';
+import Panel from './Panel';
 
 interface MeshControlPanelProps {
   onClose: () => void;
@@ -13,9 +13,6 @@ interface MeshControlPanelProps {
 const MeshControlPanel: React.FC<MeshControlPanelProps> = ({ onClose, vrmManager, initialPos, onDragEnd }) => {
   const [meshes, setMeshes] = useState<{ name: string; visible: boolean }[]>([]);
   const [currentVrm, setCurrentVrm] = useState<VRM | null>(null);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const handleRef = useRef<HTMLDivElement>(null);
-  const { x, y } = useDraggable({ handleRef, initialPos, onDragEnd });
 
   const listVrmMeshes = useCallback((vrm: VRM | null): { name: string; visible: boolean }[] => {
     if (!vrm) return [];
@@ -71,35 +68,26 @@ const MeshControlPanel: React.FC<MeshControlPanelProps> = ({ onClose, vrmManager
   }, [vrmManager, listVrmMeshes]);
 
   return (
-    <div className={`panel-container ${isCollapsed ? 'collapsed' : ''}`} style={{ top: y, left: x }}>
-      <div className="panel-header" ref={handleRef} style={{ cursor: 'move' }}>
-        <h3 className="panel-title">메쉬 관리</h3>
-        <div>
-          <button onClick={() => setIsCollapsed(!isCollapsed)} className="panel-close-button" style={{ right: '40px' }}>{isCollapsed ? '□' : '−'}</button>
-          <button onClick={onClose} className="panel-close-button">×</button>
-        </div>
-      </div>
-      <div className="panel-content">
-        {meshes.length === 0 ? (
-          <p className="empty-message">VRM 모델이 로드되지 않았거나 메쉬가 없습니다.</p>
-        ) : (
-          meshes.map((mesh) => (
-            <div key={mesh.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #333' }}>
-              <span style={{ flexGrow: 1, marginRight: '10px' }}>{mesh.name}</span>
-              <button 
-                onClick={() => toggleVrmMeshVisibility(mesh.name)}
-                style={{
-                  padding: '5px 10px', border: 'none', borderRadius: '4px', cursor: 'pointer',
-                  backgroundColor: mesh.visible ? '#555' : '#007bff', color: 'white'
-                }}
-              >
-                {mesh.visible ? '숨기기' : '보이기'}
-              </button>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
+    <Panel title="메쉬 관리" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
+      {meshes.length === 0 ? (
+        <p className="empty-message">VRM 모델이 로드되지 않았거나 메쉬가 없습니다.</p>
+      ) : (
+        meshes.map((mesh) => (
+          <div key={mesh.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #333' }}>
+            <span style={{ flexGrow: 1, marginRight: '10px' }}>{mesh.name}</span>
+            <button 
+              onClick={() => toggleVrmMeshVisibility(mesh.name)}
+              style={{
+                padding: '5px 10px', border: 'none', borderRadius: '4px', cursor: 'pointer',
+                backgroundColor: mesh.visible ? '#555' : '#007bff', color: 'white'
+              }}
+            >
+              {mesh.visible ? '숨기기' : '보이기'}
+            </button>
+          </div>
+        ))
+      )}
+    </Panel>
   );
 };
 

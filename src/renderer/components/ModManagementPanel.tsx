@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useDraggable } from '../hooks/useDraggable';
+import React, { useState, useEffect } from 'react';
+import Panel from './Panel';
 
 interface Mod {
   name: string;
@@ -23,9 +23,6 @@ const ModManagementPanel: React.FC<ModManagementPanelProps> = ({ onClose, initia
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showRestartMessage, setShowRestartMessage] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const handleRef = useRef<HTMLDivElement>(null);
-  const { x, y } = useDraggable({ handleRef, initialPos, onDragEnd });
 
   useEffect(() => {
     const fetchMods = async () => {
@@ -79,17 +76,8 @@ const ModManagementPanel: React.FC<ModManagementPanelProps> = ({ onClose, initia
   };
 
   return (
-    <div className={`panel-container ${isCollapsed ? 'collapsed' : ''}`} style={{ top: y, left: x }}>
-      <div className="panel-header" ref={handleRef} style={{ cursor: 'move' }}>
-        <h3 className="panel-title">모드 관리</h3>
-        <div>
-          <button onClick={() => setIsCollapsed(!isCollapsed)} className="panel-close-button" style={{ right: '40px' }}>{isCollapsed ? '□' : '−'}</button>
-          <button onClick={onClose} className="panel-close-button">×</button>
-        </div>
-      </div>
-      <div className="panel-content">
-        {renderContent()}
-      </div>
+    <Panel title="모드 관리" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
+      {renderContent()}
       {showRestartMessage && (
         <p style={{
           marginTop: '15px', padding: '8px', background: 'rgba(255, 255, 0, 0.1)',
@@ -98,7 +86,7 @@ const ModManagementPanel: React.FC<ModManagementPanelProps> = ({ onClose, initia
           ℹ️ 앱을 재시작하여 변경사항을 적용하세요.
         </p>
       )}
-    </div>
+    </Panel>
   );
 };
 

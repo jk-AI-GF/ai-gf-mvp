@@ -86,59 +86,7 @@ body {
   color: #FFFFFF;
 }
 
-.control-panel {
-  display:none; 
-  position: fixed; 
-  top: 10px; 
-  left: 210px; 
-  width: 300px; 
-  max-height: 70vh; 
-  background: rgba(20,20,20,0.8); 
-  z-index: 2000; 
-  padding: 10px; 
-  color: #fff; 
-  overflow-y: auto;
-  user-select: none; /* Prevent text selection when dragging */
-}
-.control-panel input,
-.control-panel textarea,
-.control-panel button {
-  user-select: auto;
-}
 
-
-.control-panel-close-button {
-  position: absolute; 
-  top: 10px; 
-  right: 10px; 
-  background: none; 
-  border: none; 
-  color: #fff; 
-  font-size: 1.5rem; 
-  cursor: pointer;
-}
-
-.control-panel-minimize-button {
-  position: absolute;
-  top: 10px;
-  right: 40px; /* close button 옆에 위치 */
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 1.5rem;
-  line-height: 1; /* 버튼 세로 정렬을 위해 추가 */
-  cursor: pointer;
-}
-
-/* 패널이 접혔을 때의 스타일 */
-.control-panel.collapsed {
-  max-height: 45px; /* 제목 표시줄 높이에 맞춤 */
-  overflow: hidden; /* 내용이 넘치지 않도록 */
-}
-
-.control-panel.collapsed > div {
-  display: none; /* 내용 숨기기 */
-}
 
 #save-message {
   text-align: center;

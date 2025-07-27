@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
 import * as THREE from 'three';
 import eventBus from '../../core/event-bus';
 import BoneSlider from './BoneSlider';
-import { useDraggable } from '../hooks/useDraggable';
+import Panel from './Panel'; // Import the generic Panel component
 
 interface JointControlPanelProps {
   onClose: () => void;
@@ -20,9 +20,6 @@ type BoneInfo = {
 
 const JointControlPanel: React.FC<JointControlPanelProps> = ({ onClose, initialPos, onDragEnd }) => {
   const [bones, setBones] = useState<BoneInfo[]>([]);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const handleRef = useRef<HTMLDivElement>(null);
-  const { x, y } = useDraggable({ handleRef, initialPos, onDragEnd });
 
   const updateBoneStateFromVrm = useCallback(() => {
     const vrm = (window as any).currentVrm as VRM | undefined;
@@ -30,7 +27,6 @@ const JointControlPanel: React.FC<JointControlPanelProps> = ({ onClose, initialP
       setBones([]);
       return;
     }
-
     const latestBones = Object.values(VRMHumanBoneName).map(boneName => {
       const boneNode = vrm.humanoid.getNormalizedBoneNode(boneName);
       if (!boneNode) return null;
@@ -61,18 +57,10 @@ const JointControlPanel: React.FC<JointControlPanelProps> = ({ onClose, initialP
   const handleSliderChange = useCallback((boneName: VRMHumanBoneName, axis: 'x' | 'y' | 'z', value: number) => {
     const vrm = (window as any).currentVrm as VRM | undefined;
     if (!vrm) return;
-
     const boneNode = vrm.humanoid.getNormalizedBoneNode(boneName);
     if (!boneNode) return;
-
     setBones(prevBones => {
-        const newBones = prevBones.map(b => {
-            if (b.boneName === boneName) {
-                return { ...b, [axis]: value };
-            }
-            return b;
-        });
-
+        const newBones = prevBones.map(b => b.boneName === boneName ? { ...b, [axis]: value } : b);
         const targetBone = newBones.find(b => b.boneName === boneName);
         if (targetBone) {
             const euler = new THREE.Euler(
@@ -92,35 +80,25 @@ const JointControlPanel: React.FC<JointControlPanelProps> = ({ onClose, initialP
     if (!vrm) return;
     const boneNode = vrm.humanoid.getNormalizedBoneNode(boneName);
     if (!boneNode) return;
-
     boneNode.quaternion.set(0, 0, 0, 1);
     updateBoneStateFromVrm();
   }, [updateBoneStateFromVrm]);
 
   return (
-    <div className={`panel-container ${isCollapsed ? 'collapsed' : ''}`} style={{ top: y, left: x }}>
-      <div className="panel-header" ref={handleRef} style={{ cursor: 'move' }}>
-        <h3 className="panel-title">관절 조절</h3>
-        <div>
-          <button onClick={() => setIsCollapsed(!isCollapsed)} className="panel-close-button" style={{ right: '40px' }}>{isCollapsed ? '□' : '−'}</button>
-          <button onClick={onClose} className="panel-close-button">×</button>
-        </div>
-      </div>
-      <div className="panel-content">
-        {bones.length === 0 ? (
-          <p className="empty-message">VRM 모델을 로드해주세요.</p>
-        ) : (
-          bones.map((bone) => (
-            <BoneSlider
-              key={bone.boneName}
-              {...bone}
-              onSliderChange={handleSliderChange}
-              onReset={resetBone}
-            />
-          ))
-        )}
-      </div>
-    </div>
+    <Panel title="관절 조절" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
+      {bones.length === 0 ? (
+        <p className="empty-message">VRM 모델을 로드해주세요.</p>
+      ) : (
+        bones.map((bone) => (
+          <BoneSlider
+            key={bone.boneName}
+            {...bone}
+            onSliderChange={handleSliderChange}
+            onReset={resetBone}
+          />
+        ))
+      )}
+    </Panel>
   );
 };
 
