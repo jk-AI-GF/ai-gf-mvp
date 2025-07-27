@@ -388,6 +388,29 @@ export class VRMManager {
             this._fixedLookAtTarget = null;
         }
     }
+
+    public async saveCurrentPose() {
+        if (!this.currentVrm) {
+            alert('VRM 모델이 로드되지 않았습니다.');
+            return;
+        }
+        const pose = this.currentVrm.humanoid.getNormalizedPose();
+        const jsonString = JSON.stringify(pose, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            if (event.target?.result instanceof ArrayBuffer) {
+                const result = await window.electronAPI.saveVrmaPose(event.target.result);
+                if (result.success) console.log(`Pose saved: ${result.message}`);
+                else if (result.message !== 'Save operation canceled.') console.error(`Failed to save pose: ${result.message}`);
+            } else {
+                console.error('Failed to read blob as ArrayBuffer.');
+                alert('포즈 파일 변환에 실패했습니다.');
+            }
+        };
+        reader.onerror = (error) => console.error('FileReader error:', error);
+        reader.readAsArrayBuffer(blob);
+    }
 }
 
 declare global {

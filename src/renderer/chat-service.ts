@@ -1,35 +1,21 @@
 
+import eventBus from '../core/event-bus';
+
 type ChatMessage = {
   role: string;
   parts: { text: string }[];
 };
 
 export class ChatService {
-  private chatForm: HTMLFormElement;
-  private chatInput: HTMLInputElement;
   private chatHistory: ChatMessage[] = [];
 
   constructor() {
-    this.chatForm = document.getElementById('chat-form') as HTMLFormElement;
-    this.chatInput = document.getElementById('chat-input') as HTMLInputElement;
-
     // Expose the method to the window object so other parts of the application can use it.
     // A better approach would be to use an event bus or dependency injection.
     (window as any).sendChatMessage = this.sendChatMessage.bind(this);
-    
-    this.setupFormListener();
   }
 
-  private setupFormListener(): void {
-    if (!this.chatForm) return;
-
-    this.chatForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      if (this.chatInput) {
-        this.sendChatMessage(this.chatInput.value);
-      }
-    });
-  }
+  
 
   public async sendChatMessage(message: string): Promise<void> {
     const userMsg = message.trim();
@@ -37,7 +23,6 @@ export class ChatService {
 
     (window as any).appendMessage('user', userMsg);
     this.chatHistory.push({ role: 'user', parts: [{ text: userMsg }] });
-    if (this.chatInput) this.chatInput.value = '';
 
     const apiKey = localStorage.getItem('llmApiKey');
     if (!apiKey) {
@@ -83,12 +68,14 @@ export class ChatService {
         text = text.replace(/<표정:\s*(.*?)\s*>/, '').trim();
       }
 
-      // Apply expression and show message
       if ((window as any).animateExpression) {
         (window as any).animateExpression(expression, 1.0, 0.5);
       }
       
+      // Send message to the chat box UI
       (window as any).appendMessage('assistant', text);
+      // Trigger the floating message UI
+      eventBus.emit('ui:showFloatingMessage', { text });
 
       if ((window as any).playTTS) {
         (window as any).playTTS(text);

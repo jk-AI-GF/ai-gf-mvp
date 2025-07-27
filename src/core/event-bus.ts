@@ -7,6 +7,15 @@ export type AppEvents = {
   'vrm:unloaded': void;
   'vrm:poseApplied': void; // 포즈가 적용되었을 때 발생하는 이벤트
 
+  /** 카메라 */
+  'camera:toggleMode': void;
+  'camera:modeChanged': 'free' | 'follow';
+  'camera:requestState': void;
+
+  /** 채팅 */
+  'chat:newMessage': { role: string, text: string };
+  'ui:showFloatingMessage': { text: string };
+
   /** 액션/애니메이션 */
   'action:play-expression': { name: string; weight: number; fadeIn?: number; duration?: number };
   'action:play-clip': { clip: string };

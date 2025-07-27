@@ -26,11 +26,44 @@ import { SystemControls } from '../plugin-api/system-controls';
 import eventBus from '../core/event-bus';
 import { TriggerEngine } from '../core/trigger-engine';
 import { characterState } from '../core/character-state';
-import { setupPosePanelButton, setupAnimationPanelButton, setupSavePoseButton, setupLoadPoseFileButton, setupLoadVrmButton, appendMessage } from './ui-manager';
 import { VRMManager } from './vrm-manager';
 import { setClearColor, toggleCameraMode, onWindowResize, DEFAULT_FREE_CAMERA_POSITION, DEFAULT_FREE_CAMERA_ROTATION, getIntersectedObject } from './scene-utils';
 import { initAudioContext, playTTS, toggleTts, setMasterVolume } from './audio-service';
 
+eventBus.on('ui:showFloatingMessage', ({ text }) => {
+  const floatingContainer = document.getElementById('floating-chat-messages-container');
+  if (floatingContainer) {
+    // Clear any existing floating messages
+    if (window.floatingMessages && window.floatingMessages.length > 0) {
+      window.floatingMessages.forEach(msg => msg.element.remove());
+      window.floatingMessages = []; // Clear the array
+    }
+
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'floating-chat-message assistant entering';
+    msgDiv.textContent = text;
+    Object.assign(msgDiv.style, {
+      position: 'absolute',
+      background: 'rgba(0, 0, 0, 0.7)',
+      color: 'white',
+      padding: '8px 12px',
+      borderRadius: '15px',
+      maxWidth: '250px',
+      textAlign: 'center',
+      pointerEvents: 'none',
+      whiteSpace: 'pre-wrap',
+      wordBreak: 'break-word',
+    });
+    floatingContainer.appendChild(msgDiv);
+    
+    window.floatingMessages.push({ element: msgDiv, timestamp: performance.now() });
+
+    setTimeout(() => {
+      msgDiv.classList.remove('entering');
+      msgDiv.style.opacity = '1';
+    }, 10);
+  }
+});
 
 let controls: OrbitControls | null = null;
 let isFreeCameraMode = true;
@@ -50,7 +83,7 @@ const actions: Actions = {
     }
   },
   showMessage: (message: string, duration?: number) => {
-    appendMessage('assistant', message);
+    eventBus.emit('chat:newMessage', { role: 'assistant', text: message });
   },
   setExpression: (expressionName: string, weight: number, duration?: number) => {
     vrmManager.animateExpression(expressionName, weight, duration);
@@ -321,12 +354,7 @@ function animate() {
 }
 animate();
 
-const cameraModeButton = document.getElementById('toggle-camera-mode-button');
-if (cameraModeButton) {
-  cameraModeButton.addEventListener('click', () => {
-    toggleCameraMode(camera, controls);
-  });
-}
+
 
 // Setup UI buttons and link them to the new VRMManager methods
 async function handleFileSelectAndProcess(filePath: string, expectedType: 'pose' | 'animation') {
@@ -341,12 +369,6 @@ async function handleFileSelectAndProcess(filePath: string, expectedType: 'pose'
     }
 }
 
-setupPosePanelButton(window.electronAPI, (path) => handleFileSelectAndProcess(`Pose/${path}`, 'pose'));
-setupAnimationPanelButton(window.electronAPI, (path) => handleFileSelectAndProcess(`Animation/${path}`, 'animation'));
-setupSavePoseButton(() => vrmManager.currentVrm, window.electronAPI);
-setupLoadPoseFileButton(window.electronAPI, (path) => handleFileSelectAndProcess(path, 'pose'));
-setupLoadVrmButton(window.electronAPI, (path) => vrmManager.loadVRM(path));
-
 console.log('👋 VRM Overlay loaded successfully.');
 
 
@@ -360,7 +382,6 @@ window.electronAPI.on('tts-speak', (text: string) => {
 
 // Expose functions to window for UI interaction
 window.setMasterVolume = setMasterVolume;
-window.appendMessage = appendMessage;
 window.toggleTts = toggleTts;
 
 // --- React Integration ---

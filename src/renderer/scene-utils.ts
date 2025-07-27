@@ -14,7 +14,7 @@ export function setClearColor(renderer: THREE.WebGLRenderer, color: number) {
   renderer.setClearColor(color, 0.1);
 }
 
-export function toggleCameraMode(camera: THREE.PerspectiveCamera, controls: OrbitControls) {
+export function toggleCameraMode(camera: THREE.PerspectiveCamera, controls: OrbitControls): 'free' | 'follow' {
   isFreeCameraMode = !isFreeCameraMode;
   if (controls) controls.enabled = isFreeCameraMode;
   if (!isFreeCameraMode) {
@@ -34,6 +34,7 @@ export function toggleCameraMode(camera: THREE.PerspectiveCamera, controls: Orbi
 
   camera.updateMatrix();
   console.log(`Camera mode: ${isFreeCameraMode ? 'Free' : 'Fixed'}`);
+  return isFreeCameraMode ? 'free' : 'follow';
 }
 
 export function onWindowResize(camera: THREE.PerspectiveCamera, renderer: THREE.WebGLRenderer) {
