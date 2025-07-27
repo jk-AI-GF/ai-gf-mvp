@@ -1,5 +1,7 @@
 
 import eventBus from '../core/event-bus';
+import { VRMManager } from './vrm-manager';
+import { PluginManager } from '../plugins/plugin-manager';
 
 type ChatMessage = {
   role: string;
@@ -8,34 +10,34 @@ type ChatMessage = {
 
 export class ChatService {
   private chatHistory: ChatMessage[] = [];
+  private vrmManager: VRMManager;
+  private pluginManager: PluginManager;
 
-  constructor() {
-    // Expose the method to the window object so other parts of the application can use it.
-    // A better approach would be to use an event bus or dependency injection.
-    (window as any).sendChatMessage = this.sendChatMessage.bind(this);
+  constructor(vrmManager: VRMManager, pluginManager: PluginManager) {
+    this.vrmManager = vrmManager;
+    this.pluginManager = pluginManager;
   }
 
-  
-
-  public async sendChatMessage(message: string): Promise<void> {
+  public async sendChatMessage(message: string, persona: string): Promise<void> {
     const userMsg = message.trim();
     if (!userMsg) return;
 
-    (window as any).appendMessage('user', userMsg);
+    eventBus.emit('chat:newMessage', { role: 'user', text: userMsg });
     this.chatHistory.push({ role: 'user', parts: [{ text: userMsg }] });
 
     const apiKey = localStorage.getItem('llmApiKey');
     if (!apiKey) {
-      (window as any).appendMessage('assistant', 'API 키가 설정되어 있지 않습니다. 설정에서 입력해 주세요.');
+      eventBus.emit('chat:newMessage', { role: 'assistant', text: 'API 키가 설정되어 있지 않습니다. 설정에서 입력해 주세요.' });
       return;
     }
 
     try {
-      const personaText = (window as any).personaText || '';
-      const vrmExpressionList = (window as any).vrmExpressionList || ['neutral', 'happy', 'sad'];
+      const vrmExpressionList = this.vrmManager.currentVrm 
+        ? Object.keys(this.vrmManager.currentVrm.expressionManager.expressionMap)
+        : ['neutral', 'happy', 'sad'];
       
       const systemInstruction = {
-        parts: [{ text: `${personaText}\n모든 응답에 <표정: [표정_이름]> 형식의 표정 태그를 포함해 주세요. 표정_이름은 다음 목록 중 하나여야 합니다: ${vrmExpressionList.join(', ')}. 예시: <표정: happy> 안녕하세요!` }]
+        parts: [{ text: `${persona}\n모든 응답에 <표정: [표정_이름]> 형식의 표정 태그를 포함해 주세요. 표정_이름은 다음 목록 중 하나여야 합니다: ${vrmExpressionList.join(', ')}. 예시: <표정: happy> 안녕하세요!` }]
       };
 
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
@@ -55,7 +57,6 @@ export class ChatService {
       const data = await res.json();
       let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '응답이 없습니다.';
       
-      // Extract expression
       let expression = 'happy'; // Default expression
       const expressionMatch = text.match(/<표정:\s*(.*?)\s*>/);
       if (expressionMatch && expressionMatch[1]) {
@@ -68,24 +69,18 @@ export class ChatService {
         text = text.replace(/<표정:\s*(.*?)\s*>/, '').trim();
       }
 
-      if ((window as any).animateExpression) {
-        (window as any).animateExpression(expression, 1.0, 0.5);
-      }
+      // Use actions from plugin context
+      this.pluginManager.context.actions.setExpression(expression, 1.0, 0.5);
+      this.pluginManager.context.actions.speak(text);
       
-      // Send message to the chat box UI
-      (window as any).appendMessage('assistant', text);
-      // Trigger the floating message UI
+      eventBus.emit('chat:newMessage', { role: 'assistant', text });
       eventBus.emit('ui:showFloatingMessage', { text });
-
-      if ((window as any).playTTS) {
-        (window as any).playTTS(text);
-      }
 
       this.chatHistory.push({ role: 'model', parts: [{ text }] });
 
     } catch (err: any) {
       console.error('Gemini API call failed:', err);
-      (window as any).appendMessage('assistant', 'Gemini API 호출 실패: ' + err.message);
+      eventBus.emit('chat:newMessage', { role: 'assistant', text: 'Gemini API 호출 실패: ' + err.message });
     }
   }
 }

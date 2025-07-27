@@ -2,15 +2,16 @@ import React, { useState, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import { VRM } from '@pixiv/three-vrm';
 import Panel from './Panel';
+import { useAppContext } from '../contexts/AppContext';
 
 interface MeshControlPanelProps {
   onClose: () => void;
-  vrmManager: any;
   initialPos: { x: number, y: number };
   onDragEnd: (pos: { x: number, y: number }) => void;
 }
 
-const MeshControlPanel: React.FC<MeshControlPanelProps> = ({ onClose, vrmManager, initialPos, onDragEnd }) => {
+const MeshControlPanel: React.FC<MeshControlPanelProps> = ({ onClose, initialPos, onDragEnd }) => {
+  const { vrmManager } = useAppContext();
   const [meshes, setMeshes] = useState<{ name: string; visible: boolean }[]>([]);
   const [currentVrm, setCurrentVrm] = useState<VRM | null>(null);
 
@@ -35,8 +36,8 @@ const MeshControlPanel: React.FC<MeshControlPanelProps> = ({ onClose, vrmManager
       }
     });
     if (found) {
-      setMeshes(prevMeshes => 
-        prevMeshes.map(mesh => 
+      setMeshes(prevMeshes =>
+        prevMeshes.map(mesh =>
           mesh.name === meshName ? { ...mesh, visible: !mesh.visible } : mesh
         )
       );
@@ -44,26 +45,29 @@ const MeshControlPanel: React.FC<MeshControlPanelProps> = ({ onClose, vrmManager
   };
 
   useEffect(() => {
+    if (!vrmManager) return;
+
     const vrm = vrmManager.currentVrm;
     setCurrentVrm(vrm);
-    if (vrm) setMeshes(listVrmMeshes(vrm));
-    else setMeshes([]);
+    setMeshes(listVrmMeshes(vrm));
 
-    const handleVrmLoad = (event: CustomEvent) => {
-        const newVrm = event.detail.vrm;
-        setCurrentVrm(newVrm);
-        setMeshes(listVrmMeshes(newVrm));
+    const handleVrmLoad = (e: any) => {
+      const newVrm = e.detail.vrm;
+      setCurrentVrm(newVrm);
+      setMeshes(listVrmMeshes(newVrm));
     };
+
     const handleVrmUnload = () => {
-        setCurrentVrm(null);
-        setMeshes([]);
+      setCurrentVrm(null);
+      setMeshes([]);
     };
 
-    const unsubLoad = window.electronAPI.on('vrm:loaded', handleVrmLoad);
-    const unsubUnload = window.electronAPI.on('vrm:unloaded', handleVrmUnload);
+    vrmManager.eventBus.on('vrm:loaded', handleVrmLoad);
+    vrmManager.eventBus.on('vrm:unloaded', handleVrmUnload);
+
     return () => {
-      if (unsubLoad) unsubLoad();
-      if (unsubUnload) unsubUnload();
+      vrmManager.eventBus.off('vrm:loaded', handleVrmLoad);
+      vrmManager.eventBus.off('vrm:unloaded', handleVrmUnload);
     };
   }, [vrmManager, listVrmMeshes]);
 
@@ -75,7 +79,7 @@ const MeshControlPanel: React.FC<MeshControlPanelProps> = ({ onClose, vrmManager
         meshes.map((mesh) => (
           <div key={mesh.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #333' }}>
             <span style={{ flexGrow: 1, marginRight: '10px' }}>{mesh.name}</span>
-            <button 
+            <button
               onClick={() => toggleVrmMeshVisibility(mesh.name)}
               style={{
                 padding: '5px 10px', border: 'none', borderRadius: '4px', cursor: 'pointer',

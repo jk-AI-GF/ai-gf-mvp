@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Panel from './Panel';
 import styles from './AnimationPanel.module.css';
+import { useAppContext } from '../contexts/AppContext';
 
 interface AnimationPanelProps {
   onClose: () => void;
@@ -10,12 +11,13 @@ interface AnimationPanelProps {
 }
 
 const AnimationPanel: React.FC<AnimationPanelProps> = ({ onClose, initialPos, onDragEnd }) => {
+  const { vrmManager } = useAppContext();
   const [animationFiles, setAnimationFiles] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const fetchAnimations = useCallback(async () => {
     try {
-      const result = await (window as any).electronAPI.listDirectory('Animation');
+      const result = await window.electronAPI.listDirectory('Animation');
       if (result.error) {
         throw new Error(result.error);
       }
@@ -35,13 +37,13 @@ const AnimationPanel: React.FC<AnimationPanelProps> = ({ onClose, initialPos, on
   }, [fetchAnimations]);
 
   const handleAnimationClick = async (fileName: string) => {
-    if (window.vrmManager) {
+    if (vrmManager) {
       // Reset to T-Pose before playing a new animation to clear any existing pose.
-      window.vrmManager.resetToTPose();
+      vrmManager.resetToTPose();
       
-      const result = await window.vrmManager.loadAndParseFile(`Animation/${fileName}`);
+      const result = await vrmManager.loadAndParseFile(`Animation/${fileName}`);
       if (result?.type === 'animation') {
-        window.vrmManager.playAnimation(result.data, false);
+        vrmManager.playAnimation(result.data, false);
       } else {
         setError(`'${fileName}'은 애니메이션 파일이 아닙니다.`);
       }

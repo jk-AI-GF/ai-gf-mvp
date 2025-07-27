@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Panel from './Panel';
 import styles from './PosePanel.module.css';
+import { useAppContext } from '../contexts/AppContext';
 
 interface PosePanelProps {
   onClose: () => void;
@@ -10,12 +11,13 @@ interface PosePanelProps {
 }
 
 const PosePanel: React.FC<PosePanelProps> = ({ onClose, initialPos, onDragEnd }) => {
+  const { vrmManager } = useAppContext();
   const [poseFiles, setPoseFiles] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const fetchPoses = useCallback(async () => {
     try {
-      const result = await (window as any).electronAPI.listDirectory('Pose');
+      const result = await window.electronAPI.listDirectory('Pose');
       if (result.error) {
         throw new Error(result.error);
       }
@@ -35,10 +37,10 @@ const PosePanel: React.FC<PosePanelProps> = ({ onClose, initialPos, onDragEnd })
   }, [fetchPoses]);
 
   const handlePoseClick = async (fileName: string) => {
-    if (window.vrmManager) {
-      const result = await window.vrmManager.loadAndParseFile(`Pose/${fileName}`);
+    if (vrmManager) {
+      const result = await vrmManager.loadAndParseFile(`Pose/${fileName}`);
       if (result?.type === 'pose') {
-        window.vrmManager.applyPose(result.data);
+        vrmManager.applyPose(result.data);
       } else {
         setError(`'${fileName}'은 포즈 파일이 아닙니다.`);
       }

@@ -55,7 +55,7 @@ export class VRMManager {
     private _fixedLookAtTarget: THREE.Object3D | THREE.Vector3 | null = null;
     private _camera: THREE.PerspectiveCamera;
     private _plane: THREE.Mesh;
-    private eventBus: TypedEventBus<AppEvents>;
+    public eventBus: TypedEventBus<AppEvents>;
 
     constructor(scene: THREE.Scene, camera: THREE.PerspectiveCamera, plane: THREE.Mesh, eventBusInstance: TypedEventBus<AppEvents>) {
         this._camera = camera;

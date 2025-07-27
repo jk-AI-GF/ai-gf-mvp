@@ -42,7 +42,7 @@ export interface IPlugin {
 export class PluginManager {
   public plugins: Map<string, IPlugin> = new Map();
   private startedPlugins: Set<string> = new Set();
-  private context: PluginContext;
+  public context: PluginContext;
 
   constructor(context: PluginContext) {
     this.context = context;

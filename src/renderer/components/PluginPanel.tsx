@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Panel from './Panel';
-
-interface Plugin {
-  name: string;
-  enabled: boolean;
-}
+import { useAppContext } from '../contexts/AppContext';
+import { IPlugin } from '../../plugins/plugin-manager';
 
 interface PluginPanelProps {
   onClose: () => void;
@@ -13,25 +10,26 @@ interface PluginPanelProps {
 }
 
 const PluginPanel: React.FC<PluginPanelProps> = ({ onClose, initialPos, onDragEnd }) => {
-  const [plugins, setPlugins] = useState<Plugin[]>([]);
+  const { pluginManager } = useAppContext();
+  const [plugins, setPlugins] = useState<IPlugin[]>([]);
 
   useEffect(() => {
-    const pluginManager = (window as any).pluginManager;
     if (pluginManager) {
-      const registeredPlugins = Array.from(pluginManager.plugins.values()) as Plugin[];
+      const registeredPlugins = Array.from(pluginManager.plugins.values());
       setPlugins(registeredPlugins);
     }
-  }, []);
+  }, [pluginManager]);
 
   const handleToggle = (pluginName: string, enabled: boolean) => {
-    const pluginManager = (window as any).pluginManager;
     if (pluginManager) {
       if (enabled) {
         pluginManager.enable(pluginName);
       } else {
         pluginManager.disable(pluginName);
       }
-      setPlugins(plugins.map(p => p.name === pluginName ? { ...p, enabled } : p));
+      // Re-fetch the state from the manager to ensure consistency
+      const updatedPlugins = Array.from(pluginManager.plugins.values());
+      setPlugins(updatedPlugins);
     }
   };
 
@@ -53,7 +51,7 @@ const PluginPanel: React.FC<PluginPanelProps> = ({ onClose, initialPos, onDragEn
           </div>
         ))
       ) : (
-        <p className="empty-message">플러그인 관리자를 찾을 수 없습니다.</p>
+        <p className="empty-message">사용 가능한 플러그인이 없습니다.</p>
       )}
     </Panel>
   );
