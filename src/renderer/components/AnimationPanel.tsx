@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Panel from './Panel';
+import styles from './AnimationPanel.module.css';
 
 interface AnimationPanelProps {
   onClose: () => void;
@@ -52,13 +53,13 @@ const AnimationPanel: React.FC<AnimationPanelProps> = ({ onClose, initialPos, on
 
   return (
     <Panel title="애니메이션 선택" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
-      <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-        {error && <p className="empty-message">{error}</p>}
+      <div className={styles.content}>
+        {error && <p className={styles.emptyMessage}>{error}</p>}
         {animationFiles.map((file) => (
           <button
             key={file}
             onClick={() => handleAnimationClick(file)}
-            className="list-button"
+            className={styles.listButton}
           >
             {file}
           </button>

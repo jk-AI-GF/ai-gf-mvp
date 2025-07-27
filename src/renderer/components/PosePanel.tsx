@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Panel from './Panel';
+import styles from './PosePanel.module.css';
 
 interface PosePanelProps {
   onClose: () => void;
@@ -49,13 +50,13 @@ const PosePanel: React.FC<PosePanelProps> = ({ onClose, initialPos, onDragEnd })
 
   return (
     <Panel title="포즈 선택" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
-      <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-        {error && <p className="empty-message">{error}</p>}
+      <div className={styles.content}>
+        {error && <p className={styles.emptyMessage}>{error}</p>}
         {poseFiles.map((file) => (
           <button
             key={file}
             onClick={() => handlePoseClick(file)}
-            className="list-button"
+            className={styles.listButton}
           >
             {file}
           </button>

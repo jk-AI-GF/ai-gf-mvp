@@ -35,59 +35,6 @@ body {
   background: #888;
 }
 
-#sidebar-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 100vh;
-  width: 20px; /* 마우스 호버를 감지할 영역의 너비 */
-  z-index: 3000;
-}
-
-#sidebar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 200px;
-  height: 100vh;
-  background: rgba(40, 44, 52, 0.95); /* 진한 차콜 색상 */
-  padding: 4px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  transform: translateX(-100%); /* 기본적으로 숨김 */
-  visibility: hidden; /* 처음엔 완전히 숨김 */
-  box-shadow: 2px 0 5px rgba(0,0,0,0.2); /* 그림자 추가 */
-  /* 사라질 때 visibility를 지연시킴 */
-  transition: transform 0.3s ease-in-out, visibility 0s linear 0.3s;
-}
-
-#sidebar-container:hover #sidebar {
-  transform: translateX(0); /* 호버 시 나타남 */
-  visibility: visible; /* 호버 시 보이게 함 */
-  /* 나타날 때는 모든 지연을 제거 */
-  transition-delay: 0s;
-}
-
-.menu-button {
-  background: none;       /* 배경색 제거 */
-  border: none;           /* 테두리 제거 */
-  padding: 8px 10px;
-  text-align: left;
-  font-size: 14px;
-  cursor: pointer;
-  border-radius: 4px;
-  color: #EAEAEA; /* 밝은 흰색 글자 */
-}
-
-.menu-button:hover {
-  background-color: rgba(255, 255, 255, 0.1); /* 마우스 올렸을 때 약간 밝아짐 */
-  color: #FFFFFF;
-}
-
-
-
 #save-message {
   text-align: center;
 }
@@ -128,63 +75,5 @@ body {
 /* ...but enable them for all descendants. */
 #root * {
   pointer-events: auto;
-}
-
-/* --- New Unified Panel Styles --- */
-.panel-container {
-  position: absolute;
-  width: 350px;
-  max-height: calc(100vh - 90px);
-  background: rgba(20, 20, 20, 0.9);
-  border-radius: 8px;
-  color: white;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  padding: 15px;
-}
-
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.panel-title {
-  margin: 0;
-  font-size: 1.2rem;
-}
-
-.panel-close-button {
-  background: none;
-  border: none;
-  color: #aaa;
-  font-size: 1.5rem;
-  cursor: pointer;
-  line-height: 1;
-}
-
-.panel-content {
-  overflow-y: auto;
-  flex-grow: 1;
-  padding-right: 10px; /* for scrollbar */
-}
-
-.panel-content .empty-message {
-  color: #888;
-  text-align: center;
-  margin-top: 20px;
-}
-
-.panel-container.collapsed > .panel-content,
-.panel-container.collapsed > p /* For ModManagementPanel's restart message */ {
-  display: none;
-}
-
-.panel-container.collapsed {
-  max-height: 45px; /* Header height */
-  overflow: hidden;
 }
 

@@ -1,7 +1,9 @@
 import type { Configuration } from 'webpack';
-
-import { rules } from './webpack.rules';
+import { rules as baseRules } from './webpack.rules';
 import { plugins } from './webpack.plugins';
+
+// Clone the base rules and add the specific CSS rules for the renderer process
+const rules = [...baseRules];
 
 // Rule for global CSS files (e.g., index.css)
 rules.push({
@@ -22,7 +24,6 @@ rules.push({
       loader: 'css-loader',
       options: {
         modules: {
-          // Use a more descriptive name in development for easier debugging
           localIdentName: '[name]__[local]__[hash:base64:5]',
         },
       },

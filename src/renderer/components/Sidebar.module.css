@@ -1,0 +1,51 @@
+.container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 20px; /* Width of the area that detects the mouse hover */
+    z-index: 3000;
+  }
+  
+  .sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200px;
+    height: 100vh;
+    background: rgba(40, 44, 52, 0.95);
+    padding: 4px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transform: translateX(-100%); /* Hidden by default */
+    visibility: hidden; /* Completely hidden at first */
+    box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+    transition: transform 0.3s ease-in-out, visibility 0s linear 0.3s;
+    backdrop-filter: blur(5px);
+  }
+  
+  .container:hover .sidebar {
+    transform: translateX(0); /* Show on hover */
+    visibility: visible; /* Make visible on hover */
+    transition-delay: 0s; /* Remove all delays when appearing */
+  }
+  
+  .menuButton {
+    background: none;
+    border: none;
+    padding: 8px 10px;
+    text-align: left;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
+    color: #EAEAEA;
+    transition: background-color 0.2s, color 0.2s;
+  }
+  
+  .menuButton:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #FFFFFF;
+  }
+  

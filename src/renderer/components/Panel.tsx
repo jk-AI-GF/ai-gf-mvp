@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useDraggable } from '../hooks/useDraggable';
+import styles from './Panel.module.css';
 
 interface PanelProps {
   title: string;
@@ -14,18 +15,19 @@ const Panel: React.FC<PanelProps> = ({ title, children, onClose, initialPos, onD
   const handleRef = useRef<HTMLDivElement>(null);
   const { x, y } = useDraggable({ handleRef, initialPos, onDragEnd });
 
+  const containerClasses = `${styles.panelContainer} ${isCollapsed ? styles.collapsed : ''}`;
+
   return (
-    <div className={`panel-container ${isCollapsed ? 'collapsed' : ''}`} style={{ top: y, left: x }}>
-      <div className="panel-header" ref={handleRef} style={{ cursor: 'move' }}>
-        <h3 className="panel-title">{title}</h3>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+    <div className={containerClasses} style={{ top: y, left: x }}>
+      <div className={styles.panelHeader} ref={handleRef}>
+        <h3 className={styles.panelTitle}>{title}</h3>
+        <div className={styles.headerButtons}>
           <button 
             onClick={(e) => {
               e.stopPropagation(); // Prevent drag from starting on click
               setIsCollapsed(!isCollapsed);
             }} 
-            className="panel-close-button" 
-            style={{ position: 'relative', right: '10px' }}
+            className={styles.controlButton}
           >
             {isCollapsed ? '□' : '−'}
           </button>
@@ -34,13 +36,13 @@ const Panel: React.FC<PanelProps> = ({ title, children, onClose, initialPos, onD
               e.stopPropagation();
               onClose();
             }} 
-            className="panel-close-button"
+            className={styles.controlButton}
           >
             ×
           </button>
         </div>
       </div>
-      <div className="panel-content">
+      <div className={styles.panelContent}>
         {children}
       </div>
     </div>
