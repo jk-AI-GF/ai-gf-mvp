@@ -268,7 +268,7 @@ export class VRMManager {
         if (!this.currentVrm || !this.mixer) return;
         this.mixer.stopAllAction();
         this.currentAction = null;
-        this.currentVrm.humanoid.resetPose();
+        this.currentVrm.humanoid.resetNormalizedPose();
         this.eventBus.emit('vrm:poseApplied'); // Notify UI that the pose has changed
     }
 

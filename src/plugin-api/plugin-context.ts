@@ -1,4 +1,5 @@
 
+import { VRMManager } from '../renderer/vrm-manager';
 import { EventBus } from './event-bus';
 import { Trigger, Condition, Action } from './triggers';
 import { Actions } from './actions';
@@ -40,6 +41,11 @@ export interface PluginContext {
    * 캐릭터의 현재 상태(예: 호기심 수준)에 접근합니다.
    */
   characterState: ICharacterState;
+
+  /**
+   * VRM 관리자에 직접 접근합니다. (렌더러 프로세스에서만 사용 가능, 주의해서 사용)
+   */
+  vrmManager?: VRMManager;
 
   // 향후 추가될 API 예시:
   // getCurrentPersona(): Persona;

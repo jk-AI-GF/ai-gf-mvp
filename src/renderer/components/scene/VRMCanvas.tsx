@@ -24,21 +24,39 @@ interface VRMCanvasProps {
   onLoad: (managers: { vrmManager: VRMManager; pluginManager: PluginManager; chatService: ChatService }) => void;
 }
 
+import { onWindowResize } from '../../scene-utils';
+
+// ... (imports)
+
 const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
   const handleSceneLoad = useCallback((instances: {
     scene: THREE.Scene;
-    camera: THREE.PerspectiveCamera;
     renderer: THREE.WebGLRenderer;
-    controls: OrbitControls;
     plane: THREE.Mesh;
   }) => {
-    const { scene, camera, renderer, controls, plane } = instances;
+    const { scene, renderer, plane } = instances;
 
-    // VRM Manager
-    const vrmManager = new VRMManager(scene, camera, plane, eventBus);
+    // --- Camera and Controls Setup ---
+    let cameraMode: 'orbit' | 'fixed' = 'orbit';
+    const perspectiveCamera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 1000);
+    perspectiveCamera.position.set(0, 1.2, 3);
+    
+    const orthographicCamera = new THREE.OrthographicCamera(-5, 5, 5, -5, 0.1, 1000);
+    orthographicCamera.position.set(0, 1.2, 3); // Closer position
+    orthographicCamera.zoom = 1.2; // Increased zoom
+    orthographicCamera.updateProjectionMatrix();
+
+    let activeCamera: THREE.Camera = perspectiveCamera;
+
+    const controls = new OrbitControls(perspectiveCamera, renderer.domElement);
+    controls.target.set(0, 1, 0);
+    controls.update();
+
+    // --- VRM Manager ---
+    const vrmManager = new VRMManager(scene, perspectiveCamera, plane, eventBus);
     vrmManager.loadVRM('VRM/Liqu.vrm');
 
-    // Plugin System
+    // --- Plugin System ---
     const triggerEngine = new TriggerEngine();
     const actions: Actions = {
         playAnimation: async (animationName, loop, crossFadeDuration) => {
@@ -82,6 +100,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
         actions,
         system: systemControls,
         characterState,
+        vrmManager,
     };
 
     const pluginManager = new PluginManager(pluginContext);
@@ -92,13 +111,13 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     pluginManager.register(new ActionTestPlugin());
     pluginManager.register(new GrabVrmPlugin());
 
-    // Initialize ChatService after other managers are ready
+    // --- Chat Service ---
     const chatService = new ChatService(vrmManager, pluginManager);
 
     // Pass managers up to the provider
     onLoad({ vrmManager, pluginManager, chatService });
 
-    // Animation loop
+    // --- Animation Loop ---
     const clock = new THREE.Clock();
     const tempVector = new THREE.Vector3();
     const animate = () => {
@@ -108,11 +127,10 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
         if (vrmManager.currentVrm) {
             pluginManager.update(delta, vrmManager.currentVrm);
             
-            // Calculate and emit head position for UI elements
             const head = vrmManager.currentVrm.humanoid.getNormalizedBoneNode('head');
             if (head) {
                 const headPosition = head.getWorldPosition(tempVector);
-                headPosition.project(camera);
+                headPosition.project(activeCamera);
                 const x = (headPosition.x * 0.5 + 0.5) * renderer.domElement.clientWidth;
                 const y = (-headPosition.y * 0.5 + 0.5) * renderer.domElement.clientHeight;
                 eventBus.emit('ui:updateFloatingMessagePosition', { left: x, top: y, visible: true });
@@ -124,19 +142,73 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
         }
         
         controls.update();
-        renderer.render(scene, camera);
+        renderer.render(scene, activeCamera);
     };
     animate();
 
-    // Event listeners & IPC
+    // --- Event Listeners & IPC ---
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    const handleMouseClick = (event: MouseEvent) => {
+      if ((event.target as HTMLElement).closest('.panel, .sidebar, .top-menu, .chat-container')) return;
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, activeCamera);
+      const intersects = raycaster.intersectObjects(vrmManager.hitboxes);
+      if (intersects.length > 0) {
+        const partName = intersects[0].object.name.replace('hitbox_', '');
+        if (event.button === 0) eventBus.emit('character_part_clicked', { partName });
+        else if (event.button === 2) {
+          event.preventDefault();
+          eventBus.emit('character_part_right_clicked', { partName });
+        }
+      }
+    };
+
+    const handleResize = () => {
+        if (activeCamera instanceof THREE.PerspectiveCamera) {
+            activeCamera.aspect = window.innerWidth / window.innerHeight;
+            activeCamera.updateProjectionMatrix();
+        } else if (activeCamera instanceof THREE.OrthographicCamera) {
+            // You might need to adjust the frustum here for orthographic cameras
+            // For now, just updating the projection matrix is enough
+            activeCamera.updateProjectionMatrix();
+        }
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+
+    const toggleCameraMode = () => {
+        if (cameraMode === 'orbit') {
+            cameraMode = 'fixed';
+            activeCamera = orthographicCamera;
+            controls.enabled = false;
+            eventBus.emit('camera:modeChanged', 'follow'); // Emitting 'follow' for UI
+        } else {
+            cameraMode = 'orbit';
+            activeCamera = perspectiveCamera;
+            // Ensure aspect ratio is correct when switching back
+            perspectiveCamera.aspect = window.innerWidth / window.innerHeight;
+            perspectiveCamera.updateProjectionMatrix();
+            controls.enabled = true;
+            eventBus.emit('camera:modeChanged', 'free'); // Emitting 'free' for UI
+        }
+    };
+
+    const requestCameraState = () => {
+        eventBus.emit('camera:modeChanged', cameraMode === 'orbit' ? 'free' : 'follow');
+    };
+
+    window.addEventListener('resize', handleResize);
+    document.addEventListener('mousedown', handleMouseClick);
     document.addEventListener('click', initAudioContext, { once: true });
     const unsubTts = window.electronAPI.on('tts-speak', (text: string) => playTTS(text));
+    eventBus.on('camera:toggleMode', toggleCameraMode);
+    eventBus.on('camera:requestState', requestCameraState);
     
-    // VRM load/unload events for UI updates
     const handleVrmLoad = (payload: { vrm: VRM }) => {
-        const vrm = payload.vrm;
-        window.currentVrm = vrm; // Keep global for legacy UI parts if needed
-        window.vrmExpressionList = Object.keys(vrm.expressionManager.expressionMap);
+        window.currentVrm = payload.vrm;
+        window.vrmExpressionList = Object.keys(payload.vrm.expressionManager.expressionMap);
     };
     const handleVrmUnload = () => {
         window.currentVrm = null;
@@ -145,8 +217,13 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     vrmManager.eventBus.on('vrm:loaded', handleVrmLoad);
     vrmManager.eventBus.on('vrm:unloaded', handleVrmUnload);
 
+    // --- Cleanup ---
     return () => {
+        window.removeEventListener('resize', handleResize);
+        document.removeEventListener('mousedown', handleMouseClick);
         unsubTts();
+        eventBus.off('camera:toggleMode', toggleCameraMode);
+        eventBus.off('camera:requestState', requestCameraState);
         vrmManager.eventBus.off('vrm:loaded', handleVrmLoad);
         vrmManager.eventBus.off('vrm:unloaded', handleVrmUnload);
     };

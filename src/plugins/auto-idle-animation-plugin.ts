@@ -14,7 +14,7 @@ export class AutoIdleAnimationPlugin implements IPlugin {
   private idleTime = 0;
   private nextIdleTime = 5; // Start first idle animation after 5 seconds
 
-  setPluginContext(context: PluginContext): void {
+  setup(context: PluginContext): void {
     this.context = context;
   }
 

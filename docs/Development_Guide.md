@@ -66,7 +66,7 @@
 
 플러그인이든 UI 컴포넌트든, 캐릭터와 상호작용할 때는 다음의 표준화된 인터페이스를 사용하는 것이 권장됩니다.
 
--   **`pluginManager.context.actions`**: 캐릭터를 제어하는 가장 표준적인 방법입니다. `playAnimation`, `setExpression`, `speak`, `lookAt` 등의 함수를 제공합니다.
+-   **`pluginManager.context.actions`**: 로직을 제어하는 가장 표준적인 방법입니다. `playAnimation`, `setExpression`, `speak`, `lookAt` 등의 함수를 제공합니다.
 -   **`pluginManager.context.system`**: TTS 토글, 마스터 볼륨 조절 등 시스템 레벨의 기능을 제어합니다.
 
 ## 4. 기능 추가 가이드 (How to Add a New Feature)

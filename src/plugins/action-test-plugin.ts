@@ -11,7 +11,7 @@ export class ActionTestPlugin implements IPlugin {
   public enabled = false;
   private context: PluginContext | null = null;
 
-  setPluginContext(context: PluginContext): void {
+  setup(context: PluginContext): void {
     this.context = context;
     console.log('[ActionTestPlugin] Initialized.');
     this.setupEventListeners();

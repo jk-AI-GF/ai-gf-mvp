@@ -40,7 +40,7 @@ export class ProactiveDialoguePlugin implements IPlugin {
     this.resetDialogueTimer();
   }
 
-  public setPluginContext(context: PluginContext): void {
+  public setup(context: PluginContext): void {
     this.context = context;
   }
 

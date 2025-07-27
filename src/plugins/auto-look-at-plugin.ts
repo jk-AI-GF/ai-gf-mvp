@@ -19,7 +19,7 @@ export class AutoLookAtPlugin implements IPlugin {
     this.nextChangeInterval = Math.random() * (10000 - 7000) + 500; // Random
   }
 
-  public setPluginContext(context: PluginContext): void {
+  public setup(context: PluginContext): void {
     this.context = context;
   }
 

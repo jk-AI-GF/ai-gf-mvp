@@ -17,7 +17,7 @@ export class AutoBlinkPlugin implements IPlugin {
     this.resetBlinkTimer();
   }
 
-  public setPluginContext(context: PluginContext): void {
+  public setup(context: PluginContext): void {
     this.context = context;
   }
 
@@ -28,11 +28,6 @@ export class AutoBlinkPlugin implements IPlugin {
     this.timeSinceLastBlink = 0.0;
     // 1.5초에서 7.5초 사이의 랜덤한 시간 후에 다음 깜빡임을 설정합니다.
     this.nextBlinkTime = Math.random() * 6.0 + 1.5;
-  }
-
-  public setup(vrm: VRM): void {
-    // Blink uses expressions, which are already part of the VRM.
-    // No specific setup is needed for this plugin.
   }
 
   /**

@@ -12,28 +12,19 @@ export interface IPlugin {
   enabled: boolean;
 
   /**
+   * 플러그인이 등록될 때 PluginManager에 의해 한 번만 호출됩니다.
+   * 이벤트 리스너 등록 등 초기 설정 로직을 여기에 배치해야 합니다.
+   * @param context 플러그인이 앱과 상호작용할 수 있는 모든 API를 포함하는 객체
+   * @param manager 플러그인 관리자 인스턴스
+   */
+  setup(context: PluginContext, manager: PluginManager): void;
+
+  /**
    * 매 프레임마다 호출될 메서드입니다.
    * @param delta 마지막 프레임 이후의 시간 (초)
    * @param vrm VRM 모델 인스턴스
    */
   update(delta: number, vrm: VRM): void;
-
-  /**
-   * 플러그인에 PluginContext 객체를 설정합니다.
-   * @param context 플러그인이 앱과 상호작용할 수 있는 모든 API를 포함하는 객체
-   */
-  setPluginContext(context: PluginContext): void;
-
-  /**
-   * 플러그인이 처음 활성화되고 업데이트되기 직전에 한 번 호출됩니다.
-   * 초기화 로직에 사용될 수 있습니다.
-   */
-  onStart?(): void;
-
-  /**
-   * 플러그인이 활성화될 때마다 호출됩니다.
-   */
-  onEnable?(): void;
 }
 
 /**
@@ -41,7 +32,6 @@ export interface IPlugin {
  */
 export class PluginManager {
   public plugins: Map<string, IPlugin> = new Map();
-  private startedPlugins: Set<string> = new Set();
   public context: PluginContext;
 
   constructor(context: PluginContext) {
@@ -58,7 +48,8 @@ export class PluginManager {
       return;
     }
     this.plugins.set(plugin.name, plugin);
-    plugin.setPluginContext(this.context);
+    // `setup` 메서드를 호출하여 플러그인을 초기화합니다.
+    plugin.setup(this.context, this);
     console.log(`Plugin registered: ${plugin.name}`);
   }
 
@@ -82,9 +73,6 @@ export class PluginManager {
     const plugin = this.plugins.get(name);
     if (plugin) {
       plugin.enabled = true;
-      if (typeof plugin.onEnable === 'function') {
-        plugin.onEnable();
-      }
       console.log(`Plugin enabled: ${name}`);
     }
   }
@@ -98,13 +86,6 @@ export class PluginManager {
     if (!vrm) return;
     for (const plugin of this.plugins.values()) {
       if (plugin.enabled) {
-        // 플러그인이 처음 시작되는 경우 onStart를 호출합니다.
-        if (!this.startedPlugins.has(plugin.name)) {
-          if (typeof plugin.onStart === 'function') {
-            plugin.onStart();
-          }
-          this.startedPlugins.add(plugin.name);
-        }
         plugin.update(delta, vrm);
       }
     }
