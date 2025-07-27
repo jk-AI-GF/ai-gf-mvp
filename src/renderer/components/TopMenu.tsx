@@ -7,10 +7,30 @@ interface TopMenuProps {
 }
 
 const TopMenu: React.FC<TopMenuProps> = ({ onOpenPosePanel, onOpenAnimationPanel }) => {
+  const getRelativePath = (fullPath: string): string | null => {
+    const assetsDir = 'assets';
+    const pathSeparator = /[\\/]/; // Supports both Windows and Unix separators
+    const parts = fullPath.split(pathSeparator);
+    const assetsIndex = parts.lastIndexOf(assetsDir);
+    
+    if (assetsIndex !== -1) {
+      return parts.slice(assetsIndex + 1).join('/');
+    }
+    
+    // If the file is not in the assets directory, we cannot handle it as a relative path.
+    // This might happen if the user selects a file from a completely different location.
+    // For now, we'll alert the user, but a more robust solution could be implemented later.
+    alert(`파일은 프로젝트 'assets' 폴더 내에 있어야 합니다.`);
+    return null;
+  };
+
   const handleLoadVRM = async () => {
     const filePath = await window.electronAPI.openVrmFile();
     if (filePath) {
-      window.vrmManager.loadVRM(filePath);
+      const relativePath = getRelativePath(filePath);
+      if (relativePath) {
+        window.vrmManager.loadVRM(relativePath);
+      }
     }
   };
 
@@ -21,14 +41,18 @@ const TopMenu: React.FC<TopMenuProps> = ({ onOpenPosePanel, onOpenAnimationPanel
   const handleLoadPose = async () => {
     const filePath = await window.electronAPI.openVrmaFile();
     if (filePath) {
-        const result = await window.vrmManager.loadAndParseFile(filePath);
-        if (result?.type === 'pose') {
-            window.vrmManager.applyPose(result.data);
-        } else {
-            alert('선택한 파일은 포즈 파일이 아닙니다.');
+        const relativePath = getRelativePath(filePath);
+        if (relativePath) {
+            const result = await window.vrmManager.loadAndParseFile(relativePath);
+            if (result?.type === 'pose') {
+                window.vrmManager.applyPose(result.data);
+            } else {
+                alert('선택한 파일은 포즈 파일이 아닙니다.');
+            }
         }
     }
   };
+
 
   const handleQuit = () => {
     (window as any).electronAPI.quitApp();

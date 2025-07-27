@@ -15,6 +15,7 @@ export type AppEvents = {
   /** 채팅 */
   'chat:newMessage': { role: string, text: string };
   'ui:showFloatingMessage': { text: string };
+  'ui:updateFloatingMessagePosition': { left: number; top: number; visible: boolean; };
 
   /** 액션/애니메이션 */
   'action:play-expression': { name: string; weight: number; fadeIn?: number; duration?: number };
@@ -72,7 +73,9 @@ export function createEventBus<E extends Record<string, any>>(): TypedEventBus<E
   }
 
   function emit<K extends keyof E>(type: K, ...args: any[]): void {
-    if (process.env.NODE_ENV !== 'production') {
+    // Do not log high-frequency events to avoid spamming the console
+    const silentEvents = ['ui:updateFloatingMessagePosition'];
+    if (process.env.NODE_ENV !== 'production' && !silentEvents.includes(String(type))) {
       console.log(`[EventBus] Emit: %c${String(type)}`, 'color: #3498db; font-weight: bold;', args[0] || '');
     }
     const set = map.get(type);

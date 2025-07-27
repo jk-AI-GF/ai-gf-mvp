@@ -35,6 +35,9 @@ const AnimationPanel: React.FC<AnimationPanelProps> = ({ onClose, initialPos, on
 
   const handleAnimationClick = async (fileName: string) => {
     if (window.vrmManager) {
+      // Reset to T-Pose before playing a new animation to clear any existing pose.
+      window.vrmManager.resetToTPose();
+      
       const result = await window.vrmManager.loadAndParseFile(`Animation/${fileName}`);
       if (result?.type === 'animation') {
         window.vrmManager.playAnimation(result.data, false);

@@ -30,40 +30,7 @@ import { VRMManager } from './vrm-manager';
 import { setClearColor, toggleCameraMode, onWindowResize, DEFAULT_FREE_CAMERA_POSITION, DEFAULT_FREE_CAMERA_ROTATION, getIntersectedObject } from './scene-utils';
 import { initAudioContext, playTTS, toggleTts, setMasterVolume } from './audio-service';
 
-eventBus.on('ui:showFloatingMessage', ({ text }) => {
-  const floatingContainer = document.getElementById('floating-chat-messages-container');
-  if (floatingContainer) {
-    // Clear any existing floating messages
-    if (window.floatingMessages && window.floatingMessages.length > 0) {
-      window.floatingMessages.forEach(msg => msg.element.remove());
-      window.floatingMessages = []; // Clear the array
-    }
 
-    const msgDiv = document.createElement('div');
-    msgDiv.className = 'floating-chat-message assistant entering';
-    msgDiv.textContent = text;
-    Object.assign(msgDiv.style, {
-      position: 'absolute',
-      background: 'rgba(0, 0, 0, 0.7)',
-      color: 'white',
-      padding: '8px 12px',
-      borderRadius: '15px',
-      maxWidth: '250px',
-      textAlign: 'center',
-      pointerEvents: 'none',
-      whiteSpace: 'pre-wrap',
-      wordBreak: 'break-word',
-    });
-    floatingContainer.appendChild(msgDiv);
-    
-    window.floatingMessages.push({ element: msgDiv, timestamp: performance.now() });
-
-    setTimeout(() => {
-      msgDiv.classList.remove('entering');
-      msgDiv.style.opacity = '1';
-    }, 10);
-  }
-});
 
 let controls: OrbitControls | null = null;
 let isFreeCameraMode = true;
@@ -310,40 +277,28 @@ function animate() {
   if (currentVrm) {
     pluginManager.update(delta, currentVrm);
     
-    // Update floating messages
+    // Update floating messages position via event bus
     const headPosition = currentVrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Head)?.getWorldPosition(tempVector);
     if (headPosition) {
       headPosition.y += 0.2; // Adjust height slightly above the head
       headPosition.project(camera);
 
       // Convert to screen coordinates
-      const x = (headPosition.x * 0.5 + 0.65) * renderer.domElement.clientWidth;
-      const y = (-headPosition.y * 0.5 + 0.65) * renderer.domElement.clientHeight;
+      const x = (headPosition.x * 0.5 + 0.5) * renderer.domElement.clientWidth;
+      const y = (-headPosition.y * 0.5 + 0.5) * renderer.domElement.clientHeight;
 
-      // Update button position
+      eventBus.emit('ui:updateFloatingMessagePosition', { left: x, top: y, visible: true });
+
+      // Update button position (can be refactored later if needed)
       vrmFollowButton.style.left = `${x}px`;
       vrmFollowButton.style.top = `${y}px`;
-      vrmFollowButton.style.display = 'block'; // Show the button when VRM is present
-
-      const currentTime = performance.now();
-      for (let i = window.floatingMessages.length - 1; i >= 0; i--) {
-        const message = window.floatingMessages[i];
-        const age = currentTime - message.timestamp;
-        const duration = 5000;
-        const fadeDuration = 1000;
-
-        if (age > duration) {
-          message.element.remove();
-          window.floatingMessages.splice(i, 1);
-        } else if (age > (duration - fadeDuration)) {
-          message.element.style.opacity = String(1 - (age - (duration - fadeDuration)) / fadeDuration);
-        }
-        message.element.style.left = `${x}px`;
-        message.element.style.top = `${y}px`;
-      }
+      vrmFollowButton.style.display = 'block';
+    } else {
+      eventBus.emit('ui:updateFloatingMessagePosition', { left: 0, top: 0, visible: false });
     }
   } else {
     vrmFollowButton.style.display = 'none'; // Hide the button if no VRM is loaded
+    eventBus.emit('ui:updateFloatingMessagePosition', { left: 0, top: 0, visible: false });
   }
   
   if (isFreeCameraMode) {

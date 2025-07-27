@@ -16,6 +16,5 @@
       "*": ["node_modules/*"]
     }
   },
-  "include": ["src/**/*"],
-  "files": ["src/renderer/global.d.ts"]
+  "include": ["src/**/*"]
 }

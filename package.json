@@ -36,6 +36,7 @@
     "babel-loader": "^10.0.0",
     "copy-webpack-plugin": "^13.0.0",
     "css-loader": "^6.11.0",
+    "css-modules-typescript-loader": "^4.0.1",
     "electron": "37.2.3",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^10.1.8",

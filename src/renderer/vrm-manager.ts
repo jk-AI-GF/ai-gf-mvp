@@ -185,17 +185,21 @@ export class VRMManager {
         }
     }
 
-    private async _readFile(filePathOrUrl: string): Promise<ArrayBuffer | null> {
-        const isAbsolute = filePathOrUrl.startsWith('file://');
-        const promise = isAbsolute
-            ? window.electronAPI.readAbsoluteFile(filePathOrUrl.substring(7))
-            : window.electronAPI.readAssetFile(filePathOrUrl);
+    private async _readFile(filePath: string): Promise<ArrayBuffer | null> {
+        // All file paths are now treated as relative to the assets directory.
         try {
-            const fileContent = await promise;
-            if (!(fileContent instanceof ArrayBuffer)) throw new Error('Invalid file content received.');
+            const fileContent = await window.electronAPI.readAssetFile(filePath);
+            if (!(fileContent instanceof ArrayBuffer)) {
+                // The main process might have returned an error object
+                const error = fileContent as any;
+                if (error && error.error) {
+                     throw new Error(error.error);
+                }
+                throw new Error('Invalid file content received.');
+            }
             return fileContent;
         } catch (error) {
-            console.error(`Failed to read file ${filePathOrUrl}:`, error);
+            console.error(`Failed to read asset file ${filePath}:`, error);
             return null;
         }
     }
@@ -258,6 +262,14 @@ export class VRMManager {
         }
         newAction.play();
         this.currentAction = newAction;
+    }
+
+    public resetToTPose(): void {
+        if (!this.currentVrm || !this.mixer) return;
+        this.mixer.stopAllAction();
+        this.currentAction = null;
+        this.currentVrm.humanoid.resetPose();
+        this.eventBus.emit('vrm:poseApplied'); // Notify UI that the pose has changed
     }
 
     private animateVrmDrop(vrm: VRM, duration: number, startY: number, endY: number): Promise<void> {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import TopMenu from './components/TopMenu';
 import SettingsModal from './components/SettingsModal';
 import JointControlPanel from './components/JointControlPanel';
@@ -11,6 +11,13 @@ import PosePanel from './components/PosePanel';
 import AnimationPanel from './components/AnimationPanel';
 import Chat from './components/Chat';
 import CameraControl from './components/CameraControl';
+import FloatingMessageManager from './components/FloatingMessageManager';
+import eventBus from '../core/event-bus';
+
+interface Message {
+  role: string;
+  text: string;
+}
 
 const App: React.FC = () => {
   const [isSettingsModalOpen, setSettingsModalOpen] = useState(false);
@@ -21,6 +28,34 @@ const App: React.FC = () => {
   const [isModManagementPanelOpen, setModManagementPanelOpen] = useState(false);
   const [isPosePanelOpen, setPosePanelOpen] = useState(false);
   const [isAnimationPanelOpen, setAnimationPanelOpen] = useState(false);
+  
+  const [chatMessages, setChatMessages] = useState<Message[]>([]);
+
+  useEffect(() => {
+    const handleNewMessage = (message: Message) => {
+      setChatMessages(prev => [...prev, message]);
+    };
+
+    const unsubscribe = eventBus.on('chat:newMessage', handleNewMessage);
+
+    // This replaces the old global function with an event-based one
+    (window as any).appendMessage = (role: string, text: string) => {
+      eventBus.emit('chat:newMessage', { role, text });
+    };
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  const handleSendMessage = (text: string) => {
+    if ((window as any).sendChatMessage) {
+      (window as any).sendChatMessage(text);
+    } else {
+      console.error('ChatService is not available.');
+      setChatMessages(prev => [...prev, { role: 'system', text: '오류: 채팅 서비스가 초기화되지 않았습니다.' }]);
+    }
+  };
 
   const [panelPositions, setPanelPositions] = useState({
     joint: { x: 20, y: 70 },
@@ -66,8 +101,9 @@ const App: React.FC = () => {
       {isModManagementPanelOpen && <ModManagementPanel onClose={() => setModManagementPanelOpen(false)} initialPos={panelPositions.mod} onDragEnd={(pos) => handlePanelDrag('mod', pos)} />}
       {isPosePanelOpen && <PosePanel onClose={() => setPosePanelOpen(false)} initialPos={panelPositions.pose} onDragEnd={(pos) => handlePanelDrag('pose', pos)} />}
       {isAnimationPanelOpen && <AnimationPanel onClose={() => setAnimationPanelOpen(false)} initialPos={panelPositions.animation} onDragEnd={(pos) => handlePanelDrag('animation', pos)} />}
-      <Chat />
+      <Chat messages={chatMessages} onSendMessage={handleSendMessage} />
       <CameraControl />
+      <FloatingMessageManager />
     </div>
   );
 };
