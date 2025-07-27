@@ -24,8 +24,6 @@ const FloatingMessageManager: React.FC = () => {
         if (visible) {
           containerRef.current.style.visibility = 'visible';
           containerRef.current.style.transform = `translate(${left}px, ${top}px)`;
-        } else {
-          containerRef.current.style.visibility = 'hidden';
         }
       }
     };

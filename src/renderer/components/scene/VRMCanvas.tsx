@@ -34,11 +34,20 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     // --- Camera and Controls Setup ---
     let cameraMode: 'orbit' | 'fixed' = 'orbit';
     const perspectiveCamera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 1000);
-    perspectiveCamera.position.set(0, 1.2, 3);
+    perspectiveCamera.position.set(0, 0.6, 3);
     
-    const orthographicCamera = new THREE.OrthographicCamera(-5, 5, 5, -5, 0.1, 1000);
-    orthographicCamera.position.set(0, 1.2, 3); // Closer position
-    orthographicCamera.zoom = 1.2; // Increased zoom
+    const aspect = window.innerWidth / window.innerHeight;
+    const frustumHeight = 3;
+    const orthographicCamera = new THREE.OrthographicCamera(
+        -frustumHeight * aspect / 2,
+        frustumHeight * aspect / 2,
+        frustumHeight / 2,
+        -frustumHeight / 2,
+        0.1,
+        1000
+    );
+    orthographicCamera.position.set(0, 0.6, 2.5);
+    orthographicCamera.zoom = 1.2; // Zoom을 조정하여 캐릭터 크기를 맞춥니다.
     orthographicCamera.updateProjectionMatrix();
 
     let activeCamera: THREE.Camera = perspectiveCamera;
@@ -48,7 +57,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     controls.update();
 
     // --- VRM Manager ---
-    const vrmManager = new VRMManager(scene, perspectiveCamera, plane, eventBus);
+    const vrmManager = new VRMManager(scene, activeCamera, plane, eventBus);
     vrmManager.loadVRM('VRM/Liqu.vrm');
 
     // --- Plugin System ---
@@ -81,7 +90,10 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
             
             const head = vrmManager.currentVrm.humanoid.getNormalizedBoneNode('head');
             if (head) {
+                // 강제로 월드 행렬을 업데이트하여 최신 위치를 보장합니다.
+                head.updateWorldMatrix(true, false);
                 const headPosition = head.getWorldPosition(tempVector);
+
                 headPosition.project(activeCamera);
                 const x = (headPosition.x * 0.5 + 0.5) * renderer.domElement.clientWidth;
                 const y = (-headPosition.y * 0.5 + 0.5) * renderer.domElement.clientHeight;
@@ -119,12 +131,16 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     };
 
     const handleResize = () => {
+        const aspect = window.innerWidth / window.innerHeight;
         if (activeCamera instanceof THREE.PerspectiveCamera) {
-            activeCamera.aspect = window.innerWidth / window.innerHeight;
+            activeCamera.aspect = aspect;
             activeCamera.updateProjectionMatrix();
         } else if (activeCamera instanceof THREE.OrthographicCamera) {
-            // You might need to adjust the frustum here for orthographic cameras
-            // For now, just updating the projection matrix is enough
+            const frustumHeight = 3; // 기준 높이
+            activeCamera.left = -frustumHeight * aspect / 2;
+            activeCamera.right = frustumHeight * aspect / 2;
+            activeCamera.top = frustumHeight / 2;
+            activeCamera.bottom = -frustumHeight / 2;
             activeCamera.updateProjectionMatrix();
         }
         renderer.setSize(window.innerWidth, window.innerHeight);

@@ -21,9 +21,6 @@ function createAnimationClipFromVRMPose(vrmPose: VRMPose, vrm: VRM): THREE.Anima
 
             if (poseData.position) {
                 const position = new THREE.Vector3().fromArray(poseData.position);
-                if (boneName === VRMHumanBoneName.Hips) {
-                    position.y = 0.7;
-                }
                 tracks.push(new THREE.VectorKeyframeTrack(
                     `${boneNode.name}.position`,
                     [0],
@@ -53,12 +50,12 @@ export class VRMManager {
     private currentAction: THREE.AnimationAction | null = null;
     private _lookAtMode: 'none' | 'camera' | 'mouse' | 'fixed' = 'none';
     private _fixedLookAtTarget: THREE.Object3D | THREE.Vector3 | null = null;
-    private _camera: THREE.PerspectiveCamera;
+    public activeCamera: THREE.Camera;
     private _plane: THREE.Mesh;
     public eventBus: TypedEventBus<AppEvents>;
 
-    constructor(scene: THREE.Scene, camera: THREE.PerspectiveCamera, plane: THREE.Mesh, eventBusInstance: TypedEventBus<AppEvents>) {
-        this._camera = camera;
+    constructor(scene: THREE.Scene, camera: THREE.Camera, plane: THREE.Mesh, eventBusInstance: TypedEventBus<AppEvents>) {
+        this.activeCamera = camera;
         this.scene = scene;
         this._plane = plane;
         this.eventBus = eventBusInstance;
@@ -322,15 +319,30 @@ export class VRMManager {
     }
 
     public update(delta: number): void {
-        this.mixer?.update(delta);
+        this.mixer?.update(delta); // VRM.update()가 내부적으로 mixer를 업데이트하므로 중복 호출을 피합니다.
         if (this.currentVrm) {
+            // VRM.update()는 애니메이션, 물리(Spring Bone) 등 모든 것을 업데이트합니다.
             this.currentVrm.update(delta);
+            
             let lookAtTarget: THREE.Object3D | THREE.Vector3 | null = null;
             if (this._lookAtMode === 'camera') {
-                lookAtTarget = this._camera;
+                lookAtTarget = this.activeCamera;
             } else if (this._lookAtMode === 'mouse') {
                 if (window.mousePosition) {
-                    lookAtTarget = get3DPointFromMouse(this._camera, this._plane);
+                    const mouse = new THREE.Vector2(window.mousePosition.x, window.mousePosition.y);
+                    const raycaster = new THREE.Raycaster();
+                    raycaster.setFromCamera(mouse, this.activeCamera);
+
+                    // 두 카메라 타입 모두에서, 캐릭터 앞의 가상 평면과 교차점을 찾습니다.
+                    const planeNormal = new THREE.Vector3(0, 0, 1).applyQuaternion(this.activeCamera.quaternion);
+                    const planeDistance = this.currentVrm.scene.position.distanceTo(this.activeCamera.position) * 0.8;
+                    const planePoint = this.activeCamera.position.clone().add(this.activeCamera.getWorldDirection(new THREE.Vector3()).multiplyScalar(planeDistance));
+                    const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(planeNormal, planePoint);
+                    
+                    const intersection = new THREE.Vector3();
+                    if (raycaster.ray.intersectPlane(plane, intersection)) {
+                        lookAtTarget = intersection;
+                    }
                 }
             } else if (this._lookAtMode === 'fixed') {
                 lookAtTarget = this._fixedLookAtTarget;

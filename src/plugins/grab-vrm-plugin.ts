@@ -1,42 +1,44 @@
 import * as THREE from 'three';
-import { IPlugin, PluginManager } from './plugin-manager';
+import { IPlugin } from './plugin-manager';
 import { PluginContext } from '../plugin-api/plugin-context';
 import { VRM } from '@pixiv/three-vrm';
 import { VRMManager } from '../renderer/vrm-manager';
 
-/**
- * A plugin that allows the user to grab and drag the VRM character.
- * The drag action is initiated by clicking and holding the 'hips' hitbox.
- */
 export class GrabVrmPlugin implements IPlugin {
   public readonly name = 'GrabVrm';
-  public enabled = true; // Enable by default
-  
+  public enabled = true;
+
   private context!: PluginContext;
   private vrmManager!: VRMManager;
-  private camera!: THREE.PerspectiveCamera;
+  private camera!: THREE.Camera; // 타입을 일반 Camera로 변경
 
   private isDragging = false;
-  
   private raycaster = new THREE.Raycaster();
   private dragPlane = new THREE.Plane();
   private dragOffset = new THREE.Vector3();
+  private intersection = new THREE.Vector3();
 
   constructor() {
-    // Bind methods to ensure `this` is correct when they are used as event handlers
     this.handleMouseDownOnPart = this.handleMouseDownOnPart.bind(this);
     this.handleMouseMove = this.handleMouseMove.bind(this);
     this.handleMouseUp = this.handleMouseUp.bind(this);
   }
 
-  setup(context: PluginContext, pluginManager: PluginManager): void {
+  setup(context: PluginContext): void {
     this.context = context;
+    if (!context.vrmManager) return;
+
     this.vrmManager = context.vrmManager;
-    // A bit of a hack to get the private camera, a public getter would be better
-    this.camera = (this.vrmManager as any)._camera; 
+    // VRMManager에서 현재 활성 카메라를 가져옴
+    this.camera = this.vrmManager.activeCamera; 
 
     this.context.eventBus.on('character_part_clicked', this.handleMouseDownOnPart);
     
+    // 카메라 모드가 변경될 때마다 this.camera를 업데이트
+    this.context.eventBus.on('camera:modeChanged', () => {
+        this.camera = this.vrmManager.activeCamera;
+    });
+
     console.log('[GrabVrmPlugin] Initialized.');
   }
 
@@ -46,19 +48,20 @@ export class GrabVrmPlugin implements IPlugin {
     if (partName === 'hips') {
       this.isDragging = true;
       
-      this.camera.getWorldDirection(this.dragPlane.normal); 
-      this.dragPlane.setFromNormalAndCoplanarPoint(this.dragPlane.normal, this.vrmManager.currentVrm.scene.position);
-
       const mouse = new THREE.Vector2(
-        (window.event as MouseEvent).clientX / window.innerWidth * 2 - 1,
+        ((window.event as MouseEvent).clientX / window.innerWidth) * 2 - 1,
         -((window.event as MouseEvent).clientY / window.innerHeight) * 2 + 1
       );
       this.raycaster.setFromCamera(mouse, this.camera);
-      const intersectionPoint = new THREE.Vector3();
-      this.raycaster.ray.intersectPlane(this.dragPlane, intersectionPoint);
-      
-      if (intersectionPoint) {
-        this.dragOffset.copy(intersectionPoint).sub(this.vrmManager.currentVrm.scene.position);
+
+      // 드래그 평면을 캐릭터의 현재 위치를 기준으로 설정
+      this.dragPlane.setFromNormalAndCoplanarPoint(
+        this.camera.getWorldDirection(this.dragPlane.normal),
+        this.vrmManager.currentVrm.scene.position
+      );
+
+      if (this.raycaster.ray.intersectPlane(this.dragPlane, this.intersection)) {
+        this.dragOffset.copy(this.intersection).sub(this.vrmManager.currentVrm.scene.position);
       }
 
       document.addEventListener('mousemove', this.handleMouseMove);
@@ -69,9 +72,11 @@ export class GrabVrmPlugin implements IPlugin {
 
       console.log('[GrabVrmPlugin] Started dragging character.');
       
-      // Disable orbit controls
-      const controls = (this.camera.parent?.children.find((c: any) => c.constructor.name === 'OrbitControls') as any);
-      if(controls) controls.enabled = false;
+      // Disable orbit controls only if they exist and are enabled
+      if (this.camera instanceof THREE.PerspectiveCamera) {
+        const controls = (this.vrmManager.activeCamera.parent?.children.find((c: any) => c.constructor.name === 'OrbitControls') as any);
+        if (controls) controls.enabled = false;
+      }
     }
   }
 
@@ -84,11 +89,22 @@ export class GrabVrmPlugin implements IPlugin {
     );
 
     this.raycaster.setFromCamera(mouse, this.camera);
-    const intersectionPoint = new THREE.Vector3();
-    this.raycaster.ray.intersectPlane(this.dragPlane, intersectionPoint);
 
-    if (intersectionPoint) {
-      this.vrmManager.currentVrm.scene.position.copy(intersectionPoint.sub(this.dragOffset));
+    if (this.camera instanceof THREE.PerspectiveCamera) {
+        if (this.raycaster.ray.intersectPlane(this.dragPlane, this.intersection)) {
+            this.vrmManager.currentVrm.scene.position.copy(this.intersection.sub(this.dragOffset));
+        }
+    } else if (this.camera instanceof THREE.OrthographicCamera) {
+        // 직교 카메라의 경우, 화면 좌표를 월드 좌표로 변환
+        this.intersection.set(mouse.x, mouse.y, 0.5); // z는 -1에서 1 사이의 값
+        this.intersection.unproject(this.camera);
+        
+        // 캐릭터의 원래 z 깊이를 유지하면서 x, y만 변경
+        const currentPos = this.vrmManager.currentVrm.scene.position;
+        const newPos = new THREE.Vector3(this.intersection.x, this.intersection.y, currentPos.z);
+        
+        currentPos.x = newPos.x;
+        currentPos.y = newPos.y;
     }
   }
 
@@ -104,9 +120,11 @@ export class GrabVrmPlugin implements IPlugin {
 
     console.log('[GrabVrmPlugin] Stopped dragging character.');
 
-    // Re-enable orbit controls
-    const controls = (this.camera.parent?.children.find((c: any) => c.constructor.name === 'OrbitControls') as any);
-    if(controls) controls.enabled = true;
+    // Re-enable orbit controls if they exist
+    if (this.camera instanceof THREE.PerspectiveCamera) {
+        const controls = (this.vrmManager.activeCamera.parent?.children.find((c: any) => c.constructor.name === 'OrbitControls') as any);
+        if (controls) controls.enabled = true;
+    }
   }
 
   update(deltaTime: number, vrm: VRM): void {
