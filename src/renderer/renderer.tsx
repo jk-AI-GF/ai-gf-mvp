@@ -23,10 +23,10 @@ import { GrabVrmPlugin } from '../plugins/grab-vrm-plugin'; // 새로 추가
 import { Actions } from '../plugin-api/actions';
 import { PluginContext } from '../plugin-api/plugin-context';
 import { SystemControls } from '../plugin-api/system-controls';
-import { createEventBus, AppEvents } from '../core/event-bus';
+import eventBus from '../core/event-bus';
 import { TriggerEngine } from '../core/trigger-engine';
 import { characterState } from '../core/character-state';
-import { updateJointSliders, createJointSliders, setupPosePanelButton, setupAnimationPanelButton, setupSavePoseButton, setupLoadPoseFileButton, setupLoadVrmButton, createMeshList, appendMessage, createExpressionSliders, clearExpressionSliders, clearMeshList, clearJointSliders, toggleVrmMeshVisibility } from './ui-manager';
+import { setupPosePanelButton, setupAnimationPanelButton, setupSavePoseButton, setupLoadPoseFileButton, setupLoadVrmButton, createMeshList, appendMessage, clearMeshList, toggleVrmMeshVisibility } from './ui-manager';
 import { VRMManager } from './vrm-manager';
 import { setClearColor, toggleCameraMode, onWindowResize, DEFAULT_FREE_CAMERA_POSITION, DEFAULT_FREE_CAMERA_ROTATION, getIntersectedObject } from './scene-utils';
 import { initAudioContext, playTTS, toggleTts, setMasterVolume } from './audio-service';
@@ -35,7 +35,7 @@ import { initAudioContext, playTTS, toggleTts, setMasterVolume } from './audio-s
 let controls: OrbitControls | null = null;
 let isFreeCameraMode = true;
 
-const eventBus = createEventBus<AppEvents>();
+
 const triggerEngine = new TriggerEngine();
 
 // Actions implementation
@@ -244,9 +244,7 @@ eventBus.on('vrm:loaded', ({ vrm }) => {
   window.vrmExpressionList = Object.keys(vrm.expressionManager.expressionMap);
   
   // Call UI update functions
-  createExpressionSliders();
   createMeshList(vrm, toggleVrmMeshVisibility);
-  createJointSliders();
 });
 
 eventBus.on('vrm:unloaded', () => {
@@ -255,9 +253,7 @@ eventBus.on('vrm:unloaded', () => {
   window.expressionMap = {};
   window.vrmExpressionList = [];
   
-  clearExpressionSliders();
   clearMeshList();
-  clearJointSliders();
 });
 
 
@@ -321,7 +317,6 @@ function animate() {
     controls?.update();
   }
   
-  updateJointSliders();
   renderer.render(scene, camera);
 }
 animate();

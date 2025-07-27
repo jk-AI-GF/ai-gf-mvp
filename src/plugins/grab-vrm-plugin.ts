@@ -9,7 +9,7 @@ import { VRM } from '@pixiv/three-vrm';
  */
 export class GrabVrmPlugin implements IPlugin {
   public readonly name = 'GrabVrm';
-  public enabled = true;
+  public enabled = false;
   
   private context: PluginContext | null = null;
   private isDragging = false;
