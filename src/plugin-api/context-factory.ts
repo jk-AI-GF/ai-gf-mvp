@@ -30,8 +30,12 @@ export function createPluginContext(
     showMessage: (message: string, duration?: number) => {
       eventBus.emit('ui:showFloatingMessage', { text: message });
     },
-    setExpression: (expressionName: string, weight: number, duration?: number) => {
-      vrmManager.animateExpression(expressionName, weight, duration);
+    setExpression: (expressionName: string, weight: number, duration?: number) =>
+      vrmManager.animateExpression(expressionName, weight, duration),
+    setExpressionWeight: (expressionName: string, weight: number) => {
+      if (vrmManager.currentVrm?.expressionManager) {
+        vrmManager.currentVrm.expressionManager.setValue(expressionName, weight);
+      }
     },
     setPose: async (poseName: string) => {
       const result = await vrmManager.loadAndParseFile(`Pose/${poseName}`);
@@ -86,6 +90,7 @@ export function createPluginContext(
     actions: actions,
     system: systemControls,
     characterState: characterState,
+    vrmManager: vrmManager,
   };
 
   return pluginContext;

@@ -68,9 +68,6 @@ export class VRMManager {
         this.loader.register((parser) => new VRMAnimationLoaderPlugin(parser));
 
         this.fbxLoader = new FBXLoader();
-
-        window.animateExpression = this.animateExpression.bind(this);
-        window.animateExpressionAdditive = this.animateExpressionAdditive.bind(this);
     }
 
     public async loadVRM(filePathOrUrl: string): Promise<void> {
@@ -94,7 +91,6 @@ export class VRMManager {
             vrm.scene.rotation.y = Math.PI;
             this.scene.add(vrm.scene);
             this.currentVrm = vrm;
-            window.currentVrm = vrm;
 
             this.mixer = new THREE.AnimationMixer(vrm.scene);
 
@@ -132,7 +128,8 @@ export class VRMManager {
                 }
             }, 3000);
 
-            this.eventBus.emit('vrm:loaded', { vrm: this.currentVrm });
+            const expressionNames = Object.keys(this.currentVrm.expressionManager.expressionMap);
+            this.eventBus.emit('vrm:loaded', { vrm: this.currentVrm, expressionNames });
 
         } catch (error) {
             console.error('VRM load failed:', error);
@@ -425,13 +422,3 @@ export class VRMManager {
     }
 }
 
-declare global {
-    interface Window {
-        vrmManager: VRMManager;
-        currentVrm: VRM | null;
-        vrmExpressionList: string[];
-        expressionMap: { [name: string]: any };
-        animateExpression: (expressionName: string, targetWeight: number, duration: number) => void;
-        animateExpressionAdditive: (expressionName: string, targetWeight: number, duration: number) => void;
-    }
-}

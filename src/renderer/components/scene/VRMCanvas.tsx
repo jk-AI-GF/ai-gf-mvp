@@ -1,20 +1,16 @@
 import React, { useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { VRM } from '@pixiv/three-vrm';
 import Scene from './Scene';
 import { VRMManager } from '../../vrm-manager';
 import { PluginManager } from '../../../plugins/plugin-manager';
-import { PluginContext } from '../../../plugin-api/plugin-context';
-import { Actions } from '../../../plugin-api/actions';
-import { SystemControls } from '../../../plugin-api/system-controls';
 import eventBus from '../../../core/event-bus';
 import { TriggerEngine } from '../../../core/trigger-engine';
-import { characterState } from '../../../core/character-state';
-import { initAudioContext, playTTS, toggleTts, setMasterVolume } from '../../audio-service';
+import { initAudioContext, playTTS } from '../../audio-service';
 import { AutoLookAtPlugin } from '../../../plugins/auto-look-at-plugin';
 import { AutoBlinkPlugin } from '../../../plugins/auto-blink-plugin';
 import { AutoIdleAnimationPlugin } from '../../../plugins/auto-idle-animation-plugin';
+import { createPluginContext } from '../../../plugin-api/context-factory';
 import { ProactiveDialoguePlugin } from '../../../plugins/proactive-dialogue-plugin';
 import { ActionTestPlugin } from '../../../plugins/action-test-plugin';
 import { GrabVrmPlugin } from '../../../plugins/grab-vrm-plugin';
@@ -24,9 +20,8 @@ interface VRMCanvasProps {
   onLoad: (managers: { vrmManager: VRMManager; pluginManager: PluginManager; chatService: ChatService }) => void;
 }
 
-import { onWindowResize } from '../../scene-utils';
-
-// ... (imports)
+// onWindowResize is not used, so it's removed to clean up.
+// import { onWindowResize } from '../../scene-utils';
 
 const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
   const handleSceneLoad = useCallback((instances: {
@@ -58,50 +53,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
 
     // --- Plugin System ---
     const triggerEngine = new TriggerEngine();
-    const actions: Actions = {
-        playAnimation: async (animationName, loop, crossFadeDuration) => {
-            const result = await vrmManager.loadAndParseFile(animationName);
-            if (result?.type === 'animation') vrmManager.playAnimation(result.data, loop, crossFadeDuration);
-            else if (result?.type === 'pose') vrmManager.applyPose(result.data);
-        },
-        showMessage: (message, duration) => eventBus.emit('chat:newMessage', { role: 'assistant', text: message }),
-        setExpression: (expressionName, weight, duration) => vrmManager.animateExpression(expressionName, weight, duration),
-        setPose: async (poseName) => {
-            const result = await vrmManager.loadAndParseFile(`Pose/${poseName}`);
-            if (result?.type === 'pose') vrmManager.applyPose(result.data);
-            else if (result?.type === 'animation') vrmManager.playAnimation(result.data, false);
-        },
-        lookAt: (target) => {
-            if (target === 'camera') vrmManager.lookAt('camera');
-            else if (target === 'mouse') vrmManager.lookAt('mouse');
-            else if (Array.isArray(target)) vrmManager.lookAt(new THREE.Vector3(...target));
-            else vrmManager.lookAt(null);
-        },
-        setContext: (key, value) => window.electronAPI.send('context:set', key, value),
-        changeBackground: (imagePath) => {
-            document.body.style.backgroundImage = `url('${imagePath}')`;
-            document.body.style.backgroundColor = 'transparent';
-            document.body.style.backgroundSize = 'cover';
-            document.body.style.backgroundPosition = 'center';
-            renderer.setClearAlpha(0);
-        },
-        getContext: (key) => window.electronAPI.invoke('context:get', key),
-        speak: playTTS,
-    };
-
-    const systemControls: SystemControls = {
-        toggleTts: toggleTts,
-        setMasterVolume: setMasterVolume,
-    };
-
-    const pluginContext: PluginContext = {
-        eventBus,
-        registerTrigger: triggerEngine.registerTrigger.bind(triggerEngine),
-        actions,
-        system: systemControls,
-        characterState,
-        vrmManager,
-    };
+    const pluginContext = createPluginContext(vrmManager, triggerEngine, renderer);
 
     const pluginManager = new PluginManager(pluginContext);
     pluginManager.register(new AutoLookAtPlugin());
@@ -203,29 +155,22 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     document.addEventListener('mousedown', handleMouseClick);
     document.addEventListener('click', initAudioContext, { once: true });
     const unsubTts = window.electronAPI.on('tts-speak', (text: string) => playTTS(text));
+    const unsubSetExpressionWeight = window.electronAPI.on('set-expression-weight', (expressionName: string, weight: number) => {
+        if (vrmManager.currentVrm?.expressionManager) {
+            vrmManager.currentVrm.expressionManager.setValue(expressionName, weight);
+        }
+    });
     eventBus.on('camera:toggleMode', toggleCameraMode);
     eventBus.on('camera:requestState', requestCameraState);
-    
-    const handleVrmLoad = (payload: { vrm: VRM }) => {
-        window.currentVrm = payload.vrm;
-        window.vrmExpressionList = Object.keys(payload.vrm.expressionManager.expressionMap);
-    };
-    const handleVrmUnload = () => {
-        window.currentVrm = null;
-        window.vrmExpressionList = [];
-    };
-    vrmManager.eventBus.on('vrm:loaded', handleVrmLoad);
-    vrmManager.eventBus.on('vrm:unloaded', handleVrmUnload);
 
     // --- Cleanup ---
     return () => {
         window.removeEventListener('resize', handleResize);
         document.removeEventListener('mousedown', handleMouseClick);
         unsubTts();
+        unsubSetExpressionWeight();
         eventBus.off('camera:toggleMode', toggleCameraMode);
         eventBus.off('camera:requestState', requestCameraState);
-        vrmManager.eventBus.off('vrm:loaded', handleVrmLoad);
-        vrmManager.eventBus.off('vrm:unloaded', handleVrmUnload);
     };
   }, [onLoad]);
 

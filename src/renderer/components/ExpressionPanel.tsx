@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { VRM } from '@pixiv/three-vrm';
-import Panel from './Panel'; // Import the generic Panel component
+import Panel from './Panel';
+import { useAppContext } from '../contexts/AppContext';
+import eventBus from '../../core/event-bus';
 
 interface ExpressionPanelProps {
   onClose: () => void;
@@ -14,34 +15,59 @@ type ExpressionInfo = {
 };
 
 const ExpressionPanel: React.FC<ExpressionPanelProps> = ({ onClose, initialPos, onDragEnd }) => {
+  const { pluginManager } = useAppContext();
   const [expressions, setExpressions] = useState<ExpressionInfo[]>([]);
-  const [vrm, setVrm] = useState<VRM | null>(null);
+  const [isVrmLoaded, setIsVrmLoaded] = useState(false);
 
   useEffect(() => {
-    const currentVrm = (window as any).currentVrm as VRM | undefined;
-    if (currentVrm?.expressionManager) {
-      setVrm(currentVrm);
-      const expressionMap = currentVrm.expressionManager.expressionMap;
-      const initialExpressions = Object.keys(expressionMap).map(name => ({
+    const handleVrmLoad = (data: { expressionNames: string[] }) => {
+      const initialExpressions = data.expressionNames.map(name => ({
         name,
-        value: (currentVrm.expressionManager.getValue(name) || 0) * 100,
+        value: 0, // Start all at 0
       }));
       setExpressions(initialExpressions);
+      setIsVrmLoaded(true);
+    };
+
+    const handleVrmUnload = () => {
+      setExpressions([]);
+      setIsVrmLoaded(false);
+    };
+
+    const unsubLoad = eventBus.on('vrm:loaded', handleVrmLoad);
+    const unsubUnload = eventBus.on('vrm:unloaded', handleVrmUnload);
+
+    // Request initial state in case VRM is already loaded
+    if (pluginManager?.context.vrmManager?.currentVrm) {
+        const vrm = pluginManager.context.vrmManager.currentVrm;
+        handleVrmLoad({ expressionNames: Object.keys(vrm.expressionManager.expressionMap) });
     }
-  }, []);
+
+
+    return () => {
+      unsubLoad();
+      unsubUnload();
+    };
+  }, [pluginManager]);
 
   const handleSliderChange = (name: string, value: number) => {
-    if (vrm?.expressionManager) {
+    if (pluginManager) {
       const weight = value / 100;
-      vrm.expressionManager.setValue(name, weight);
-      vrm.expressionManager.update();
-      setExpressions(expressions.map(exp => exp.name === name ? { ...exp, value } : exp));
+      // Use the new action to set expression weight without affecting others
+      pluginManager.context.actions.setExpressionWeight(name, weight);
+      
+      // Update local state to reflect the change immediately on the slider
+      setExpressions(currentExpressions =>
+        currentExpressions.map(exp =>
+          exp.name === name ? { ...exp, value } : exp
+        )
+      );
     }
   };
 
   return (
     <Panel title="표정 조절" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
-      {!vrm ? (
+      {!isVrmLoaded ? (
         <p className="empty-message">VRM 모델을 로드해주세요.</p>
       ) : (
         expressions.map(({ name, value }) => (
@@ -52,7 +78,7 @@ const ExpressionPanel: React.FC<ExpressionPanelProps> = ({ onClose, initialPos, 
               min="0"
               max="100"
               value={value}
-              onChange={(e) => handleSliderChange(name, parseInt(e.target.value))}
+              onChange={(e) => handleSliderChange(name, parseInt(e.target.value, 10))}
               style={{ width: '100%' }}
             />
           </div>

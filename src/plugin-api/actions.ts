@@ -29,6 +29,13 @@ export interface Actions {
   setExpression(expressionName: string, weight: number, duration?: number): void;
 
   /**
+   * VRM 모델의 개별 표정 가중치를 직접 설정합니다. (다른 표정은 그대로 둡니다)
+   * @param expressionName 변경할 표정의 이름
+   * @param weight 표정의 강도 (0.0 ~ 1.0)
+   */
+  setExpressionWeight(expressionName: string, weight: number): void;
+
+  /**
    * VRM 모델의 포즈를 설정합니다.
    * @param poseName 설정할 포즈의 이름 (보통 .vrma 파일 이름)
    */

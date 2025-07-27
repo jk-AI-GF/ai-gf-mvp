@@ -14,12 +14,15 @@ import CameraControl from './components/CameraControl';
 import FloatingMessageManager from './components/FloatingMessageManager';
 import eventBus from '../core/event-bus';
 
+import { useAppContext } from './contexts/AppContext';
+
 interface Message {
   role: string;
   text: string;
 }
 
 const App: React.FC = () => {
+  const { chatService } = useAppContext(); // useAppContext로 chatService 가져오기
   const [isSettingsModalOpen, setSettingsModalOpen] = useState(false);
   const [isJointPanelOpen, setJointPanelOpen] = useState(false);
   const [isExpressionPanelOpen, setExpressionPanelOpen] = useState(false);
@@ -38,21 +41,18 @@ const App: React.FC = () => {
 
     const unsubscribe = eventBus.on('chat:newMessage', handleNewMessage);
 
-    // This replaces the old global function with an event-based one
-    (window as any).appendMessage = (role: string, text: string) => {
-      eventBus.emit('chat:newMessage', { role, text });
-    };
-
     return () => {
       unsubscribe();
     };
   }, []);
 
   const handleSendMessage = (text: string) => {
-    if ((window as any).sendChatMessage) {
-      (window as any).sendChatMessage(text);
+    if (chatService) {
+      const savedPersona = localStorage.getItem('userPersona');
+      const currentPersona = savedPersona || "You are a friendly and helpful AI assistant. Please respond in Korean.";
+      chatService.sendChatMessage(text, currentPersona);
     } else {
-      console.error('ChatService is not available.');
+      console.error('Chat service is not initialized.');
       setChatMessages(prev => [...prev, { role: 'system', text: '오류: 채팅 서비스가 초기화되지 않았습니다.' }]);
     }
   };

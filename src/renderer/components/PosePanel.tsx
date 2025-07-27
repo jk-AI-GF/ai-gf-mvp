@@ -11,7 +11,7 @@ interface PosePanelProps {
 }
 
 const PosePanel: React.FC<PosePanelProps> = ({ onClose, initialPos, onDragEnd }) => {
-  const { vrmManager } = useAppContext();
+  const { pluginManager } = useAppContext(); // vrmManager에서 pluginManager로 변경
   const [poseFiles, setPoseFiles] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,17 +36,13 @@ const PosePanel: React.FC<PosePanelProps> = ({ onClose, initialPos, onDragEnd })
     fetchPoses();
   }, [fetchPoses]);
 
-  const handlePoseClick = async (fileName: string) => {
-    if (vrmManager) {
-      const result = await vrmManager.loadAndParseFile(`Pose/${fileName}`);
-      if (result?.type === 'pose') {
-        vrmManager.applyPose(result.data);
-      } else {
-        setError(`'${fileName}'은 포즈 파일이 아닙니다.`);
-      }
+  const handlePoseClick = (fileName: string) => {
+    if (pluginManager) {
+      // 표준 Actions 인터페이스를 통해 포즈 설정
+      pluginManager.context.actions.setPose(fileName);
     } else {
-      console.error('vrmManager is not available.');
-      setError('VRM 매니저를 찾을 수 없습니다.');
+      console.error('pluginManager is not available.');
+      setError('플러그인 매니저를 찾을 수 없습니다.');
     }
   };
 

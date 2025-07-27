@@ -27,15 +27,16 @@
 
 -   **`components/scene/`**: 3D 렌더링과 관련된 React 컴포넌트들이 위치합니다.
     -   **`Scene.tsx`**: 3D 세계의 정적인 뼈대(Scene, 조명, 렌더러, 바닥 등)를 생성하는 역할에 집중합니다.
-    -   **`VRMCanvas.tsx`**: **3D 세계의 동적인 로직을 총괄**합니다. 카메라와 `OrbitControls`를 관리하고, `VRMManager`와 `PluginManager`를 초기화하며, 모든 3D 관련 이벤트(마우스 클릭 등) 처리 및 애니메이션 루프를 담당합니다.
+    -   **`VRMCanvas.tsx`**: **3D 세계의 동적인 로직을 총괄**합니다. 카메라와 `OrbitControls`를 관리하고, `VRMManager`와 `PluginManager`를 초기화하며, 모든 3D 관련 이벤트(마우스 클릭 등) 처리 및 애니메이션 루프를 담당합니다. 또한 `context-factory.ts`를 호출하여 `PluginContext`를 생성하고 `PluginManager`에 주입하는 역할을 합니다.
 
 -   **`vrm-manager.ts`**: VRM 모델에 대한 저수준(low-level) 제어를 직접 담당하는 클래스입니다. VRM 파일 로딩, 애니메이션 재생, 표정 변화, 포즈 적용 등의 실제 로직이 여기에 구현되어 있습니다.
 
 ### `src/plugins/` 및 `src/plugin-api/` - 플러그인 아키텍처
 
 -   **`plugin-api/`**: **모더와 코어 개발자를 위한 "공식 API"**가 정의된 디렉토리입니다. 플러그인이 시스템과 상호작용하기 위해 필요한 모든 인터페이스(`PluginContext`, `Actions`, `Triggers` 등)가 이곳에 정의됩니다.
+    -   **`context-factory.ts`**: **`PluginContext` 생성의 유일한 책임자**입니다. `vrmManager`와 같은 핵심 모듈을 인자로 받아, `Actions`와 `SystemControls`의 실제 구현을 포함하는 완전한 `PluginContext` 객체를 생성하여 반환합니다. API의 실제 구현 코드를 찾고 싶다면 이 파일을 확인해야 합니다.
 -   **`plugins/`**: 애플리케이션의 기본 행동(자동 눈 깜빡임, 자동 고개 돌리기 등)을 제공하는 **코어 플러그인**들이 위치합니다. 이 플러그인들은 사용자가 만드는 모드와 동일한 `IPlugin` 인터페이스와 `PluginContext`를 사용하여 만들어집니다.
--   **`plugin-manager.ts`**: 모든 플러그인(코어 플러그인, 사용자 모드)의 생명주기를 관리합니다. 플러그인을 등록하고, 매 프레임 `update`를 호출하며, `PluginContext`를 생성하여 플러그인에 주입하는 중요한 역할을 합니다.
+-   **`plugin-manager.ts`**: 모든 플러그인(코어 플러그인, 사용자 모드)의 생명주기를 관리합니다. 플러그인을 등록하고, 매 프레임 `update`를 호출하며, `context-factory.ts`로부터 생성된 `PluginContext`를 플러그인에 주입하는 중요한 역할을 합니다.
 
 ### `src/core/` - 핵심 유틸리티 및 엔진
 

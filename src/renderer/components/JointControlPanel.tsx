@@ -3,7 +3,8 @@ import { VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
 import * as THREE from 'three';
 import eventBus from '../../core/event-bus';
 import BoneSlider from './BoneSlider';
-import Panel from './Panel'; // Import the generic Panel component
+import Panel from './Panel';
+import { useAppContext } from '../contexts/AppContext'; // useAppContext 임포트
 
 interface JointControlPanelProps {
   onClose: () => void;
@@ -19,10 +20,11 @@ type BoneInfo = {
 };
 
 const JointControlPanel: React.FC<JointControlPanelProps> = ({ onClose, initialPos, onDragEnd }) => {
+  const { pluginManager } = useAppContext(); // useAppContext 사용
   const [bones, setBones] = useState<BoneInfo[]>([]);
 
   const updateBoneStateFromVrm = useCallback(() => {
-    const vrm = (window as any).currentVrm as VRM | undefined;
+    const vrm = pluginManager?.context.vrmManager?.currentVrm; // pluginManager를 통해 vrm에 접근
     if (!vrm) {
       setBones([]);
       return;
@@ -39,23 +41,27 @@ const JointControlPanel: React.FC<JointControlPanelProps> = ({ onClose, initialP
       };
     }).filter((b): b is BoneInfo => b !== null);
     setBones(latestBones);
-  }, []);
+  }, [pluginManager]);
 
   useEffect(() => {
-    updateBoneStateFromVrm();
-    const unsubscribe = eventBus.on('vrm:poseApplied', updateBoneStateFromVrm);
+    // 컴포넌트 마운트 시 vrmManager가 준비되었는지 확인 후 상태 업데이트
+    if (pluginManager?.context.vrmManager?.currentVrm) {
+      updateBoneStateFromVrm();
+    }
+
     const unsubscribeLoaded = eventBus.on('vrm:loaded', updateBoneStateFromVrm);
+    const unsubscribePoseApplied = eventBus.on('vrm:poseApplied', updateBoneStateFromVrm);
     const unsubscribeUnloaded = eventBus.on('vrm:unloaded', () => setBones([]));
     
     return () => {
-      unsubscribe();
       unsubscribeLoaded();
+      unsubscribePoseApplied();
       unsubscribeUnloaded();
     };
-  }, [updateBoneStateFromVrm]);
+  }, [pluginManager, updateBoneStateFromVrm]);
 
   const handleSliderChange = useCallback((boneName: VRMHumanBoneName, axis: 'x' | 'y' | 'z', value: number) => {
-    const vrm = (window as any).currentVrm as VRM | undefined;
+    const vrm = pluginManager?.context.vrmManager?.currentVrm;
     if (!vrm) return;
     const boneNode = vrm.humanoid.getNormalizedBoneNode(boneName);
     if (!boneNode) return;
@@ -73,16 +79,18 @@ const JointControlPanel: React.FC<JointControlPanelProps> = ({ onClose, initialP
         }
         return newBones;
     });
-  }, []);
+  }, [pluginManager]);
   
   const resetBone = useCallback((boneName: VRMHumanBoneName) => {
-    const vrm = (window as any).currentVrm as VRM | undefined;
+    const vrm = pluginManager?.context.vrmManager?.currentVrm;
     if (!vrm) return;
     const boneNode = vrm.humanoid.getNormalizedBoneNode(boneName);
     if (!boneNode) return;
+    // Resetting to identity quaternion
     boneNode.quaternion.set(0, 0, 0, 1);
+    vrm.humanoid.getNormalizedBoneNode(boneName)?.updateWorldMatrix(true, true);
     updateBoneStateFromVrm();
-  }, [updateBoneStateFromVrm]);
+  }, [pluginManager, updateBoneStateFromVrm]);
 
   return (
     <Panel title="관절 조절" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>

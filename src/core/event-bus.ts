@@ -3,7 +3,7 @@ import { VRM } from '@pixiv/three-vrm';
 // src/core/event-bus.ts
 export type AppEvents = {
   /** VRM 로드/해제 */
-  'vrm:loaded': { vrm: VRM };
+  'vrm:loaded': { vrm: VRM; expressionNames: string[] };
   'vrm:unloaded': void;
   'vrm:poseApplied': void; // 포즈가 적용되었을 때 발생하는 이벤트
 

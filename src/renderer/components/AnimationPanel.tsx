@@ -11,7 +11,7 @@ interface AnimationPanelProps {
 }
 
 const AnimationPanel: React.FC<AnimationPanelProps> = ({ onClose, initialPos, onDragEnd }) => {
-  const { vrmManager } = useAppContext();
+  const { pluginManager } = useAppContext(); // vrmManager에서 pluginManager로 변경
   const [animationFiles, setAnimationFiles] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,20 +36,13 @@ const AnimationPanel: React.FC<AnimationPanelProps> = ({ onClose, initialPos, on
     fetchAnimations();
   }, [fetchAnimations]);
 
-  const handleAnimationClick = async (fileName: string) => {
-    if (vrmManager) {
-      // Reset to T-Pose before playing a new animation to clear any existing pose.
-      vrmManager.resetToTPose();
-      
-      const result = await vrmManager.loadAndParseFile(`Animation/${fileName}`);
-      if (result?.type === 'animation') {
-        vrmManager.playAnimation(result.data, false);
-      } else {
-        setError(`'${fileName}'은 애니메이션 파일이 아닙니다.`);
-      }
+  const handleAnimationClick = (fileName: string) => {
+    if (pluginManager) {
+      // 표준 Actions 인터페이스를 통해 애니메이션 재생
+      pluginManager.context.actions.playAnimation(`Animation/${fileName}`, false);
     } else {
-      console.error('vrmManager is not available.');
-      setError('VRM 매니저를 찾을 수 없습니다.');
+      console.error('pluginManager is not available.');
+      setError('플러그인 매니저를 찾을 수 없습니다.');
     }
   };
 

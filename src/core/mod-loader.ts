@@ -119,6 +119,9 @@ export class ModLoader {
             setExpression: (expressionName: string, weight: number, duration?: number) => {
               this.sendToRenderer('set-expression', expressionName, weight, duration);
             },
+            setExpressionWeight: (expressionName: string, weight: number) => {
+              this.sendToRenderer('set-expression-weight', expressionName, weight);
+            },
             setPose: (poseName: string) => {
               this.sendToRenderer('set-pose', poseName);
             },
