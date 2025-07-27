@@ -21,6 +21,8 @@
     </style>
   </head>
   <body>
+    <div id="canvas-container"></div>
+    <div id="root"></div>
     <div id="sidebar-container">
       <div id="sidebar">
         <button class="menu-button" id="open-settings">설정</button>
@@ -32,29 +34,6 @@
 
       </div>
     </div>
-    <div id="settings-modal" style="visibility:hidden; opacity:0; transition: opacity 0.3s ease, visibility 0.3s ease; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; height: 400px; background: rgba(20,20,20,0.95); z-index: 2001; padding: 20px; border-radius: 10px; color: #fff; overflow-y: auto; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
-      <button id="close-settings" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">×</button>
-      <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 1.8rem; text-align: center;">챗봇 LLM API 설정</h2>
-      <form id="llm-form" style="display: flex; flex-direction: column; gap: 15px;">
-        <label for="llm-api-key" style="font-size: 1.1rem; color: #ccc;">LLM API 키</label>
-        <input type="text" id="llm-api-key" name="llm-api-key" placeholder="API 키를 입력하세요" required style="padding: 10px; border: 1px solid #444; border-radius: 5px; background-color: #333; color: #eee; font-size: 1rem;" />
-        <button type="submit" style="padding: 12px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1rem; transition: background-color 0.2s ease;">저장</button>
-      </form>
-      <h2 style="margin-top: 20px; margin-bottom: 20px; font-size: 1.8rem; text-align: center;">페르소나 설정</h2>
-      <form id="persona-form" style="display: flex; flex-direction: column; gap: 15px;">
-        <label for="persona-text" style="font-size: 1.1rem; color: #ccc;">페르소나 텍스트</label>
-        <textarea id="persona-text" name="persona-text" rows="5" placeholder="페르소나를 입력하세요" style="padding: 10px; border: 1px solid #444; border-radius: 5px; background-color: #333; color: #eee; font-size: 1rem; resize: vertical;"></textarea>
-        <button type="submit" style="padding: 12px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1rem; transition: background-color 0.2s ease;">저장</button>
-        <button type="button" id="load-persona-file-button" style="padding: 12px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1rem; transition: background-color 0.2s ease;">파일에서 불러오기</button>
-      </form>
-      <h2 style="margin-top: 20px; margin-bottom: 20px; font-size: 1.8rem; text-align: center;">배경 설정</h2>
-      <form id="background-form" style="display: flex; flex-direction: column; gap: 15px;">
-        <label for="background-color-picker" style="font-size: 1.1rem; color: #ccc;">배경 색상</label>
-        <input type="color" id="background-color-picker" name="background-color-picker" value="#36393f" style="width: 100%; height: 40px; border: none; padding: 0;" />
-      </form>
-      <div id="save-message" style="display:none; color:lightgreen; margin-top:15px; font-size: 0.9rem; text-align: center;">저장되었습니다!</div>
-    </div>
-    <div id="settings-modal-overlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.2); pointer-events: none;"></div>
     
     
     <div class="control-panel" id="joint-control-panel">

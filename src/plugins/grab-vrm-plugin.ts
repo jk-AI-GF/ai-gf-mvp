@@ -76,6 +76,11 @@ export class GrabVrmPlugin implements IPlugin {
       document.addEventListener('mousemove', this.onMouseMove);
       document.addEventListener('mouseup', this.onMouseUp, { once: true }); // `once` ensures it's automatically removed
 
+      // 4. Animate to grabbed
+      
+      this.context.actions.setPose("pose_grabbed.vrma")
+      this.context.actions.showMessage("으악!")
+
       console.log('[GrabVrmPlugin] Started dragging character.');
       
       // Disable orbit controls to prevent camera movement while dragging
@@ -109,6 +114,9 @@ export class GrabVrmPlugin implements IPlugin {
     if (!this.isDragging) return;
     
     this.isDragging = false;
+
+    // Animate to Stand
+    this.context.actions.setPose("pose_stand_001.vrma")
 
     document.removeEventListener('mousemove', this.onMouseMove);
     // No need to remove mouseup listener if `once: true` is used, but doesn't hurt to be explicit

@@ -1,4 +1,3 @@
-import { SettingsService } from './settings-service';
 import { ChatService } from './chat-service';
 import { makePanelsDraggable } from './draggable-panels';
 import { createJointSliders, createExpressionSliders, createMeshList, createModList, toggleVrmMeshVisibility } from './ui-manager';
@@ -54,11 +53,6 @@ function createPluginList() {
 
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Initialize services
-  const settingsService = new SettingsService();
-  await settingsService.loadInitialSettings();
-  settingsService.setupEventListeners();
-
   new ChatService(); // This will handle all chat functionality
 
   // Make control panels draggable
@@ -67,27 +61,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // UI Panel Logic
   document.getElementById('quit-app-button')!.onclick = () => (window as any).electronAPI.quitApp();
   
-  document.getElementById('open-settings')!.onclick = () => {
-    const settingsModal = document.getElementById('settings-modal') as HTMLDivElement;
-    const settingsOverlay = document.getElementById('settings-modal-overlay') as HTMLDivElement;
-    settingsModal.style.display = 'block';
-    settingsModal.style.visibility = 'visible';
-    settingsModal.style.opacity = '1';
-    settingsOverlay.style.display = 'block';
-    settingsOverlay.style.pointerEvents = 'auto';
-  };
-  document.getElementById('close-settings')!.onclick = () => {
-    const settingsModal = document.getElementById('settings-modal') as HTMLDivElement;
-    const settingsOverlay = document.getElementById('settings-modal-overlay') as HTMLDivElement;
-    settingsModal.style.opacity = '0';
-    settingsModal.style.visibility = 'hidden';
-    settingsOverlay.style.display = 'none';
-    settingsOverlay.style.pointerEvents = 'none';
-    // Give time for the transition to complete before setting display to 'none'
-    setTimeout(() => {
-      settingsModal.style.display = 'none';
-    }, 300); // Matches the transition duration
-  };
   document.getElementById('open-joint-control')!.onclick = () => {
     const jointControlPanel = document.getElementById('joint-control-panel') as HTMLDivElement;
     if (jointControlPanel.style.display === 'block') {

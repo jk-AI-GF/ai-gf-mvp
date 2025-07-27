@@ -30,7 +30,7 @@ export class AutoLookAtPlugin implements IPlugin {
         this.lastChangeTime = currentTime;
         this.setNextChangeInterval();
 
-        const targets = ['camera', 'mouse']; //null 임시 제거 
+        const targets = ['camera', 'mouse', null]; //null 임시 제거 
         const randomIndex = Math.floor(Math.random() * targets.length);
         const selectedTargetType = targets[randomIndex];
 

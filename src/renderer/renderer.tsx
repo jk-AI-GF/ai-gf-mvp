@@ -180,7 +180,8 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 setClearColor(renderer, 0x000000);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.shadowMap.enabled = true;
-document.body.appendChild(renderer.domElement);
+const canvasContainer = document.getElementById('canvas-container');
+canvasContainer.appendChild(renderer.domElement);
 
 window.addEventListener('resize', () => onWindowResize(camera, renderer));
 
@@ -367,4 +368,18 @@ window.setMasterVolume = setMasterVolume;
 window.appendMessage = appendMessage;
 window.toggleTts = toggleTts;
 
+// --- React Integration ---
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+
+const rootElement = document.getElementById('root');
+if (rootElement) {
+  const root = ReactDOM.createRoot(rootElement);
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+}
 

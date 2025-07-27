@@ -222,3 +222,29 @@ body {
 #chat-form button:hover {
   background: #0056b3;
 }
+
+/* --- Main Layout Containers --- */
+#canvas-container, #root {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#canvas-container {
+  z-index: 1;
+}
+
+#root {
+  /* Ensure React UI is on top of the canvas */
+  z-index: 2; 
+  
+  /* Pass mouse events through the root container... */
+  pointer-events: none;
+}
+
+/* ...but enable them for actual UI elements inside the root. */
+#root > * {
+  pointer-events: auto;
+}

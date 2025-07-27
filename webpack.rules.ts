@@ -22,9 +22,9 @@ export const rules: Required<ModuleOptions>['rules'] = [
     test: /\.tsx?$/,
     exclude: /(node_modules|\.webpack)/,
     use: {
-      loader: 'ts-loader',
+      loader: 'babel-loader',
       options: {
-        transpileOnly: true,
+        presets: ['@babel/preset-react', '@babel/preset-typescript'],
       },
     },
   },
