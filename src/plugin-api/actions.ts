@@ -51,13 +51,8 @@ export interface Actions {
    * 애플리케이션의 배경 이미지를 변경합니다.
    * @param imagePath userdata/mods/{mod_name}/assets/ 폴더 기준의 상대 경로 또는 전체 URL
    */
-  changeBackground(imagePath: string): void;
-
-  /**
-   * ContextStore에서 키에 해당하는 값을 가져옵니다.
-   * @param key 가져올 데이터의 키
-   * @returns 저장된 값. 키가 없으면 undefined를 반환합니다.
-   */
-  getContext(key: string): any;
+  changeBackground: (imagePath: string) => void;
+  getContext: (key: string) => Promise<any>;
+  speak: (text: string) => void;
 }
 

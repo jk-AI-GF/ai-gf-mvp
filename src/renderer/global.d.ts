@@ -1,49 +1,32 @@
-import { VRM, VRMExpression, VRMNormalizedPose } from '@pixiv/three-vrm';
+import { VRM, VRMExpression, VRMHumanBoneName, VRMNormalizedPose } from '@pixiv/three-vrm';
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { PluginManager } from '../plugins/plugin-manager';
-import { VRMManager } from './vrm-manager'; // VRMManager import 추가
+import { VRMManager } from './vrm-manager';
+import { PluginContext } from '../plugin-api/plugin-context';
+import { CharacterState } from '../core/character-state';
+import { TypedEventBus, AppEvents } from '../core/event-bus';
 
 declare global {
   interface Window {
-    // --- Refactored ---
-    vrmManager: VRMManager; // vrmManager 추가
+    // --- Debug ---
+    vrmManager: VRMManager;
     pluginManager: PluginManager;
+    pluginContext: PluginContext;
+    scene: THREE.Scene;
+    camera: THREE.PerspectiveCamera;
+    controls: OrbitControls;
+    THREE: typeof THREE;
 
-    // --- UI Interaction Functions ---
-    animateExpression: (expressionName: string, targetWeight: number, duration: number) => void;
-    animateExpressionAdditive: (expressionName: string, targetWeight: number, duration: number) => void;
-    loadAnimationFile: (url: string, options?: { loop?: boolean; crossFadeDuration?: number }) => Promise<void>;
+    // --- Legacy / To be refactored ---
+    // These are kept for transitional purposes and should be removed eventually.
     appendMessage: (role: string, text: string) => void;
     sendChatMessage: (message: string) => Promise<void>;
-    
-    // --- UI Creation/Update Functions ---
-    updateJointSliders: () => void;
-    createJointSliders: () => void;
-    createExpressionSliders: () => void;
-    createMeshList: () => void;
-    createPluginList: () => void;
-    createModList: () => void;
-    get3DPointFromMouse: () => THREE.Vector3;
-
-    // --- System & Device Controls ---
-    playTTS: (text: string) => Promise<void>;
-    setClearColor: (color: number) => void;
-    toggleCameraMode: () => void;
-    toggleTts: (enable: boolean) => void;
-    setMasterVolume: (volume: number) => void;
-    
-    // --- Data & State ---
+    currentVrm: VRM | null;
     mousePosition: { x: number; y: number };
-    floatingMessages: { element: HTMLDivElement; timestamp: number; }[];
-    vrmExpressionList: string[];
-    expressionMap: { [key: string]: VRMExpression };
-    personaText: string;
-
-    // --- VRM specific direct access (should be minimized) ---
-    listVrmMeshes: () => string[];
-    toggleVrmMeshVisibility: (meshName: string, visible: boolean) => void;
-    currentVrm: VRM | null; // Still needed for some Plugins/UI parts
-
+    setMasterVolume: (volume: number) => void;
+    toggleTts: (enable: boolean) => void;
+    
     // --- Electron API ---
     electronAPI: {
       quitApp: () => void;
@@ -61,10 +44,11 @@ declare global {
       on: (channel: string, listener: (...args: any[]) => void) => () => void;
       send: (channel: string, ...args: any[]) => void;
       invoke: (channel: string, ...args: any[]) => Promise<any>;
-      // --- Mod Management ---
       getAllMods: () => Promise<{ name: string; version: string; path: string; }[]>;
       getModSettings: () => Promise<Record<string, boolean>>;
       setModEnabled: (modName: string, isEnabled: boolean) => Promise<{ success: boolean }>;
     };
   }
 }
+
+export {};

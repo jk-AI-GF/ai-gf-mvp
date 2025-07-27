@@ -151,6 +151,9 @@ export class ModLoader {
             getContext: (key: string): any => {
               return this.contextStore.get(key);
             },
+            speak: (text: string) => {
+              this.sendToRenderer('speak', text);
+            },
           },
           system: {
             toggleTts: (enable: boolean) => {

@@ -80,16 +80,17 @@ export class ProactiveDialoguePlugin implements IPlugin {
 
     // window.appendMessage 함수를 사용하여 말풍선을 띄웁니다.
     if (this.context.actions) {
-      this.context.actions.showMessage(phrase);
+      this.speak(phrase);
     } else {
       console.warn('Actions object not set. Cannot display dialogue.');
     }
+  }
 
-    // window.playTTS 함수를 사용하여 음성을 재생합니다.
-    if (window.playTTS) {
-      window.playTTS(phrase);
-    } else {
-      console.warn('window.playTTS is not defined. Cannot play TTS.');
-    }
+  private speak(phrase: string) {
+    // Show the message in the floating message UI
+    this.context.actions.showMessage(phrase);
+    
+    // Use the context action to play TTS
+    this.context.actions.speak(phrase);
   }
 }
