@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import TopMenu from './components/TopMenu';
 import SettingsModal from './components/SettingsModal';
 import JointControlPanel from './components/JointControlPanel';
@@ -14,6 +14,7 @@ import LightPanel from './components/LightPanel';
 import Chat from './components/Chat';
 import CameraControl from './components/CameraControl';
 import FloatingMessageManager from './components/FloatingMessageManager';
+import UIModeNotification from './components/UIModeNotification';
 import eventBus from '../core/event-bus';
 import { useAppContext } from './contexts/AppContext';
 
@@ -35,6 +36,8 @@ const App: React.FC = () => {
   const [isMaterialPanelOpen, setMaterialPanelOpen] = useState(false);
   const [isLightPanelOpen, setLightPanelOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
+  const [notification, setNotification] = useState({ show: false, message: '' });
+  const isInitialMount = useRef(true);
 
   useEffect(() => {
     const handleNewMessage = (message: Message) => {
@@ -46,6 +49,18 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    const message = isUiInteractive ? 'UI Interaction Enabled' : 'UI Interaction Disabled (Mouse Ignored)';
+    setNotification({ show: true, message });
+
+    const timer = setTimeout(() => {
+      setNotification((prev) => ({ ...prev, show: false }));
+    }, 2000);
+
     if (!isUiInteractive) {
       setSettingsModalOpen(false);
       setJointPanelOpen(false);
@@ -58,6 +73,8 @@ const App: React.FC = () => {
       setMaterialPanelOpen(false);
       setLightPanelOpen(false);
     }
+
+    return () => clearTimeout(timer);
   }, [isUiInteractive]);
 
   const handleSendMessage = (text: string) => {
@@ -92,6 +109,8 @@ const App: React.FC = () => {
 
   return (
     <div>
+      <UIModeNotification isVisible={notification.show} message={notification.message} />
+      
       {isUiInteractive && (
         <>
           <TopMenu
