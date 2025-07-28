@@ -44,6 +44,13 @@ declare global {
       on: (channel: string, listener: (...args: any[]) => void) => () => void;
       send: (channel: string, ...args: any[]) => void;
       invoke: (channel: string, ...args: any[]) => Promise<any>;
+      // --- Settings ---
+      setWindowOpacity: (opacity: number) => void;
+      getWindowOpacity: () => Promise<number>;
+      getSettings: () => Promise<{ apiKey: string; persona: string }>;
+      setApiKey: (apiKey: string) => void;
+      setPersona: (persona: string) => void;
+      // --- Mod Management ---
       getAllMods: () => Promise<{ name: string; version: string; path: string; }[]>;
       getModSettings: () => Promise<Record<string, boolean>>;
       setModEnabled: (modName: string, isEnabled: boolean) => Promise<{ success: boolean }>;

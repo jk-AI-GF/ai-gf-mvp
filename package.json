@@ -55,6 +55,7 @@
     "@pixiv/three-vrm-animation": "^3.4.2",
     "@types/three": "^0.178.1",
     "electron-squirrel-startup": "^1.0.1",
+    "electron-store": "^8.1.0",
     "mime": "^4.0.7",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

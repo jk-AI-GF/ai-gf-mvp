@@ -29,6 +29,12 @@ import { ipcRenderer } from 'electron';
   invoke: (channel: string, ...args: any[]) => {
     return ipcRenderer.invoke(channel, ...args);
   },
+  // --- Settings ---
+  setWindowOpacity: (opacity: number) => ipcRenderer.send('set-window-opacity', opacity),
+  getWindowOpacity: () => ipcRenderer.invoke('get-window-opacity'),
+  getSettings: () => ipcRenderer.invoke('get-settings'),
+  setApiKey: (apiKey: string) => ipcRenderer.send('set-api-key', apiKey),
+  setPersona: (persona: string) => ipcRenderer.send('set-persona', persona),
   // --- Mod Management ---
   getAllMods: () => ipcRenderer.invoke('get-all-mods'),
   getModSettings: () => ipcRenderer.invoke('get-mod-settings'),

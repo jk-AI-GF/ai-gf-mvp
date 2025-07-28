@@ -1,11 +1,28 @@
 import { app, BrowserWindow, Tray, Menu, globalShortcut, dialog, session, ipcMain, screen } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
+import Store from 'electron-store';
 import { ModLoader } from '../core/mod-loader';
 import { createEventBus, AppEvents } from '../core/event-bus';
 import { TriggerEngine } from '../core/trigger-engine';
 import { ContextStore } from '../core/context-store';
 import { ModSettingsManager } from '../core/mod-settings-manager';
+
+// Define the schema for electron-store
+interface StoreSchema {
+  windowOpacity: number;
+  apiKey: string;
+  persona: string;
+}
+
+// ❸ Store 인스턴스 생성
+const store = new Store<StoreSchema>({
+  defaults: {
+    windowOpacity: 1.0,
+    apiKey:        '',
+    persona:       '당신은 친절하고 상냥한 AI 여자친구입니다. 항상 사용자에게 긍정적이고 다정한 태도로 대화에 임해주세요.',
+  }
+});
 
 process.on('uncaughtException', (error) => {
   const message = error.stack || error.message || 'Unknown error';
@@ -163,8 +180,40 @@ app.on('ready', async () => {
   });
 
   createWindow();
+  
+  // Restore and set window opacity
+  const initialOpacity = store.get('windowOpacity', 1.0);
+  mainWindow.setOpacity(initialOpacity);
+
   createOverlayWindow(); // Create both windows on startup
   createTray();
+
+  // --- IPC Handlers for Settings ---
+  ipcMain.on('set-window-opacity', (event, opacity: number) => {
+    if (mainWindow) {
+      mainWindow.setOpacity(opacity);
+      store.set('windowOpacity', opacity);
+    }
+  });
+
+  ipcMain.handle('get-window-opacity', () => {
+    return store.get('windowOpacity', 1.0);
+  });
+
+  ipcMain.handle('get-settings', () => {
+    return {
+      apiKey: store.get('apiKey', ''),
+      persona: store.get('persona', ''),
+    };
+  });
+
+  ipcMain.on('set-api-key', (event, apiKey: string) => {
+    store.set('apiKey', apiKey);
+  });
+
+  ipcMain.on('set-persona', (event, persona: string) => {
+    store.set('persona', persona);
+  });
 
   // Initialize core components
   const eventBus = createEventBus<AppEvents>();
