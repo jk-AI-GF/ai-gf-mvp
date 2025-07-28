@@ -1,8 +1,6 @@
 .chatContainer {
     position: fixed;
     bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
     width: 600px;
     max-width: 90vw;
     z-index: 1000;
@@ -12,16 +10,52 @@
     color: white;
     box-shadow: 0 -2px 20px rgba(0,0,0,0.2);
     backdrop-filter: blur(5px);
+    transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+    cursor: grab;
+  }
+  
+  .chatContainer:active {
+    cursor: grabbing;
+  }
+
+  .chatHeader {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+  
+  .toggleButton {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background-color 0.2s;
+  }
+
+  .toggleButton:hover {
+    background: rgba(255, 255, 255, 0.2);
   }
   
   .messages {
-    height: 180px;
-    overflow-y: auto;
-    margin-bottom: 12px;
-    padding-right: 10px;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out, margin-bottom 0.4s ease-in-out;
+    margin-bottom: 0;
+  }
+
+  .messages.expanded {
+    max-height: 180px;
+    opacity: 1;
+    overflow-y: auto;
+    margin-bottom: 12px;
+    padding-right: 10px; /* Add padding for scrollbar */
   }
   
   .message {

@@ -127,9 +127,9 @@ const App: React.FC = () => {
             onOpenMaterialPanel={() => setMaterialPanelOpen((prev) => !prev)}
             onOpenLightPanel={() => setLightPanelOpen((prev) => !prev)}
           />
-          <Chat messages={chatMessages} onSendMessage={handleSendMessage} />
         </>
       )}
+      <Chat messages={chatMessages} onSendMessage={handleSendMessage} />
 
       <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setSettingsModalOpen(false)} />
 

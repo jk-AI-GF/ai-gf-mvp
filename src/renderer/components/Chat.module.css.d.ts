@@ -4,11 +4,14 @@ interface CssExports {
   'assistant': string;
   'button': string;
   'chatContainer': string;
+  'chatHeader': string;
+  'expanded': string;
   'form': string;
   'input': string;
   'message': string;
   'messages': string;
   'system': string;
+  'toggleButton': string;
   'user': string;
 }
 export const cssExports: CssExports;

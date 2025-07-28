@@ -9,9 +9,10 @@ interface DraggableOptions {
   handleRef: React.RefObject<HTMLElement>;
   initialPos?: Position;
   onDragEnd?: (pos: Position) => void;
+  axis?: 'x' | 'y' | 'both';
 }
 
-export const useDraggable = ({ handleRef, initialPos, onDragEnd }: DraggableOptions) => {
+export const useDraggable = ({ handleRef, initialPos, onDragEnd, axis = 'both' }: DraggableOptions) => {
   const [position, setPosition] = useState(initialPos || { x: 0, y: 0 });
   const isDragging = useRef(false);
   const offset = useRef({ x: 0, y: 0 });
@@ -29,12 +30,13 @@ export const useDraggable = ({ handleRef, initialPos, onDragEnd }: DraggableOpti
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (isDragging.current) {
-      setPosition({
-        x: e.clientX - offset.current.x,
-        y: e.clientY - offset.current.y,
-      });
+      const newPos = {
+        x: axis === 'y' ? position.x : e.clientX - offset.current.x,
+        y: axis === 'x' ? position.y : e.clientY - offset.current.y,
+      };
+      setPosition(newPos);
     }
-  }, []);
+  }, [axis, position.x, position.y]);
 
   const handleMouseUp = useCallback(() => {
     if (isDragging.current) {
@@ -64,7 +66,9 @@ export const useDraggable = ({ handleRef, initialPos, onDragEnd }: DraggableOpti
 
   // Update position if initialPos changes (e.g. from parent state)
   useEffect(() => {
-    setPosition(initialPos || { x: 0, y: 0 });
+    if (initialPos) {
+      setPosition(initialPos);
+    }
   }, [initialPos]);
 
 
