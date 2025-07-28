@@ -1,0 +1,37 @@
+.content {
+  padding: 15px;
+  min-width: 300px;
+  box-sizing: border-box;
+}
+
+.emptyMessage {
+  color: #aaa;
+  text-align: center;
+  padding: 20px;
+}
+
+.controlRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.controlRow label {
+  margin-right: 10px;
+  white-space: nowrap;
+  flex-shrink: 0; /* 레이블 너비가 줄어들지 않도록 설정 */
+}
+
+.controlRow input[type="range"] {
+  flex-grow: 1;
+  margin: 0 10px;
+  /* 슬라이더가 너무 커지지 않도록 최대 너비 제한 (옵션) */
+  max-width: 150px; 
+}
+
+.controlRow span {
+  min-width: 40px; /* 숫자 표시 영역의 최소 너비 확보 */
+  text-align: right;
+  flex-shrink: 0; /* 숫자 영역 너비가 줄어들지 않도록 설정 */
+}
