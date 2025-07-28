@@ -165,6 +165,14 @@ app.on('ready', async () => {
   createWindow();
   createOverlayWindow(); // Create both windows on startup
   createTray();
+
+  // Initialize core components
+  const eventBus = createEventBus<AppEvents>();
+  const triggerEngine = new TriggerEngine();
+  const contextStore = new ContextStore();
+  const modSettingsManager = new ModSettingsManager(app.getPath('userData'));
+  await modSettingsManager.loadSettings(); // Load settings before initializing mods
+
   globalShortcut.register('CommandOrControl+Shift+T', () => {
     toggleOverlayWindow();
   });
@@ -180,6 +188,9 @@ app.on('ready', async () => {
         mainWindow.focus();
       }
 
+      // Store the current state in ContextStore for plugins to access
+      contextStore.set('system:isIgnoringMouseEvents', isIgnoringMouseEvents);
+
       // Emit event and show message regardless of state
       eventBus.emit('system:mouse-ignore-toggle', isIgnoringMouseEvents);
       const message = isIgnoringMouseEvents ? '클릭 통과 활성' : '클릭 통과 비활성';
@@ -192,21 +203,14 @@ app.on('ready', async () => {
   // This handler forces a style re-evaluation to keep the window frameless.
   mainWindow.on('blur', () => {
     console.log('[DEBUG] MainWindow lost focus (blur event triggered).');
-    // Use a minimal timeout to ensure this runs after Windows' own redraw attempt.
-    setTimeout(() => {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        console.log('[DEBUG] Re-applying alwaysOnTop to prevent title bar.');
-        mainWindow.setAlwaysOnTop(true, 'screen-saver');
-      }
-    }, 16); // A delay of ~1 frame.
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      console.log('[DEBUG] Force-redrawing window by hiding and showing.');
+      mainWindow.hide();
+      mainWindow.show();
+      // Re-apply alwaysOnTop as an extra measure.
+      mainWindow.setAlwaysOnTop(true, 'screen-saver');
+    }
   });
-
-  // Initialize core components
-  const eventBus = createEventBus<AppEvents>();
-  const triggerEngine = new TriggerEngine();
-  const contextStore = new ContextStore();
-  const modSettingsManager = new ModSettingsManager(app.getPath('userData'));
-  await modSettingsManager.loadSettings(); // Load settings before initializing mods
 
   const modLoader = new ModLoader(
     app.getPath('userData'),
