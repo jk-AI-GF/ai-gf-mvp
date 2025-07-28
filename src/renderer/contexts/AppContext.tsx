@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import * as THREE from 'three';
 import VRMCanvas from '../components/scene/VRMCanvas';
 import { VRMManager } from '../vrm-manager';
@@ -11,6 +11,7 @@ interface AppContextType {
   chatService: ChatService | null;
   directionalLight: THREE.DirectionalLight | null;
   ambientLight: THREE.AmbientLight | null;
+  isUiInteractive: boolean;
   setDirectionalLight: (light: THREE.DirectionalLight) => void;
   setAmbientLight: (light: THREE.AmbientLight) => void;
 }
@@ -31,6 +32,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [chatService, setChatService] = useState<ChatService | null>(null);
   const [directionalLight, setDirectionalLight] = useState<THREE.DirectionalLight | null>(null);
   const [ambientLight, setAmbientLight] = useState<THREE.AmbientLight | null>(null);
+  const [isUiInteractive, setUiInteractive] = useState(true);
+
+  useEffect(() => {
+    const handleUiModeChange = (isInteractive: boolean) => {
+      setUiInteractive(isInteractive);
+    };
+    const unsubscribe = window.electronAPI.on('set-ui-interactive-mode', handleUiModeChange);
+    return () => unsubscribe();
+  }, []);
 
   const handleManagersLoad = useCallback((managers: { vrmManager: VRMManager; pluginManager: PluginManager }) => {
     setVrmManager(managers.vrmManager);
@@ -44,6 +54,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     chatService,
     directionalLight,
     ambientLight,
+    isUiInteractive,
     setDirectionalLight,
     setAmbientLight,
   };

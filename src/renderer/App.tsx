@@ -10,12 +10,11 @@ import ModManagementPanel from './components/ModManagementPanel';
 import PosePanel from './components/PosePanel';
 import AnimationPanel from './components/AnimationPanel';
 import MaterialPanel from './components/MaterialPanel';
-import LightPanel from './components/LightPanel'; // Import LightPanel
+import LightPanel from './components/LightPanel';
 import Chat from './components/Chat';
 import CameraControl from './components/CameraControl';
 import FloatingMessageManager from './components/FloatingMessageManager';
 import eventBus from '../core/event-bus';
-
 import { useAppContext } from './contexts/AppContext';
 
 interface Message {
@@ -24,7 +23,7 @@ interface Message {
 }
 
 const App: React.FC = () => {
-  const { chatService } = useAppContext();
+  const { chatService, isUiInteractive } = useAppContext();
   const [isSettingsModalOpen, setSettingsModalOpen] = useState(false);
   const [isJointPanelOpen, setJointPanelOpen] = useState(false);
   const [isExpressionPanelOpen, setExpressionPanelOpen] = useState(false);
@@ -34,30 +33,41 @@ const App: React.FC = () => {
   const [isPosePanelOpen, setPosePanelOpen] = useState(false);
   const [isAnimationPanelOpen, setAnimationPanelOpen] = useState(false);
   const [isMaterialPanelOpen, setMaterialPanelOpen] = useState(false);
-  const [isLightPanelOpen, setLightPanelOpen] = useState(false); // State for LightPanel
-  
+  const [isLightPanelOpen, setLightPanelOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
 
   useEffect(() => {
     const handleNewMessage = (message: Message) => {
-      setChatMessages(prev => [...prev, message]);
+      setChatMessages((prev) => [...prev, message]);
     };
-
     const unsubscribe = eventBus.on('chat:newMessage', handleNewMessage);
 
-    return () => {
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!isUiInteractive) {
+      setSettingsModalOpen(false);
+      setJointPanelOpen(false);
+      setExpressionPanelOpen(false);
+      setPluginsPanelOpen(false);
+      setMeshPanelOpen(false);
+      setModManagementPanelOpen(false);
+      setPosePanelOpen(false);
+      setAnimationPanelOpen(false);
+      setMaterialPanelOpen(false);
+      setLightPanelOpen(false);
+    }
+  }, [isUiInteractive]);
 
   const handleSendMessage = (text: string) => {
     if (chatService) {
       const savedPersona = localStorage.getItem('userPersona');
-      const currentPersona = savedPersona || "You are a friendly and helpful AI assistant. Please respond in Korean.";
+      const currentPersona = savedPersona || 'You are a friendly and helpful AI assistant. Please respond in Korean.';
       chatService.sendChatMessage(text, currentPersona);
     } else {
       console.error('Chat service is not initialized.');
-      setChatMessages(prev => [...prev, { role: 'system', text: '오류: 채팅 서비스가 초기화되지 않았습니다.' }]);
+      setChatMessages((prev) => [...prev, { role: 'system', text: '오류: 채팅 서비스가 초기화되지 않았습니다.' }]);
     }
   };
 
@@ -70,11 +80,11 @@ const App: React.FC = () => {
     pose: { x: window.innerWidth - 370, y: 70 },
     animation: { x: window.innerWidth - 370, y: 70 },
     material: { x: 20, y: 400 },
-    light: { x: 350, y: 400 }, // Position for LightPanel
+    light: { x: 350, y: 400 },
   });
 
-  const handlePanelDrag = (panelId: keyof typeof panelPositions, pos: { x: number, y: number }) => {
-    setPanelPositions(prev => ({
+  const handlePanelDrag = (panelId: keyof typeof panelPositions, pos: { x: number; y: number }) => {
+    setPanelPositions((prev) => ({
       ...prev,
       [panelId]: pos,
     }));
@@ -82,25 +92,27 @@ const App: React.FC = () => {
 
   return (
     <div>
-      <TopMenu 
-        onOpenPosePanel={() => setPosePanelOpen(prev => !prev)}
-        onOpenAnimationPanel={() => setAnimationPanelOpen(prev => !prev)}
-      />
-      <Sidebar
-        onOpenSettings={() => setSettingsModalOpen(prev => !prev)}
-        onOpenJointControl={() => setJointPanelOpen(prev => !prev)}
-        onOpenExpressionPanel={() => setExpressionPanelOpen(prev => !prev)}
-        onOpenPluginsPanel={() => setPluginsPanelOpen(prev => !prev)}
-        onOpenMeshPanel={() => setMeshPanelOpen(prev => !prev)}
-        onOpenModManagementPanel={() => setModManagementPanelOpen(prev => !prev)}
-        onOpenMaterialPanel={() => setMaterialPanelOpen(prev => !prev)}
-        onOpenLightPanel={() => setLightPanelOpen(prev => !prev)} // Pass handler to Sidebar
-      />
+      {isUiInteractive && (
+        <>
+          <TopMenu
+            onOpenPosePanel={() => setPosePanelOpen((prev) => !prev)}
+            onOpenAnimationPanel={() => setAnimationPanelOpen((prev) => !prev)}
+          />
+          <Sidebar
+            onOpenSettings={() => setSettingsModalOpen((prev) => !prev)}
+            onOpenJointControl={() => setJointPanelOpen((prev) => !prev)}
+            onOpenExpressionPanel={() => setExpressionPanelOpen((prev) => !prev)}
+            onOpenPluginsPanel={() => setPluginsPanelOpen((prev) => !prev)}
+            onOpenMeshPanel={() => setMeshPanelOpen((prev) => !prev)}
+            onOpenModManagementPanel={() => setModManagementPanelOpen((prev) => !prev)}
+            onOpenMaterialPanel={() => setMaterialPanelOpen((prev) => !prev)}
+            onOpenLightPanel={() => setLightPanelOpen((prev) => !prev)}
+          />
+          <Chat messages={chatMessages} onSendMessage={handleSendMessage} />
+        </>
+      )}
 
-      <SettingsModal 
-        isOpen={isSettingsModalOpen} 
-        onClose={() => setSettingsModalOpen(false)} 
-      />
+      <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setSettingsModalOpen(false)} />
 
       {isJointPanelOpen && <JointControlPanel onClose={() => setJointPanelOpen(false)} initialPos={panelPositions.joint} onDragEnd={(pos) => handlePanelDrag('joint', pos)} />}
       {isExpressionPanelOpen && <ExpressionPanel onClose={() => setExpressionPanelOpen(false)} initialPos={panelPositions.expression} onDragEnd={(pos) => handlePanelDrag('expression', pos)} />}
@@ -111,7 +123,7 @@ const App: React.FC = () => {
       {isAnimationPanelOpen && <AnimationPanel onClose={() => setAnimationPanelOpen(false)} initialPos={panelPositions.animation} onDragEnd={(pos) => handlePanelDrag('animation', pos)} />}
       {isMaterialPanelOpen && <MaterialPanel onClose={() => setMaterialPanelOpen(false)} initialPos={panelPositions.material} onDragEnd={(pos) => handlePanelDrag('material', pos)} />}
       {isLightPanelOpen && <LightPanel onClose={() => setLightPanelOpen(false)} initialPos={panelPositions.light} onDragEnd={(pos) => handlePanelDrag('light', pos)} />}
-      <Chat messages={chatMessages} onSendMessage={handleSendMessage} />
+      
       <CameraControl />
       <FloatingMessageManager />
     </div>

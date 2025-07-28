@@ -173,6 +173,13 @@ app.on('ready', async () => {
   const modSettingsManager = new ModSettingsManager(app.getPath('userData'));
   await modSettingsManager.loadSettings(); // Load settings before initializing mods
 
+  // Bridge events from the main process event bus to the renderer process
+  eventBus.on('system:mouse-ignore-toggle', (isIgnoring) => {
+    if (mainWindow) {
+      mainWindow.webContents.send('set-ui-interactive-mode', !isIgnoring);
+    }
+  });
+
   globalShortcut.register('CommandOrControl+Shift+T', () => {
     toggleOverlayWindow();
   });
@@ -203,7 +210,7 @@ app.on('ready', async () => {
   // This handler forces a style re-evaluation to keep the window frameless.
   mainWindow.on('blur', () => {
     console.log('[DEBUG] MainWindow lost focus (blur event triggered).');
-    if (mainWindow && !mainWindow.isDestroyed()) {
+    if (mainWindow && !mainWindow.isDestroyed() && isIgnoringMouseEvents) {
       console.log('[DEBUG] Force-redrawing window by hiding and showing.');
       mainWindow.hide();
       mainWindow.show();
