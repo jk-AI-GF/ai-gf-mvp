@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { onWindowResize } from '../../scene-utils';
+import { useAppContext } from '../../contexts/AppContext';
 
 interface SceneProps {
   onLoad: (instances: {
@@ -15,6 +16,7 @@ interface SceneProps {
 
 const Scene: React.FC<SceneProps> = ({ onLoad }) => {
   const mountRef = useRef<HTMLDivElement>(null);
+  const { setDirectionalLight, setAmbientLight } = useAppContext();
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -45,9 +47,11 @@ const Scene: React.FC<SceneProps> = ({ onLoad }) => {
     light.shadow.mapSize.width = 1024;
     light.shadow.mapSize.height = 1024;
     scene.add(light);
+    setDirectionalLight(light); // Set light in global context
 
     const ambientLight = new THREE.AmbientLight(0x404040, 2);
     scene.add(ambientLight);
+    setAmbientLight(ambientLight); // Set ambient light in global context
 
     // Ground plane
     const planeGeometry = new THREE.PlaneGeometry(10, 10);
@@ -82,7 +86,7 @@ const Scene: React.FC<SceneProps> = ({ onLoad }) => {
       });
       renderer.dispose();
     };
-  }, [onLoad]);
+  }, [onLoad, setDirectionalLight, setAmbientLight]);
 
   return <div ref={mountRef} style={{ position: 'fixed', top: 0, left: 0, zIndex: -1 }} />;
 };

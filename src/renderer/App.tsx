@@ -9,7 +9,8 @@ import MeshControlPanel from './components/MeshControlPanel';
 import ModManagementPanel from './components/ModManagementPanel';
 import PosePanel from './components/PosePanel';
 import AnimationPanel from './components/AnimationPanel';
-import MaterialPanel from './components/MaterialPanel'; // Import MaterialPanel
+import MaterialPanel from './components/MaterialPanel';
+import LightPanel from './components/LightPanel'; // Import LightPanel
 import Chat from './components/Chat';
 import CameraControl from './components/CameraControl';
 import FloatingMessageManager from './components/FloatingMessageManager';
@@ -23,7 +24,7 @@ interface Message {
 }
 
 const App: React.FC = () => {
-  const { chatService } = useAppContext(); // useAppContext로 chatService 가져오기
+  const { chatService } = useAppContext();
   const [isSettingsModalOpen, setSettingsModalOpen] = useState(false);
   const [isJointPanelOpen, setJointPanelOpen] = useState(false);
   const [isExpressionPanelOpen, setExpressionPanelOpen] = useState(false);
@@ -32,7 +33,8 @@ const App: React.FC = () => {
   const [isModManagementPanelOpen, setModManagementPanelOpen] = useState(false);
   const [isPosePanelOpen, setPosePanelOpen] = useState(false);
   const [isAnimationPanelOpen, setAnimationPanelOpen] = useState(false);
-  const [isMaterialPanelOpen, setMaterialPanelOpen] = useState(false); // State for MaterialPanel
+  const [isMaterialPanelOpen, setMaterialPanelOpen] = useState(false);
+  const [isLightPanelOpen, setLightPanelOpen] = useState(false); // State for LightPanel
   
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
 
@@ -67,7 +69,8 @@ const App: React.FC = () => {
     mod: { x: window.innerWidth - 370, y: 70 },
     pose: { x: window.innerWidth - 370, y: 70 },
     animation: { x: window.innerWidth - 370, y: 70 },
-    material: { x: 20, y: 400 }, // Position for MaterialPanel
+    material: { x: 20, y: 400 },
+    light: { x: 350, y: 400 }, // Position for LightPanel
   });
 
   const handlePanelDrag = (panelId: keyof typeof panelPositions, pos: { x: number, y: number }) => {
@@ -90,7 +93,8 @@ const App: React.FC = () => {
         onOpenPluginsPanel={() => setPluginsPanelOpen(prev => !prev)}
         onOpenMeshPanel={() => setMeshPanelOpen(prev => !prev)}
         onOpenModManagementPanel={() => setModManagementPanelOpen(prev => !prev)}
-        onOpenMaterialPanel={() => setMaterialPanelOpen(prev => !prev)} // Pass handler to Sidebar
+        onOpenMaterialPanel={() => setMaterialPanelOpen(prev => !prev)}
+        onOpenLightPanel={() => setLightPanelOpen(prev => !prev)} // Pass handler to Sidebar
       />
 
       <SettingsModal 
@@ -106,6 +110,7 @@ const App: React.FC = () => {
       {isPosePanelOpen && <PosePanel onClose={() => setPosePanelOpen(false)} initialPos={panelPositions.pose} onDragEnd={(pos) => handlePanelDrag('pose', pos)} />}
       {isAnimationPanelOpen && <AnimationPanel onClose={() => setAnimationPanelOpen(false)} initialPos={panelPositions.animation} onDragEnd={(pos) => handlePanelDrag('animation', pos)} />}
       {isMaterialPanelOpen && <MaterialPanel onClose={() => setMaterialPanelOpen(false)} initialPos={panelPositions.material} onDragEnd={(pos) => handlePanelDrag('material', pos)} />}
+      {isLightPanelOpen && <LightPanel onClose={() => setLightPanelOpen(false)} initialPos={panelPositions.light} onDragEnd={(pos) => handlePanelDrag('light', pos)} />}
       <Chat messages={chatMessages} onSendMessage={handleSendMessage} />
       <CameraControl />
       <FloatingMessageManager />

@@ -1,0 +1,43 @@
+.content {
+  padding: 15px;
+  min-width: 320px; /* Increase width for new controls */
+  box-sizing: border-box;
+}
+
+.header {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 1em;
+  font-weight: bold;
+  color: #eee;
+}
+
+.divider {
+  border: 1px solid #444;
+  margin: 20px 0;
+}
+
+.controlRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.controlRow label {
+  margin-right: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.controlRow input[type="range"] {
+  flex-grow: 1;
+  margin: 0 10px;
+  max-width: 150px; 
+}
+
+.controlRow span {
+  min-width: 40px;
+  text-align: right;
+  flex-shrink: 0;
+}
