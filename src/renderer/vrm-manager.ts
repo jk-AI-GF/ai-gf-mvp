@@ -4,7 +4,6 @@ import { VRMLoaderPlugin, VRM, VRMHumanBoneName, VRMPose } from '@pixiv/three-vr
 import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-vrm-animation';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 
-import { get3DPointFromMouse } from './scene-utils';
 import eventBus, { AppEvents, TypedEventBus } from '../core/event-bus';
 
 type ParsedFile = { type: 'pose'; data: THREE.AnimationClip } | { type: 'animation'; data: THREE.AnimationClip } | null;
@@ -84,7 +83,7 @@ export class VRMManager {
             });
 
             const vrm = gltf.userData.vrm as VRM;
-            vrm.scene.position.set(0, 3.0, 0);
+            vrm.scene.position.set(0, -10.0, 0);
             vrm.scene.rotation.y = Math.PI;
             this.scene.add(vrm.scene);
             this.currentVrm = vrm;
@@ -111,7 +110,7 @@ export class VRMManager {
                 console.error(`[VRMManager] Error playing custom animation ${customAnimationPath1}:`, error);
             }
 
-            await this.animateVrmDrop(vrm, 0.5, 3.0, -0.6);
+            await this.animateVrmDrop(vrm, 0.5, 3.0, 0.0);
 
             setTimeout(async () => {
                 const customAnimationPath2 = 'Animation/VRMA_03.vrma';
@@ -153,8 +152,8 @@ export class VRMManager {
         const hitboxMaterial = new THREE.MeshBasicMaterial({ visible: false });
         const bonesToTarget: { [key in VRMHumanBoneName]?: { size: THREE.Vector3, position?: THREE.Vector3 } } = {
             [VRMHumanBoneName.Head]: { size: new THREE.Vector3(0.3, 0.4, 0.3) },
-            [VRMHumanBoneName.Spine]: { size: new THREE.Vector3(0.35, 0.5, 0.3) },
-            [VRMHumanBoneName.Hips]: { size: new THREE.Vector3(0.35, 0.3, 0.3), position: new THREE.Vector3(0, 0.05, 0) },
+            [VRMHumanBoneName.Spine]: { size: new THREE.Vector3(0.3, 0.3, 0.3) },
+            [VRMHumanBoneName.Hips]: { size: new THREE.Vector3(0.35, 0.35, 0.5), position: new THREE.Vector3(0, 0.05, 0) },
             [VRMHumanBoneName.LeftUpperArm]: { size: new THREE.Vector3(0.15, 0.3, 0.15), position: new THREE.Vector3(0, -0.15, 0) },
             [VRMHumanBoneName.RightUpperArm]: { size: new THREE.Vector3(0.15, 0.3, 0.15), position: new THREE.Vector3(0, -0.15, 0) },
             [VRMHumanBoneName.LeftLowerArm]: { size: new THREE.Vector3(0.15, 0.3, 0.15), position: new THREE.Vector3(0, -0.15, 0) },

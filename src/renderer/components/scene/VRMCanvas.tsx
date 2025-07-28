@@ -20,9 +20,6 @@ interface VRMCanvasProps {
   onLoad: (managers: { vrmManager: VRMManager; pluginManager: PluginManager; chatService: ChatService }) => void;
 }
 
-// onWindowResize is not used, so it's removed to clean up.
-// import { onWindowResize } from '../../scene-utils';
-
 const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
   const handleSceneLoad = useCallback((instances: {
     scene: THREE.Scene;

@@ -3,29 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <title>AiCompanion</title>
-    <style>
-      .settings-modal-hidden {
-        display: none;
-      }
-      .settings-modal-visible {
-        display: block;
-      }
-      .floating-chat-message.assistant {
-        transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-        transform: translate(-50%, -100%); /* 최종 위치 */
-      }
-      .floating-chat-message.assistant.entering {
-        opacity: 0;
-        transform: translate(-60%, -100%); /* 왼쪽에서 시작 */
-      }
-    </style>
   </head>
   <body>
     <div id="canvas-container"></div>
     <div id="root"></div>
-
-    <div id="vrm-follow-button" style="position: absolute; background-color: whitesmoke; color: black; padding: 10px; border-radius: 5px; cursor: pointer; display: none; transform: translate(-50%, -50%);">
-      Follow Button(디버그)
-    </div>
-    </body>
+  </body>
 </html>
