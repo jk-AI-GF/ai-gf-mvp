@@ -35,6 +35,9 @@ export type AppEvents = {
 
   /** 공통 에러 */
   'error': { scope: string; error: Error };
+
+  /** 시스템 이벤트 */
+  'system:mouse-ignore-toggle': boolean;
 };
 
 type Handler<T> = (payload: T) => void;

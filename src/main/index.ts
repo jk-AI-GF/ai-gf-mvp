@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Tray, Menu, globalShortcut, dialog, session, ipcMain } from 'electron';
+import { app, BrowserWindow, Tray, Menu, globalShortcut, dialog, session, ipcMain, screen } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import { ModLoader } from '../core/mod-loader';
@@ -25,19 +25,25 @@ if (require('electron-squirrel-startup')) {
 let tray: Tray | null = null;
 let overlayWindow: BrowserWindow | null = null;
 let mainWindow: BrowserWindow | null = null;
+let isIgnoringMouseEvents = false;
 
 const assetsRoot = app.isPackaged
   ? path.join(process.resourcesPath, 'assets')
   : path.join(app.getAppPath(), 'assets');
 
 const createOverlayWindow = (): void => {
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width, height } = primaryDisplay.size;
+
   // Create the browser window.
   overlayWindow = new BrowserWindow({
-    height: 860,
-    width: 1400,
-    fullscreen: true,
+    height,
+    width,
+    x: 0,
+    y: 0,
     skipTaskbar: true,
     frame: false,
+    titleBarStyle: 'hidden',
     transparent: true,
     alwaysOnTop: true,
     show: false, // Start hidden
@@ -87,11 +93,21 @@ const createTray = (): void => {
 };
 
 const createWindow = (): void => {
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width, height } = primaryDisplay.workAreaSize;
+
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    height: 860,
-    width: 1400,
-    fullscreen: app.isPackaged,
+    height,
+    width,
+    x: 0,
+    y: 0,
+    alwaysOnTop: true,
+    frame: false,
+    titleBarStyle: 'hidden',
+    transparent: true,
+    resizable: false,
+
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       webSecurity: true, // 보안 검사 활성화
@@ -101,12 +117,21 @@ const createWindow = (): void => {
     },
   });
 
+  // Set the window to the highest level to stay above the taskbar
+  mainWindow.setAlwaysOnTop(true, 'screen-saver');
+  mainWindow.moveTop();
+
   // and load the index.html of the app.
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
+  // Focus the window once the content is fully loaded
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.focus();
+  });
+
   // Open the DevTools only when not in production
   if (!app.isPackaged) {
-    mainWindow.webContents.openDevTools();
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
   }
 
   mainWindow.on('closed', () => {
@@ -140,8 +165,40 @@ app.on('ready', async () => {
   createWindow();
   createOverlayWindow(); // Create both windows on startup
   createTray();
-  globalShortcut.register('CommandOrControl+Shift+O', () => {
+  globalShortcut.register('CommandOrControl+Shift+T', () => {
     toggleOverlayWindow();
+  });
+
+  globalShortcut.register('CommandOrControl+Shift+O', () => {
+    if (mainWindow) {
+      isIgnoringMouseEvents = !isIgnoringMouseEvents;
+
+      if (isIgnoringMouseEvents) {
+        mainWindow.setIgnoreMouseEvents(true, { forward: true });
+      } else {
+        mainWindow.setIgnoreMouseEvents(false);
+        mainWindow.focus();
+      }
+
+      // Emit event and show message regardless of state
+      eventBus.emit('system:mouse-ignore-toggle', isIgnoringMouseEvents);
+      const message = isIgnoringMouseEvents ? '클릭 통과 활성' : '클릭 통과 비활성';
+      mainWindow.webContents.send('show-message-in-renderer', message, 1500);
+    }
+  });
+
+  // WORKAROUND for Windows frameless transparent window issue.
+  // When the window loses focus (blur), Windows may incorrectly render a title bar.
+  // This handler forces a style re-evaluation to keep the window frameless.
+  mainWindow.on('blur', () => {
+    console.log('[DEBUG] MainWindow lost focus (blur event triggered).');
+    // Use a minimal timeout to ensure this runs after Windows' own redraw attempt.
+    setTimeout(() => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        console.log('[DEBUG] Re-applying alwaysOnTop to prevent title bar.');
+        mainWindow.setAlwaysOnTop(true, 'screen-saver');
+      }
+    }, 16); // A delay of ~1 frame.
   });
 
   // Initialize core components
