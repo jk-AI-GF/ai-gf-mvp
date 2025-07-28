@@ -210,3 +210,105 @@ export class ProactiveDialoguePlugin implements Plugin {
 ```
 
 이처럼 Trigger 시스템은 복잡한 상호작용을 모듈화하고 재사용 가능하게 만드는 핵심적인 도구입니다. 새로운 기능을 만들 때, "매 프레임마다 실행되어야 하는가?" 아니면 "특정 조건에서 한 번 실행되어야 하는가?"를 고민하고, 후자라면 Trigger 시스템을 적극적으로 활용하는 것을 권장합니다.
+
+## 6. 고급: 씬(Scene) 객체의 전역 관리
+
+때로는 `Scene.tsx`에서 생성된 특정 3D 객체(예: 조명)를 다른 UI 컴포넌트(예: `LightPanel`)에서 직접 제어하고 싶을 수 있습니다. 이 프로젝트는 `AppContext`를 통해 이러한 종류의 전역 상태 관리를 지원합니다.
+
+### 왜 필요한가?
+
+`Scene.tsx`는 3D 세계의 뼈대를 만드는 역할에만 집중합니다. 만약 조명 제어 로직까지 이 파일에 넣는다면, `Scene.tsx`의 책임이 너무 많아져 코드가 복잡해집니다. UI 컴포넌트는 UI 로직만 담당하고, 3D 씬 생성은 씬 생성 로직만 담당하도록 역할을 분리하는 것이 좋습니다.
+
+### 구현 절차
+
+**예시: `LightPanel`에서 씬의 조명을 제어하는 기능 구현하기**
+
+#### 1단계: `AppContext.tsx`에 상태 추가
+
+제어하려는 객체(예: `DirectionalLight`)와 그 객체를 설정하는 함수를 `AppContextType` 인터페이스와 `AppProvider`의 `value`에 추가합니다.
+
+```typescript
+// src/renderer/contexts/AppContext.tsx
+
+// ... import
+import * as THREE from 'three';
+
+interface AppContextType {
+  // ... 기존 속성들
+  directionalLight: THREE.DirectionalLight | null;
+  setDirectionalLight: (light: THREE.DirectionalLight) => void;
+}
+
+export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // ... 기존 state들
+  const [directionalLight, setDirectionalLight] = useState<THREE.DirectionalLight | null>(null);
+
+  const value = {
+    // ... 기존 value들
+    directionalLight,
+    setDirectionalLight,
+  };
+
+  return <AppContext.Provider value={value}>{/* ... */}</AppContext.Provider>;
+};
+```
+
+#### 2단계: `Scene.tsx`에서 전역 상태 설정
+
+`Scene.tsx`에서 조명 객체를 생성한 직후, `useAppContext`를 통해 가져온 `setDirectionalLight` 함수를 호출하여 생성된 인스턴스를 전역 상태에 등록합니다.
+
+```typescript
+// src/renderer/components/scene/Scene.tsx
+
+// ... import
+import { useAppContext } from '../../contexts/AppContext';
+
+const Scene: React.FC<SceneProps> = ({ onLoad }) => {
+  const { setDirectionalLight } = useAppContext();
+
+  useEffect(() => {
+    // ... 씬 설정 코드
+    
+    // 조명 생성
+    const light = new THREE.DirectionalLight(0xffffff, 2);
+    scene.add(light);
+    
+    // 생성된 조명 인스턴스를 전역 상태에 등록
+    setDirectionalLight(light);
+
+    // ... 나머지 코드
+  }, [onLoad, setDirectionalLight]);
+
+  return <div ref={mountRef} />;
+};
+```
+
+#### 3단계: UI 컴포넌트에서 전역 상태 사용
+
+이제 어떤 컴포넌트에서든 `useAppContext`를 통해 `directionalLight` 객체에 접근하여 그 속성을 직접 제어할 수 있습니다.
+
+```tsx
+// src/renderer/components/LightPanel.tsx
+
+// ... import
+import { useAppContext } from '../contexts/AppContext';
+
+const LightPanel: React.FC<LightPanelProps> = ({ onClose }) => {
+  const { directionalLight } = useAppContext();
+
+  const handleIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newIntensity = parseFloat(e.target.value);
+    if (directionalLight) {
+      directionalLight.intensity = newIntensity;
+    }
+  };
+
+  return (
+    <Panel title="조명 편집" onClose={onClose}>
+      <input type="range" onChange={handleIntensityChange} />
+    </Panel>
+  );
+};
+```
+
+이 패턴을 사용하면, 3D 객체의 생성과 제어 로직을 명확하게 분리하여 프로젝트의 유지보수성과 확장성을 크게 향상시킬 수 있습니다.

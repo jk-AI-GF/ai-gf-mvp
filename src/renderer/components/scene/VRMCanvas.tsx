@@ -14,6 +14,7 @@ import { createPluginContext } from '../../../plugin-api/context-factory';
 import { ProactiveDialoguePlugin } from '../../../plugins/proactive-dialogue-plugin';
 import { ActionTestPlugin } from '../../../plugins/action-test-plugin';
 import { GrabVrmPlugin } from '../../../plugins/grab-vrm-plugin';
+import { TimeSyncTestPlugin } from '../../../plugins/time-sync-test-plugin'; // Import the new plugin
 import { ChatService } from '../../chat-service';
 
 interface VRMCanvasProps {
@@ -68,6 +69,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     pluginManager.register(new ProactiveDialoguePlugin());
     pluginManager.register(new ActionTestPlugin());
     pluginManager.register(new GrabVrmPlugin());
+    pluginManager.register(new TimeSyncTestPlugin()); // Register the new plugin
 
     // --- Chat Service ---
     const chatService = new ChatService(vrmManager, pluginManager);
