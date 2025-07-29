@@ -119,13 +119,13 @@ const App: React.FC = () => {
           <EditMenu
             onOpenPosePanel={() => setPosePanelOpen((prev) => !prev)}
             onOpenAnimationPanel={() => setAnimationPanelOpen((prev) => !prev)}
+            onOpenJointControl={() => setJointPanelOpen((prev) => !prev)}
+            onOpenExpressionPanel={() => setExpressionPanelOpen((prev) => !prev)}
+            onOpenMeshPanel={() => setMeshPanelOpen((prev) => !prev)}
           />
           <Sidebar
             onOpenSettings={() => setSettingsModalOpen((prev) => !prev)}
-            onOpenJointControl={() => setJointPanelOpen((prev) => !prev)}
-            onOpenExpressionPanel={() => setExpressionPanelOpen((prev) => !prev)}
             onOpenPluginsPanel={() => setPluginsPanelOpen((prev) => !prev)}
-            onOpenMeshPanel={() => setMeshPanelOpen((prev) => !prev)}
             onOpenModManagementPanel={() => setModManagementPanelOpen((prev) => !prev)}
             onOpenMaterialPanel={() => setMaterialPanelOpen((prev) => !prev)}
             onOpenLightPanel={() => setLightPanelOpen((prev) => !prev)}

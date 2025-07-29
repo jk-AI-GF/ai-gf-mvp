@@ -6,9 +6,18 @@ import styles from './EditMenu.module.css';
 interface EditMenuProps {
   onOpenPosePanel: () => void;
   onOpenAnimationPanel: () => void;
+  onOpenJointControl: () => void;
+  onOpenExpressionPanel: () => void;
+  onOpenMeshPanel: () => void;
 }
 
-const EditMenu: React.FC<EditMenuProps> = ({ onOpenPosePanel, onOpenAnimationPanel }) => {
+const EditMenu: React.FC<EditMenuProps> = ({
+  onOpenPosePanel,
+  onOpenAnimationPanel,
+  onOpenJointControl,
+  onOpenExpressionPanel,
+  onOpenMeshPanel,
+}) => {
   const { vrmManager } = useAppContext();
   const [isVisible, setIsVisible] = useState(false);
 
@@ -26,7 +35,7 @@ const EditMenu: React.FC<EditMenuProps> = ({ onOpenPosePanel, onOpenAnimationPan
 
   const getRelativePath = (fullPath: string): string | null => {
     const assetsDir = 'assets';
-    const pathSeparator = /[\\/]/;
+    const pathSeparator = /[\/]/;
     const parts = fullPath.split(pathSeparator);
     const assetsIndex = parts.lastIndexOf(assetsDir);
     
@@ -77,6 +86,9 @@ const EditMenu: React.FC<EditMenuProps> = ({ onOpenPosePanel, onOpenAnimationPan
   return (
     <div className={styles.menuContainer}>
       <button className={styles.menuButton} onClick={handleLoadVRM}>VRM</button>
+      <button className={styles.menuButton} onClick={onOpenJointControl}>관절</button>
+      <button className={styles.menuButton} onClick={onOpenExpressionPanel}>표정</button>
+      <button className={styles.menuButton} onClick={onOpenMeshPanel}>메쉬</button>
       <button className={styles.menuButton} onClick={onOpenPosePanel}>포즈</button>
       <button className={styles.menuButton} onClick={onOpenAnimationPanel}>애니</button>
       <button className={styles.menuButton} onClick={handleSavePose}>저장</button>

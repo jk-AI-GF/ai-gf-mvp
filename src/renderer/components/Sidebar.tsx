@@ -3,10 +3,7 @@ import styles from './Sidebar.module.css';
 import eventBus from '../../core/event-bus';
 
 interface SidebarProps {
-  onOpenJointControl: () => void;
-  onOpenExpressionPanel: () => void;
   onOpenPluginsPanel: () => void;
-  onOpenMeshPanel: () => void;
   onOpenModManagementPanel: () => void;
   onOpenSettings: () => void;
   onOpenMaterialPanel: () => void;
@@ -14,10 +11,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
-  onOpenJointControl,
-  onOpenExpressionPanel,
   onOpenPluginsPanel,
-  onOpenMeshPanel,
   onOpenModManagementPanel,
   onOpenSettings,
   onOpenMaterialPanel,
@@ -45,12 +39,9 @@ const Sidebar: React.FC<SidebarProps> = ({
           {isEditMode ? '편집 모드 ON' : '편집 모드 OFF'}
         </button>
         <button className={styles.menuButton} onClick={onOpenSettings}>설정</button>
-        <button className={styles.menuButton} onClick={onOpenJointControl}>관절 조절</button>
-        <button className={styles.menuButton} onClick={onOpenExpressionPanel}>표정</button>
         <button className={styles.menuButton} onClick={onOpenMaterialPanel}>재질</button>
         <button className={styles.menuButton} onClick={onOpenLightPanel}>조명</button>
         <button className={styles.menuButton} onClick={onOpenPluginsPanel}>플러그인</button>
-        <button className={styles.menuButton} onClick={onOpenMeshPanel}>메쉬</button>
         <button className={styles.menuButton} onClick={onOpenModManagementPanel}>모드 관리</button>
         <button className={`${styles.menuButton} ${styles.quitButton}`} onClick={handleQuit}>종료</button>
       </div>
