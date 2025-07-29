@@ -53,4 +53,11 @@
     background-color: #007bff;
     color: white;
   }
-  
+
+  .quitButton {
+    background-color: rgba(200, 50, 50, 0.7);
+  }
+
+  .quitButton:hover {
+    background-color: rgba(231, 76, 60, 0.9);
+  }

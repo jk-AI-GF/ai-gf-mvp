@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import TopMenu from './components/TopMenu';
+import EditMenu from './components/EditMenu';
 import SettingsModal from './components/SettingsModal';
 import JointControlPanel from './components/JointControlPanel';
 import ExpressionPanel from './components/ExpressionPanel';
@@ -116,7 +116,7 @@ const App: React.FC = () => {
       
       {isUiInteractive && (
         <>
-          <TopMenu
+          <EditMenu
             onOpenPosePanel={() => setPosePanelOpen((prev) => !prev)}
             onOpenAnimationPanel={() => setAnimationPanelOpen((prev) => !prev)}
           />

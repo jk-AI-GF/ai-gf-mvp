@@ -1,14 +1,14 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 import eventBus from '../../core/event-bus';
+import styles from './EditMenu.module.css';
 
-interface TopMenuProps {
+interface EditMenuProps {
   onOpenPosePanel: () => void;
   onOpenAnimationPanel: () => void;
 }
 
-const TopMenu: React.FC<TopMenuProps> = ({ onOpenPosePanel, onOpenAnimationPanel }) => {
+const EditMenu: React.FC<EditMenuProps> = ({ onOpenPosePanel, onOpenAnimationPanel }) => {
   const { vrmManager } = useAppContext();
   const [isVisible, setIsVisible] = useState(false);
 
@@ -70,25 +70,19 @@ const TopMenu: React.FC<TopMenuProps> = ({ onOpenPosePanel, onOpenAnimationPanel
     }
   };
 
-  const handleQuit = () => {
-    window.electronAPI.quitApp();
-  };
-
   if (!isVisible) {
     return null;
   }
 
   return (
-    <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 1000, display: 'flex', gap: '10px' }}>
-      <button onClick={handleLoadVRM}>VRM 모델 로드</button>
-      <button onClick={onOpenPosePanel}>포즈 열기</button>
-      <button onClick={onOpenAnimationPanel}>애니메이션 열기</button>
-      <button onClick={handleSavePose}>포즈 저장</button>
-      <button onClick={handleLoadPose}>포즈 파일 열기</button>
-      <button onClick={handleQuit}>종료</button>
+    <div className={styles.menuContainer}>
+      <button className={styles.menuButton} onClick={handleLoadVRM}>VRM</button>
+      <button className={styles.menuButton} onClick={onOpenPosePanel}>포즈</button>
+      <button className={styles.menuButton} onClick={onOpenAnimationPanel}>애니</button>
+      <button className={styles.menuButton} onClick={handleSavePose}>저장</button>
+      <button className={styles.menuButton} onClick={handleLoadPose}>열기</button>
     </div>
   );
 };
 
-export default TopMenu;
-
+export default EditMenu;

@@ -31,6 +31,10 @@ const Sidebar: React.FC<SidebarProps> = ({
     eventBus.emit('ui:editModeToggled', { isEditMode: newMode });
   };
 
+  const handleQuit = () => {
+    window.electronAPI.quitApp();
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.sidebar}>
@@ -48,6 +52,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <button className={styles.menuButton} onClick={onOpenPluginsPanel}>플러그인</button>
         <button className={styles.menuButton} onClick={onOpenMeshPanel}>메쉬</button>
         <button className={styles.menuButton} onClick={onOpenModManagementPanel}>모드 관리</button>
+        <button className={`${styles.menuButton} ${styles.quitButton}`} onClick={handleQuit}>종료</button>
       </div>
     </div>
   );

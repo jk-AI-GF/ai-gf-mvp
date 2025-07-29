@@ -333,20 +333,21 @@ app.on('ready', async () => {
   });
 
   ipcMain.handle('save-vrma-pose', async (event, vrmaData: ArrayBuffer) => {
-    const { canceled, filePath } = await dialog.showSaveDialog({
-      title: 'Save VRMA Pose',
-      defaultPath: path.join(assetsRoot, 'Pose', `pose_${Date.now()}.vrma`),
-      filters: [
-        { name: 'VRM Animation', extensions: ['vrma'] },
-        { name: 'All Files', extensions: ['*'] }
-      ]
-    });
-
-    if (canceled || !filePath) {
-      return { success: false, message: 'Save operation canceled.' };
-    }
-
+    if (mainWindow) mainWindow.setAlwaysOnTop(false);
     try {
+      const { canceled, filePath } = await dialog.showSaveDialog({
+        title: 'Save VRMA Pose',
+        defaultPath: path.join(assetsRoot, 'Pose', `pose_${Date.now()}.vrma`),
+        filters: [
+          { name: 'VRM Animation', extensions: ['vrma'] },
+          { name: 'All Files', extensions: ['*'] }
+        ]
+      });
+
+      if (canceled || !filePath) {
+        return { success: false, message: 'Save operation canceled.' };
+      }
+
       const buffer = Buffer.from(vrmaData);
       await fs.promises.writeFile(filePath, buffer);
       return { success: true, message: `VRMA pose saved to ${filePath}` };
@@ -354,66 +355,97 @@ app.on('ready', async () => {
       console.error('Failed to save VRMA pose:', error);
       const message = error instanceof Error ? error.message : String(error);
       return { success: false, message: `Failed to save VRMA pose: ${message}` };
+    } finally {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.hide();
+        mainWindow.show();
+        mainWindow.setAlwaysOnTop(true, 'screen-saver');
+      }
     }
   });
 
   ipcMain.handle('open-vrm-file', async () => {
-    const { canceled, filePaths } = await dialog.showOpenDialog({
-      title: 'Open VRM Model',
-      defaultPath: path.join(assetsRoot, 'VRM'),
-      filters: [
-        { name: 'VRM Models', extensions: ['vrm'] },
-        { name: 'All Files', extensions: ['*'] },
-      ],
-      properties: ['openFile'],
-    });
+    if (mainWindow) mainWindow.setAlwaysOnTop(false);
+    try {
+      const { canceled, filePaths } = await dialog.showOpenDialog({
+        title: 'Open VRM Model',
+        defaultPath: path.join(assetsRoot, 'VRM'),
+        filters: [
+          { name: 'VRM Models', extensions: ['vrm'] },
+          { name: 'All Files', extensions: ['*'] },
+        ],
+        properties: ['openFile'],
+      });
 
-    if (canceled || filePaths.length === 0) {
-      return null;
+      if (canceled || filePaths.length === 0) {
+        return null;
+      }
+
+      return filePaths[0];
+    } finally {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.hide();
+        mainWindow.show();
+        mainWindow.setAlwaysOnTop(true, 'screen-saver');
+      }
     }
-
-    return filePaths[0];
   });
 
   ipcMain.handle('open-vrma-file', async () => {
-    const { canceled, filePaths } = await dialog.showOpenDialog({
-      title: 'Open VRMA Pose',
-      defaultPath: path.join(assetsRoot, 'Pose'),
-      filters: [
-        { name: 'VRM Animation', extensions: ['vrma'] },
-        { name: 'All Files', extensions: ['*'] },
-      ],
-      properties: ['openFile'],
-    });
+    if (mainWindow) mainWindow.setAlwaysOnTop(false);
+    try {
+      const { canceled, filePaths } = await dialog.showOpenDialog({
+        title: 'Open VRMA Pose',
+        defaultPath: path.join(assetsRoot, 'Pose'),
+        filters: [
+          { name: 'VRM Animation', extensions: ['vrma'] },
+          { name: 'All Files', extensions: ['*'] },
+        ],
+        properties: ['openFile'],
+      });
 
-    if (canceled || filePaths.length === 0) {
-      return null;
+      if (canceled || filePaths.length === 0) {
+        return null;
+      }
+
+      return filePaths[0];
+    } finally {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.hide();
+        mainWindow.show();
+        mainWindow.setAlwaysOnTop(true, 'screen-saver');
+      }
     }
-
-    return filePaths[0];
   });
 
   ipcMain.handle('open-persona-file', async () => {
-    const { canceled, filePaths } = await dialog.showOpenDialog({
-      title: 'Open Persona File',
-      defaultPath: path.join(assetsRoot, 'Persona'),
-      properties: ['openFile'],
-      filters: [
-        { name: 'Text Files', extensions: ['txt'] },
-        { name: 'All Files', extensions: ['*'] }
-      ]
-    });
-
-    if (canceled || filePaths.length === 0) {
-      return null;
-    }
-
+    if (mainWindow) mainWindow.setAlwaysOnTop(false);
     try {
+      const { canceled, filePaths } = await dialog.showOpenDialog({
+        title: 'Open Persona File',
+        defaultPath: path.join(assetsRoot, 'Persona'),
+        properties: ['openFile'],
+        filters: [
+          { name: 'Text Files', extensions: ['txt'] },
+          { name: 'All Files', extensions: ['*'] }
+        ]
+      });
+
+      if (canceled || filePaths.length === 0) {
+        return null;
+      }
+
       const personaContent = await fs.promises.readFile(filePaths[0], 'utf8');
       return personaContent;
     } catch (error) {
       console.error('Failed to read persona file:', error);
       return null;
+    } finally {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.hide();
+        mainWindow.show();
+        mainWindow.setAlwaysOnTop(true, 'screen-saver');
+      }
     }
   });
 
@@ -447,26 +479,33 @@ app.on('ready', async () => {
   });
 
   ipcMain.handle('save-persona-to-file', async (event, persona: string) => {
-    const { canceled, filePath } = await dialog.showSaveDialog({
-      title: 'Save Persona',
-      defaultPath: path.join(assetsRoot, 'Persona', 'persona.txt'),
-      filters: [
-        { name: 'Text Files', extensions: ['txt'] },
-        { name: 'All Files', extensions: ['*'] }
-      ]
-    });
-
-    if (canceled || !filePath) {
-      return { success: false, message: 'Save operation canceled.' };
-    }
-
+    if (mainWindow) mainWindow.setAlwaysOnTop(false);
     try {
+      const { canceled, filePath } = await dialog.showSaveDialog({
+        title: 'Save Persona',
+        defaultPath: path.join(assetsRoot, 'Persona', 'persona.txt'),
+        filters: [
+          { name: 'Text Files', extensions: ['txt'] },
+          { name: 'All Files', extensions: ['*'] }
+        ]
+      });
+
+      if (canceled || !filePath) {
+        return { success: false, message: 'Save operation canceled.' };
+      }
+
       await fs.promises.writeFile(filePath, persona, 'utf8');
       return { success: true, message: `Persona saved to ${filePath}` };
     } catch (error) {
       console.error('Failed to save persona:', error);
       const message = error instanceof Error ? error.message : String(error);
       return { success: false, message: `Failed to save persona: ${message}` };
+    } finally {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.hide();
+        mainWindow.show();
+        mainWindow.setAlwaysOnTop(true, 'screen-saver');
+      }
     }
   });
 
