@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 import { SUPPORTED_MODELS } from '../../core/llm-settings';
 
@@ -34,6 +34,19 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     llmSettings,
     setLlmSettings,
   } = useAppContext();
+  const [shortcut, setShortcut] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      window.electronAPI.getMouseIgnoreShortcut().then(setShortcut);
+    }
+  }, [isOpen]);
+
+  const handleShortcutChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newShortcut = e.target.value;
+    setShortcut(newShortcut);
+    window.electronAPI.setMouseIgnoreShortcut(newShortcut);
+  };
 
   if (!isOpen) {
     return null;
@@ -117,6 +130,21 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
             value={windowOpacity}
             onChange={(e) => setWindowOpacity(parseFloat(e.target.value))}
             style={{ width: '100%' }}
+          />
+        </div>
+
+        {/* Shortcut Control */}
+        <div style={{ marginBottom: '30px' }}>
+          <label htmlFor="shortcut-input" style={labelStyle}>
+            마우스 무시 단축키
+          </label>
+          <input
+            type="text"
+            id="shortcut-input"
+            value={shortcut}
+            onChange={handleShortcutChange}
+            placeholder="예: CommandOrControl+Shift+O"
+            style={inputStyle}
           />
         </div>
 

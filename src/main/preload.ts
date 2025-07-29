@@ -39,6 +39,8 @@ import { LlmSettings } from '../core/llm-settings';
   getPersona: () => ipcRenderer.invoke('get-persona'),
   getLlmSettings: (): Promise<LlmSettings> => ipcRenderer.invoke('get-llm-settings'),
   setLlmSettings: (settings: LlmSettings) => ipcRenderer.send('set-llm-settings', settings),
+  getMouseIgnoreShortcut: () => ipcRenderer.invoke('get-mouse-ignore-shortcut'),
+  setMouseIgnoreShortcut: (shortcut: string) => ipcRenderer.send('set-mouse-ignore-shortcut', shortcut),
   // --- Mod Management ---
   getAllMods: () => ipcRenderer.invoke('get-all-mods'),
   getModSettings: () => ipcRenderer.invoke('get-mod-settings'),

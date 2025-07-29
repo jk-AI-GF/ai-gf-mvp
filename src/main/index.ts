@@ -14,6 +14,7 @@ interface StoreSchema {
   windowOpacity: number;
   persona: string;
   llmSettings: LlmSettings;
+  mouseIgnoreShortcut: string;
 }
 
 // Store 인스턴스 생성
@@ -22,6 +23,7 @@ const store = new Store<StoreSchema>({
     windowOpacity: 1.0,
     persona: '당신은 친절하고 상냥한 AI 여자친구입니다. 항상 사용자에게 긍정적이고 다정한 태도로 대화에 임해주세요.',
     llmSettings: DEFAULT_LLM_SETTINGS,
+    mouseIgnoreShortcut: 'CommandOrControl+Shift+O',
   }
 });
 
@@ -231,11 +233,42 @@ app.on('ready', async () => {
     }
   };
 
+  let currentShortcut = store.get('mouseIgnoreShortcut');
+
+  const registerMouseIgnoreShortcut = () => {
+    if (currentShortcut) {
+      try {
+        globalShortcut.register(currentShortcut, toggleMouseIgnore);
+        console.log(`Registered shortcut: ${currentShortcut}`);
+      } catch (error) {
+        console.error(`Failed to register shortcut "${currentShortcut}":`, error);
+      }
+    }
+  };
+
+  const unregisterMouseIgnoreShortcut = () => {
+    if (currentShortcut) {
+      globalShortcut.unregister(currentShortcut);
+      console.log(`Unregistered shortcut: ${currentShortcut}`);
+    }
+  };
+
+  registerMouseIgnoreShortcut();
+
+  ipcMain.handle('get-mouse-ignore-shortcut', () => {
+    return store.get('mouseIgnoreShortcut');
+  });
+
+  ipcMain.on('set-mouse-ignore-shortcut', (event, shortcut: string) => {
+    unregisterMouseIgnoreShortcut();
+    store.set('mouseIgnoreShortcut', shortcut);
+    currentShortcut = shortcut;
+    registerMouseIgnoreShortcut();
+  });
+
   globalShortcut.register('CommandOrControl+Shift+T', () => {
     toggleOverlayWindow();
   });
-
-  globalShortcut.register('CommandOrControl+Shift+O', toggleMouseIgnore);
 
   ipcMain.on('toggle-mouse-ignore', toggleMouseIgnore);
 

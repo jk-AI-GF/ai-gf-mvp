@@ -54,6 +54,8 @@ declare global {
       getPersona: () => Promise<string>;
       getLlmSettings: () => Promise<LlmSettings>;
       setLlmSettings: (settings: LlmSettings) => void;
+      getMouseIgnoreShortcut: () => Promise<string>;
+      setMouseIgnoreShortcut: (shortcut: string) => void;
       // --- Mod Management ---
       getAllMods: () => Promise<{ name: string; version: string; path: string; }[]>;
       getModSettings: () => Promise<Record<string, boolean>>;
