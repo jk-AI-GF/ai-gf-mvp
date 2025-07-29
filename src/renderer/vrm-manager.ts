@@ -179,11 +179,10 @@ export class VRMManager {
     }
 
     private async _readFile(filePath: string): Promise<ArrayBuffer | null> {
-        // All file paths are now treated as relative to the assets directory.
         try {
-            const fileContent = await window.electronAPI.readAssetFile(filePath);
+            // electronAPI.readFile을 사용하여 절대/상대 경로의 파일을 읽습니다.
+            const fileContent = await window.electronAPI.readFile(filePath);
             if (!(fileContent instanceof ArrayBuffer)) {
-                // The main process might have returned an error object
                 const error = fileContent as any;
                 if (error && error.error) {
                      throw new Error(error.error);
@@ -192,12 +191,19 @@ export class VRMManager {
             }
             return fileContent;
         } catch (error) {
-            console.error(`Failed to read asset file ${filePath}:`, error);
+            console.error(`Failed to read file ${filePath}:`, error);
+            alert(`파일을 읽는 데 실패했습니다: ${filePath}`);
             return null;
         }
     }
 
     public async loadAndParseFile(filePath: string): Promise<ParsedFile> {
+        if (!this.currentVrm) {
+            console.error('[VRMManager] Cannot parse file because no VRM is loaded.');
+            alert('먼저 VRM 모델을 로드해주세요.');
+            return null;
+        }
+
         const fileContent = await this._readFile(filePath);
         if (!fileContent) return null;
         let clip: THREE.AnimationClip | null = null;

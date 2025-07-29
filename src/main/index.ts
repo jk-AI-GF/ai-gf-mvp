@@ -451,6 +451,24 @@ app.on('ready', async () => {
     }
   });
 
+  ipcMain.handle('readFile', async (event, filePath: string) => {
+    try {
+      let fullPath = filePath;
+      if (!path.isAbsolute(filePath)) {
+        fullPath = path.join(assetsRoot, filePath);
+        // Security check: ensure fullPath is within the assetsRoot directory
+        if (!fullPath.startsWith(assetsRoot)) {
+          throw new Error('Attempted to access file outside the assets directory.');
+        }
+      }
+      const data = await fs.promises.readFile(fullPath);
+      return data.buffer;
+    } catch (error) {
+      console.error(`Failed to read file ${filePath}:`, error);
+      return { error: error.message };
+    }
+  });
+
   ipcMain.handle('save-persona-to-file', async (event, persona: string) => {
     if (mainWindow) mainWindow.setAlwaysOnTop(false);
     try {

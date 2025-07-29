@@ -14,6 +14,7 @@ import { LlmSettings } from '../core/llm-settings';
   openPersonaFile: () => ipcRenderer.invoke('open-persona-file'),
   readAssetFile: async (filePath: string) => ipcRenderer.invoke('read-asset-file', filePath),
   readAbsoluteFile: async (filePath: string) => ipcRenderer.invoke('read-absolute-file', filePath),
+  readFile: async (filePath: string) => ipcRenderer.invoke('readFile', filePath),
   playAnimation: (animationName: string, loop: boolean, crossFadeDuration: number) => ipcRenderer.invoke('play-animation', animationName, loop, crossFadeDuration),
   showMessage: (message: string, duration: number) => ipcRenderer.invoke('show-message', message, duration),
   setExpression: (expressionName: string, weight: number, duration: number) => ipcRenderer.invoke('set-expression', expressionName, weight, duration),

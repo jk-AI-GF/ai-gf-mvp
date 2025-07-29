@@ -40,6 +40,7 @@ declare global {
       openPersonaFile: () => Promise<string | null>;
       readAssetFile: (filePath: string) => Promise<ArrayBuffer | { error: string }>;
       readAbsoluteFile: (filePath: string) => Promise<ArrayBuffer | { error: string }>;
+      readFile: (filePath: string) => Promise<ArrayBuffer | { error: string }>;
       playAnimation: (animationName: string, loop?: boolean, crossFadeDuration?: number) => Promise<void>;
       showMessage: (message: string, duration?: number) => Promise<void>;
       setExpression: (expressionName: string, weight: number, duration?: number) => Promise<void>;
