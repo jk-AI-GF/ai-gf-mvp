@@ -22,8 +22,10 @@ const FloatingMessageManager: React.FC = () => {
     const handleUpdatePosition = ({ top, left, visible }: { top: number; left: number; visible: boolean }) => {
       if (containerRef.current) {
         if (visible) {
+          const offsetX = 230; // 오른쪽으로 이동
+          const offsetY = 70; // 아래로 이동
           containerRef.current.style.visibility = 'visible';
-          containerRef.current.style.transform = `translate(${left}px, ${top}px)`;
+          containerRef.current.style.transform = `translate(${left + offsetX}px, ${top + offsetY}px)`;
         }
       }
     };
