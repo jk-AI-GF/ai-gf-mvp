@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './Sidebar.module.css';
+import eventBus from '../../core/event-bus';
 
 interface SidebarProps {
   onOpenJointControl: () => void;
@@ -22,9 +23,36 @@ const Sidebar: React.FC<SidebarProps> = ({
   onOpenMaterialPanel,
   onOpenLightPanel, // Destructure prop
 }) => {
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  useEffect(() => {
+    const handleModeChange = (mode: 'free' | 'follow') => {
+      setIsEditMode(mode === 'free');
+    };
+
+    eventBus.on('camera:modeChanged', handleModeChange);
+    eventBus.emit('camera:requestState'); // Request current state on mount
+
+    return () => {
+      eventBus.off('camera:modeChanged', handleModeChange);
+    };
+  }, []);
+
+
+  const handleToggleEditMode = () => {
+    // 상태를 직접 바꾸는 대신, 이벤트를 보내고 응답을 기다립니다.
+    eventBus.emit('camera:toggleMode');
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.sidebar}>
+        <button
+          className={`${styles.menuButton} ${isEditMode ? styles.active : ''}`}
+          onClick={handleToggleEditMode}
+        >
+          {isEditMode ? '편집 모드 ON' : '편집 모드 OFF'}
+        </button>
         <button className={styles.menuButton} onClick={onOpenSettings}>설정</button>
         <button className={styles.menuButton} onClick={onOpenJointControl}>관절 조절</button>
         <button className={styles.menuButton} onClick={onOpenExpressionPanel}>표정</button>

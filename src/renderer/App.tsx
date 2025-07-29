@@ -12,7 +12,6 @@ import AnimationPanel from './components/AnimationPanel';
 import MaterialPanel from './components/MaterialPanel';
 import LightPanel from './components/LightPanel';
 import Chat from './components/Chat';
-import CameraControl from './components/CameraControl';
 import FloatingMessageManager from './components/FloatingMessageManager';
 import UIModeNotification from './components/UIModeNotification';
 import eventBus from '../core/event-bus';
@@ -147,7 +146,6 @@ const App: React.FC = () => {
       {isMaterialPanelOpen && <MaterialPanel onClose={() => setMaterialPanelOpen(false)} initialPos={panelPositions.material} onDragEnd={(pos) => handlePanelDrag('material', pos)} />}
       {isLightPanelOpen && <LightPanel onClose={() => setLightPanelOpen(false)} initialPos={panelPositions.light} onDragEnd={(pos) => handlePanelDrag('light', pos)} />}
       
-      <CameraControl />
       <FloatingMessageManager />
     </div>
   );

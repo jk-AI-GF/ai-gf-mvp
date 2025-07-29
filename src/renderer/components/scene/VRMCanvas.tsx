@@ -13,6 +13,7 @@ import { AutoIdleAnimationPlugin } from '../../../plugins/auto-idle-animation-pl
 import { createPluginContext } from '../../../plugin-api/context-factory';
 import { ProactiveDialoguePlugin } from '../../../plugins/proactive-dialogue-plugin';
 import { ActionTestPlugin } from '../../../plugins/action-test-plugin';
+import { MToonMaterialOutlineWidthMode } from '@pixiv/three-vrm';
 import { GrabVrmPlugin } from '../../../plugins/grab-vrm-plugin';
 import { TimeSyncTestPlugin } from '../../../plugins/time-sync-test-plugin'; // Import the new plugin
 import { ChatService } from '../../chat-service';
@@ -30,7 +31,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     const { scene, renderer, plane } = instances;
 
     // --- Camera and Controls Setup ---
-    let cameraMode: 'orbit' | 'fixed' = 'orbit';
+    let cameraMode: 'orbit' | 'fixed' = 'fixed';
     const perspectiveCamera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 1000);
     perspectiveCamera.position.set(0, 0.6, 3);
     
@@ -44,13 +45,14 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
         0.1,
         1000
     );
-    orthographicCamera.position.set(0, 0.6, 2.5);
-    orthographicCamera.zoom = 1.2; // Zoom을 조정하여 캐릭터 크기를 맞춥니다.
+    orthographicCamera.position.set(0, 0.98, 1.0);
+    orthographicCamera.zoom = 1.4; // Zoom을 조정하여 캐릭터 크기를 맞춥니다.
     orthographicCamera.updateProjectionMatrix();
 
-    let activeCamera: THREE.Camera = perspectiveCamera;
+    let activeCamera: THREE.Camera = orthographicCamera;
 
     const controls = new OrbitControls(perspectiveCamera, renderer.domElement);
+    controls.enabled = false; // Default to disabled as cameraMode is 'fixed'
     controls.target.set(0, 1, 0);
     controls.update();
 
@@ -76,6 +78,31 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
 
     // Pass managers up to the provider
     onLoad({ vrmManager, pluginManager, chatService });
+
+    const setOutlineMode = (mode: typeof MToonMaterialOutlineWidthMode.WorldCoordinates | typeof MToonMaterialOutlineWidthMode.ScreenCoordinates) => {
+        if (vrmManager.currentVrm) {
+            vrmManager.currentVrm.scene.traverse((object) => {
+                const mesh = object as THREE.Mesh;
+                if (mesh.isMesh && mesh.material) {
+                    const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+                    materials.forEach((material: any) => {
+                        if (material.isMToonMaterial) {
+                            material.outlineWidthMode = mode;
+                        }
+                    });
+                }
+            });
+        }
+    };
+
+    // Set initial outline mode based on the default camera
+    eventBus.on('vrm:loaded', () => {
+        if (cameraMode === 'fixed') {
+            setOutlineMode(MToonMaterialOutlineWidthMode.ScreenCoordinates);
+        } else {
+            setOutlineMode(MToonMaterialOutlineWidthMode.WorldCoordinates);
+        }
+    });
 
     // --- Animation Loop ---
     const clock = new THREE.Clock();
@@ -151,6 +178,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
             activeCamera = orthographicCamera;
             controls.enabled = false;
             eventBus.emit('camera:modeChanged', 'follow'); // Emitting 'follow' for UI
+            setOutlineMode(MToonMaterialOutlineWidthMode.ScreenCoordinates);
         } else {
             cameraMode = 'orbit';
             activeCamera = perspectiveCamera;
@@ -159,6 +187,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
             perspectiveCamera.updateProjectionMatrix();
             controls.enabled = true;
             eventBus.emit('camera:modeChanged', 'free'); // Emitting 'free' for UI
+            setOutlineMode(MToonMaterialOutlineWidthMode.WorldCoordinates);
         }
     };
 
