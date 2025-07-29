@@ -62,7 +62,7 @@ const MaterialPanel: React.FC<MaterialPanelProps> = ({ onClose, initialPos, onDr
   };
 
   return (
-    <Panel title="재질 일괄 편집" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
+    <Panel title="재질 일괄 편집" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd} width="320px">
       <div className={styles.content}>
         <div className={styles.controlRow}>
           <label>그림자 색</label>

@@ -8,17 +8,23 @@ interface PanelProps {
   onClose: () => void;
   initialPos: { x: number, y: number };
   onDragEnd: (pos: { x: number, y: number }) => void;
+  width?: string; // Optional width prop
 }
 
-const Panel: React.FC<PanelProps> = ({ title, children, onClose, initialPos, onDragEnd }) => {
+const Panel: React.FC<PanelProps> = ({ title, children, onClose, initialPos, onDragEnd, width }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const handleRef = useRef<HTMLDivElement>(null);
   const { x, y } = useDraggable({ handleRef, initialPos, onDragEnd });
 
   const containerClasses = `${styles.panelContainer} ${isCollapsed ? styles.collapsed : ''}`;
+  const containerStyle = {
+    top: y,
+    left: x,
+    width: width, // Apply width if provided
+  };
 
   return (
-    <div className={containerClasses} style={{ top: y, left: x }}>
+    <div className={containerClasses} style={containerStyle}>
       <div className={styles.panelHeader} ref={handleRef}>
         <h3 className={styles.panelTitle}>{title}</h3>
         <div className={styles.headerButtons}>

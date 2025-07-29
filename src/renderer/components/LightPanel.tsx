@@ -92,7 +92,7 @@ const LightPanel: React.FC<LightPanelProps> = ({ onClose, initialPos, onDragEnd 
   };
 
   return (
-    <Panel title="조명 편집" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
+    <Panel title="조명 편집" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd} width="320px">
       <div className={styles.content}>
         <h4 className={styles.header}>주 조명 (Directional)</h4>
         <div className={styles.controlRow}>

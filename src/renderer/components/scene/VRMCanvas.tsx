@@ -33,7 +33,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     // --- Camera and Controls Setup ---
     let cameraMode: 'orbit' | 'fixed' = 'fixed';
     const perspectiveCamera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 1000);
-    perspectiveCamera.position.set(0, 0.6, 3);
+    perspectiveCamera.position.set(1.4, 0.7, 2.5);
     
     const aspect = window.innerWidth / window.innerHeight;
     const frustumHeight = 3;
@@ -53,7 +53,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
 
     const controls = new OrbitControls(perspectiveCamera, renderer.domElement);
     controls.enabled = false; // Default to disabled as cameraMode is 'fixed'
-    controls.target.set(0, 1, 0);
+    controls.target.set(0, 0.6, 0);
     controls.update();
 
     // --- VRM Manager ---
