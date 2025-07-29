@@ -229,11 +229,7 @@ app.on('ready', async () => {
     }
   });
 
-  globalShortcut.register('CommandOrControl+Shift+T', () => {
-    toggleOverlayWindow();
-  });
-
-  globalShortcut.register('CommandOrControl+Shift+O', () => {
+  const toggleMouseIgnore = () => {
     if (mainWindow) {
       isIgnoringMouseEvents = !isIgnoringMouseEvents;
 
@@ -252,7 +248,15 @@ app.on('ready', async () => {
       const message = isIgnoringMouseEvents ? '클릭 통과 활성' : '클릭 통과 비활성';
       mainWindow.webContents.send('show-message-in-renderer', message, 1500);
     }
+  };
+
+  globalShortcut.register('CommandOrControl+Shift+T', () => {
+    toggleOverlayWindow();
   });
+
+  globalShortcut.register('CommandOrControl+Shift+O', toggleMouseIgnore);
+
+  ipcMain.on('toggle-mouse-ignore', toggleMouseIgnore);
 
   // WORKAROUND for Windows frameless transparent window issue.
   // When the window loses focus (blur), Windows may incorrectly render a title bar.
@@ -284,7 +288,8 @@ app.on('ready', async () => {
       if (mainWindow) {
         mainWindow.webContents.send(channel, ...args);
       }
-    }
+    },
+    ipcMain
   );
   modLoader.loadMods();
 

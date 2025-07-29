@@ -79,6 +79,9 @@ export function createPluginContext(
     toggleTts: (enable: boolean) => {
       toggleTts(enable);
     },
+    toggleMouseIgnore: () => {
+      window.electronAPI.toggleMouseIgnore();
+    },
     setMasterVolume: (volume: number) => {
       setMasterVolume(volume);
     },

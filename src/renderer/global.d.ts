@@ -30,6 +30,7 @@ declare global {
     // --- Electron API ---
     electronAPI: {
       quitApp: () => void;
+      toggleMouseIgnore: () => void;
       listDirectory: (dirPath: string) => Promise<{ files: string[]; directories: string[]; error?: string }>;
       openVrmFile: () => Promise<string | null>;
       saveVrmaPose: (poseData: ArrayBuffer) => Promise<{ success: boolean; message: string }>;

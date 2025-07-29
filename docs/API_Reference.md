@@ -171,6 +171,12 @@ const score = await actions.getContext('playerScore');
 
 ### 주요 이벤트 목록
 
+#### `ui:editModeToggled`
+-   **설명**: 사용자가 UI를 통해 '편집 모드'를 켜거나 끌 때 발행됩니다.
+-   **데이터**: `{ isEditMode: boolean }`
+-   **주요 발행자**: `Sidebar.tsx`
+-   **주요 구독자**: `EditMenu.tsx`, `VRMCanvas.tsx`
+
 #### `chat:newMessage`
 -   **설명**: 사용자 또는 AI의 새로운 채팅 메시지가 발생했을 때 발행됩니다.
 -   **데이터**: `{ role: 'user' | 'assistant' | 'system', text: string }`
@@ -240,6 +246,18 @@ TTS(Text-to-Speech) 기능을 활성화하거나 비활성화합니다.
 ```typescript
 // TTS 기능 끄기
 context.system.toggleTts(false);
+```
+
+---
+
+### `toggleMouseIgnore()`
+
+마우스 클릭 통과(Click-Through) 기능을 켜고 끕니다. `Ctrl+Shift+O` 단축키와 동일한 기능을 수행합니다.
+
+**예시:**
+```typescript
+// 마우스 클릭 통과 모드 전환
+context.system.toggleMouseIgnore();
 ```
 
 ---

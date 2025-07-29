@@ -3,14 +3,19 @@
  */
 export interface SystemControls {
   /**
-   * TTS(Text-to-Speech) 기능을 활성화하거나 비활성화합니다.
-   * @param enable TTS 기능을 활성화할지(true) 비활성화할지(false) 여부.
+   * TTS(Text-to-Speech) 기능을 켜거나 끕니다.
+   * @param enable - 활성화 여부
    */
   toggleTts(enable: boolean): void;
 
   /**
-   * 애플리케이션의 마스터 볼륨을 설정합니다.
-   * @param volume 볼륨 값 (0.0에서 1.0 사이).
+   * 마우스 클릭 통과(ignore mouse events) 기능을 토글합니다.
+   */
+  toggleMouseIgnore(): void;
+
+  /**
+   * 애플리케이션의 마스터 볼륨을 조절합니다.
+   * @param volume - 볼륨 값 (0.0 ~ 1.0)
    */
   setMasterVolume(volume: number): void;
 }

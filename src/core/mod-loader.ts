@@ -1,4 +1,5 @@
 
+import { IpcMain } from 'electron';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import mime from 'mime';
@@ -29,6 +30,7 @@ export class ModLoader {
   private contextStore: ContextStore;
   private modSettingsManager: ModSettingsManager;
   private sendToRenderer: (channel: string, ...args: any[]) => void;
+  private ipcMain: IpcMain;
 
   constructor(
     userDataPath: string, 
@@ -38,7 +40,8 @@ export class ModLoader {
     triggerEngine: TriggerEngine, 
     contextStore: ContextStore, 
     modSettingsManager: ModSettingsManager,
-    sendToRenderer: (channel: string, ...args: any[]) => void
+    sendToRenderer: (channel: string, ...args: any[]) => void,
+    ipcMain: IpcMain
   ) {
     // 개발 환경에서는 프로젝트 루트의 userdata/mods를 사용하고,
     // 배포 환경에서는 Electron의 userData 경로를 사용합니다.
@@ -50,6 +53,7 @@ export class ModLoader {
     this.contextStore = contextStore;
     this.modSettingsManager = modSettingsManager;
     this.sendToRenderer = sendToRenderer;
+    this.ipcMain = ipcMain;
     console.log(`[ModLoader] Initialized. Mods directory: ${this.modsDir}`);
   }
 
@@ -161,6 +165,9 @@ export class ModLoader {
           system: {
             toggleTts: (enable: boolean) => {
               this.sendToRenderer('toggle-tts', enable);
+            },
+            toggleMouseIgnore: () => {
+              this.ipcMain.emit('toggle-mouse-ignore');
             },
             setMasterVolume: (volume: number) => {
               this.sendToRenderer('set-master-volume', volume);

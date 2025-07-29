@@ -124,6 +124,7 @@ const App: React.FC = () => {
             onOpenMeshPanel={() => setMeshPanelOpen((prev) => !prev)}
           />
           <Sidebar
+            isUiInteractive={isUiInteractive}
             onOpenSettings={() => setSettingsModalOpen((prev) => !prev)}
             onOpenPluginsPanel={() => setPluginsPanelOpen((prev) => !prev)}
             onOpenModManagementPanel={() => setModManagementPanelOpen((prev) => !prev)}
