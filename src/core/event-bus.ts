@@ -12,6 +12,9 @@ export type AppEvents = {
   'camera:modeChanged': 'free' | 'follow';
   'camera:requestState': void;
 
+  /** UI */
+  'ui:editModeToggled': { isEditMode: boolean };
+
   /** 채팅 */
   'chat:newMessage': { role: string, text: string };
   'ui:showFloatingMessage': { text: string };

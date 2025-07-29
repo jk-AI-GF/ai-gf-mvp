@@ -1,6 +1,7 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../contexts/AppContext';
+import eventBus from '../../core/event-bus';
 
 interface TopMenuProps {
   onOpenPosePanel: () => void;
@@ -9,6 +10,19 @@ interface TopMenuProps {
 
 const TopMenu: React.FC<TopMenuProps> = ({ onOpenPosePanel, onOpenAnimationPanel }) => {
   const { vrmManager } = useAppContext();
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const handleEditModeToggle = (data: { isEditMode: boolean }) => {
+      setIsVisible(data.isEditMode);
+    };
+
+    const unsubscribe = eventBus.on('ui:editModeToggled', handleEditModeToggle);
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const getRelativePath = (fullPath: string): string | null => {
     const assetsDir = 'assets';
@@ -60,6 +74,10 @@ const TopMenu: React.FC<TopMenuProps> = ({ onOpenPosePanel, onOpenAnimationPanel
     window.electronAPI.quitApp();
   };
 
+  if (!isVisible) {
+    return null;
+  }
+
   return (
     <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 1000, display: 'flex', gap: '10px' }}>
       <button onClick={handleLoadVRM}>VRM 모델 로드</button>
@@ -73,3 +91,4 @@ const TopMenu: React.FC<TopMenuProps> = ({ onOpenPosePanel, onOpenAnimationPanel
 };
 
 export default TopMenu;
+

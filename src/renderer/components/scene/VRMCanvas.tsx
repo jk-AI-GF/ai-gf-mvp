@@ -172,14 +172,17 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
         renderer.setSize(window.innerWidth, window.innerHeight);
     };
 
-    const toggleCameraMode = () => {
-        if (cameraMode === 'orbit') {
+    const handleEditModeChange = (data: { isEditMode: boolean }) => {
+        const newMode = data.isEditMode ? 'orbit' : 'fixed';
+        if (cameraMode === newMode) return; // 이미 해당 모드이면 변경하지 않음
+
+        if (newMode === 'fixed') {
             cameraMode = 'fixed';
             activeCamera = orthographicCamera;
             controls.enabled = false;
             eventBus.emit('camera:modeChanged', 'follow'); // Emitting 'follow' for UI
             setOutlineMode(MToonMaterialOutlineWidthMode.ScreenCoordinates);
-        } else {
+        } else { // 'orbit'
             cameraMode = 'orbit';
             activeCamera = perspectiveCamera;
             // Ensure aspect ratio is correct when switching back
@@ -204,7 +207,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
             vrmManager.currentVrm.expressionManager.setValue(expressionName, weight);
         }
     });
-    eventBus.on('camera:toggleMode', toggleCameraMode);
+    eventBus.on('ui:editModeToggled', handleEditModeChange);
     eventBus.on('camera:requestState', requestCameraState);
 
     // --- Cleanup ---
@@ -213,7 +216,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
         document.removeEventListener('mousedown', handleMouseClick);
         unsubTts();
         unsubSetExpressionWeight();
-        eventBus.off('camera:toggleMode', toggleCameraMode);
+        eventBus.off('ui:editModeToggled', handleEditModeChange);
         eventBus.off('camera:requestState', requestCameraState);
     };
   }, [onLoad]);

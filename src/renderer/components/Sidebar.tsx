@@ -25,23 +25,10 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [isEditMode, setIsEditMode] = useState(false);
 
-  useEffect(() => {
-    const handleModeChange = (mode: 'free' | 'follow') => {
-      setIsEditMode(mode === 'free');
-    };
-
-    eventBus.on('camera:modeChanged', handleModeChange);
-    eventBus.emit('camera:requestState'); // Request current state on mount
-
-    return () => {
-      eventBus.off('camera:modeChanged', handleModeChange);
-    };
-  }, []);
-
-
   const handleToggleEditMode = () => {
-    // 상태를 직접 바꾸는 대신, 이벤트를 보내고 응답을 기다립니다.
-    eventBus.emit('camera:toggleMode');
+    const newMode = !isEditMode;
+    setIsEditMode(newMode);
+    eventBus.emit('ui:editModeToggled', { isEditMode: newMode });
   };
 
   return (
