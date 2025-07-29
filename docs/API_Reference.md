@@ -9,26 +9,47 @@
 ```typescript
 // src/plugins/plugin-manager.ts 에 정의된 인터페이스
 export interface IPlugin {
-  readonly name: string; // 플러그인의 고유한 이름
-  enabled: boolean;      // 플러그인의 활성화 여부
+  readonly name: string;
+  enabled: boolean;
+  runInEditMode?: boolean;
+
+  // 플러그인이 처음 등록될 때 한 번 호출
+  setup(context: PluginContext): void;
+
+  // 플러그인이 활성화될 때 호출
+  onEnable(): void;
+
+  // 플러그인이 비활성화될 때 호출
+  onDisable(): void;
   
-  // 플러그인이 처음 등록될 때 한 번 호출되는 초기화 함수
-  setup(context: PluginContext, manager: PluginManager): void;
-  
-  // 매 프레임마다 호출되는 업데이트 함수
+  // 활성화된 상태에서 매 프레임마다 호출
   update(delta: number, vrm: VRM): void;
 }
 ```
 
-### 필수 속성 및 메서드
+### 생명주기(Lifecycle) 및 필수 속성
 
 -   **`name`** (`string`, `readonly`): 플러그인을 식별하는 고유한 이름입니다. (예: `'AutoBlink'`)
--   **`enabled`** (`boolean`): 플러그인의 활성화 상태를 나타냅니다. `false`이면 `update` 메서드가 호출되지 않습니다.
--   **`setup(context, manager)`**: 플러그인이 `PluginManager`에 등록될 때 단 한 번 호출됩니다. 이벤트 리스너 등록, 초기값 설정 등 모든 준비 작업을 이 메서드 안에서 수행해야 합니다.
+-   **`enabled`** (`boolean`): 플러그인의 현재 활성화 상태를 나타냅니다. 이 값은 `PluginManager`에 의해 내부적으로 관리되므로 직접 수정해서는 안 됩니다.
+-   **`runInEditMode`** (`boolean`, Optional, Default: `false`): `true`로 설정하면, 사용자가 '편집 모드'에 진입해도 이 플러그인이 비활성화되지 않고 계속 실행됩니다. 캐릭터를 직접 조작하는 플러그인(예: `GrabVrmPlugin`)에 유용합니다.
+
+### 생명주기 메서드
+
+-   **`setup(context)`**: 플러그인이 `PluginManager`에 등록될 때 **단 한 번만** 호출됩니다. `context`를 클래스 속성에 저장하는 등, 플러그인의 가장 기본적인 초기화 작업을 수행합니다. **이벤트 리스너 등록 등 실제 동작과 관련된 로직은 `onEnable`에 작성해야 합니다.**
     -   `context`: 플러그인이 시스템 기능(Actions, EventBus 등)에 접근할 수 있는 API 집합입니다.
-    -   `manager`: `PluginManager` 자신의 인스턴스로, 다른 플러그인을 참조해야 하는 고급 기능에 사용될 수 있습니다.
--   **`update(delta, vrm)`**: 매 프레임마다 호출됩니다. 캐릭터의 지속적인 행동이나 상태 변화 로직을 여기에 구현합니다.
-    -   `delta`: 이전 프레임으로부터 경과한 시간(초)입니다. 이 값을 사용하여 시간에 따른 애니메이션이나 로직을 일관되게 처리할 수 있습니다.
+
+-   **`onEnable()`**: 플러그인이 활성화될 때 호출됩니다. `PluginManager`는 다음과 같은 상황에서 이 메서드를 호출합니다.
+    1.  플러그인이 처음 등록될 때 (편집 모드가 아닌 경우)
+    2.  사용자가 '편집 모드'를 종료할 때
+    3.  (향후 추가될) 사용자가 UI를 통해 플러그인을 직접 켤 때
+    
+    **모든 이벤트 리스너 등록, `setInterval`/`setTimeout` 설정 등 플러그인의 실제 동작을 시작하는 코드는 반드시 이 메서드 안에 위치해야 합니다.**
+
+-   **`onDisable()`**: 플러그인이 비활성화될 때 호출됩니다. `onEnable`에서 등록했던 모든 것을 완벽하게 "정리"하는 역할을 합니다.
+    -   `eventBus` 구독 해제, `document.removeEventListener` 호출, `clearInterval` 등을 통해 모든 동작을 확실히 멈춰야 합니다. 이는 메모리 누수를 방지하고 원치 않는 동작을 막는 데 매우 중요합니다.
+
+-   **`update(delta, vrm)`**: 플러그인이 `enabled` 상태일 때, 매 프레임마다 호출됩니다. 캐릭터의 지속적인 상태 변화 로직을 여기에 구현합니다.
+    -   `delta`: 이전 프레임으로부터 경과한 시간(초)입니다.
     -   `vrm`: 현재 로드된 VRM 모델의 인스턴스입니다.
 
 ---

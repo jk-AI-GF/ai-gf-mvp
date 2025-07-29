@@ -5,7 +5,7 @@ import { PluginContext } from '../plugin-api/plugin-context';
 export class AutoIdleAnimationPlugin implements IPlugin {
   public readonly name = 'AutoIdleAnimation';
   public enabled = false;
-  private context: PluginContext;
+  private context!: PluginContext;
 
   private readonly IDLE_ANIMATION_FILES = [
     'VRMA_01.vrma', 'VRMA_02.vrma', 'VRMA_03.vrma', 
@@ -18,8 +18,16 @@ export class AutoIdleAnimationPlugin implements IPlugin {
     this.context = context;
   }
 
+  onEnable(): void {
+    this.resetTimer();
+  }
+
+  onDisable(): void {
+    // No specific cleanup needed as logic is in update()
+  }
+
   update(delta: number, vrm: VRM): void {
-    if (!this.enabled || !this.context.actions) return;
+    if (!this.context.actions) return;
 
     this.idleTime += delta;
 

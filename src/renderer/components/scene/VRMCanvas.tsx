@@ -60,6 +60,9 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     const vrmManager = new VRMManager(scene, activeCamera, plane, eventBus);
     vrmManager.loadVRM('VRM/Liqu.vrm');
 
+    // --- Edit Mode State ---
+    let isEditMode = false;
+
     // --- Plugin System ---
     const triggerEngine = new TriggerEngine();
     const pluginContext = createPluginContext(vrmManager, triggerEngine, renderer);
@@ -111,7 +114,9 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
         requestAnimationFrame(animate);
         const delta = clock.getDelta();
         vrmManager.update(delta);
+
         if (vrmManager.currentVrm) {
+            // The plugin manager now internally handles the edit mode state
             pluginManager.update(delta, vrmManager.currentVrm);
             
             const head = vrmManager.currentVrm.humanoid.getNormalizedBoneNode('head');
@@ -173,8 +178,11 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     };
 
     const handleEditModeChange = (data: { isEditMode: boolean }) => {
+        isEditMode = data.isEditMode; // Update the local state
+        pluginManager.setEditMode(isEditMode); // Inform the plugin manager
+
         const newMode = data.isEditMode ? 'orbit' : 'fixed';
-        if (cameraMode === newMode) return; // 이미 해당 모드이면 변경하지 않음
+        if (cameraMode === newMode) return; // Already in the correct camera mode
 
         if (newMode === 'fixed') {
             cameraMode = 'fixed';

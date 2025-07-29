@@ -7,6 +7,7 @@ import { PluginContext } from '../plugin-api/plugin-context';
 export class ProactiveDialoguePlugin implements IPlugin {
   public readonly name = 'ProactiveDialogue';
   public enabled = false;
+  runInEditMode = false;
 
   private context: PluginContext;
   private timeSinceLastDialogue = 0.0;
@@ -37,11 +38,18 @@ export class ProactiveDialoguePlugin implements IPlugin {
       '주말 계획은 어떻게 되세요?',
       '요즘 가장 행복했던 순간은 언제인가요?',
     ];
-    this.resetDialogueTimer();
   }
 
   public setup(context: PluginContext): void {
     this.context = context;
+  }
+
+  public onEnable(): void {
+    this.resetDialogueTimer();
+  }
+
+  public onDisable(): void {
+    // No ongoing processes to disable
   }
 
   /**
@@ -56,11 +64,8 @@ export class ProactiveDialoguePlugin implements IPlugin {
   /**
    * 매 프레임마다 호출되어 대화 로직을 처리합니다.
    * @param delta 마지막 프레임 이후의 시간 (초)
-   * @param vrm VRM 모델 인스턴스 (이 플러그인에서는 직접 사용하지 않음)
    */
   public update(delta: number): void {
-    if (!this.enabled) return;
-
     this.timeSinceLastDialogue += delta;
 
     if (this.timeSinceLastDialogue >= this.nextDialogueTime) {
@@ -78,7 +83,6 @@ export class ProactiveDialoguePlugin implements IPlugin {
     const randomIndex = Math.floor(Math.random() * this.dialoguePhrases.length);
     const phrase = this.dialoguePhrases[randomIndex];
 
-    // window.appendMessage 함수를 사용하여 말풍선을 띄웁니다.
     if (this.context.actions) {
       this.speak(phrase);
     } else {

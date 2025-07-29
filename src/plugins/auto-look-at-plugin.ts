@@ -7,7 +7,7 @@ export class AutoLookAtPlugin implements IPlugin {
   public readonly name = 'AutoLookAt';
   public enabled = false;
 
-  private context: PluginContext; // Add context property
+  private context!: PluginContext;
   private lastChangeTime: number = 0;
   private nextChangeInterval: number = 0; // In milliseconds
 
@@ -21,6 +21,15 @@ export class AutoLookAtPlugin implements IPlugin {
 
   public setup(context: PluginContext): void {
     this.context = context;
+  }
+
+  public onEnable(): void {
+    this.lastChangeTime = performance.now();
+    this.setNextChangeInterval();
+  }
+
+  public onDisable(): void {
+    // No specific cleanup needed as logic is in update()
   }
 
   public update(delta: number, vrm: VRM): void {

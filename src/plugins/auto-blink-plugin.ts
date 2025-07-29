@@ -7,9 +7,10 @@ import { PluginContext } from '../plugin-api/plugin-context';
  */
 export class AutoBlinkPlugin implements IPlugin {
   public readonly name = 'AutoBlink';
-  public enabled = true;
+  public enabled = false;
+  public runInEditMode = true;
 
-  private context: PluginContext;
+  private context!: PluginContext;
   private timeSinceLastBlink = 0.0;
   private nextBlinkTime = 0.0;
 
@@ -19,6 +20,14 @@ export class AutoBlinkPlugin implements IPlugin {
 
   public setup(context: PluginContext): void {
     this.context = context;
+  }
+
+  public onEnable(): void {
+    this.resetBlinkTimer();
+  }
+
+  public onDisable(): void {
+    // No specific cleanup needed as logic is in update()
   }
 
   /**

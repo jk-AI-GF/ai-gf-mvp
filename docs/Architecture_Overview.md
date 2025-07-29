@@ -43,7 +43,12 @@
 -   **`plugin-api/`**: **모더와 코어 개발자를 위한 "공식 API"**가 정의된 디렉토리입니다. 플러그인이 시스템과 상호작용하기 위해 필요한 모든 인터페이스(`PluginContext`, `Actions`, `Triggers` 등)가 이곳에 정의됩니다.
     -   **`context-factory.ts`**: **`PluginContext` 생성의 유일한 책임자**입니다. `vrmManager`와 같은 핵심 모듈을 인자로 받아, `Actions`와 `SystemControls`의 실제 구현을 포함하는 완전한 `PluginContext` 객체를 생성하여 반환합니다. API의 실제 구현 코드를 찾고 싶다면 이 파일을 확인해야 합니다.
 -   **`plugins/`**: 애플리케이션의 기본 행동(자동 눈 깜빡임, 자동 고개 돌리기 등)을 제공하는 **코어 플러그인**들이 위치합니다. 이 플러그인들은 사용자가 만드는 모드와 동일한 `IPlugin` 인터페이스와 `PluginContext`를 사용하여 만들어집니다.
--   **`plugin-manager.ts`**: 모든 플러그인(코어 플러그인, 사용자 모드)의 생명주기를 관리합니다. 플러그인을 등록하고, 매 프레임 `update`를 호출하며, `context-factory.ts`로부터 생성된 `PluginContext`를 플러그인에 주입하는 중요한 역할을 합니다.
+-   **`plugin-manager.ts`**: **모든 플러그인의 생명주기(Lifecycle)를 총괄하는 핵심 관리자**입니다.
+    -   **주요 역할**:
+        1.  플러그인을 등록(`register`)하고 `PluginContext`를 주입합니다.
+        2.  플러그인의 `setup`, `onEnable`, `onDisable` 생명주기 메서드를 적절한 시점에 호출합니다.
+        3.  '편집 모드' 상태가 변경되면(`setEditMode` 호출), `runInEditMode` 속성이 `false`인 플러그인들을 자동으로 비활성화/활성화하여 동작을 제어합니다.
+        4.  활성화된 플러그인들의 `update` 메서드를 매 프레임 호출합니다.
 
 ### `src/core/` - 핵심 유틸리티 및 엔진
 

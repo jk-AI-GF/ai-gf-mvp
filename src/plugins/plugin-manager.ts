@@ -8,16 +8,32 @@ export interface IPlugin {
   /** 플러그인의 고유한 이름 */
   readonly name: string;
   
-  /** 플러그인이 활성화되었는지 여부 */
+  /** 플러그인이 활성화되었는지 여부. PluginManager가 관리합니다. */
   enabled: boolean;
 
   /**
-   * 플러그인이 등록될 때 PluginManager에 의해 한 번만 호출됩니다.
-   * 이벤트 리스너 등록 등 초기 설정 로직을 여기에 배치해야 합니다.
-   * @param context 플러그인이 앱과 상호작용할 수 있는 모든 API를 포함하는 객체
-   * @param manager 플러그인 관리자 인스턴스
+   * 편집 모드에서도 플러그인을 실행할지 여부.
+   * @default false
    */
-  setup(context: PluginContext, manager: PluginManager): void;
+  runInEditMode?: boolean;
+
+  /**
+   * 플러그인이 등록될 때 한 번만 호출됩니다.
+   * @param context 플러그인이 앱과 상호작용할 수 있는 모든 API를 포함하는 객체
+   */
+  setup(context: PluginContext): void;
+
+  /**
+   * 플러그인이 활성화될 때 호출됩니다.
+   * 이벤트 리스너 등록, 타이머 시작 등 실제 동작 로직을 여기에 배치합니다.
+   */
+  onEnable(): void;
+
+  /**
+   * 플러그인이 비활성화될 때 호출됩니다.
+   * onEnable에서 등록한 모든 리스너와 타이머를 정리해야 합니다.
+   */
+  onDisable(): void;
 
   /**
    * 매 프레임마다 호출될 메서드입니다.
@@ -33,6 +49,7 @@ export interface IPlugin {
 export class PluginManager {
   public plugins: Map<string, IPlugin> = new Map();
   public context: PluginContext;
+  private isEditMode = false;
 
   constructor(context: PluginContext) {
     this.context = context;
@@ -48,9 +65,33 @@ export class PluginManager {
       return;
     }
     this.plugins.set(plugin.name, plugin);
-    // `setup` 메서드를 호출하여 플러그인을 초기화합니다.
-    plugin.setup(this.context, this);
+    plugin.setup(this.context);
+    
+    // 편집 모드가 아닐 경우에만 즉시 활성화
+    if (!this.isEditMode || plugin.runInEditMode) {
+      this.enable(plugin.name);
+    }
+    
     console.log(`Plugin registered: ${plugin.name}`);
+  }
+
+  /**
+   * 편집 모드 상태를 설정하고, 상태에 따라 플러그인을 활성화/비활성화합니다.
+   * @param isEditMode 새로운 편집 모드 상태
+   */
+  setEditMode(isEditMode: boolean): void {
+    if (this.isEditMode === isEditMode) return;
+    this.isEditMode = isEditMode;
+
+    for (const plugin of this.plugins.values()) {
+      if (this.isEditMode && !plugin.runInEditMode) {
+        // 편집 모드 진입: runInEditMode가 false인 플러그인 비활성화
+        this.disable(plugin.name);
+      } else if (!this.isEditMode) {
+        // 편집 모드 종료: 모든 플러그인 활성화 (이미 활성화된 것은 무시됨)
+        this.enable(plugin.name);
+      }
+    }
   }
 
   /**
@@ -59,8 +100,9 @@ export class PluginManager {
    */
   disable(name: string): void {
     const plugin = this.plugins.get(name);
-    if (plugin) {
+    if (plugin && plugin.enabled) {
       plugin.enabled = false;
+      plugin.onDisable();
       console.log(`Plugin disabled: ${name}`);
     }
   }
@@ -71,8 +113,9 @@ export class PluginManager {
    */
   enable(name: string): void {
     const plugin = this.plugins.get(name);
-    if (plugin) {
+    if (plugin && !plugin.enabled) {
       plugin.enabled = true;
+      plugin.onEnable();
       console.log(`Plugin enabled: ${name}`);
     }
   }

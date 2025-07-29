@@ -8,79 +8,55 @@ import { PluginContext } from '../plugin-api/plugin-context';
  */
 export class ActionTestPlugin implements IPlugin {
   public readonly name = 'ActionTest';
-  public enabled = false;
-  private context: PluginContext | null = null;
+  public enabled = false; // Managed by PluginManager
+  private context!: PluginContext;
+  private unsubs: (() => void)[] = [];
 
   setup(context: PluginContext): void {
     this.context = context;
     console.log('[ActionTestPlugin] Initialized.');
-    this.setupEventListeners();
-  }
-
-  private setupEventListeners() {
-    if (!this.context) return;
-
-    this.context.eventBus.on('character_part_clicked', ({ partName }) => {
-      if (!this.enabled) return;
-      
-      console.log(`[ActionTestPlugin] Event received: character_part_clicked, part: ${partName}`);
-      
-      const message = `${partName} 클릭됨!`;
-      this.context?.actions.showMessage(message, 2);
-    });
-
-    this.context.eventBus.on('character_part_right_clicked', ({ partName }) => {
-      if (!this.enabled) return;
-      
-      console.log(`[ActionTestPlugin] Event received: character_part_right_clicked, part: ${partName}`);
-      
-      const message = `${partName} 우클릭됨! 특별한 반응!`;
-      this.context?.actions.showMessage(message, 2);
-    });
-
-    this.context.eventBus.on('vrm:loaded', ({ vrm }) => {
-      if (!this.enabled) return;
-      const modelName = 'name' in vrm.meta ? vrm.meta.name : (vrm.meta as any).title;
-      console.log(`[ActionTestPlugin] Event received: vrm:loaded. Model name: ${modelName}`);
-    });
-
-    this.context.eventBus.on('vrm:unloaded', () => {
-      if (!this.enabled) return;
-      console.log('[ActionTestPlugin] Event received: vrm:unloaded.');
-    });
   }
 
   onEnable(): void {
-    if (!this.context) return;
+    console.log('[ActionTestPlugin] Enabled.');
+    this.unsubs.push(this.context.eventBus.on('character_part_clicked', ({ partName }) => {
+      console.log(`[ActionTestPlugin] Event received: character_part_clicked, part: ${partName}`);
+      const message = `${partName} 클릭됨!`;
+      this.context.actions.showMessage(message, 2);
+    }));
+
+    this.unsubs.push(this.context.eventBus.on('character_part_right_clicked', ({ partName }) => {
+      console.log(`[ActionTestPlugin] Event received: character_part_right_clicked, part: ${partName}`);
+      const message = `${partName} 우클릭됨! 특별한 반응!`;
+      this.context.actions.showMessage(message, 2);
+    }));
+
+    this.unsubs.push(this.context.eventBus.on('vrm:loaded', ({ vrm }) => {
+      const modelName = 'name' in vrm.meta ? vrm.meta.name : (vrm.meta as any).title;
+      console.log(`[ActionTestPlugin] Event received: vrm:loaded. Model name: ${modelName}`);
+    }));
+
+    this.unsubs.push(this.context.eventBus.on('vrm:unloaded', () => {
+      console.log('[ActionTestPlugin] Event received: vrm:unloaded.');
+    }));
+
+    this.runActionSequence();
+  }
+
+  onDisable(): void {
+    console.log('[ActionTestPlugin] Disabled.');
+    this.unsubs.forEach(unsub => unsub());
+    this.unsubs = [];
+  }
+
+  private runActionSequence() {
     const actions = this.context.actions;
-
-    console.log('[ActionTestPlugin] Starting action sequence test on enable...');
-
-    // 1. Show start message
+    console.log('[ActionTestPlugin] Starting action sequence test...');
     actions.showMessage('Action 테스트를 시작합니다.', 3);
-    
-    // 2. Set expression after 3 seconds
-    setTimeout(() => {
-      actions.showMessage('표정을 변경합니다: happy', 3);
-      actions.setExpression('happy', 1.0, 0.5);
-    }, 3000);
-
-    // 3. Set pose after 6 seconds
-    setTimeout(() => {
-      actions.showMessage('포즈를 변경합니다: pose_stand_001.vrma', 3);
-      actions.setPose('pose_stand_001.vrma');
-    }, 6000);
-
-    // 4. Play animation after 9 seconds
-    setTimeout(() => {
-      actions.showMessage('애니메이션을 재생합니다: VRMA_04.vrma', 3);
-      actions.playAnimation('Animation/VRMA_04.vrma', false, 1.5);
-    }, 9000);
-
-    // 5. Show end message after 15 seconds
-    setTimeout(() => {
-      actions.showMessage('Action 테스트가 종료되었습니다.', 3);
-    }, 15000);
+    setTimeout(() => actions.setExpression('happy', 1.0, 0.5), 3000);
+    setTimeout(() => actions.setPose('pose_stand_001.vrma'), 6000);
+    setTimeout(() => actions.playAnimation('Animation/VRMA_04.vrma', false, 1.5), 9000);
+    setTimeout(() => actions.showMessage('Action 테스트가 종료되었습니다.', 3), 15000);
   }
 
   update(deltaTime: number): void {

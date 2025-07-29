@@ -6,40 +6,59 @@ import { VRMManager } from '../renderer/vrm-manager';
 
 export class GrabVrmPlugin implements IPlugin {
   public readonly name = 'GrabVrm';
-  public enabled = true;
+  public enabled = false; // Start disabled, enabled by PluginManager
+  public runInEditMode = true; // This plugin should run in edit mode
 
   private context!: PluginContext;
   private vrmManager!: VRMManager;
-  private camera!: THREE.Camera; // 타입을 일반 Camera로 변경
+  private camera!: THREE.Camera;
 
   private isDragging = false;
   private raycaster = new THREE.Raycaster();
   private dragPlane = new THREE.Plane();
   private dragOffset = new THREE.Vector3();
   private intersection = new THREE.Vector3();
+  private cameraModeUnsubscribe: (() => void) | null = null;
+  private partClickedUnsubscribe: (() => void) | null = null;
 
   constructor() {
     this.handleMouseDownOnPart = this.handleMouseDownOnPart.bind(this);
     this.handleMouseMove = this.handleMouseMove.bind(this);
     this.handleMouseUp = this.handleMouseUp.bind(this);
+    this.updateCamera = this.updateCamera.bind(this);
   }
 
   setup(context: PluginContext): void {
     this.context = context;
-    if (!context.vrmManager) return;
-
+    if (!context.vrmManager) {
+      console.error('[GrabVrmPlugin] VRMManager not found in context.');
+      return;
+    }
     this.vrmManager = context.vrmManager;
-    // VRMManager에서 현재 활성 카메라를 가져옴
-    this.camera = this.vrmManager.activeCamera; 
+    this.camera = this.vrmManager.activeCamera;
+    console.log('[GrabVrmPlugin] Setup complete.');
+  }
 
-    this.context.eventBus.on('character_part_clicked', this.handleMouseDownOnPart);
-    
-    // 카메라 모드가 변경될 때마다 this.camera를 업데이트
-    this.context.eventBus.on('camera:modeChanged', () => {
-        this.camera = this.vrmManager.activeCamera;
-    });
+  onEnable(): void {
+    console.log('[GrabVrmPlugin] Enabled.');
+    this.partClickedUnsubscribe = this.context.eventBus.on('character_part_clicked', this.handleMouseDownOnPart);
+    this.cameraModeUnsubscribe = this.context.eventBus.on('camera:modeChanged', this.updateCamera);
+  }
 
-    console.log('[GrabVrmPlugin] Initialized.');
+  onDisable(): void {
+    console.log('[GrabVrmPlugin] Disabled.');
+    this.partClickedUnsubscribe?.();
+    this.cameraModeUnsubscribe?.();
+    // Ensure dragging state is reset if disabled mid-drag
+    if (this.isDragging) {
+      this.handleMouseUp();
+    }
+  }
+
+  private updateCamera(): void {
+    if (this.vrmManager) {
+      this.camera = this.vrmManager.activeCamera;
+    }
   }
 
   private handleMouseDownOnPart({ partName }: { partName: string }): void {
@@ -54,7 +73,6 @@ export class GrabVrmPlugin implements IPlugin {
       );
       this.raycaster.setFromCamera(mouse, this.camera);
 
-      // 드래그 평면을 캐릭터의 현재 위치를 기준으로 설정
       this.dragPlane.setFromNormalAndCoplanarPoint(
         this.camera.getWorldDirection(this.dragPlane.normal),
         this.vrmManager.currentVrm.scene.position
@@ -72,7 +90,6 @@ export class GrabVrmPlugin implements IPlugin {
 
       console.log('[GrabVrmPlugin] Started dragging character.');
       
-      // Disable orbit controls only if they exist and are enabled
       if (this.camera instanceof THREE.PerspectiveCamera) {
         const controls = (this.vrmManager.activeCamera.parent?.children.find((c: any) => c.constructor.name === 'OrbitControls') as any);
         if (controls) controls.enabled = false;
@@ -95,16 +112,12 @@ export class GrabVrmPlugin implements IPlugin {
             this.vrmManager.currentVrm.scene.position.copy(this.intersection.sub(this.dragOffset));
         }
     } else if (this.camera instanceof THREE.OrthographicCamera) {
-        // 직교 카메라의 경우, 화면 좌표를 월드 좌표로 변환
-        this.intersection.set(mouse.x, mouse.y, 0.5); // z는 -1에서 1 사이의 값
+        this.intersection.set(mouse.x, mouse.y, 0.5);
         this.intersection.unproject(this.camera);
         
-        // 캐릭터의 원래 z 깊이를 유지하면서 x, y만 변경
         const currentPos = this.vrmManager.currentVrm.scene.position;
-        const newPos = new THREE.Vector3(this.intersection.x, this.intersection.y, currentPos.z);
-        
-        currentPos.x = newPos.x;
-        currentPos.y = newPos.y;
+        currentPos.x = this.intersection.x;
+        currentPos.y = this.intersection.y;
     }
   }
 
@@ -116,11 +129,10 @@ export class GrabVrmPlugin implements IPlugin {
     this.context.actions.setPose("pose_stand_001.vrma");
 
     document.removeEventListener('mousemove', this.handleMouseMove);
-    document.removeEventListener('mouseup', this.handleMouseUp);
+    // 'mouseup' is registered with { once: true }, so it removes itself.
 
     console.log('[GrabVrmPlugin] Stopped dragging character.');
 
-    // Re-enable orbit controls if they exist
     if (this.camera instanceof THREE.PerspectiveCamera) {
         const controls = (this.vrmManager.activeCamera.parent?.children.find((c: any) => c.constructor.name === 'OrbitControls') as any);
         if (controls) controls.enabled = true;
