@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { onWindowResize } from '../../scene-utils';
 import { useAppContext } from '../../contexts/AppContext';
+import eventBus from '../../../core/event-bus';
 
 interface SceneProps {
   onLoad: (instances: {
@@ -54,11 +55,12 @@ const Scene: React.FC<SceneProps> = ({ onLoad }) => {
     scene.add(ambientLight);
     setAmbientLight(ambientLight); // Set ambient light in global context
 
-    // Ground plane
+    // Wall plane
     const planeGeometry = new THREE.PlaneGeometry(10, 10);
     const planeMaterial = new THREE.ShadowMaterial({ opacity: 0.7 });
     const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-    plane.rotation.x = -Math.PI / 2;
+    plane.rotation.x = 0; // 기본 상태를 '벽'으로 설정
+    plane.position.z = -0.15; // 벽을 뒤로 이동
     plane.receiveShadow = true;
     plane.material.depthWrite = false;
     scene.add(plane);
@@ -70,9 +72,26 @@ const Scene: React.FC<SceneProps> = ({ onLoad }) => {
     const handleResize = () => onWindowResize(camera, renderer);
     window.addEventListener('resize', handleResize);
 
+    const handleEditModeToggle = ({ isEditMode }: { isEditMode: boolean }) => {
+      // isEditMode가 true이면 바닥(기본값), false이면 벽으로 사용
+      if (isEditMode) {
+        plane.rotation.x = -Math.PI / 2;
+        plane.position.z = 0;
+        renderer.setClearColor(0x000000, 0.5); // 편집 모드: 반투명 검은색
+      } else {
+        plane.rotation.x = 0;
+        plane.position.z = -5;
+        renderer.setClearColor(0x000000, 0); // 기본 모드: 완전 투명
+      }
+    };
+
+    eventBus.on('ui:editModeToggled', handleEditModeToggle);
+
+
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
+      eventBus.off('ui:editModeToggled', handleEditModeToggle);
       container.removeChild(renderer.domElement);
       // Dispose Three.js objects to prevent memory leaks
       scene.traverse(object => {
