@@ -23,7 +23,7 @@ interface Message {
 }
 
 const App: React.FC = () => {
-  const { chatService, isUiInteractive, persona } = useAppContext();
+  const { chatService, isUiInteractive, persona, llmSettings } = useAppContext();
   const [isSettingsModalOpen, setSettingsModalOpen] = useState(false);
   const [isJointPanelOpen, setJointPanelOpen] = useState(false);
   const [isExpressionPanelOpen, setExpressionPanelOpen] = useState(false);
@@ -81,7 +81,7 @@ const App: React.FC = () => {
       const currentPersona =
         persona ||
         'You are a friendly and helpful AI assistant. Please respond in Korean.';
-      chatService.sendChatMessage(text, currentPersona);
+      chatService.sendChatMessage(text, currentPersona, llmSettings);
     } else {
       console.error('Chat service is not initialized.');
       setChatMessages((prev) => [

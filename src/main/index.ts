@@ -7,20 +7,21 @@ import { createEventBus, AppEvents } from '../core/event-bus';
 import { TriggerEngine } from '../core/trigger-engine';
 import { ContextStore } from '../core/context-store';
 import { ModSettingsManager } from '../core/mod-settings-manager';
+import { LlmSettings, DEFAULT_LLM_SETTINGS } from '../core/llm-settings';
 
 // Define the schema for electron-store
 interface StoreSchema {
   windowOpacity: number;
-  apiKey: string;
   persona: string;
+  llmSettings: LlmSettings;
 }
 
-// ❸ Store 인스턴스 생성
+// Store 인스턴스 생성
 const store = new Store<StoreSchema>({
   defaults: {
     windowOpacity: 1.0,
-    apiKey:        '',
-    persona:       '당신은 친절하고 상냥한 AI 여자친구입니다. 항상 사용자에게 긍정적이고 다정한 태도로 대화에 임해주세요.',
+    persona: '당신은 친절하고 상냥한 AI 여자친구입니다. 항상 사용자에게 긍정적이고 다정한 태도로 대화에 임해주세요.',
+    llmSettings: DEFAULT_LLM_SETTINGS,
   }
 });
 
@@ -83,8 +84,6 @@ const createOverlayWindow = (): void => {
 
 const toggleOverlayWindow = (): void => {
   if (!overlayWindow) {
-    // If it doesn't exist, it's created by the 'ready' event, so we shouldn't get here.
-    // But as a fallback, we could create it. For now, we'll assume it exists.
     console.log('Overlay window does not exist.');
     return;
   }
@@ -127,26 +126,21 @@ const createWindow = (): void => {
 
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
-      webSecurity: true, // 보안 검사 활성화
-      nodeIntegration: true, // Node.js 통합 활성화
-      contextIsolation: false, // 컨텍스트 격리 비활성화
-      webgl: true, // WebGL 활성화
+      webSecurity: true,
+      nodeIntegration: true,
+      contextIsolation: false,
+      webgl: true,
     },
   });
 
-  // Set the window to the highest level to stay above the taskbar
   mainWindow.setAlwaysOnTop(true, 'screen-saver');
   mainWindow.moveTop();
-
-  // and load the index.html of the app.
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
-  // Focus the window once the content is fully loaded
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow.focus();
   });
 
-  // Open the DevTools only when not in production
   if (!app.isPackaged) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   }
@@ -156,9 +150,6 @@ const createWindow = (): void => {
   });
 };
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
 app.on('ready', async () => {
   // CSP 설정
   const policy = [
@@ -166,10 +157,9 @@ app.on('ready', async () => {
     "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: file:",
-    "connect-src 'self' blob: data: https://generativelanguage.googleapis.com http://localhost:8000 file:"
+    "connect-src 'self' blob: data: https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com http://localhost:8000 file:"
   ].join("; ");
 
-  // 윈도우 만들기 전에 defaultSession에 적용
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
@@ -181,11 +171,10 @@ app.on('ready', async () => {
 
   createWindow();
   
-  // Restore and set window opacity
   const initialOpacity = store.get('windowOpacity', 1.0);
   mainWindow.setOpacity(initialOpacity);
 
-  createOverlayWindow(); // Create both windows on startup
+  createOverlayWindow();
   createTray();
 
   // --- IPC Handlers for Settings ---
@@ -200,19 +189,21 @@ app.on('ready', async () => {
     return store.get('windowOpacity', 1.0);
   });
 
-  ipcMain.handle('get-settings', () => {
-    return {
-      apiKey: store.get('apiKey', ''),
-      persona: store.get('persona', ''),
-    };
-  });
-
-  ipcMain.on('set-api-key', (event, apiKey: string) => {
-    store.set('apiKey', apiKey);
-  });
-
   ipcMain.on('set-persona', (event, persona: string) => {
     store.set('persona', persona);
+  });
+
+  ipcMain.handle('get-persona', () => {
+    return store.get('persona');
+  });
+
+  ipcMain.handle('get-llm-settings', () => {
+    const storedSettings = store.get('llmSettings');
+    return { ...DEFAULT_LLM_SETTINGS, ...storedSettings };
+  });
+
+  ipcMain.on('set-llm-settings', (event, settings: LlmSettings) => {
+    store.set('llmSettings', settings);
   });
 
   // Initialize core components
@@ -220,9 +211,8 @@ app.on('ready', async () => {
   const triggerEngine = new TriggerEngine();
   const contextStore = new ContextStore();
   const modSettingsManager = new ModSettingsManager(app.getPath('userData'));
-  await modSettingsManager.loadSettings(); // Load settings before initializing mods
+  await modSettingsManager.loadSettings();
 
-  // Bridge events from the main process event bus to the renderer process
   eventBus.on('system:mouse-ignore-toggle', (isIgnoring) => {
     if (mainWindow) {
       mainWindow.webContents.send('set-ui-interactive-mode', !isIgnoring);
@@ -232,21 +222,12 @@ app.on('ready', async () => {
   const toggleMouseIgnore = () => {
     if (mainWindow) {
       isIgnoringMouseEvents = !isIgnoringMouseEvents;
-
-      if (isIgnoringMouseEvents) {
-        mainWindow.setIgnoreMouseEvents(true, { forward: true });
-      } else {
-        mainWindow.setIgnoreMouseEvents(false);
+      mainWindow.setIgnoreMouseEvents(isIgnoringMouseEvents, { forward: isIgnoringMouseEvents });
+      if (!isIgnoringMouseEvents) {
         mainWindow.focus();
       }
-
-      // Store the current state in ContextStore for plugins to access
       contextStore.set('system:isIgnoringMouseEvents', isIgnoringMouseEvents);
-
-      // Emit event and show message regardless of state
       eventBus.emit('system:mouse-ignore-toggle', isIgnoringMouseEvents);
-      const message = isIgnoringMouseEvents ? '클릭 통과 활성' : '클릭 통과 비활성';
-      mainWindow.webContents.send('show-message-in-renderer', message, 1500);
     }
   };
 
@@ -258,16 +239,10 @@ app.on('ready', async () => {
 
   ipcMain.on('toggle-mouse-ignore', toggleMouseIgnore);
 
-  // WORKAROUND for Windows frameless transparent window issue.
-  // When the window loses focus (blur), Windows may incorrectly render a title bar.
-  // This handler forces a style re-evaluation to keep the window frameless.
   mainWindow.on('blur', () => {
-    console.log('[DEBUG] MainWindow lost focus (blur event triggered).');
     if (mainWindow && !mainWindow.isDestroyed() && isIgnoringMouseEvents) {
-      console.log('[DEBUG] Force-redrawing window by hiding and showing.');
       mainWindow.hide();
       mainWindow.show();
-      // Re-apply alwaysOnTop as an extra measure.
       mainWindow.setAlwaysOnTop(true, 'screen-saver');
     }
   });
@@ -279,21 +254,16 @@ app.on('ready', async () => {
     eventBus,
     triggerEngine,
     contextStore,
-    modSettingsManager, // Pass the settings manager
+    modSettingsManager,
     (channel: string, ...args: any[]) => {
-      // Send to both windows to ensure the active one receives the message
-      if (overlayWindow) {
-        overlayWindow.webContents.send(channel, ...args);
-      }
-      if (mainWindow) {
-        mainWindow.webContents.send(channel, ...args);
-      }
+      const targetWindow = overlayWindow?.isVisible() ? overlayWindow : mainWindow;
+      targetWindow?.webContents.send(channel, ...args);
     },
     ipcMain
   );
   modLoader.loadMods();
 
-  // IPC handler
+  // ... (rest of the IPC handlers remain the same)
   ipcMain.handle('play-animation', async (event, animationName: string, loop: boolean, crossFadeDuration: number) => {
     if (overlayWindow) {
       overlayWindow.webContents.send('play-animation-in-renderer', animationName, loop, crossFadeDuration);
@@ -470,11 +440,9 @@ app.on('ready', async () => {
 
   ipcMain.handle('read-absolute-file', async (event, filePath: string) => {
     try {
-      // Basic security check: ensure it's an absolute path.
       if (!path.isAbsolute(filePath)) {
         throw new Error('Path must be absolute.');
       }
-      // More security checks can be added here if needed (e.g., file type).
       const data = await fs.promises.readFile(filePath);
       return data.buffer;
     } catch (error) {
@@ -526,8 +494,6 @@ app.on('ready', async () => {
     return contextStore.get(key);
   });
 
-  // --- Mod Settings IPC Handlers ---
-
   ipcMain.handle('get-mod-settings', () => {
     return modSettingsManager.getSettings();
   });
@@ -561,7 +527,7 @@ app.on('ready', async () => {
               });
             }
           } catch (e) {
-            // mod.json이 없거나 잘못된 폴더는 무시
+            // ignore folders without valid mod.json
           }
         }
       }
@@ -577,9 +543,6 @@ app.on('will-quit', () => {
   globalShortcut.unregisterAll();
 });
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
@@ -587,12 +550,7 @@ app.on('window-all-closed', () => {
 });
 
 app.on('activate', () => {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
 });
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.

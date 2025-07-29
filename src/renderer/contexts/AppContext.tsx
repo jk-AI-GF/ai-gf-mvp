@@ -4,6 +4,7 @@ import VRMCanvas from '../components/scene/VRMCanvas';
 import { VRMManager } from '../vrm-manager';
 import { PluginManager } from '../../plugins/plugin-manager';
 import { ChatService } from '../chat-service';
+import { LlmSettings, DEFAULT_LLM_SETTINGS } from '../../core/llm-settings';
 
 interface AppContextType {
   vrmManager: VRMManager | null;
@@ -13,11 +14,11 @@ interface AppContextType {
   ambientLight: THREE.AmbientLight | null;
   isUiInteractive: boolean;
   windowOpacity: number;
-  apiKey: string;
   persona: string;
+  llmSettings: LlmSettings;
   setWindowOpacity: (opacity: number) => void;
-  setApiKey: (key: string) => void;
   setPersona: (persona: string) => void;
+  setLlmSettings: (settings: Partial<LlmSettings>) => void;
   setDirectionalLight: (light: THREE.DirectionalLight) => void;
   setAmbientLight: (light: THREE.AmbientLight) => void;
 }
@@ -40,15 +41,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [ambientLight, setAmbientLight] = useState<THREE.AmbientLight | null>(null);
   const [isUiInteractive, setUiInteractive] = useState(true);
   const [windowOpacity, setWindowOpacityState] = useState(1.0);
-  const [apiKey, setApiKeyState] = useState('');
   const [persona, setPersonaState] = useState('');
+  const [llmSettings, setLlmSettingsState] = useState<LlmSettings>(DEFAULT_LLM_SETTINGS);
 
   useEffect(() => {
     // Fetch all settings when the app loads
     window.electronAPI.getWindowOpacity().then(setWindowOpacityState);
-    window.electronAPI.getSettings().then(settings => {
-      setApiKeyState(settings.apiKey);
-      setPersonaState(settings.persona);
+    window.electronAPI.getPersona().then(setPersonaState);
+    window.electronAPI.getLlmSettings().then(settings => {
+      if (settings) {
+        // 저장된 설정과 기본 설정을 병합하여 항상 모든 필드를 보장
+        setLlmSettingsState(prev => ({ ...prev, ...settings }));
+      }
     });
 
     const handleUiModeChange = (isInteractive: boolean) => {
@@ -69,14 +73,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     window.electronAPI.setWindowOpacity(opacity);
   };
 
-  const setApiKey = (key: string) => {
-    setApiKeyState(key);
-    window.electronAPI.setApiKey(key);
-  };
-
   const setPersona = (newPersona: string) => {
     setPersonaState(newPersona);
     window.electronAPI.setPersona(newPersona);
+  };
+
+  const setLlmSettings = (newSettings: Partial<LlmSettings>) => {
+    const updatedSettings = { ...llmSettings, ...newSettings };
+    setLlmSettingsState(updatedSettings);
+    window.electronAPI.setLlmSettings(updatedSettings);
   };
 
   const value = { 
@@ -87,11 +92,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     ambientLight,
     isUiInteractive,
     windowOpacity,
-    apiKey,
     persona,
+    llmSettings,
     setWindowOpacity,
-    setApiKey,
     setPersona,
+    setLlmSettings,
     setDirectionalLight,
     setAmbientLight,
   };

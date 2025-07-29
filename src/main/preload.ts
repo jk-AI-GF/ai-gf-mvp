@@ -1,4 +1,5 @@
 import { ipcRenderer } from 'electron';
+import { LlmSettings } from '../core/llm-settings';
 
 // Expose ipcRenderer directly to the window object
 // This is safe because nodeIntegration is true and contextIsolation is false
@@ -33,11 +34,14 @@ import { ipcRenderer } from 'electron';
   // --- Settings ---
   setWindowOpacity: (opacity: number) => ipcRenderer.send('set-window-opacity', opacity),
   getWindowOpacity: () => ipcRenderer.invoke('get-window-opacity'),
-  getSettings: () => ipcRenderer.invoke('get-settings'),
-  setApiKey: (apiKey: string) => ipcRenderer.send('set-api-key', apiKey),
   setPersona: (persona: string) => ipcRenderer.send('set-persona', persona),
+  getPersona: () => ipcRenderer.invoke('get-persona'),
+  getLlmSettings: (): Promise<LlmSettings> => ipcRenderer.invoke('get-llm-settings'),
+  setLlmSettings: (settings: LlmSettings) => ipcRenderer.send('set-llm-settings', settings),
   // --- Mod Management ---
   getAllMods: () => ipcRenderer.invoke('get-all-mods'),
   getModSettings: () => ipcRenderer.invoke('get-mod-settings'),
   setModEnabled: (modName: string, isEnabled: boolean) => ipcRenderer.invoke('set-mod-enabled', modName, isEnabled),
 };
+
+console.log('Preload script loaded.');

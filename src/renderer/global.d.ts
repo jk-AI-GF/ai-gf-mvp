@@ -6,6 +6,7 @@ import { VRMManager } from './vrm-manager';
 import { PluginContext } from '../plugin-api/plugin-context';
 import { CharacterState } from '../core/character-state';
 import { TypedEventBus, AppEvents } from '../core/event-bus';
+import { LlmSettings } from '../core/llm-settings';
 
 declare global {
   interface Window {
@@ -48,9 +49,10 @@ declare global {
       // --- Settings ---
       setWindowOpacity: (opacity: number) => void;
       getWindowOpacity: () => Promise<number>;
-      getSettings: () => Promise<{ apiKey: string; persona: string }>;
-      setApiKey: (apiKey: string) => void;
       setPersona: (persona: string) => void;
+      getPersona: () => Promise<string>;
+      getLlmSettings: () => Promise<LlmSettings>;
+      setLlmSettings: (settings: LlmSettings) => void;
       // --- Mod Management ---
       getAllMods: () => Promise<{ name: string; version: string; path: string; }[]>;
       getModSettings: () => Promise<Record<string, boolean>>;
