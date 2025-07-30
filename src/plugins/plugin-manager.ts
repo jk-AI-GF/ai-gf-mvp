@@ -50,6 +50,7 @@ export class PluginManager {
   public plugins: Map<string, IPlugin> = new Map();
   public context: PluginContext;
   private isEditMode = false;
+  private pluginsDisabledByEditMode: Set<string> = new Set();
 
   constructor(context: PluginContext) {
     this.context = context;
@@ -67,16 +68,11 @@ export class PluginManager {
     this.plugins.set(plugin.name, plugin);
     plugin.setup(this.context);
     
-    // Enable the plugin only if its default 'enabled' state is true
-    // and it meets the edit mode criteria.
-    if (plugin.enabled && (!this.isEditMode || plugin.runInEditMode)) {
-      // We call onEnable directly here because the enable() method checks
-      // !plugin.enabled, which would be false. We must set it to true first.
-      plugin.onEnable();
-      console.log(`Plugin enabled on register: ${plugin.name}`);
-    } else {
-      // Ensure the plugin's state is consistent if it's not enabled on register
-      plugin.enabled = false;
+    const isEnabledByDefault = plugin.enabled;
+    plugin.enabled = false; // Reset before calling enable, so the check inside enable() works
+
+    if (isEnabledByDefault && (!this.isEditMode || plugin.runInEditMode)) {
+      this.enable(plugin.name);
     }
     
     console.log(`Plugin registered: ${plugin.name}`);
@@ -90,14 +86,21 @@ export class PluginManager {
     if (this.isEditMode === isEditMode) return;
     this.isEditMode = isEditMode;
 
-    for (const plugin of this.plugins.values()) {
-      if (this.isEditMode && !plugin.runInEditMode) {
-        // 편집 모드 진입: runInEditMode가 false인 플러그인 비활성화
-        this.disable(plugin.name);
-      } else if (!this.isEditMode) {
-        // 편집 모드 종료: 모든 플러그인 활성화 (이미 활성화된 것은 무시됨)
-        this.enable(plugin.name);
+    if (this.isEditMode) {
+      // Entering edit mode
+      this.pluginsDisabledByEditMode.clear();
+      for (const plugin of this.plugins.values()) {
+        if (plugin.enabled && !plugin.runInEditMode) {
+          this.pluginsDisabledByEditMode.add(plugin.name);
+          this.disable(plugin.name);
+        }
       }
+    } else {
+      // Exiting edit mode
+      for (const pluginName of this.pluginsDisabledByEditMode) {
+        this.enable(pluginName);
+      }
+      this.pluginsDisabledByEditMode.clear();
     }
   }
 
