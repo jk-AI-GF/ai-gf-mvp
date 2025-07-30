@@ -3,7 +3,7 @@ import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 import { VRMLoaderPlugin, VRM, VRMHumanBoneName, VRMPose } from '@pixiv/three-vrm';
 import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-vrm-animation';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
-
+import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils';
 import eventBus, { AppEvents, TypedEventBus } from '../core/event-bus';
 
 type ParsedFile = { type: 'pose'; data: THREE.AnimationClip } | { type: 'animation'; data: THREE.AnimationClip } | null;
@@ -41,8 +41,32 @@ function createAnimationClipFromVRMPose(vrmPose: VRMPose, vrm: VRM): THREE.Anima
 
 /**
  * A map from Mixamo rig name to VRM Humanoid bone name.
+ * This map includes both old (without colon) and new (with colon) Mixamo naming conventions.
  */
 const mixamoVRMRigMap: { [mixamoRigName: string]: VRMHumanBoneName } = {
+    // New format with colon
+    'mixamorig:Hips': VRMHumanBoneName.Hips,
+    'mixamorig:Spine': VRMHumanBoneName.Spine,
+    'mixamorig:Spine1': VRMHumanBoneName.Chest,
+    'mixamorig:Spine2': VRMHumanBoneName.UpperChest,
+    'mixamorig:Neck': VRMHumanBoneName.Neck,
+    'mixamorig:Head': VRMHumanBoneName.Head,
+    'mixamorig:LeftShoulder': VRMHumanBoneName.LeftShoulder,
+    'mixamorig:LeftArm': VRMHumanBoneName.LeftUpperArm,
+    'mixamorig:LeftForeArm': VRMHumanBoneName.LeftLowerArm,
+    'mixamorig:LeftHand': VRMHumanBoneName.LeftHand,
+    'mixamorig:RightShoulder': VRMHumanBoneName.RightShoulder,
+    'mixamorig:RightArm': VRMHumanBoneName.RightUpperArm,
+    'mixamorig:RightForeArm': VRMHumanBoneName.RightLowerArm,
+    'mixamorig:RightHand': VRMHumanBoneName.RightHand,
+    'mixamorig:LeftUpLeg': VRMHumanBoneName.LeftUpperLeg,
+    'mixamorig:LeftLeg': VRMHumanBoneName.LeftLowerLeg,
+    'mixamorig:LeftFoot': VRMHumanBoneName.LeftFoot,
+    'mixamorig:RightUpLeg': VRMHumanBoneName.RightUpperLeg,
+    'mixamorig:RightLeg': VRMHumanBoneName.RightLowerLeg,
+    'mixamorig:RightFoot': VRMHumanBoneName.RightFoot,
+
+    // Old format without colon (for backward compatibility)
     'mixamorigHips': VRMHumanBoneName.Hips,
     'mixamorigSpine': VRMHumanBoneName.Spine,
     'mixamorigSpine1': VRMHumanBoneName.Chest,
@@ -63,6 +87,36 @@ const mixamoVRMRigMap: { [mixamoRigName: string]: VRMHumanBoneName } = {
     'mixamorigRightUpLeg': VRMHumanBoneName.RightUpperLeg,
     'mixamorigRightLeg': VRMHumanBoneName.RightLowerLeg,
     'mixamorigRightFoot': VRMHumanBoneName.RightFoot,
+    
+    'mixamorigLeftHandThumb3': 'leftThumbDistal',
+    'mixamorigLeftHandIndex1': 'leftIndexProximal',
+    'mixamorigLeftHandIndex2': 'leftIndexIntermediate',
+    'mixamorigLeftHandIndex3': 'leftIndexDistal',
+    'mixamorigLeftHandMiddle1': 'leftMiddleProximal',
+    'mixamorigLeftHandMiddle2': 'leftMiddleIntermediate',
+    'mixamorigLeftHandMiddle3': 'leftMiddleDistal',
+    'mixamorigLeftHandRing1': 'leftRingProximal',
+    'mixamorigLeftHandRing2': 'leftRingIntermediate',
+    'mixamorigLeftHandRing3': 'leftRingDistal',
+    'mixamorigLeftHandPinky1': 'leftLittleProximal',
+    'mixamorigLeftHandPinky2': 'leftLittleIntermediate',
+    'mixamorigLeftHandPinky3': 'leftLittleDistal',
+    'mixamorigRightHandPinky1': 'rightLittleProximal',
+    'mixamorigRightHandPinky2': 'rightLittleIntermediate',
+    'mixamorigRightHandPinky3': 'rightLittleDistal',
+    'mixamorigRightHandRing1': 'rightRingProximal',
+    'mixamorigRightHandRing2': 'rightRingIntermediate',
+    'mixamorigRightHandRing3': 'rightRingDistal',
+    'mixamorigRightHandMiddle1': 'rightMiddleProximal',
+    'mixamorigRightHandMiddle2': 'rightMiddleIntermediate',
+    'mixamorigRightHandMiddle3': 'rightMiddleDistal',
+    'mixamorigRightHandIndex1': 'rightIndexProximal',
+    'mixamorigRightHandIndex2': 'rightIndexIntermediate',
+    'mixamorigRightHandIndex3': 'rightIndexDistal',
+    'mixamorigRightHandThumb1': 'rightThumbProximal',
+    'mixamorigRightHandThumb3': 'rightThumbDistal',
+    'mixamorigLeftToeBase': 'leftToes',
+    'mixamorigRightToeBase': 'rightToes',
 };
 
 /**
