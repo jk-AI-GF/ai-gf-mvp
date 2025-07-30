@@ -95,8 +95,3 @@ typings/
 
 # Electron-Forge
 out/
-
-# Custom VRM ignores
-assets/VRM/*.vrm
-!assets/VRM/Liqu.vrm
-!assets/VRM/HatsuneMikuNT.vrm

@@ -99,7 +99,8 @@ export class VRMManager {
 
             this.createHitboxes(vrm);
             await new Promise(resolve => setTimeout(resolve, 500));
-            
+
+            // Play the model loading animation sequence
             const customAnimationPath1 = 'Animation/VRMA_02.vrma';
             try {
                 const animationResult1 = await this.loadAndParseFile(customAnimationPath1);
@@ -204,8 +205,29 @@ export class VRMManager {
             return null;
         }
 
-        const fileContent = await this._readFile(filePath);
+        // Try resolving from userdata first, then fallback to assets
+        let resolvedPath: string;
+        try {
+            // Check if file exists in userdata
+            const userDataPath = await window.electronAPI.resolvePath('userData', filePath);
+            // This is a bit of a hack: readFile will throw if it doesn't exist.
+            // A proper file existence check API would be better.
+            await window.electronAPI.readFile(userDataPath);
+            resolvedPath = userDataPath;
+        } catch (e) {
+            // If not in userdata, try assets
+            try {
+                resolvedPath = await window.electronAPI.resolvePath('assets', filePath);
+                await window.electronAPI.readFile(resolvedPath);
+            } catch (e2) {
+                console.error(`File not found in userdata or assets: ${filePath}`);
+                return null;
+            }
+        }
+
+        const fileContent = await this._readFile(resolvedPath);
         if (!fileContent) return null;
+        
         let clip: THREE.AnimationClip | null = null;
         try {
             const jsonString = new TextDecoder().decode(fileContent);

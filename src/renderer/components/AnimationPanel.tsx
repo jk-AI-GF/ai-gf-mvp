@@ -17,14 +17,15 @@ const AnimationPanel: React.FC<AnimationPanelProps> = ({ onClose, initialPos, on
 
   const fetchAnimations = useCallback(async () => {
     try {
-      const result = await window.electronAPI.listDirectory('Animation');
+      // 'userdata'의 'animations' 디렉토리를 읽도록 수정
+      const result = await window.electronAPI.listDirectory('animations', 'userData');
       if (result.error) {
         throw new Error(result.error);
       }
       const animFiles = result.files.filter((file: string) => file.endsWith('.vrma') || file.endsWith('.fbx'));
       setAnimationFiles(animFiles);
       if (animFiles.length === 0) {
-        setError('저장된 애니메이션 파일(.vrma, .fbx)이 없습니다.');
+        setError('userdata/animations 폴더에 저장된 애니메이션 파일(.vrma, .fbx)이 없습니다.');
       }
     } catch (err) {
       console.error('Failed to list animations:', err);
@@ -38,8 +39,8 @@ const AnimationPanel: React.FC<AnimationPanelProps> = ({ onClose, initialPos, on
 
   const handleAnimationClick = (fileName: string) => {
     if (pluginManager) {
-      // 표준 Actions 인터페이스를 통해 애니메이션 재생
-      pluginManager.context.actions.playAnimation(`Animation/${fileName}`, false);
+      // 파일 이름만 전달하도록 수정. vrm-manager가 경로를 처리함.
+      pluginManager.context.actions.playAnimation(fileName, false);
     } else {
       console.error('pluginManager is not available.');
       setError('플러그인 매니저를 찾을 수 없습니다.');

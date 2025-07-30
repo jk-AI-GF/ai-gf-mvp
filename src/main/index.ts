@@ -8,6 +8,7 @@ import { TriggerEngine } from '../core/trigger-engine';
 import { ContextStore } from '../core/context-store';
 import { ModSettingsManager } from '../core/mod-settings-manager';
 import { LlmSettings, DEFAULT_LLM_SETTINGS } from '../core/llm-settings';
+import { getAssetsPath, getUserDataPath, resolveAssetsPath, resolveUserDataPath } from './path-utils';
 
 // Define the schema for electron-store
 interface StoreSchema {
@@ -47,9 +48,29 @@ let overlayWindow: BrowserWindow | null = null;
 let mainWindow: BrowserWindow | null = null;
 let isIgnoringMouseEvents = false;
 
-const assetsRoot = app.isPackaged
-  ? path.join(process.resourcesPath, 'assets')
-  : path.join(app.getAppPath(), 'assets');
+// --- Path and Resource IPC Handlers ---
+ipcMain.handle('get-path', async (event, pathName: 'assets' | 'userData') => {
+  switch (pathName) {
+    case 'assets':
+      return getAssetsPath();
+    case 'userData':
+      return getUserDataPath();
+    default:
+      throw new Error(`Unknown path name: ${pathName}`);
+  }
+});
+
+ipcMain.handle('resolve-path', async (event, pathName: 'assets' | 'userData', subpath: string) => {
+  switch (pathName) {
+    case 'assets':
+      return resolveAssetsPath(subpath);
+    case 'userData':
+      return resolveUserDataPath(subpath);
+    default:
+      throw new Error(`Unknown path name: ${pathName}`);
+  }
+});
+
 
 const createOverlayWindow = (): void => {
   const primaryDisplay = screen.getPrimaryDisplay();
@@ -100,7 +121,7 @@ const toggleOverlayWindow = (): void => {
 };
 
 const createTray = (): void => {
-  const iconPath = path.join(assetsRoot, 'icon.png');
+  const iconPath = resolveAssetsPath('icon.png');
   tray = new Tray(iconPath);
   const contextMenu = Menu.buildFromTemplate([
     { label: 'Toggle Overlay', click: () => toggleOverlayWindow() },
@@ -172,6 +193,18 @@ app.on('ready', async () => {
   });
 
   createWindow();
+
+  // Ensure userdata directories exist on startup
+  try {
+    const userDataPath = getUserDataPath();
+    const requiredDirs = ['vrm', 'poses', 'mods', 'animations', 'persona'];
+    for (const dir of requiredDirs) {
+      fs.mkdirSync(path.join(userDataPath, dir), { recursive: true });
+    }
+    console.log('User data directories verified/created successfully.');
+  } catch (error) {
+    console.error('Failed to create user data directories:', error);
+  }
   
   const initialOpacity = store.get('windowOpacity', 1.0);
   mainWindow.setOpacity(initialOpacity);
@@ -327,9 +360,9 @@ app.on('ready', async () => {
     }
   });
 
-  ipcMain.handle('list-directory', async (event, dirPath: string) => {
+  ipcMain.handle('list-directory', async (event, dirPath: string, basePath: 'assets' | 'userData' = 'assets') => {
     try {
-      const fullPath = path.join(assetsRoot, dirPath);
+      const fullPath = basePath === 'assets' ? resolveAssetsPath(dirPath) : resolveUserDataPath(dirPath);
       const dirents = await fs.promises.readdir(fullPath, { withFileTypes: true });
       const files = dirents.filter(dirent => dirent.isFile()).map(dirent => dirent.name);
       const directories = dirents.filter(dirent => dirent.isDirectory()).map(dirent => dirent.name);
@@ -345,7 +378,7 @@ app.on('ready', async () => {
     try {
       const { canceled, filePath } = await dialog.showSaveDialog({
         title: 'Save VRMA Pose',
-        defaultPath: path.join(assetsRoot, 'Pose', `pose_${Date.now()}.vrma`),
+        defaultPath: path.join(getUserDataPath(), 'poses', `pose_${Date.now()}.vrma`),
         filters: [
           { name: 'VRM Animation', extensions: ['vrma'] },
           { name: 'All Files', extensions: ['*'] }
@@ -377,7 +410,7 @@ app.on('ready', async () => {
     try {
       const { canceled, filePaths } = await dialog.showOpenDialog({
         title: 'Open VRM Model',
-        defaultPath: path.join(assetsRoot, 'VRM'),
+        defaultPath: path.join(getUserDataPath(), 'vrm'),
         filters: [
           { name: 'VRM Models', extensions: ['vrm'] },
           { name: 'All Files', extensions: ['*'] },
@@ -404,7 +437,7 @@ app.on('ready', async () => {
     try {
       const { canceled, filePaths } = await dialog.showOpenDialog({
         title: 'Open VRMA Pose',
-        defaultPath: path.join(assetsRoot, 'Pose'),
+        defaultPath: path.join(getUserDataPath(), 'poses'),
         filters: [
           { name: 'VRM Animation', extensions: ['vrma'] },
           { name: 'All Files', extensions: ['*'] },
@@ -431,7 +464,7 @@ app.on('ready', async () => {
     try {
       const { canceled, filePaths } = await dialog.showOpenDialog({
         title: 'Open Persona File',
-        defaultPath: path.join(assetsRoot, 'Persona'),
+        defaultPath: path.join(getUserDataPath(), 'persona'),
         properties: ['openFile'],
         filters: [
           { name: 'Text Files', extensions: ['txt'] },
@@ -459,8 +492,8 @@ app.on('ready', async () => {
 
   ipcMain.handle('read-asset-file', async (event, filePath: string) => {
     try {
-      const fullPath = path.join(assetsRoot, filePath);
-      if (!fullPath.startsWith(assetsRoot)) {
+      const fullPath = resolveAssetsPath(filePath);
+      if (!fullPath.startsWith(getAssetsPath())) {
         throw new Error('Attempted to read file outside the assets directory.');
       }
       const data = await fs.promises.readFile(fullPath);
@@ -488,9 +521,10 @@ app.on('ready', async () => {
     try {
       let fullPath = filePath;
       if (!path.isAbsolute(filePath)) {
-        fullPath = path.join(assetsRoot, filePath);
-        // Security check: ensure fullPath is within the assetsRoot directory
-        if (!fullPath.startsWith(assetsRoot)) {
+        // If not absolute, assume it's relative to the assets directory for backward compatibility.
+        fullPath = resolveAssetsPath(filePath);
+        // Security check
+        if (!fullPath.startsWith(getAssetsPath())) {
           throw new Error('Attempted to access file outside the assets directory.');
         }
       }
@@ -507,7 +541,7 @@ app.on('ready', async () => {
     try {
       const { canceled, filePath } = await dialog.showSaveDialog({
         title: 'Save Persona',
-        defaultPath: path.join(assetsRoot, 'Persona', 'persona.txt'),
+        defaultPath: path.join(getUserDataPath(), 'persona', 'persona.txt'),
         filters: [
           { name: 'Text Files', extensions: ['txt'] },
           { name: 'All Files', extensions: ['*'] }
@@ -555,11 +589,12 @@ app.on('ready', async () => {
   });
 
   ipcMain.handle('get-all-mods', async () => {
-    const modsDir = app.isPackaged 
-      ? path.join(app.getPath('userData'), 'mods') 
-      : path.join(app.getAppPath(), 'userdata', 'mods');
+    const modsDir = resolveUserDataPath('mods');
     
     try {
+      // Ensure the mods directory exists
+      await fs.promises.mkdir(modsDir, { recursive: true });
+
       const modFolders = await fs.promises.readdir(modsDir, { withFileTypes: true });
       const modDetails = [];
 

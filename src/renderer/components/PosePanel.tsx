@@ -17,14 +17,15 @@ const PosePanel: React.FC<PosePanelProps> = ({ onClose, initialPos, onDragEnd })
 
   const fetchPoses = useCallback(async () => {
     try {
-      const result = await window.electronAPI.listDirectory('Pose');
+      // 'userdata'의 'poses' 디렉토리를 읽도록 수정
+      const result = await window.electronAPI.listDirectory('poses', 'userData');
       if (result.error) {
         throw new Error(result.error);
       }
       const vrmaFiles = result.files.filter((file: string) => file.endsWith('.vrma'));
       setPoseFiles(vrmaFiles);
       if (vrmaFiles.length === 0) {
-        setError('저장된 포즈 파일(.vrma)이 없습니다.');
+        setError('userdata/poses 폴더에 저장된 포즈 파일(.vrma)이 없습니다.');
       }
     } catch (err) {
       console.error('Failed to list poses:', err);

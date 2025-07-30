@@ -66,16 +66,16 @@ export interface IPlugin {
 
 ### `playAnimation(animationName, loop, crossFadeDuration)`
 
-캐릭터에게 특정 애니메이션을 재생하도록 지시합니다.
+캐릭터에게 특정 애니메이션을 재생하도록 지시합니다. 이 함수는 `userdata/animations` 폴더와 `assets/Animation` 폴더에서 순서대로 파일을 검색합니다.
 
--   **`animationName`** (`string`): 재생할 애니메이션 파일의 경로. `assets` 폴더 또는 모드의 `assets` 폴더 기준입니다. (예: `Animation/Idle.vrma`, `MyMod/Jump.fbx`)
+-   **`animationName`** (`string`): 재생할 애니메이션 파일의 이름. (예: `MyJump.vrma`, `Idle.fbx`) **경로 접두사 없이 파일 이름만 전달해야 합니다.**
 -   **`loop`** (`boolean`, Optional, Default: `false`): 애니메이션 반복 여부.
 -   **`crossFadeDuration`** (`number`, Optional, Default: `0.5`): 이전 애니메이션과의 교차 페이드 시간(초).
 
 **예시:**
 ```typescript
-// 점프 애니메이션을 한 번 재생
-actions.playAnimation('Animation/Jump.vrma', false);
+// userdata/animations/Jump.vrma 또는 assets/Animation/Jump.vrma 재생
+actions.playAnimation('Jump.vrma', false);
 ```
 
 ---
@@ -98,13 +98,13 @@ actions.setExpression('happy', 1.0, 0.5);
 
 ### `setPose(poseName)`
 
-캐릭터에게 특정 포즈를 적용합니다. 포즈는 애니메이션의 한 프레임일 수 있습니다.
+캐릭터에게 특정 포즈를 적용합니다. 이 함수는 `userdata/poses` 폴더와 `assets/Pose` 폴더에서 순서대로 파일을 검색합니다.
 
--   **`poseName`** (`string`): 적용할 포즈 파일의 경로. (예: `Pose/T-Pose.vrma`)
+-   **`poseName`** (`string`): 적용할 포즈 파일의 이름. (예: `T-Pose.vrma`) **경로 접두사 없이 파일 이름만 전달해야 합니다.**
 
 **예시:**
 ```typescript
-actions.setPose('Pose/Stand_01.vrma');
+actions.setPose('Stand_01.vrma');
 ```
 
 ---
@@ -186,7 +186,32 @@ actions.setContext('playerScore', 100);
 const score = await actions.getContext('playerScore');
 ```
 
-## 3. EventBus API
+## 3. 경로 API (`window.electronAPI`)
+
+렌더러 프로세스에서 `assets` 또는 `userdata` 폴더의 절대 경로를 안전하게 얻기 위한 API입니다. 파일 목록을 가져오거나 특정 파일의 경로를 해석하는 데 사용됩니다.
+
+### `resolvePath(pathName, subpath)`
+- **설명**: `assets` 또는 `userdata` 폴더 내의 상대 경로를 기반으로 전체 절대 경로를 반환합니다.
+- **`pathName`** (`'assets' | 'userData'`): 기준이 될 폴더를 지정합니다.
+- **`subpath`** (`string`): 기준 폴더로부터의 상대 경로 (예: `vrm/MyModel.vrm`).
+- **반환값**: `Promise<string>` (절대 경로)
+
+### `listDirectory(dirPath, basePath)`
+- **설명**: 지정된 폴더 내의 파일 및 하위 디렉토리 목록을 반환합니다.
+- **`dirPath`** (`string`): 목록을 가져올 디렉토리의 상대 경로.
+- **`basePath`** (`'assets' | 'userData'`, Optional, Default: `'assets'`): `dirPath`의 기준이 될 폴더를 지정합니다.
+- **반환값**: `Promise<{ files: string[], directories: string[], error?: string }>`
+
+**예시:**
+```typescript
+// userdata/mods 폴더의 파일 및 폴더 목록 가져오기
+const mods = await window.electronAPI.listDirectory('mods', 'userData');
+
+// assets/Animation/Jump.vrma 파일의 절대 경로 가져오기
+const jumpPath = await window.electronAPI.resolvePath('assets', 'Animation/Jump.vrma');
+```
+
+## 4. EventBus API
 
 `EventBus`는 시스템의 여러 부분(UI, 플러그인, 코어 시스템)이 서로 직접적인 의존성 없이 통신할 수 있게 해주는 발행/구독 시스템입니다. `pluginContext.eventBus` 또는 `import eventBus from '../core/event-bus'`를 통해 접근할 수 있습니다.
 
@@ -228,7 +253,7 @@ const unsubscribe = eventBus.on('myCustomEvent', (data) => {
 // unsubscribe();
 ```
 
-## 4. Trigger API
+## 5. Trigger API
 
 `Trigger`는 **"어떤 조건이 충족되었을 때, 특정 행동을 실행"**하는 로직을 선언적으로 등록하는 시스템입니다. 복잡한 상호작용을 모듈화하고 재사용 가능하게 만드는 데 사용됩니다. `pluginContext.registerTrigger`를 통해 접근합니다.
 
@@ -251,7 +276,7 @@ context.registerTrigger(
 );
 ```
 
-## 5. SystemControls API
+## 6. SystemControls API
 
 `SystemControls`는 애플리케이션의 시스템 레벨 설정을 제어하는 인터페이스입니다. `Actions`가 캐릭터의 '행동'을 다룬다면, `SystemControls`는 TTS나 볼륨과 같은 시스템의 '상태'나 '설정'을 변경하는 데 사용됩니다. `pluginContext.system`을 통해 접근할 수 있습니다.
 
