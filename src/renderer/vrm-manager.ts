@@ -268,17 +268,22 @@ export class VRMManager {
 
     private createHitboxes(vrm: VRM) {
         this.removeHitboxes();
-        const hitboxMaterial = new THREE.MeshBasicMaterial({ visible: false });
+        const hitboxMaterial = new THREE.MeshBasicMaterial({
+            color: 0xff0000,
+            transparent: true,
+            opacity: 0.2,
+            visible: false
+        });
         const bonesToTarget: { [key in VRMHumanBoneName]?: { size: THREE.Vector3, position?: THREE.Vector3 } } = {
-            [VRMHumanBoneName.Head]: { size: new THREE.Vector3(0.3, 0.4, 0.3) },
-            [VRMHumanBoneName.Spine]: { size: new THREE.Vector3(0.3, 0.3, 0.3) },
-            [VRMHumanBoneName.Hips]: { size: new THREE.Vector3(0.35, 0.35, 0.5), position: new THREE.Vector3(0, 0.05, 0) },
-            [VRMHumanBoneName.LeftUpperArm]: { size: new THREE.Vector3(0.15, 0.3, 0.15), position: new THREE.Vector3(0, -0.15, 0) },
-            [VRMHumanBoneName.RightUpperArm]: { size: new THREE.Vector3(0.15, 0.3, 0.15), position: new THREE.Vector3(0, -0.15, 0) },
-            [VRMHumanBoneName.LeftLowerArm]: { size: new THREE.Vector3(0.15, 0.3, 0.15), position: new THREE.Vector3(0, -0.15, 0) },
-            [VRMHumanBoneName.RightLowerArm]: { size: new THREE.Vector3(0.15, 0.3, 0.15), position: new THREE.Vector3(0, -0.15, 0) },
-            [VRMHumanBoneName.LeftUpperLeg]: { size: new THREE.Vector3(0.2, 0.4, 0.2), position: new THREE.Vector3(0, -0.2, 0) },
-            [VRMHumanBoneName.RightUpperLeg]: { size: new THREE.Vector3(0.2, 0.4, 0.2), position: new THREE.Vector3(0, -0.2, 0) },
+            [VRMHumanBoneName.Head]: { size: new THREE.Vector3(0.25, 0.3, 0.25), position: new THREE.Vector3(0, 0.1, 0)  },
+            [VRMHumanBoneName.Spine]: { size: new THREE.Vector3(0.2, 0.2, 0.2), position: new THREE.Vector3(0, 0.1, 0)  },
+            [VRMHumanBoneName.Hips]: { size: new THREE.Vector3(0.25, 0.25, 0.25)},
+            [VRMHumanBoneName.LeftUpperArm]: { size: new THREE.Vector3(0.25, 0.1, 0.1), position: new THREE.Vector3(-0.1, 0, 0)},
+            [VRMHumanBoneName.RightUpperArm]: { size: new THREE.Vector3(0.25, 0.1, 0.1), position: new THREE.Vector3(0.1, 0, 0)},
+            [VRMHumanBoneName.LeftLowerArm]: { size: new THREE.Vector3(0.2, 0.15, 0.15), position: new THREE.Vector3(-0.13, 0, 0)},
+            [VRMHumanBoneName.RightLowerArm]: { size: new THREE.Vector3(0.2, 0.15, 0.15), position: new THREE.Vector3(0.13, 0, 0)},
+            [VRMHumanBoneName.LeftUpperLeg]: { size: new THREE.Vector3(0.2, 0.3, 0.2), position: new THREE.Vector3(0, -0.2, 0) },
+            [VRMHumanBoneName.RightUpperLeg]: { size: new THREE.Vector3(0.2, 0.3, 0.2), position: new THREE.Vector3(0, -0.2, 0) },
             [VRMHumanBoneName.LeftLowerLeg]: { size: new THREE.Vector3(0.15, 0.4, 0.15), position: new THREE.Vector3(0, -0.2, 0) },
             [VRMHumanBoneName.RightLowerLeg]: { size: new THREE.Vector3(0.15, 0.4, 0.15), position: new THREE.Vector3(0, -0.2, 0) },
         };
@@ -611,6 +616,13 @@ export class VRMManager {
             this._lookAtMode = 'none';
             this._fixedLookAtTarget = null;
         }
+    }
+
+    public setHitboxesVisible(visible: boolean): void {
+        this.hitboxes.forEach(hitbox => {
+            const material = hitbox.material as THREE.MeshBasicMaterial;
+            material.visible = visible;
+        });
     }
 
     public async saveCurrentPose() {

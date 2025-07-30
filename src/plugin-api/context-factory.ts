@@ -62,6 +62,9 @@ export function createPluginContext(
     },
     speak: (text: string) => {
       playTTS(text);
+    },
+    setHitboxesVisible: (visible: boolean) => {
+      vrmManager.setHitboxesVisible(visible);
     }
   };
 

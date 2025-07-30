@@ -61,5 +61,11 @@ export interface Actions {
   changeBackground: (imagePath: string) => void;
   getContext: (key: string) => Promise<any>;
   speak: (text: string) => void;
+
+  /**
+   * VRM 모델의 히트박스 가시성을 설정합니다.
+   * @param visible 히트박스를 표시할지 여부
+   */
+  setHitboxesVisible(visible: boolean): void;
 }
 

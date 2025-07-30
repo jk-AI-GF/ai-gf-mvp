@@ -23,7 +23,7 @@ interface Message {
 }
 
 const App: React.FC = () => {
-  const { chatService, isUiInteractive, persona, llmSettings } = useAppContext();
+  const { chatService, isUiInteractive, persona, llmSettings, pluginManager } = useAppContext();
   const [isSettingsModalOpen, setSettingsModalOpen] = useState(false);
   const [isJointPanelOpen, setJointPanelOpen] = useState(false);
   const [isExpressionPanelOpen, setExpressionPanelOpen] = useState(false);
@@ -37,6 +37,16 @@ const App: React.FC = () => {
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [notification, setNotification] = useState({ show: false, message: '' });
   const isInitialMount = useRef(true);
+
+  useEffect(() => {
+    if (!pluginManager) return;
+
+    const unsubscribe = window.electronAPI.on('set-hitboxes-visible', (visible: boolean) => {
+      pluginManager.context.actions.setHitboxesVisible(visible);
+    });
+
+    return () => unsubscribe();
+  }, [pluginManager]);
 
   useEffect(() => {
     const handleNewMessage = (message: Message) => {

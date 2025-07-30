@@ -161,6 +161,9 @@ export class ModLoader {
             speak: (text: string) => {
               this.sendToRenderer('speak', text);
             },
+            setHitboxesVisible: (visible: boolean) => {
+              this.sendToRenderer('set-hitboxes-visible', visible);
+            },
           },
           system: {
             toggleTts: (enable: boolean) => {

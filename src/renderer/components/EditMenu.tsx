@@ -18,8 +18,9 @@ const EditMenu: React.FC<EditMenuProps> = ({
   onOpenExpressionPanel,
   onOpenMeshPanel,
 }) => {
-  const { vrmManager } = useAppContext();
+  const { vrmManager, pluginManager } = useAppContext();
   const [isVisible, setIsVisible] = useState(false);
+  const [showHitboxes, setShowHitboxes] = useState(false);
 
   useEffect(() => {
     const handleEditModeToggle = (data: { isEditMode: boolean }) => {
@@ -33,7 +34,13 @@ const EditMenu: React.FC<EditMenuProps> = ({
     };
   }, []);
 
-  
+  const handleToggleHitboxes = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const isChecked = e.target.checked;
+    setShowHitboxes(isChecked);
+    if (pluginManager) {
+      pluginManager.context.actions.setHitboxesVisible(isChecked);
+    }
+  };
 
   const handleLoadVRM = async () => {
     if (!vrmManager) return;
@@ -52,7 +59,6 @@ const EditMenu: React.FC<EditMenuProps> = ({
     if (!vrmManager) return;
     const filePath = await window.electronAPI.openVrmaFile();
     if (filePath) {
-      // Use the new, dedicated method for applying a pose from a full path
       await vrmManager.applyPoseFromFile(filePath);
     }
   };
@@ -71,8 +77,20 @@ const EditMenu: React.FC<EditMenuProps> = ({
       <button className={styles.menuButton} onClick={onOpenAnimationPanel}>애니</button>
       <button className={styles.menuButton} onClick={handleSavePose}>저장</button>
       <button className={styles.menuButton} onClick={handleLoadPose}>열기</button>
+      
+      <div className={styles.checkboxContainer}>
+        <input
+          type="checkbox"
+          id="showHitboxes"
+          checked={showHitboxes}
+          onChange={handleToggleHitboxes}
+        />
+        <label htmlFor="showHitboxes" className={styles.checkboxLabel}>히트박스</label>
+      </div>
     </div>
   );
 };
 
 export default EditMenu;
+
+
