@@ -1,6 +1,7 @@
 import { app, BrowserWindow, Tray, Menu, globalShortcut, dialog, session, ipcMain, screen } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
+import fsp from 'fs/promises';
 import Store from 'electron-store';
 import { ModLoader } from '../core/mod-loader';
 import { createEventBus, AppEvents } from '../core/event-bus';
@@ -68,6 +69,15 @@ ipcMain.handle('resolve-path', async (event, pathName: 'assets' | 'userData', su
       return resolveUserDataPath(subpath);
     default:
       throw new Error(`Unknown path name: ${pathName}`);
+  }
+});
+
+ipcMain.handle('fs:exists', async (event, filePath: string) => {
+  try {
+    await fsp.access(filePath);
+    return true;
+  } catch {
+    return false;
   }
 });
 

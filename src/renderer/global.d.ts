@@ -33,6 +33,7 @@ declare global {
       // Path API
       getPath: (pathName: 'assets' | 'userData') => Promise<string>;
       resolvePath: (pathName: 'assets' | 'userData', subpath: string) => Promise<string>;
+      fileExists: (filePath: string) => Promise<boolean>;
 
       // App control
       quitApp: () => void;

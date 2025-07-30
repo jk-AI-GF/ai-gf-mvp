@@ -19,13 +19,8 @@ export function createPluginContext(
 
   const actions: Actions = {
     playAnimation: async (animationName: string, loop?: boolean, crossFadeDuration?: number) => {
-      const result = await vrmManager.loadAndParseFile(animationName);
-      if (result?.type === 'animation') {
-        vrmManager.playAnimation(result.data, loop, crossFadeDuration);
-      } else if (result?.type === 'pose') {
-        console.warn(`[Action] playAnimation was called with a pose file: ${animationName}. Use setPose instead.`);
-        vrmManager.applyPose(result.data);
-      }
+      // Use the new helper method in VRMManager which handles path resolution
+      vrmManager.loadAndPlayAnimation(animationName, loop, crossFadeDuration);
     },
     showMessage: (message: string, duration?: number) => {
       eventBus.emit('ui:showFloatingMessage', { text: message });
@@ -38,13 +33,8 @@ export function createPluginContext(
       }
     },
     setPose: async (poseName: string) => {
-      const result = await vrmManager.loadAndParseFile(`Pose/${poseName}`);
-      if (result?.type === 'pose') {
-        vrmManager.applyPose(result.data);
-      } else if (result?.type === 'animation') {
-        console.warn(`[Action] setPose was called with an animation file: ${poseName}. Use playAnimation instead.`);
-        vrmManager.playAnimation(result.data, false);
-      }
+      // Use the new helper method in VRMManager which handles path resolution
+      vrmManager.loadAndApplyPose(poseName);
     },
     lookAt: (target: 'camera' | 'mouse' | [number, number, number] | null) => {
       if (target === 'camera') {

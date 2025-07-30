@@ -101,28 +101,11 @@ export class VRMManager {
             await new Promise(resolve => setTimeout(resolve, 500));
 
             // Play the model loading animation sequence
-            const customAnimationPath1 = 'Animation/VRMA_02.vrma';
-            try {
-                const animationResult1 = await this.loadAndParseFile(customAnimationPath1);
-                if (animationResult1?.type === 'animation') {
-                    this.playAnimation(animationResult1.data, false);
-                }
-            } catch (error) {
-                console.error(`[VRMManager] Error playing custom animation ${customAnimationPath1}:`, error);
-            }
-
+            this.loadAndPlayAnimation('VRMA_02.vrma', false);
             await this.animateVrmDrop(vrm, 0.5, 3.0, 0.0);
 
-            setTimeout(async () => {
-                const customAnimationPath2 = 'Animation/VRMA_03.vrma';
-                try {
-                    const animationResult2 = await this.loadAndParseFile(customAnimationPath2);
-                    if (animationResult2?.type === 'animation') {
-                        this.playAnimation(animationResult2.data, false);
-                    }
-                } catch (error) {
-                    console.error(`[VRMManager] Error playing custom animation ${customAnimationPath2}:`, error);
-                }
+            setTimeout(() => {
+                this.loadAndPlayAnimation('VRMA_03.vrma', false);
             }, 3000);
 
             const expressionNames = Object.keys(this.currentVrm.expressionManager.expressionMap);
@@ -198,34 +181,48 @@ export class VRMManager {
         }
     }
 
-    public async loadAndParseFile(filePath: string): Promise<ParsedFile> {
+    /**
+     * Resolves a resource path by checking userdata first, then falling back to assets.
+     * @param resourceType - The type of resource, which determines the subfolder.
+     * @param fileName - The name of the file to resolve.
+     * @returns The full absolute path if found, otherwise null.
+     */
+    private async _resolveResourcePath(resourceType: 'animation' | 'pose' | 'vrm', fileName: string): Promise<string | null> {
+        const subfolders = {
+            animation: { user: 'animations', asset: 'Animation' },
+            pose: { user: 'poses', asset: 'Pose' },
+            vrm: { user: 'vrm', asset: 'VRM' },
+        };
+        const { user, asset } = subfolders[resourceType];
+
+        // 1. Check userdata
+        const userPath = await window.electronAPI.resolvePath('userData', `${user}/${fileName}`);
+        if (await window.electronAPI.fileExists(userPath)) {
+            return userPath;
+        }
+
+        // 2. Fallback to assets
+        const assetPath = await window.electronAPI.resolvePath('assets', `${asset}/${fileName}`);
+        if (await window.electronAPI.fileExists(assetPath)) {
+            return assetPath;
+        }
+        
+        console.error(`Resource '${fileName}' not found in 'userdata/${user}' or 'assets/${asset}'.`);
+        return null;
+    }
+
+    /**
+     * Loads and parses a file from an absolute path.
+     * @param absolutePath - The full, absolute path to the file.
+     * @returns A ParsedFile object or null if parsing fails.
+     */
+    public async loadAndParseFile(absolutePath: string): Promise<ParsedFile> {
         if (!this.currentVrm) {
             console.error('[VRMManager] Cannot parse file because no VRM is loaded.');
-            alert('먼저 VRM 모델을 로드해주세요.');
             return null;
         }
 
-        // Try resolving from userdata first, then fallback to assets
-        let resolvedPath: string;
-        try {
-            // Check if file exists in userdata
-            const userDataPath = await window.electronAPI.resolvePath('userData', filePath);
-            // This is a bit of a hack: readFile will throw if it doesn't exist.
-            // A proper file existence check API would be better.
-            await window.electronAPI.readFile(userDataPath);
-            resolvedPath = userDataPath;
-        } catch (e) {
-            // If not in userdata, try assets
-            try {
-                resolvedPath = await window.electronAPI.resolvePath('assets', filePath);
-                await window.electronAPI.readFile(resolvedPath);
-            } catch (e2) {
-                console.error(`File not found in userdata or assets: ${filePath}`);
-                return null;
-            }
-        }
-
-        const fileContent = await this._readFile(resolvedPath);
+        const fileContent = await this._readFile(absolutePath);
         if (!fileContent) return null;
         
         let clip: THREE.AnimationClip | null = null;
@@ -239,16 +236,16 @@ export class VRMManager {
 
         if (!clip) {
             try {
-                if (filePath.endsWith('.vrma')) {
+                if (absolutePath.endsWith('.vrma')) {
                     const gltf = await this.loader.parseAsync(fileContent, '');
                     const vrmAnim = gltf.userData.vrmAnimations?.[0];
                     if (vrmAnim) clip = createVRMAnimationClip(vrmAnim, this.currentVrm!);
-                } else if (filePath.endsWith('.fbx')) {
+                } else if (absolutePath.endsWith('.fbx')) {
                     const fbx = this.fbxLoader.parse(fileContent, '');
                     clip = fbx.animations[0] || null;
                 }
             } catch (error) {
-                console.error(`[VRMManager] Failed to parse binary file ${filePath}:`, error);
+                console.error(`[VRMManager] Failed to parse binary file ${absolutePath}:`, error);
             }
         }
 
@@ -256,6 +253,30 @@ export class VRMManager {
             return { type: clip.duration < 0.1 ? 'pose' : 'animation', data: clip };
         }
         return null;
+    }
+
+    public async loadAndPlayAnimation(fileName: string, loop = false, crossFadeDuration = 0.5) {
+        const absolutePath = await this._resolveResourcePath('animation', fileName);
+        if (!absolutePath) return;
+        
+        const clip = await this.loadAndParseFile(absolutePath);
+        if (clip?.type === 'animation') {
+            this.playAnimation(clip.data, loop, crossFadeDuration);
+        } else if (clip?.type === 'pose') {
+            console.warn(`Attempted to play a pose file as an animation: ${fileName}`);
+        }
+   }
+
+    public async loadAndApplyPose(fileName: string) {
+        const absolutePath = await this._resolveResourcePath('pose', fileName);
+        if (!absolutePath) return;
+
+        const clip = await this.loadAndParseFile(absolutePath);
+        if (clip?.type === 'pose') {
+            this.applyPose(clip.data);
+        } else if (clip?.type === 'animation') {
+            console.warn(`Attempted to apply an animation file as a pose: ${fileName}`);
+        }
     }
 
     public applyPose(poseClip: THREE.AnimationClip): void {
