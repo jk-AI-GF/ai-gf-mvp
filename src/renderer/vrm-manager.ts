@@ -39,6 +39,87 @@ function createAnimationClipFromVRMPose(vrmPose: VRMPose, vrm: VRM): THREE.Anima
     return new THREE.AnimationClip('VRMPoseClip', duration, tracks);
 }
 
+/**
+ * A map from Mixamo rig name to VRM Humanoid bone name.
+ */
+const mixamoVRMRigMap: { [mixamoRigName: string]: VRMHumanBoneName } = {
+    'mixamorigHips': VRMHumanBoneName.Hips,
+    'mixamorigSpine': VRMHumanBoneName.Spine,
+    'mixamorigSpine1': VRMHumanBoneName.Chest,
+    'mixamorigSpine2': VRMHumanBoneName.UpperChest,
+    'mixamorigNeck': VRMHumanBoneName.Neck,
+    'mixamorigHead': VRMHumanBoneName.Head,
+    'mixamorigLeftShoulder': VRMHumanBoneName.LeftShoulder,
+    'mixamorigLeftArm': VRMHumanBoneName.LeftUpperArm,
+    'mixamorigLeftForeArm': VRMHumanBoneName.LeftLowerArm,
+    'mixamorigLeftHand': VRMHumanBoneName.LeftHand,
+    'mixamorigRightShoulder': VRMHumanBoneName.RightShoulder,
+    'mixamorigRightArm': VRMHumanBoneName.RightUpperArm,
+    'mixamorigRightForeArm': VRMHumanBoneName.RightLowerArm,
+    'mixamorigRightHand': VRMHumanBoneName.RightHand,
+    'mixamorigLeftUpLeg': VRMHumanBoneName.LeftUpperLeg,
+    'mixamorigLeftLeg': VRMHumanBoneName.LeftLowerLeg,
+    'mixamorigLeftFoot': VRMHumanBoneName.LeftFoot,
+    'mixamorigRightUpLeg': VRMHumanBoneName.RightUpperLeg,
+    'mixamorigRightLeg': VRMHumanBoneName.RightLowerLeg,
+    'mixamorigRightFoot': VRMHumanBoneName.RightFoot,
+};
+
+/**
+ * Retargets an FBX animation clip from Mixamo to a VRM model.
+ * This function not only maps bone names but also performs necessary
+ * coordinate system and scale transformations.
+ * @param fbxAnimationClip The animation clip from the FBX file.
+ * @param vrm The target VRM model.
+ * @returns A new AnimationClip retargeted for the VRM model.
+ */
+function retargetFBXAnimationClip(fbxAnimationClip: THREE.AnimationClip, vrm: VRM): THREE.AnimationClip {
+    const newTracks: THREE.KeyframeTrack[] = [];
+    const vrmMeta = vrm.meta;
+
+    for (const track of fbxAnimationClip.tracks) {
+        const trackSplitted = track.name.split('.');
+        const mixamoBoneName = trackSplitted[0];
+        const propertyName = trackSplitted[1]; // 'position', 'quaternion', 'scale'
+
+        const vrmBoneName = mixamoVRMRigMap[mixamoBoneName];
+        if (!vrmBoneName) {
+            continue;
+        }
+
+        const vrmBoneNode = vrm.humanoid.getNormalizedBoneNode(vrmBoneName);
+        if (!vrmBoneNode) {
+            continue;
+        }
+
+        const vrmNodeName = vrmBoneNode.name;
+
+        if (track instanceof THREE.QuaternionKeyframeTrack) {
+            // Retarget rotation
+            const newValues = track.values.map((v, i) =>
+                (vrmMeta?.metaVersion === '0' && i % 2 === 0) ? -v : v
+            );
+            newTracks.push(new THREE.QuaternionKeyframeTrack(
+                `${vrmNodeName}.${propertyName}`,
+                track.times,
+                newValues
+            ));
+        } else if (track instanceof THREE.VectorKeyframeTrack) {
+            // Retarget position, applying scale correction
+            const newValues = track.values.map((v, i) =>
+                ((vrmMeta?.metaVersion === '0' && i % 3 !== 1) ? -v : v) * 0.01
+            );
+            newTracks.push(new THREE.VectorKeyframeTrack(
+                `${vrmNodeName}.${propertyName}`,
+                track.times,
+                newValues
+            ));
+        }
+    }
+
+    return new THREE.AnimationClip(fbxAnimationClip.name, fbxAnimationClip.duration, newTracks);
+}
+
 export class VRMManager {
     public currentVrm: VRM | null = null;
     public hitboxes: THREE.Mesh[] = [];
@@ -242,7 +323,11 @@ export class VRMManager {
                     if (vrmAnim) clip = createVRMAnimationClip(vrmAnim, this.currentVrm!);
                 } else if (absolutePath.endsWith('.fbx')) {
                     const fbx = this.fbxLoader.parse(fileContent, '');
-                    clip = fbx.animations[0] || null;
+                    const fbxClip = fbx.animations[0];
+                    if (fbxClip) {
+                        // Retarget the FBX animation to the VRM skeleton
+                        clip = retargetFBXAnimationClip(fbxClip, this.currentVrm!);
+                    }
                 }
             } catch (error) {
                 console.error(`[VRMManager] Failed to parse binary file ${absolutePath}:`, error);
