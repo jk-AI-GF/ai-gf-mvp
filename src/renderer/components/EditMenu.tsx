@@ -52,12 +52,8 @@ const EditMenu: React.FC<EditMenuProps> = ({
     if (!vrmManager) return;
     const filePath = await window.electronAPI.openVrmaFile();
     if (filePath) {
-      const result = await vrmManager.loadAndParseFile(filePath);
-      if (result?.type === 'pose') {
-        vrmManager.applyPose(result.data);
-      } else {
-        alert('선택한 파일은 포즈 파일이 아닙니다.');
-      }
+      // Use the new, dedicated method for applying a pose from a full path
+      await vrmManager.applyPoseFromFile(filePath);
     }
   };
 

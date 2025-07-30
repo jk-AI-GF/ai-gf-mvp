@@ -55,7 +55,7 @@ export class ActionTestPlugin implements IPlugin {
     actions.showMessage('Action 테스트를 시작합니다.', 3);
     setTimeout(() => actions.setExpression('happy', 1.0, 0.5), 3000);
     setTimeout(() => actions.setPose('pose_stand_001.vrma'), 6000);
-    setTimeout(() => actions.playAnimation('Animation/VRMA_04.vrma', false, 1.5), 9000);
+    setTimeout(() => actions.playAnimation('VRMA_04.vrma', false, 1.5), 9000);
     setTimeout(() => actions.showMessage('Action 테스트가 종료되었습니다.', 3), 15000);
   }
 

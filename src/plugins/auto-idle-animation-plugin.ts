@@ -41,7 +41,7 @@ export class AutoIdleAnimationPlugin implements IPlugin {
     const randomIndex = Math.floor(Math.random() * this.IDLE_ANIMATION_FILES.length);
     const animationFile = this.IDLE_ANIMATION_FILES[randomIndex];
     console.log(`[AutoIdleAnimation] Playing idle animation: ${animationFile}`);
-    this.context.actions.playAnimation(`Animation/${animationFile}`, false, 1.5);
+    this.context.actions.playAnimation(animationFile, false, 1.5);
   }
 
   private resetTimer(): void {

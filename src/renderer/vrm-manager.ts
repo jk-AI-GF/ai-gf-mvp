@@ -297,7 +297,7 @@ export class VRMManager {
      * @param absolutePath - The full, absolute path to the file.
      * @returns A ParsedFile object or null if parsing fails.
      */
-    public async loadAndParseFile(absolutePath: string): Promise<ParsedFile> {
+    private async loadAndParseFile(absolutePath: string): Promise<ParsedFile> {
         if (!this.currentVrm) {
             console.error('[VRMManager] Cannot parse file because no VRM is loaded.');
             return null;
@@ -361,6 +361,21 @@ export class VRMManager {
             this.applyPose(clip.data);
         } else if (clip?.type === 'animation') {
             console.warn(`Attempted to apply an animation file as a pose: ${fileName}`);
+        }
+    }
+
+    /**
+     * Loads a pose from a given absolute file path and applies it to the VRM.
+     * @param absolutePath The full, absolute path to the pose file.
+     */
+    public async applyPoseFromFile(absolutePath: string) {
+        if (!absolutePath) return;
+        const clip = await this.loadAndParseFile(absolutePath);
+        if (clip?.type === 'pose') {
+            this.applyPose(clip.data);
+        } else {
+            alert('선택한 파일은 유효한 포즈 파일이 아닙니다.');
+            console.warn(`Attempted to apply a non-pose file: ${absolutePath}`);
         }
     }
 
