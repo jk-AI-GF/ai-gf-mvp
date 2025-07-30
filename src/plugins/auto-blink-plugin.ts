@@ -7,7 +7,7 @@ import { PluginContext } from '../plugin-api/plugin-context';
  */
 export class AutoBlinkPlugin implements IPlugin {
   public readonly name = 'AutoBlink';
-  public enabled = false;
+  public enabled = true;
   public runInEditMode = true;
 
   private context!: PluginContext;

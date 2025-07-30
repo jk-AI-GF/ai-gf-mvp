@@ -8,7 +8,7 @@ import { PluginContext } from '../plugin-api/plugin-context';
  */
 export class ActionTestPlugin implements IPlugin {
   public readonly name = 'ActionTest';
-  public enabled = false; // Managed by PluginManager
+  public enabled = false; // Start disabled, enabled by PluginManager
   private context!: PluginContext;
   private unsubs: (() => void)[] = [];
 

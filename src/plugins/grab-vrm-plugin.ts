@@ -6,7 +6,7 @@ import { VRMManager } from '../renderer/vrm-manager';
 
 export class GrabVrmPlugin implements IPlugin {
   public readonly name = 'GrabVrm';
-  public enabled = false; // Start disabled, enabled by PluginManager
+  public enabled = true; 
   public runInEditMode = true; // This plugin should run in edit mode
 
   private context!: PluginContext;

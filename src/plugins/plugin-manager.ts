@@ -67,9 +67,16 @@ export class PluginManager {
     this.plugins.set(plugin.name, plugin);
     plugin.setup(this.context);
     
-    // 편집 모드가 아닐 경우에만 즉시 활성화
-    if (!this.isEditMode || plugin.runInEditMode) {
-      this.enable(plugin.name);
+    // Enable the plugin only if its default 'enabled' state is true
+    // and it meets the edit mode criteria.
+    if (plugin.enabled && (!this.isEditMode || plugin.runInEditMode)) {
+      // We call onEnable directly here because the enable() method checks
+      // !plugin.enabled, which would be false. We must set it to true first.
+      plugin.onEnable();
+      console.log(`Plugin enabled on register: ${plugin.name}`);
+    } else {
+      // Ensure the plugin's state is consistent if it's not enabled on register
+      plugin.enabled = false;
     }
     
     console.log(`Plugin registered: ${plugin.name}`);

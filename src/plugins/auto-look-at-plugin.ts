@@ -5,7 +5,7 @@ import { PluginContext } from '../plugin-api/plugin-context';
 
 export class AutoLookAtPlugin implements IPlugin {
   public readonly name = 'AutoLookAt';
-  public enabled = false;
+  public enabled = false; // Start disabled, enabled by PluginManager
 
   private context!: PluginContext;
   private lastChangeTime: number = 0;

@@ -7,7 +7,7 @@ import { PluginContext } from '../plugin-api/plugin-context';
  */
 export class TimeSyncTestPlugin implements IPlugin {
   public readonly name = 'TimeSyncTest';
-  public enabled = false;
+  public enabled = false; // Start disabled, enabled by PluginManager
   runInEditMode = true; // 이 플러그인은 테스트 목적이므로 편집 모드에서도 실행되도록 설정
 
   private context: PluginContext | null = null;

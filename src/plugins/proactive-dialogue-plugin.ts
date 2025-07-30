@@ -6,7 +6,7 @@ import { PluginContext } from '../plugin-api/plugin-context';
  */
 export class ProactiveDialoguePlugin implements IPlugin {
   public readonly name = 'ProactiveDialogue';
-  public enabled = false;
+  public enabled = false; // Start disabled, enabled by PluginManager
   runInEditMode = false;
 
   private context: PluginContext;

@@ -4,7 +4,7 @@ import { PluginContext } from '../plugin-api/plugin-context';
 
 export class AutoIdleAnimationPlugin implements IPlugin {
   public readonly name = 'AutoIdleAnimation';
-  public enabled = false;
+  public enabled = false; // Start disabled, enabled by PluginManager
   private context!: PluginContext;
 
   private readonly IDLE_ANIMATION_FILES = [
