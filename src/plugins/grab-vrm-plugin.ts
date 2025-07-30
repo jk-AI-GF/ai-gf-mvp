@@ -113,17 +113,9 @@ export class GrabVrmPlugin implements IPlugin {
 
     this.raycaster.setFromCamera(mouse, this.camera);
 
-    if (this.camera instanceof THREE.PerspectiveCamera) {
-        if (this.raycaster.ray.intersectPlane(this.dragPlane, this.intersection)) {
-            this.vrmManager.currentVrm.scene.position.copy(this.intersection.sub(this.dragOffset));
-        }
-    } else if (this.camera instanceof THREE.OrthographicCamera) {
-        this.intersection.set(mouse.x, mouse.y, 0.5);
-        this.intersection.unproject(this.camera);
-        
-        const currentPos = this.vrmManager.currentVrm.scene.position;
-        currentPos.x = this.intersection.x;
-        currentPos.y = this.intersection.y;
+    // This logic works for both Perspective and Orthographic cameras.
+    if (this.raycaster.ray.intersectPlane(this.dragPlane, this.intersection)) {
+        this.vrmManager.currentVrm.scene.position.copy(this.intersection.sub(this.dragOffset));
     }
   }
 
