@@ -630,8 +630,22 @@ export class VRMManager {
             alert('VRM 모델이 로드되지 않았습니다.');
             return;
         }
-        const pose = this.currentVrm.humanoid.getNormalizedPose();
-        const jsonString = JSON.stringify(pose, null, 2);
+
+        const originalPose = this.currentVrm.humanoid.getNormalizedPose();
+        const cleanedPose: VRMPose = {};
+
+        for (const boneName in originalPose) {
+            const humanBoneName = boneName as VRMHumanBoneName;
+            const bonePose = originalPose[humanBoneName];
+            if (!bonePose || !bonePose.rotation) continue;
+
+            // Only copy rotation for all bones, ignore position entirely.
+            cleanedPose[humanBoneName] = {
+                rotation: bonePose.rotation,
+            };
+        }
+
+        const jsonString = JSON.stringify(cleanedPose, null, 2);
         const blob = new Blob([jsonString], { type: 'application/json' });
         const reader = new FileReader();
         reader.onload = async (event) => {

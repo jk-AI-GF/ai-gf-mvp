@@ -62,37 +62,43 @@ export class GrabVrmPlugin implements IPlugin {
   }
 
   private handleMouseDownOnPart({ partName }: { partName: string }): void {
-    if (!this.enabled || this.isDragging || !this.vrmManager.currentVrm) return;
+    if (!this.enabled || this.isDragging || !this.vrmManager.currentVrm || !this.vrmManager.hitboxes.length) return;
 
     if (partName === 'hips') {
-      this.isDragging = true;
-      
       const mouse = new THREE.Vector2(
         ((window.event as MouseEvent).clientX / window.innerWidth) * 2 - 1,
         -((window.event as MouseEvent).clientY / window.innerHeight) * 2 + 1
       );
       this.raycaster.setFromCamera(mouse, this.camera);
 
-      this.dragPlane.setFromNormalAndCoplanarPoint(
-        this.camera.getWorldDirection(this.dragPlane.normal),
-        this.vrmManager.currentVrm.scene.position
-      );
+      // Intersect with the actual hitboxes to find the precise click point.
+      const intersects = this.raycaster.intersectObjects(this.vrmManager.hitboxes);
 
-      if (this.raycaster.ray.intersectPlane(this.dragPlane, this.intersection)) {
-        this.dragOffset.copy(this.intersection).sub(this.vrmManager.currentVrm.scene.position);
-      }
+      if (intersects.length > 0) {
+        this.isDragging = true;
+        const clickPoint = intersects[0].point; // This is the actual 3D point on the hips.
 
-      document.addEventListener('mousemove', this.handleMouseMove);
-      document.addEventListener('mouseup', this.handleMouseUp, { once: true });
+        // Create the drag plane at the depth of the actual click point.
+        this.dragPlane.setFromNormalAndCoplanarPoint(
+          this.camera.getWorldDirection(this.dragPlane.normal),
+          clickPoint
+        );
 
-      this.context.actions.setPose("pose_grabbed.vrma");
-      this.context.actions.showMessage("으악!");
+        // Calculate the offset from the character's origin to the precise click point.
+        this.dragOffset.copy(clickPoint).sub(this.vrmManager.currentVrm.scene.position);
 
-      console.log('[GrabVrmPlugin] Started dragging character.');
-      
-      if (this.camera instanceof THREE.PerspectiveCamera) {
-        const controls = (this.vrmManager.activeCamera.parent?.children.find((c: any) => c.constructor.name === 'OrbitControls') as any);
-        if (controls) controls.enabled = false;
+        document.addEventListener('mousemove', this.handleMouseMove);
+        document.addEventListener('mouseup', this.handleMouseUp, { once: true });
+
+        this.context.actions.setPose("pose_grabbed.vrma");
+        this.context.actions.showMessage("으악!");
+
+        console.log('[GrabVrmPlugin] Started dragging character.');
+        
+        if (this.camera instanceof THREE.PerspectiveCamera) {
+          const controls = (this.vrmManager.activeCamera.parent?.children.find((c: any) => c.constructor.name === 'OrbitControls') as any);
+          if (controls) controls.enabled = false;
+        }
       }
     }
   }
