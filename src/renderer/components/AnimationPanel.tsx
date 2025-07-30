@@ -16,16 +16,27 @@ const AnimationPanel: React.FC<AnimationPanelProps> = ({ onClose, initialPos, on
   const [error, setError] = useState<string | null>(null);
 
   const fetchAnimations = useCallback(async () => {
+    setError(null);
     try {
-      // 'userdata'의 'animations' 디렉토리를 읽도록 수정
-      const result = await window.electronAPI.listDirectory('animations', 'userData');
-      if (result.error) {
-        throw new Error(result.error);
+      // Fetch from both userdata and assets
+      const [userResult, assetsResult] = await Promise.all([
+        window.electronAPI.listDirectory('animations', 'userData'),
+        window.electronAPI.listDirectory('Animation', 'assets')
+      ]);
+
+      if (userResult.error || assetsResult.error) {
+        console.error('Error fetching animations:', userResult.error || assetsResult.error);
+        throw new Error('애니메이션 폴더 중 하나를 읽는 데 실패했습니다.');
       }
-      const animFiles = result.files.filter((file: string) => file.endsWith('.vrma') || file.endsWith('.fbx'));
+
+      // Combine and deduplicate file lists
+      const combinedFiles = new Set([...userResult.files, ...assetsResult.files]);
+      const animFiles = Array.from(combinedFiles).filter((file: string) => file.endsWith('.vrma') || file.endsWith('.fbx'));
+      
       setAnimationFiles(animFiles);
+
       if (animFiles.length === 0) {
-        setError('userdata/animations 폴더에 저장된 애니메이션 파일(.vrma, .fbx)이 없습니다.');
+        setError('저장된 애니메이션 파일(.vrma, .fbx)이 없습니다.');
       }
     } catch (err) {
       console.error('Failed to list animations:', err);
