@@ -19,8 +19,8 @@ export function createPluginContext(
 
   const actions: Actions = {
     playAnimation: async (animationName: string, loop?: boolean, crossFadeDuration?: number) => {
-      // Use the new helper method in VRMManager which handles path resolution
-      vrmManager.loadAndPlayAnimation(animationName, loop, crossFadeDuration);
+      // Add await to ensure the entire process completes before returning.
+      await vrmManager.loadAndPlayAnimation(animationName, loop, crossFadeDuration);
     },
     showMessage: (message: string, duration?: number) => {
       eventBus.emit('ui:showFloatingMessage', { text: message });

@@ -293,15 +293,16 @@ export class VRMManager {
 
     public playAnimation(clip: THREE.AnimationClip, loop = false, crossFadeDuration = 0.5): void {
         if (!this.currentVrm || !this.mixer) return;
+
+        // Stop all previous actions to ensure the new animation plays with full influence.
+        this.mixer.stopAllAction();
+
         const newAction = this.mixer.clipAction(clip);
         newAction.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 0);
-        if (!loop) newAction.clampWhenFinished = true;
-        const canFade = this.currentAction && this.currentAction.getClip().duration > 0.1;
-        if (canFade && this.currentAction !== newAction) {
-            this.currentAction.crossFadeTo(newAction, crossFadeDuration, true);
-        } else {
-            this.currentAction?.stop();
+        if (!loop) {
+            newAction.clampWhenFinished = true;
         }
+        
         newAction.play();
         this.currentAction = newAction;
     }
