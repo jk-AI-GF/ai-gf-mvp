@@ -10,7 +10,7 @@ export interface Context {
 
 // 조건 함수 타입 정의
 // Context를 기반으로 참/거짓을 반환하여 액션 실행 여부를 결정합니다.
-export type Condition = (ctx: Context) => boolean;
+export type Condition = (ctx: Context) => boolean | Promise<boolean>;
 
 // 액션 함수 타입 정의
 // 조건이 충족되었을 때 실행될 동작입니다.

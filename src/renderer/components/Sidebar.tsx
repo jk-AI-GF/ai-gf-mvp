@@ -10,6 +10,7 @@ interface SidebarProps {
   onOpenSettings: () => void;
   onOpenMaterialPanel: () => void;
   onOpenLightPanel: () => void;
+  onOpenCreatorPanel: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -19,6 +20,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onOpenSettings,
   onOpenMaterialPanel,
   onOpenLightPanel,
+  onOpenCreatorPanel,
 }) => {
   const { pluginManager } = useAppContext();
   const [isEditMode, setIsEditMode] = useState(false);
@@ -55,6 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <button className={styles.menuButton} onClick={onOpenSettings}>설정</button>
         <button className={styles.menuButton} onClick={onOpenMaterialPanel}>재질</button>
         <button className={styles.menuButton} onClick={onOpenLightPanel}>조명</button>
+        <button className={styles.menuButton} onClick={onOpenCreatorPanel}>크리에이터</button>
         <button className={styles.menuButton} onClick={onOpenPluginsPanel}>플러그인</button>
         <button className={styles.menuButton} onClick={onOpenModManagementPanel}>모드 관리</button>
         <button className={`${styles.menuButton} ${styles.quitButton}`} onClick={handleQuit}>종료</button>

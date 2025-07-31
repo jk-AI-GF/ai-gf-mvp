@@ -31,18 +31,35 @@ export class TriggerEngine {
    * 등록된 모든 트리거의 조건을 평가하고, 충족되면 액션을 실행합니다.
    * 이 메서드는 앱의 메인 루프에서 주기적으로 호출되어야 합니다.
    */
-  public evaluateTriggers(): void {
+  public async evaluateTriggers(): Promise<void> {
     // console.log('[TriggerEngine] Evaluating triggers...');
-    this.triggers.forEach(trigger => {
+    
+    const conditionPromises = this.triggers.map(trigger => {
       try {
-        if (trigger.condition(this.context)) {
-          // console.log(`[TriggerEngine] Condition met for trigger: ${trigger.name}. Executing action.`);
-          trigger.action(this.context);
-          // TODO: 액션 실행 후 쿨다운, 우선순위, 병합 처리 로직 추가 필요
-        }
+        return Promise.resolve(trigger.condition(this.context));
       } catch (error) {
-        console.error(`[TriggerEngine] Error evaluating trigger '${trigger.name}':`, error);
+        console.error(`[TriggerEngine] Error starting condition for trigger '${trigger.name}':`, error);
+        return Promise.resolve(false); // 에러 발생 시 false 처리
       }
     });
+
+    try {
+      const results = await Promise.all(conditionPromises);
+      
+      results.forEach((isMet, index) => {
+        if (isMet) {
+          const trigger = this.triggers[index];
+          // console.log(`[TriggerEngine] Condition met for trigger: ${trigger.name}. Executing action.`);
+          try {
+            trigger.action(this.context);
+            // TODO: 액션 실행 후 쿨다운, 우선순위, 병합 처리 로직 추가 필요
+          } catch (error) {
+            console.error(`[TriggerEngine] Error executing action for trigger '${trigger.name}':`, error);
+          }
+        }
+      });
+    } catch (error) {
+      console.error('[TriggerEngine] An error occurred during condition evaluation:', error);
+    }
   }
 }

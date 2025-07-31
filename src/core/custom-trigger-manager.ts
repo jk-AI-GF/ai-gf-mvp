@@ -5,6 +5,7 @@ import { Actions } from '../plugin-api/actions';
 export interface CustomTrigger {
   id: string;
   name: string;
+  enabled: boolean;
   triggerType: 'polling' | 'event';
   eventName?: string;
   condition: {
@@ -42,7 +43,11 @@ export class CustomTriggerManager {
   async loadAndRegisterAll() {
     console.log('[CustomTriggerManager] Loading and registering all custom triggers...');
     const triggers: CustomTrigger[] = await window.electronAPI.getCustomTriggers();
-    triggers.forEach(trigger => this.registerTrigger(trigger));
+    triggers.forEach(trigger => {
+      if (trigger.enabled) {
+        this.registerTrigger(trigger)
+      }
+    });
   }
 
   /**
@@ -50,13 +55,15 @@ export class CustomTriggerManager {
    * @param trigger The custom trigger object from storage.
    */
   registerTrigger(trigger: CustomTrigger) {
+    if (this.registeredPollingTriggers.has(trigger.id) || this.registeredEventUnsubscribers.has(trigger.id)) {
+      console.warn(`[CustomTriggerManager] Trigger "${trigger.name}" is already registered. Skipping.`);
+      return;
+    }
+
     if (trigger.triggerType === 'event' && trigger.eventName) {
       this.registerEventTrigger(trigger);
-    } else {
-      // Polling triggers are not yet supported due to architectural constraints.
-      // The TriggerEngine expects synchronous condition checks, but getting context
-      // from the main process is an asynchronous operation.
-      console.warn(`[CustomTriggerManager] Skipping polling trigger "${trigger.name}" as it's not yet supported.`);
+    } else if (trigger.triggerType === 'polling') {
+      this.registerPollingTrigger(trigger);
     }
   }
 
@@ -65,6 +72,7 @@ export class CustomTriggerManager {
    * @param triggerId The ID of the trigger to unregister.
    */
   unregisterTrigger(triggerId: string) {
+    // Unregister event trigger
     if (this.registeredEventUnsubscribers.has(triggerId)) {
       const unsubscribe = this.registeredEventUnsubscribers.get(triggerId);
       if (unsubscribe) unsubscribe();
@@ -72,7 +80,46 @@ export class CustomTriggerManager {
       console.log(`[CustomTriggerManager] Unregistered event trigger: ${triggerId}`);
     }
     
-    // TODO: Add logic to unregister polling triggers if they become supported.
+    // Unregister polling trigger
+    if (this.registeredPollingTriggers.has(triggerId)) {
+      // To "unregister" a polling trigger, we need to remove it from the TriggerEngine's list.
+      // This requires a new method in TriggerEngine, e.g., unregisterTriggerById(id).
+      // For now, we'll just remove it from our internal map. A proper implementation
+      // would require modifying TriggerEngine.
+      // As a workaround, we can modify the trigger's condition to always be false.
+      const originalTrigger = this.registeredPollingTriggers.get(triggerId);
+      if (originalTrigger) {
+        // This is a bit of a hack. A better way is to have TriggerEngine.unregister(id)
+        // @ts-ignore
+        originalTrigger.condition = () => Promise.resolve(false); 
+        this.registeredPollingTriggers.delete(triggerId);
+        console.log(`[CustomTriggerManager] Deactivated polling trigger: ${triggerId}`);
+      }
+    }
+  }
+
+  private registerPollingTrigger(trigger: CustomTrigger) {
+    const condition = async (): Promise<boolean> => {
+      return this.checkCondition(trigger.condition);
+    };
+
+    const action = () => {
+      this.executeAction(trigger.action);
+    };
+
+    const engineTrigger = {
+      name: trigger.name,
+      condition,
+      action,
+    };
+
+    // We need a way to reference this trigger later for unregistering.
+    // Storing the trigger object itself allows us to modify it later if needed (the hacky unregister).
+    this.registeredPollingTriggers.set(trigger.id, engineTrigger as any);
+    
+    // @ts-ignore The Trigger type in TriggerEngine might not expect a Promise, but we've updated it.
+    this.context.registerTrigger(engineTrigger);
+    console.log(`[CustomTriggerManager] Registered polling trigger "${trigger.name}".`);
   }
 
   private registerEventTrigger(trigger: CustomTrigger) {
@@ -81,10 +128,8 @@ export class CustomTriggerManager {
     const handler = async (eventData: any) => {
       console.log(`[CustomTriggerManager] Event "${trigger.eventName}" received for trigger "${trigger.name}". Checking condition...`);
       
-      // For event-driven triggers, the condition can check the event's payload.
-      // For now, we assume the condition checks the global context store.
-      // A more advanced implementation would allow checking eventData properties.
-      const conditionMet = await this.checkCondition(trigger.condition);
+      // Pass the event payload to the condition checker
+      const conditionMet = await this.checkCondition(trigger.condition, eventData);
 
       if (conditionMet) {
         console.log(`[CustomTriggerManager] Condition met for "${trigger.name}". Executing action.`);
@@ -97,12 +142,24 @@ export class CustomTriggerManager {
     console.log(`[CustomTriggerManager] Registered event trigger "${trigger.name}" on event "${trigger.eventName}".`);
   }
 
-  private async checkCondition(condition: CustomTrigger['condition']): Promise<boolean> {
+  private async checkCondition(condition: CustomTrigger['condition'], eventData?: any): Promise<boolean> {
     // If no key is specified, the condition is always true.
     if (!condition.key) return true;
 
+    let contextValue: any;
+    const conditionKey = condition.key;
+
     try {
-      const contextValue = await this.context.actions.getContext(condition.key);
+      // Check if the key uses the 'event.' prefix
+      if (conditionKey.startsWith('event.')) {
+        const eventPropertyKey = conditionKey.substring(6); // Remove 'event.'
+        // Use a helper to safely access nested properties e.g., "event.data.text"
+        contextValue = eventPropertyKey.split('.').reduce((o, k) => (o || {})[k], eventData);
+      } else {
+        // Otherwise, fetch from the global context store
+        contextValue = await this.context.actions.getContext(conditionKey);
+      }
+      
       const triggerValue = this.parseConditionValue(condition.value);
 
       switch (condition.operator) {
@@ -115,7 +172,7 @@ export class CustomTriggerManager {
         default: return false;
       }
     } catch (error) {
-      console.error(`[CustomTriggerManager] Error checking condition for key "${condition.key}":`, error);
+      console.error(`[CustomTriggerManager] Error checking condition for key "${conditionKey}":`, error);
       return false;
     }
   }

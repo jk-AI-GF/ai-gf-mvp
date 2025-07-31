@@ -175,6 +175,12 @@ export class ModLoader {
             setMasterVolume: (volume: number) => {
               this.sendToRenderer('set-master-volume', volume);
             },
+            registerCustomTrigger: (trigger: any) => {
+              console.warn('[ModLoader] registerCustomTrigger is not supported for mods running in the main process.');
+            },
+            unregisterCustomTrigger: (triggerId: string) => {
+              console.warn('[ModLoader] unregisterCustomTrigger is not supported for mods running in the main process.');
+            },
           },
           characterState: {
             get curiosity(): number {

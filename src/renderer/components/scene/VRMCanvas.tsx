@@ -19,6 +19,7 @@ import { TimeSyncTestPlugin } from '../../../plugins/time-sync-test-plugin'; // 
 import { ChatService } from '../../chat-service';
 import { CustomTriggerManager } from '../../../core/custom-trigger-manager';
 import { SystemControls } from '../../../plugin-api/system-controls';
+import { toggleTts, setMasterVolume } from '../../audio-service';
 
 interface VRMCanvasProps {
   onLoad: (managers: { 

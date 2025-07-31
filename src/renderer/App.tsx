@@ -11,12 +11,14 @@ import PosePanel from './components/PosePanel';
 import AnimationPanel from './components/AnimationPanel';
 import MaterialPanel from './components/MaterialPanel';
 import LightPanel from './components/LightPanel';
-import CustomTriggerPanel from './components/CustomTriggerPanel';
+import TriggerEditorPanel from './components/TriggerEditorPanel';
+import CreatorPanel from './components/CreatorPanel';
 import Chat from './components/Chat';
 import FloatingMessageManager from './components/FloatingMessageManager';
 import UIModeNotification from './components/UIModeNotification';
 import eventBus from '../core/event-bus';
 import { useAppContext } from './contexts/AppContext';
+import { CustomTrigger } from '../core/custom-trigger-manager';
 
 interface Message {
   role: string;
@@ -35,27 +37,35 @@ const App: React.FC = () => {
   const [isAnimationPanelOpen, setAnimationPanelOpen] = useState(false);
   const [isMaterialPanelOpen, setMaterialPanelOpen] = useState(false);
   const [isLightPanelOpen, setLightPanelOpen] = useState(false);
-  const [isCustomTriggerPanelOpen, setCustomTriggerPanelOpen] = useState(true);
+  const [isCreatorPanelOpen, setCreatorPanelOpen] = useState(false);
+  const [isTriggerEditorPanelOpen, setTriggerEditorPanelOpen] = useState(false);
+  
+  const [customTriggers, setCustomTriggers] = useState<CustomTrigger[]>([]);
+  const [editingTrigger, setEditingTrigger] = useState<CustomTrigger | null>(null);
+
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [notification, setNotification] = useState({ show: false, message: '' });
   const isInitialMount = useRef(true);
 
   useEffect(() => {
-    if (!pluginManager) return;
+    const loadTriggers = async () => {
+      const savedTriggers = await window.electronAPI.getCustomTriggers();
+      setCustomTriggers(savedTriggers || []);
+    };
+    loadTriggers();
+  }, []);
 
+  useEffect(() => {
+    if (!pluginManager) return;
     const unsubscribe = window.electronAPI.on('set-hitboxes-visible', (visible: boolean) => {
       pluginManager.context.actions.setHitboxesVisible(visible);
     });
-
     return () => unsubscribe();
   }, [pluginManager]);
 
   useEffect(() => {
-    const handleNewMessage = (message: Message) => {
-      setChatMessages((prev) => [...prev, message]);
-    };
+    const handleNewMessage = (message: Message) => setChatMessages((prev) => [...prev, message]);
     const unsubscribe = eventBus.on('chat:newMessage', handleNewMessage);
-
     return () => unsubscribe();
   }, []);
 
@@ -64,64 +74,70 @@ const App: React.FC = () => {
       isInitialMount.current = false;
       return;
     }
-
     const message = isUiInteractive ? 'UI Interaction Enabled' : 'UI Interaction Disabled (Mouse Ignored)';
     setNotification({ show: true, message });
-
-    const timer = setTimeout(() => {
-      setNotification((prev) => ({ ...prev, show: false }));
-    }, 2000);
-
+    const timer = setTimeout(() => setNotification((prev) => ({ ...prev, show: false })), 2000);
     if (!isUiInteractive) {
-      setSettingsModalOpen(false);
-      setJointPanelOpen(false);
-      setExpressionPanelOpen(false);
-      setPluginsPanelOpen(false);
-      setMeshPanelOpen(false);
-      setModManagementPanelOpen(false);
-      setPosePanelOpen(false);
-      setAnimationPanelOpen(false);
-      setMaterialPanelOpen(false);
-      setLightPanelOpen(false);
-      setCustomTriggerPanelOpen(false);
+      [setSettingsModalOpen, setJointPanelOpen, setExpressionPanelOpen, setPluginsPanelOpen, 
+       setMeshPanelOpen, setModManagementPanelOpen, setPosePanelOpen, setAnimationPanelOpen, 
+       setMaterialPanelOpen, setLightPanelOpen, setCreatorPanelOpen, setTriggerEditorPanelOpen]
+      .forEach(setter => setter(false));
     }
-
     return () => clearTimeout(timer);
   }, [isUiInteractive]);
 
   const handleSendMessage = (text: string) => {
     if (chatService) {
-      const currentPersona =
-        persona ||
-        'You are a friendly and helpful AI assistant. Please respond in Korean.';
+      const currentPersona = persona || 'You are a friendly AI. Respond in Korean.';
       chatService.sendChatMessage(text, currentPersona, llmSettings);
     } else {
       console.error('Chat service is not initialized.');
-      setChatMessages((prev) => [
-        ...prev,
-        { role: 'system', text: '오류: 채팅 서비스가 초기화되지 않았습니다.' },
-      ]);
+      setChatMessages((prev) => [...prev, { role: 'system', text: '오류: 채팅 서비스가 초기화되지 않았습니다.' }]);
     }
   };
 
+  const handleOpenTriggerEditor = (trigger: CustomTrigger | null) => {
+    setEditingTrigger(trigger);
+    setTriggerEditorPanelOpen(true);
+  };
+
+  const handleSaveTrigger = async (trigger: CustomTrigger) => {
+    const isEditing = customTriggers.some(t => t.id === trigger.id);
+    const updatedTriggers = isEditing 
+      ? customTriggers.map(t => t.id === trigger.id ? trigger : t)
+      : [...customTriggers, trigger];
+    
+    setCustomTriggers(updatedTriggers);
+    await window.electronAPI.setCustomTriggers(updatedTriggers);
+
+    if (pluginManager) {
+      if (isEditing) {
+        pluginManager.context.system.unregisterCustomTrigger(trigger.id);
+      }
+      if (trigger.enabled) {
+        pluginManager.context.system.registerCustomTrigger(trigger);
+      }
+    }
+  };
+
+  const handleDeleteTrigger = async (triggerId: string) => {
+    const updatedTriggers = customTriggers.filter(t => t.id !== triggerId);
+    setCustomTriggers(updatedTriggers);
+    await window.electronAPI.setCustomTriggers(updatedTriggers);
+    pluginManager?.context.system.unregisterCustomTrigger(triggerId);
+  };
+
   const [panelPositions, setPanelPositions] = useState({
-    joint: { x: 20, y: 70 },
-    expression: { x: 390, y: 70 },
-    plugins: { x: window.innerWidth - 740, y: 70 },
-    mesh: { x: window.innerWidth - 370, y: 70 },
-    mod: { x: window.innerWidth - 370, y: 70 },
-    pose: { x: window.innerWidth - 370, y: 70 },
-    animation: { x: window.innerWidth - 370, y: 70 },
-    material: { x: 20, y: 400 },
-    light: { x: 350, y: 400 },
-    customTrigger: { x: window.innerWidth - 370, y: 400 },
+    joint: { x: 20, y: 70 }, expression: { x: 390, y: 70 },
+    plugins: { x: window.innerWidth - 740, y: 70 }, mesh: { x: window.innerWidth - 370, y: 70 },
+    mod: { x: window.innerWidth - 370, y: 70 }, pose: { x: window.innerWidth - 370, y: 70 },
+    animation: { x: window.innerWidth - 370, y: 70 }, material: { x: 20, y: 400 },
+    light: { x: 350, y: 400 }, triggerEditor: { x: window.innerWidth - 370, y: 400 },
+    creator: { x: 20, y: 70 },
   });
 
   const handlePanelDrag = (panelId: keyof typeof panelPositions, pos: { x: number; y: number }) => {
-    setPanelPositions((prev) => ({
-      ...prev,
-      [panelId]: pos,
-    }));
+    setPanelPositions((prev) => ({ ...prev, [panelId]: pos }));
   };
 
   return (
@@ -131,19 +147,20 @@ const App: React.FC = () => {
       {isUiInteractive && (
         <>
           <EditMenu
-            onOpenPosePanel={() => setPosePanelOpen((prev) => !prev)}
-            onOpenAnimationPanel={() => setAnimationPanelOpen((prev) => !prev)}
-            onOpenJointControl={() => setJointPanelOpen((prev) => !prev)}
-            onOpenExpressionPanel={() => setExpressionPanelOpen((prev) => !prev)}
-            onOpenMeshPanel={() => setMeshPanelOpen((prev) => !prev)}
+            onOpenPosePanel={() => setPosePanelOpen(p => !p)}
+            onOpenAnimationPanel={() => setAnimationPanelOpen(p => !p)}
+            onOpenJointControl={() => setJointPanelOpen(p => !p)}
+            onOpenExpressionPanel={() => setExpressionPanelOpen(p => !p)}
+            onOpenMeshPanel={() => setMeshPanelOpen(p => !p)}
           />
           <Sidebar
             isUiInteractive={isUiInteractive}
-            onOpenSettings={() => setSettingsModalOpen((prev) => !prev)}
-            onOpenPluginsPanel={() => setPluginsPanelOpen((prev) => !prev)}
-            onOpenModManagementPanel={() => setModManagementPanelOpen((prev) => !prev)}
-            onOpenMaterialPanel={() => setMaterialPanelOpen((prev) => !prev)}
-            onOpenLightPanel={() => setLightPanelOpen((prev) => !prev)}
+            onOpenSettings={() => setSettingsModalOpen(p => !p)}
+            onOpenPluginsPanel={() => setPluginsPanelOpen(p => !p)}
+            onOpenModManagementPanel={() => setModManagementPanelOpen(p => !p)}
+            onOpenMaterialPanel={() => setMaterialPanelOpen(p => !p)}
+            onOpenLightPanel={() => setLightPanelOpen(p => !p)}
+            onOpenCreatorPanel={() => setCreatorPanelOpen(p => !p)}
           />
         </>
       )}
@@ -160,7 +177,24 @@ const App: React.FC = () => {
       {isAnimationPanelOpen && <AnimationPanel onClose={() => setAnimationPanelOpen(false)} initialPos={panelPositions.animation} onDragEnd={(pos) => handlePanelDrag('animation', pos)} />}
       {isMaterialPanelOpen && <MaterialPanel onClose={() => setMaterialPanelOpen(false)} initialPos={panelPositions.material} onDragEnd={(pos) => handlePanelDrag('material', pos)} />}
       {isLightPanelOpen && <LightPanel onClose={() => setLightPanelOpen(false)} initialPos={panelPositions.light} onDragEnd={(pos) => handlePanelDrag('light', pos)} />}
-      {isCustomTriggerPanelOpen && <CustomTriggerPanel onClose={() => setCustomTriggerPanelOpen(false)} initialPos={panelPositions.customTrigger} onDragEnd={(pos) => handlePanelDrag('customTrigger', pos)} />}
+      
+      {isCreatorPanelOpen && <CreatorPanel 
+        onClose={() => setCreatorPanelOpen(false)} 
+        initialPos={panelPositions.creator} 
+        onDragEnd={(pos) => handlePanelDrag('creator', pos)}
+        triggers={customTriggers}
+        onOpenTriggerEditor={() => handleOpenTriggerEditor(null)}
+        onEditTrigger={(trigger) => handleOpenTriggerEditor(trigger)}
+        onDeleteTrigger={handleDeleteTrigger}
+      />}
+
+      {isTriggerEditorPanelOpen && <TriggerEditorPanel 
+        onClose={() => setTriggerEditorPanelOpen(false)} 
+        initialPos={panelPositions.triggerEditor} 
+        onDragEnd={(pos) => handlePanelDrag('triggerEditor', pos)}
+        onSave={handleSaveTrigger}
+        triggerToEdit={editingTrigger}
+      />}
       
       <FloatingMessageManager />
     </div>
