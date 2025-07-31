@@ -10,6 +10,7 @@ import { ContextStore } from '../core/context-store';
 import { ModSettingsManager } from '../core/mod-settings-manager';
 import { LlmSettings, DEFAULT_LLM_SETTINGS } from '../core/llm-settings';
 import { getAssetsPath, getUserDataPath, resolveAssetsPath, resolveUserDataPath } from './path-utils';
+import { CustomTrigger } from '../core/custom-trigger-manager';
 
 // Define the schema for electron-store
 interface StoreSchema {
@@ -281,7 +282,7 @@ app.on('ready', async () => {
     }
   });
 
-  ipcMain.handle('save-custom-trigger', async (event, trigger: any) => {
+  ipcMain.handle('save-custom-trigger', async (event, trigger: CustomTrigger) => {
     const triggersDir = resolveUserDataPath('triggers');
     const filePath = path.join(triggersDir, `${trigger.id}.json`);
     try {
@@ -645,6 +646,10 @@ app.on('ready', async () => {
 
   ipcMain.handle('context:get', (event, key: string) => {
     return contextStore.get(key);
+  });
+
+  ipcMain.handle('context:getAll', (event) => {
+    return contextStore.getAll();
   });
 
   ipcMain.handle('get-mod-settings', () => {

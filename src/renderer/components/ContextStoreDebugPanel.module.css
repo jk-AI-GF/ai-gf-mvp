@@ -1,0 +1,39 @@
+.container {
+  padding: 10px;
+  min-width: 350px;
+  max-height: 400px;
+  overflow-y: auto;
+  color: #333;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.table th,
+.table td {
+  border: 1px solid #ddd;
+  padding: 6px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.table th {
+  background-color: #f2f2f2;
+  font-weight: 600;
+}
+
+.table td pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-family: inherit;
+}
+
+.emptyMessage {
+  text-align: center;
+  color: #888;
+  padding: 10px;
+}

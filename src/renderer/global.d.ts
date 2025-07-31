@@ -7,6 +7,7 @@ import { PluginContext } from '../plugin-api/plugin-context';
 import { CharacterState } from '../core/character-state';
 import { TypedEventBus, AppEvents } from '../core/event-bus';
 import { LlmSettings } from '../core/llm-settings';
+import { CustomTrigger } from '../core/custom-trigger-manager';
 
 declare global {
   interface Window {
@@ -76,8 +77,9 @@ declare global {
       setModEnabled: (modName: string, isEnabled: boolean) => Promise<{ success: boolean }>;
 
       // --- Custom Triggers ---
-      getCustomTriggers: () => Promise<any[]>;
-      setCustomTriggers: (triggers: any[]) => void;
+      getCustomTriggers: () => Promise<CustomTrigger[]>;
+      saveCustomTrigger: (trigger: CustomTrigger) => Promise<{ success: boolean; error?: string }>;
+      deleteCustomTrigger: (triggerId: string) => Promise<{ success: boolean; error?: string }>;
     };
   }
 }

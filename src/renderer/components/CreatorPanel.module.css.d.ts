@@ -5,6 +5,7 @@ interface CssExports {
   'container': string;
   'controlButton': string;
   'controls': string;
+  'debugButton': string;
   'deleteButton': string;
   'editButton': string;
   'emptyMessage': string;

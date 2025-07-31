@@ -25,6 +25,14 @@ export class ContextStore {
   }
 
   /**
+   * Gets a shallow copy of all key-value pairs in the store.
+   * @returns An object containing all key-value pairs.
+   */
+  public getAll(): Record<string, any> {
+    return Object.fromEntries(this.store);
+  }
+
+  /**
    * Deletes a key-value pair from the store.
    * @param key The key to delete.
    * @returns True if the key existed and was deleted, false otherwise.

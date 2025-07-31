@@ -38,6 +38,25 @@ export interface PluginContext {
   system: SystemControls;
 
   /**
+   * Gets a value from the shared context store.
+   * @param key The key of the value to retrieve.
+   */
+  get: (key: string) => any;
+
+  /**
+   * Sets a value in the shared context store.
+   * @param key The key to store the value under.
+   * @param value The value to store.
+   */
+  set: (key: string, value: any) => void;
+
+  /**
+   * Gets all key-value pairs from the shared context store.
+   * @returns An object containing all key-value pairs.
+   */
+  getAll: () => Record<string, any>;
+
+  /**
    * 캐릭터의 현재 상태(예: 호기심 수준)에 접근합니다.
    */
   characterState: ICharacterState;

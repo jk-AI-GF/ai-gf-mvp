@@ -57,6 +57,21 @@
   background-color: #0056b3;
 }
 
+.debugButton {
+  width: 100%;
+  padding: 8px 12px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.debugButton:hover {
+  background-color: #5a6268;
+}
+
 .controlButton {
   padding: 4px 8px;
   border: 1px solid #ccc;

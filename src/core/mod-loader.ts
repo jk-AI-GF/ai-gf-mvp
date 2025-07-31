@@ -113,6 +113,9 @@ export class ModLoader {
         const pluginContext: PluginContext = {
           eventBus: this.eventBus,
           registerTrigger: (trigger: Trigger) => this.triggerEngine.registerTrigger(trigger),
+          get: (key: string) => this.contextStore.get(key),
+          set: (key: string, value: any) => this.contextStore.set(key, value),
+          getAll: () => this.contextStore.getAll(),
           actions: {
             playAnimation: (animationName: string, loop?: boolean, crossFadeDuration?: number) => {
               this.sendToRenderer('play-animation', animationName, loop, crossFadeDuration);

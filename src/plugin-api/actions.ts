@@ -48,24 +48,35 @@ export interface Actions {
   lookAt(target: 'camera' | 'mouse' | [number, number, number] | null): void;
 
   /**
-   * ContextStore에 키-값 데이터를 저장합니다.
-   * @param key 저장할 데이터의 키
-   * @param value 저장할 데이터. JSON으로 직렬화 가능해야 합니다.
+   * 배경 이미지를 변경합니다.
+   * @param imagePath 모드 폴더 내의 상대 경로 또는 전체 URL
    */
-  setContext(key: string, value: any): void;
+  changeBackground(imagePath: string): void;
 
   /**
-   * 애플리케이션의 배경 이미지를 변경합니다.
-   * @param imagePath userdata/mods/{mod_name}/assets/ 폴더 기준의 상대 경로 또는 전체 URL
+   * TTS를 사용하여 문장을 말합니다.
+   * @param text 말할 내용
    */
-  changeBackground: (imagePath: string) => void;
-  getContext: (key: string) => Promise<any>;
-  speak: (text: string) => void;
+  speak(text: string): void;
 
   /**
    * VRM 모델의 히트박스 가시성을 설정합니다.
    * @param visible 히트박스를 표시할지 여부
    */
   setHitboxesVisible(visible: boolean): void;
+
+  /**
+   * 전역 컨텍스트 저장소에 키-값 데이터를 저장합니다.
+   * @param key 저장할 데이터의 키
+   * @param value 저장할 데이터
+   */
+  setContext(key: string, value: any): void;
+
+  /**
+   * 전역 컨텍스트 저장소에서 키에 해당하는 데이터를 가져옵니다.
+   * @param key 가져올 데이터의 키
+   * @returns 키에 해당하는 데이터. 없을 경우 undefined.
+   */
+  getContext(key: string): Promise<any>;
 }
 

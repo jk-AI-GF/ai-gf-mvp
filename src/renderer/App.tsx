@@ -13,6 +13,7 @@ import MaterialPanel from './components/MaterialPanel';
 import LightPanel from './components/LightPanel';
 import TriggerEditorPanel from './components/TriggerEditorPanel';
 import CreatorPanel from './components/CreatorPanel';
+import ContextStoreDebugPanel from './components/ContextStoreDebugPanel';
 import Chat from './components/Chat';
 import FloatingMessageManager from './components/FloatingMessageManager';
 import UIModeNotification from './components/UIModeNotification';
@@ -39,6 +40,7 @@ const App: React.FC = () => {
   const [isLightPanelOpen, setLightPanelOpen] = useState(false);
   const [isCreatorPanelOpen, setCreatorPanelOpen] = useState(false);
   const [isTriggerEditorPanelOpen, setTriggerEditorPanelOpen] = useState(false);
+  const [isContextDebugPanelOpen, setContextDebugPanelOpen] = useState(false);
   
   const [customTriggers, setCustomTriggers] = useState<CustomTrigger[]>([]);
   const [editingTrigger, setEditingTrigger] = useState<CustomTrigger | null>(null);
@@ -80,7 +82,8 @@ const App: React.FC = () => {
     if (!isUiInteractive) {
       [setSettingsModalOpen, setJointPanelOpen, setExpressionPanelOpen, setPluginsPanelOpen, 
        setMeshPanelOpen, setModManagementPanelOpen, setPosePanelOpen, setAnimationPanelOpen, 
-       setMaterialPanelOpen, setLightPanelOpen, setCreatorPanelOpen, setTriggerEditorPanelOpen]
+       setMaterialPanelOpen, setLightPanelOpen, setCreatorPanelOpen, setTriggerEditorPanelOpen,
+       setContextDebugPanelOpen]
       .forEach(setter => setter(false));
     }
     return () => clearTimeout(timer);
@@ -138,19 +141,39 @@ const App: React.FC = () => {
     }
   };
 
+  const handleToggleTrigger = async (triggerId: string, enabled: boolean) => {
+    const triggerToUpdate = customTriggers.find(t => t.id === triggerId);
+    if (!triggerToUpdate) return;
+
+    const updatedTrigger = { ...triggerToUpdate, enabled };
+    
+    const { success, error } = await window.electronAPI.saveCustomTrigger(updatedTrigger);
+
+    if (success) {
+      setCustomTriggers(customTriggers.map(t => t.id === triggerId ? updatedTrigger : t));
+      if (enabled) {
+        pluginManager?.context.system.registerCustomTrigger(updatedTrigger);
+      } else {
+        pluginManager?.context.system.unregisterCustomTrigger(triggerId);
+      }
+    } else {
+      console.error('Failed to toggle trigger:', error);
+    }
+  };
+
   const [panelPositions, setPanelPositions] = useState({
     joint: { x: 20, y: 70 }, expression: { x: 390, y: 70 },
     plugins: { x: window.innerWidth - 740, y: 70 }, mesh: { x: window.innerWidth - 370, y: 70 },
     mod: { x: window.innerWidth - 370, y: 70 }, pose: { x: window.innerWidth - 370, y: 70 },
     animation: { x: window.innerWidth - 370, y: 70 }, material: { x: 20, y: 400 },
     light: { x: 350, y: 400 }, triggerEditor: { x: window.innerWidth - 370, y: 400 },
-    creator: { x: 20, y: 70 },
+    creator: { x: 20, y: 70 }, contextDebug: { x: window.innerWidth - 400, y: 70 },
   });
 
   const handlePanelDrag = (panelId: keyof typeof panelPositions, pos: { x: number; y: number }) => {
     setPanelPositions((prev) => ({ ...prev, [panelId]: pos }));
   };
-
+  
   return (
     <div>
       <UIModeNotification isVisible={notification.show} message={notification.message} />
@@ -197,6 +220,8 @@ const App: React.FC = () => {
         onOpenTriggerEditor={() => handleOpenTriggerEditor(null)}
         onEditTrigger={(trigger) => handleOpenTriggerEditor(trigger)}
         onDeleteTrigger={handleDeleteTrigger}
+        onToggleTrigger={handleToggleTrigger}
+        onOpenContextViewer={() => setContextDebugPanelOpen(p => !p)}
       />}
 
       {isTriggerEditorPanelOpen && <TriggerEditorPanel 
@@ -205,6 +230,12 @@ const App: React.FC = () => {
         onDragEnd={(pos) => handlePanelDrag('triggerEditor', pos)}
         onSave={handleSaveTrigger}
         triggerToEdit={editingTrigger}
+      />}
+
+      {isContextDebugPanelOpen && <ContextStoreDebugPanel
+        onClose={() => setContextDebugPanelOpen(false)}
+        initialPos={panelPositions.contextDebug}
+        onDragEnd={(pos) => handlePanelDrag('contextDebug', pos)}
       />}
       
       <FloatingMessageManager />

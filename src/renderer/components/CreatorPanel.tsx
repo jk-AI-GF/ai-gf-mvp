@@ -1,7 +1,6 @@
 import React from 'react';
 import Panel from './Panel';
 import styles from './CreatorPanel.module.css';
-import { useAppContext } from '../contexts/AppContext';
 import { CustomTrigger } from '../../core/custom-trigger-manager';
 
 interface CreatorPanelProps {
@@ -9,6 +8,8 @@ interface CreatorPanelProps {
   onOpenTriggerEditor: () => void;
   onEditTrigger: (trigger: CustomTrigger) => void;
   onDeleteTrigger: (triggerId: string) => void;
+  onToggleTrigger: (triggerId: string, enabled: boolean) => void;
+  onOpenContextViewer: () => void;
   triggers: CustomTrigger[];
   initialPos: { x: number, y: number };
   onDragEnd: (pos: { x: number, y: number }) => void;
@@ -19,28 +20,12 @@ const CreatorPanel: React.FC<CreatorPanelProps> = ({
   onOpenTriggerEditor, 
   onEditTrigger,
   onDeleteTrigger,
+  onToggleTrigger,
+  onOpenContextViewer,
   triggers,
   initialPos, 
   onDragEnd 
 }) => {
-  const { pluginManager } = useAppContext();
-
-  const handleToggleTrigger = async (id: string, newEnabledState: boolean) => {
-    const triggerToUpdate = triggers.find(t => t.id === id);
-    if (!triggerToUpdate) return;
-
-    const updatedTrigger = { ...triggerToUpdate, enabled: newEnabledState };
-    
-    const updatedTriggers = triggers.map(t => t.id === id ? updatedTrigger : t);
-    await window.electronAPI.setCustomTriggers(updatedTriggers);
-
-    if (newEnabledState) {
-      pluginManager?.context.system.registerCustomTrigger(updatedTrigger);
-    } else {
-      pluginManager?.context.system.unregisterCustomTrigger(id);
-    }
-  };
-
   return (
     <Panel title="크리에이터 패널" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
       <div className={styles.container}>
@@ -58,7 +43,7 @@ const CreatorPanel: React.FC<CreatorPanelProps> = ({
                     <input 
                       type="checkbox" 
                       checked={trigger.enabled} 
-                      onChange={(e) => handleToggleTrigger(trigger.id, e.target.checked)}
+                      onChange={(e) => onToggleTrigger(trigger.id, e.target.checked)}
                     />
                     <span className={styles.slider}></span>
                   </label>
@@ -70,7 +55,12 @@ const CreatorPanel: React.FC<CreatorPanelProps> = ({
             새 트리거 추가
           </button>
         </div>
-        {/* Future sections for QuickActions, etc. can be added here */}
+        <div className={styles.section}>
+           <h3 className={styles.sectionTitle}>디버그 도구</h3>
+           <button className={styles.debugButton} onClick={onOpenContextViewer}>
+            컨텍스트 스토어 뷰어
+          </button>
+        </div>
       </div>
     </Panel>
   );

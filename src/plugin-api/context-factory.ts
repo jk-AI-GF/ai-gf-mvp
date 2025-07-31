@@ -6,7 +6,7 @@ import { PluginContext } from './plugin-context';
 import eventBus from '../core/event-bus';
 import { TriggerEngine } from '../core/trigger-engine';
 import { characterState } from '../core/character-state';
-import { toggleTts, setMasterVolume, playTTS } from '../renderer/audio-service';
+import { playTTS } from '../renderer/audio-service';
 
 // This factory creates the context object that plugins will use to interact with the system.
 // It encapsulates the direct dependencies on managers and services.
@@ -20,7 +20,6 @@ export function createPluginContext(
 
   const actions: Actions = {
     playAnimation: async (animationName: string, loop?: boolean, crossFadeDuration?: number) => {
-      // Add await to ensure the entire process completes before returning.
       await vrmManager.loadAndPlayAnimation(animationName, loop, crossFadeDuration);
     },
     showMessage: (message: string, duration?: number) => {
@@ -34,7 +33,6 @@ export function createPluginContext(
       }
     },
     setPose: async (poseName: string) => {
-      // Use the new helper method in VRMManager which handles path resolution
       vrmManager.loadAndApplyPose(poseName);
     },
     lookAt: (target: 'camera' | 'mouse' | [number, number, number] | null) => {
@@ -48,9 +46,6 @@ export function createPluginContext(
         vrmManager.lookAt(null);
       }
     },
-    setContext: (key: string, value: any) => {
-      window.electronAPI.send('context:set', key, value);
-    },
     changeBackground: (imagePath: string) => {
       document.body.style.backgroundImage = `url('${imagePath}')`;
       document.body.style.backgroundColor = 'transparent';
@@ -58,15 +53,18 @@ export function createPluginContext(
       document.body.style.backgroundPosition = 'center';
       renderer.setClearAlpha(0);
     },
-    getContext: async (key: string): Promise<any> => {
-      return window.electronAPI.invoke('context:get', key);
-    },
     speak: (text: string) => {
       playTTS(text);
     },
     setHitboxesVisible: (visible: boolean) => {
       vrmManager.setHitboxesVisible(visible);
-    }
+    },
+    setContext: (key: string, value: any) => {
+      window.electronAPI.send('context:set', key, value);
+    },
+    getContext: async (key: string): Promise<any> => {
+      return window.electronAPI.invoke('context:get', key);
+    },
   };
 
   const pluginContext: PluginContext = {
@@ -74,6 +72,9 @@ export function createPluginContext(
     registerTrigger: (trigger) => triggerEngine.registerTrigger(trigger),
     actions: actions,
     system: systemControls,
+    get: (key: string) => window.electronAPI.invoke('context:get', key),
+    set: (key: string, value: any) => window.electronAPI.send('context:set', key, value),
+    getAll: () => window.electronAPI.invoke('context:getAll'),
     characterState: characterState,
     vrmManager: vrmManager,
   };
