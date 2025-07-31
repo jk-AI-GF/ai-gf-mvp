@@ -44,134 +44,147 @@ function createAnimationClipFromVRMPose(vrmPose: VRMPose, vrm: VRM): THREE.Anima
  * This map includes both old (without colon) and new (with colon) Mixamo naming conventions.
  */
 const mixamoVRMRigMap: { [mixamoRigName: string]: VRMHumanBoneName } = {
-    // New format with colon
-    'mixamorig:Hips': VRMHumanBoneName.Hips,
-    'mixamorig:Spine': VRMHumanBoneName.Spine,
-    'mixamorig:Spine1': VRMHumanBoneName.Chest,
-    'mixamorig:Spine2': VRMHumanBoneName.UpperChest,
-    'mixamorig:Neck': VRMHumanBoneName.Neck,
-    'mixamorig:Head': VRMHumanBoneName.Head,
-    'mixamorig:LeftShoulder': VRMHumanBoneName.LeftShoulder,
-    'mixamorig:LeftArm': VRMHumanBoneName.LeftUpperArm,
-    'mixamorig:LeftForeArm': VRMHumanBoneName.LeftLowerArm,
-    'mixamorig:LeftHand': VRMHumanBoneName.LeftHand,
-    'mixamorig:RightShoulder': VRMHumanBoneName.RightShoulder,
-    'mixamorig:RightArm': VRMHumanBoneName.RightUpperArm,
-    'mixamorig:RightForeArm': VRMHumanBoneName.RightLowerArm,
-    'mixamorig:RightHand': VRMHumanBoneName.RightHand,
-    'mixamorig:LeftUpLeg': VRMHumanBoneName.LeftUpperLeg,
-    'mixamorig:LeftLeg': VRMHumanBoneName.LeftLowerLeg,
-    'mixamorig:LeftFoot': VRMHumanBoneName.LeftFoot,
-    'mixamorig:RightUpLeg': VRMHumanBoneName.RightUpperLeg,
-    'mixamorig:RightLeg': VRMHumanBoneName.RightLowerLeg,
-    'mixamorig:RightFoot': VRMHumanBoneName.RightFoot,
-
-    // Old format without colon (for backward compatibility)
-    'mixamorigHips': VRMHumanBoneName.Hips,
-    'mixamorigSpine': VRMHumanBoneName.Spine,
-    'mixamorigSpine1': VRMHumanBoneName.Chest,
-    'mixamorigSpine2': VRMHumanBoneName.UpperChest,
-    'mixamorigNeck': VRMHumanBoneName.Neck,
-    'mixamorigHead': VRMHumanBoneName.Head,
-    'mixamorigLeftShoulder': VRMHumanBoneName.LeftShoulder,
-    'mixamorigLeftArm': VRMHumanBoneName.LeftUpperArm,
-    'mixamorigLeftForeArm': VRMHumanBoneName.LeftLowerArm,
-    'mixamorigLeftHand': VRMHumanBoneName.LeftHand,
-    'mixamorigRightShoulder': VRMHumanBoneName.RightShoulder,
-    'mixamorigRightArm': VRMHumanBoneName.RightUpperArm,
-    'mixamorigRightForeArm': VRMHumanBoneName.RightLowerArm,
-    'mixamorigRightHand': VRMHumanBoneName.RightHand,
-    'mixamorigLeftUpLeg': VRMHumanBoneName.LeftUpperLeg,
-    'mixamorigLeftLeg': VRMHumanBoneName.LeftLowerLeg,
-    'mixamorigLeftFoot': VRMHumanBoneName.LeftFoot,
-    'mixamorigRightUpLeg': VRMHumanBoneName.RightUpperLeg,
-    'mixamorigRightLeg': VRMHumanBoneName.RightLowerLeg,
-    'mixamorigRightFoot': VRMHumanBoneName.RightFoot,
-    
-    'mixamorigLeftHandThumb3': 'leftThumbDistal',
-    'mixamorigLeftHandIndex1': 'leftIndexProximal',
-    'mixamorigLeftHandIndex2': 'leftIndexIntermediate',
-    'mixamorigLeftHandIndex3': 'leftIndexDistal',
-    'mixamorigLeftHandMiddle1': 'leftMiddleProximal',
-    'mixamorigLeftHandMiddle2': 'leftMiddleIntermediate',
-    'mixamorigLeftHandMiddle3': 'leftMiddleDistal',
-    'mixamorigLeftHandRing1': 'leftRingProximal',
-    'mixamorigLeftHandRing2': 'leftRingIntermediate',
-    'mixamorigLeftHandRing3': 'leftRingDistal',
-    'mixamorigLeftHandPinky1': 'leftLittleProximal',
-    'mixamorigLeftHandPinky2': 'leftLittleIntermediate',
-    'mixamorigLeftHandPinky3': 'leftLittleDistal',
-    'mixamorigRightHandPinky1': 'rightLittleProximal',
-    'mixamorigRightHandPinky2': 'rightLittleIntermediate',
-    'mixamorigRightHandPinky3': 'rightLittleDistal',
-    'mixamorigRightHandRing1': 'rightRingProximal',
-    'mixamorigRightHandRing2': 'rightRingIntermediate',
-    'mixamorigRightHandRing3': 'rightRingDistal',
-    'mixamorigRightHandMiddle1': 'rightMiddleProximal',
-    'mixamorigRightHandMiddle2': 'rightMiddleIntermediate',
-    'mixamorigRightHandMiddle3': 'rightMiddleDistal',
-    'mixamorigRightHandIndex1': 'rightIndexProximal',
-    'mixamorigRightHandIndex2': 'rightIndexIntermediate',
-    'mixamorigRightHandIndex3': 'rightIndexDistal',
-    'mixamorigRightHandThumb1': 'rightThumbProximal',
-    'mixamorigRightHandThumb3': 'rightThumbDistal',
-    'mixamorigLeftToeBase': 'leftToes',
-    'mixamorigRightToeBase': 'rightToes',
+	mixamorigHips: 'hips',
+	mixamorigSpine: 'spine',
+	mixamorigSpine1: 'chest',
+	mixamorigSpine2: 'upperChest',
+	mixamorigNeck: 'neck',
+	mixamorigHead: 'head',
+	mixamorigLeftShoulder: 'leftShoulder',
+	mixamorigLeftArm: 'leftUpperArm',
+	mixamorigLeftForeArm: 'leftLowerArm',
+	mixamorigLeftHand: 'leftHand',
+	mixamorigLeftHandThumb1: 'leftThumbMetacarpal',
+	mixamorigLeftHandThumb2: 'leftThumbProximal',
+	mixamorigLeftHandThumb3: 'leftThumbDistal',
+	mixamorigLeftHandIndex1: 'leftIndexProximal',
+	mixamorigLeftHandIndex2: 'leftIndexIntermediate',
+	mixamorigLeftHandIndex3: 'leftIndexDistal',
+	mixamorigLeftHandMiddle1: 'leftMiddleProximal',
+	mixamorigLeftHandMiddle2: 'leftMiddleIntermediate',
+	mixamorigLeftHandMiddle3: 'leftMiddleDistal',
+	mixamorigLeftHandRing1: 'leftRingProximal',
+	mixamorigLeftHandRing2: 'leftRingIntermediate',
+	mixamorigLeftHandRing3: 'leftRingDistal',
+	mixamorigLeftHandPinky1: 'leftLittleProximal',
+	mixamorigLeftHandPinky2: 'leftLittleIntermediate',
+	mixamorigLeftHandPinky3: 'leftLittleDistal',
+	mixamorigRightShoulder: 'rightShoulder',
+	mixamorigRightArm: 'rightUpperArm',
+	mixamorigRightForeArm: 'rightLowerArm',
+	mixamorigRightHand: 'rightHand',
+	mixamorigRightHandPinky1: 'rightLittleProximal',
+	mixamorigRightHandPinky2: 'rightLittleIntermediate',
+	mixamorigRightHandPinky3: 'rightLittleDistal',
+	mixamorigRightHandRing1: 'rightRingProximal',
+	mixamorigRightHandRing2: 'rightRingIntermediate',
+	mixamorigRightHandRing3: 'rightRingDistal',
+	mixamorigRightHandMiddle1: 'rightMiddleProximal',
+	mixamorigRightHandMiddle2: 'rightMiddleIntermediate',
+	mixamorigRightHandMiddle3: 'rightMiddleDistal',
+	mixamorigRightHandIndex1: 'rightIndexProximal',
+	mixamorigRightHandIndex2: 'rightIndexIntermediate',
+	mixamorigRightHandIndex3: 'rightIndexDistal',
+	mixamorigRightHandThumb1: 'rightThumbMetacarpal',
+	mixamorigRightHandThumb2: 'rightThumbProximal',
+	mixamorigRightHandThumb3: 'rightThumbDistal',
+	mixamorigLeftUpLeg: 'leftUpperLeg',
+	mixamorigLeftLeg: 'leftLowerLeg',
+	mixamorigLeftFoot: 'leftFoot',
+	mixamorigLeftToeBase: 'leftToes',
+	mixamorigRightUpLeg: 'rightUpperLeg',
+	mixamorigRightLeg: 'rightLowerLeg',
+	mixamorigRightFoot: 'rightFoot',
+	mixamorigRightToeBase: 'rightToes',
 };
 
 /**
- * Retargets an FBX animation clip from Mixamo to a VRM model.
- * This function not only maps bone names but also performs necessary
- * coordinate system and scale transformations.
- * @param fbxAnimationClip The animation clip from the FBX file.
+ * Converts a Mixamo animation clip to be compatible with a VRM model.
+ * This function retargets bone rotations and scales hips position.
+ * @param asset The loaded FBX asset (THREE.Group) from Mixamo.
  * @param vrm The target VRM model.
- * @returns A new AnimationClip retargeted for the VRM model.
+ * @returns A new AnimationClip retargeted for the VRM model, or null if conversion fails.
  */
-function retargetFBXAnimationClip(fbxAnimationClip: THREE.AnimationClip, vrm: VRM): THREE.AnimationClip {
-    const newTracks: THREE.KeyframeTrack[] = [];
-    const vrmMeta = vrm.meta;
-
-    for (const track of fbxAnimationClip.tracks) {
-        const trackSplitted = track.name.split('.');
-        const mixamoBoneName = trackSplitted[0];
-        const propertyName = trackSplitted[1]; // 'position', 'quaternion', 'scale'
-
-        const vrmBoneName = mixamoVRMRigMap[mixamoBoneName];
-        if (!vrmBoneName) {
-            continue;
+function convertMixamoAnimation(asset: THREE.Group, vrm: VRM): THREE.AnimationClip | null {
+    // Find the animation clip. Use 'mixamo.com' by default, but fall back to the first clip.
+    let clip = THREE.AnimationClip.findByName(asset.animations, 'mixamo.com');
+    if (!clip) {
+        clip = asset.animations[0];
+        if (!clip) {
+            console.error("No animation clips found in the FBX asset.");
+            return null;
         }
-
-        const vrmBoneNode = vrm.humanoid.getNormalizedBoneNode(vrmBoneName);
-        if (!vrmBoneNode) {
-            continue;
-        }
-
-        const vrmNodeName = vrmBoneNode.name;
-
-        if (track instanceof THREE.QuaternionKeyframeTrack) {
-            // Retarget rotation
-            const newValues = track.values.map((v, i) =>
-                (vrmMeta?.metaVersion === '0' && i % 2 === 0) ? -v : v
-            );
-            newTracks.push(new THREE.QuaternionKeyframeTrack(
-                `${vrmNodeName}.${propertyName}`,
-                track.times,
-                newValues
-            ));
-        } else if (track instanceof THREE.VectorKeyframeTrack) {
-            // Retarget position, applying scale correction
-            const newValues = track.values.map((v, i) =>
-                ((vrmMeta?.metaVersion === '0' && i % 3 !== 1) ? -v : v) * 0.01
-            );
-            newTracks.push(new THREE.VectorKeyframeTrack(
-                `${vrmNodeName}.${propertyName}`,
-                track.times,
-                newValues
-            ));
-        }
+        console.warn("Could not find 'mixamo.com' animation clip. Using the first clip found:", clip.name);
     }
 
-    return new THREE.AnimationClip(fbxAnimationClip.name, fbxAnimationClip.duration, newTracks);
+    const tracks: THREE.KeyframeTrack[] = [];
+
+    const restRotationInverse = new THREE.Quaternion();
+    const parentRestWorldRotation = new THREE.Quaternion();
+    const _quatA = new THREE.Quaternion();
+
+    // Adjust with reference to hips height.
+    const motionHipsNode = asset.getObjectByName('mixamorigHips');
+    if (!motionHipsNode) {
+        console.error("Could not find 'mixamorigHips' in the FBX asset. Position may be incorrect.");
+        return null;
+    }
+    const motionHipsHeight = motionHipsNode.position.y;
+    const vrmHipsHeight = vrm.humanoid.normalizedRestPose.hips.position[1];
+    const hipsPositionScale = vrmHipsHeight / motionHipsHeight;
+
+    clip.tracks.forEach((track) => {
+        const trackSplitted = track.name.split('.');
+        const mixamoRigName = trackSplitted[0];
+        const propertyName = trackSplitted[1];
+
+        const vrmBoneName = mixamoVRMRigMap[mixamoRigName];
+        if (!vrmBoneName) return;
+
+        const vrmNode = vrm.humanoid.getNormalizedBoneNode(vrmBoneName);
+        if (!vrmNode) return;
+        const vrmNodeName = vrmNode.name;
+
+        const mixamoRigNode = asset.getObjectByName(mixamoRigName);
+        if (!mixamoRigNode) {
+            console.warn(`Could not find Mixamo rig node: ${mixamoRigName}`);
+            return;
+        }
+
+        if (track instanceof THREE.QuaternionKeyframeTrack) {
+            mixamoRigNode.getWorldQuaternion(restRotationInverse).invert();
+            mixamoRigNode.parent.getWorldQuaternion(parentRestWorldRotation);
+
+            const newValues = new Float32Array(track.values.length);
+            for (let i = 0; i < track.values.length; i += 4) {
+                _quatA.fromArray(track.values, i);
+                _quatA.premultiply(parentRestWorldRotation).multiply(restRotationInverse);
+                _quatA.toArray(newValues, i);
+            }
+            
+            const finalValues = Array.from(newValues).map((v, i) => (vrm.meta?.metaVersion === '0' && i % 2 === 0 ? -v : v));
+
+            tracks.push(new THREE.QuaternionKeyframeTrack(
+                `${vrmNodeName}.${propertyName}`,
+                track.times,
+                finalValues
+            ));
+
+        } else if (track instanceof THREE.VectorKeyframeTrack) {
+            if (vrmBoneName === 'hips') {
+                const newValues = track.values.map((v, i) => 
+                    (vrm.meta?.metaVersion === '0' && i % 3 !== 1 ? -v : v) * hipsPositionScale
+                );
+                tracks.push(new THREE.VectorKeyframeTrack(
+                    `${vrmNodeName}.${propertyName}`,
+                    track.times,
+                    newValues
+                ));
+            }
+        }
+    });
+
+    return new THREE.AnimationClip('vrmAnimation', clip.duration, tracks);
 }
 
 export class VRMManager {
@@ -381,11 +394,10 @@ export class VRMManager {
                     const vrmAnim = gltf.userData.vrmAnimations?.[0];
                     if (vrmAnim) clip = createVRMAnimationClip(vrmAnim, this.currentVrm!);
                 } else if (absolutePath.endsWith('.fbx')) {
-                    const fbx = this.fbxLoader.parse(fileContent, '');
-                    const fbxClip = fbx.animations[0];
-                    if (fbxClip) {
-                        // Retarget the FBX animation to the VRM skeleton
-                        clip = retargetFBXAnimationClip(fbxClip, this.currentVrm!);
+                    const fbxAsset = this.fbxLoader.parse(fileContent, '');
+                    if (fbxAsset) {
+                        // Convert the Mixamo FBX animation to a VRM-compatible animation clip
+                        clip = convertMixamoAnimation(fbxAsset, this.currentVrm!);
                     }
                 }
             } catch (error) {
