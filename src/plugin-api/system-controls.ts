@@ -14,8 +14,20 @@ export interface SystemControls {
   toggleMouseIgnore(): void;
 
   /**
-   * 애플리케이션의 마스터 볼륨을 조절합니다.
-   * @param volume - 볼륨 값 (0.0 ~ 1.0)
+   * 애플리케이션의 마스터 볼륨을 설정합니다.
+   * @param volume 볼륨 값 (0.0에서 1.0 사이).
    */
   setMasterVolume(volume: number): void;
+
+  /**
+   * JSON 정의를 기반으로 커스텀 트리거를 등록합니다.
+   * @param trigger 트리거의 JSON 객체
+   */
+  registerCustomTrigger(trigger: any): void;
+
+  /**
+   * ID를 기반으로 커스텀 트리거를 등록 해제합니다.
+   * @param triggerId 등록 해제할 트리거의 ID
+   */
+  unregisterCustomTrigger(triggerId: string): void;
 }

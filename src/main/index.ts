@@ -17,6 +17,7 @@ interface StoreSchema {
   persona: string;
   llmSettings: LlmSettings;
   mouseIgnoreShortcut: string;
+  customTriggers: any[]; // We'll use 'any' for now, as the CustomTrigger interface is in the renderer.
 }
 
 // Store 인스턴스 생성
@@ -26,6 +27,7 @@ const store = new Store<StoreSchema>({
     persona: '당신은 친절하고 상냥한 AI 여자친구입니다. 항상 사용자에게 긍정적이고 다정한 태도로 대화에 임해주세요.',
     llmSettings: DEFAULT_LLM_SETTINGS,
     mouseIgnoreShortcut: 'CommandOrControl+Shift+O',
+    customTriggers: [],
   }
 });
 
@@ -249,6 +251,15 @@ app.on('ready', async () => {
 
   ipcMain.on('set-llm-settings', (event, settings: LlmSettings) => {
     store.set('llmSettings', settings);
+  });
+
+  // --- Custom Triggers ---
+  ipcMain.handle('get-custom-triggers', () => {
+    return store.get('customTriggers', []);
+  });
+
+  ipcMain.on('set-custom-triggers', (event, triggers: any[]) => {
+    store.set('customTriggers', triggers);
   });
 
   // Initialize core components

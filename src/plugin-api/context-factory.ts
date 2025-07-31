@@ -14,7 +14,8 @@ import { toggleTts, setMasterVolume, playTTS } from '../renderer/audio-service';
 export function createPluginContext(
   vrmManager: VRMManager,
   triggerEngine: TriggerEngine,
-  renderer: THREE.WebGLRenderer
+  renderer: THREE.WebGLRenderer,
+  systemControls: SystemControls, // Pass in the fully-formed controls
 ): PluginContext {
 
   const actions: Actions = {
@@ -66,18 +67,6 @@ export function createPluginContext(
     setHitboxesVisible: (visible: boolean) => {
       vrmManager.setHitboxesVisible(visible);
     }
-  };
-
-  const systemControls: SystemControls = {
-    toggleTts: (enable: boolean) => {
-      toggleTts(enable);
-    },
-    toggleMouseIgnore: () => {
-      window.electronAPI.toggleMouseIgnore();
-    },
-    setMasterVolume: (volume: number) => {
-      setMasterVolume(volume);
-    },
   };
 
   const pluginContext: PluginContext = {

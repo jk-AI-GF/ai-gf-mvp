@@ -11,6 +11,7 @@ import PosePanel from './components/PosePanel';
 import AnimationPanel from './components/AnimationPanel';
 import MaterialPanel from './components/MaterialPanel';
 import LightPanel from './components/LightPanel';
+import CustomTriggerPanel from './components/CustomTriggerPanel';
 import Chat from './components/Chat';
 import FloatingMessageManager from './components/FloatingMessageManager';
 import UIModeNotification from './components/UIModeNotification';
@@ -34,6 +35,7 @@ const App: React.FC = () => {
   const [isAnimationPanelOpen, setAnimationPanelOpen] = useState(false);
   const [isMaterialPanelOpen, setMaterialPanelOpen] = useState(false);
   const [isLightPanelOpen, setLightPanelOpen] = useState(false);
+  const [isCustomTriggerPanelOpen, setCustomTriggerPanelOpen] = useState(true);
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [notification, setNotification] = useState({ show: false, message: '' });
   const isInitialMount = useRef(true);
@@ -81,6 +83,7 @@ const App: React.FC = () => {
       setAnimationPanelOpen(false);
       setMaterialPanelOpen(false);
       setLightPanelOpen(false);
+      setCustomTriggerPanelOpen(false);
     }
 
     return () => clearTimeout(timer);
@@ -111,6 +114,7 @@ const App: React.FC = () => {
     animation: { x: window.innerWidth - 370, y: 70 },
     material: { x: 20, y: 400 },
     light: { x: 350, y: 400 },
+    customTrigger: { x: window.innerWidth - 370, y: 400 },
   });
 
   const handlePanelDrag = (panelId: keyof typeof panelPositions, pos: { x: number; y: number }) => {
@@ -156,6 +160,7 @@ const App: React.FC = () => {
       {isAnimationPanelOpen && <AnimationPanel onClose={() => setAnimationPanelOpen(false)} initialPos={panelPositions.animation} onDragEnd={(pos) => handlePanelDrag('animation', pos)} />}
       {isMaterialPanelOpen && <MaterialPanel onClose={() => setMaterialPanelOpen(false)} initialPos={panelPositions.material} onDragEnd={(pos) => handlePanelDrag('material', pos)} />}
       {isLightPanelOpen && <LightPanel onClose={() => setLightPanelOpen(false)} initialPos={panelPositions.light} onDragEnd={(pos) => handlePanelDrag('light', pos)} />}
+      {isCustomTriggerPanelOpen && <CustomTriggerPanel onClose={() => setCustomTriggerPanelOpen(false)} initialPos={panelPositions.customTrigger} onDragEnd={(pos) => handlePanelDrag('customTrigger', pos)} />}
       
       <FloatingMessageManager />
     </div>

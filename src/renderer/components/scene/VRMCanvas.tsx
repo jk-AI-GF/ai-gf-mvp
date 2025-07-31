@@ -17,9 +17,16 @@ import { MToonMaterialOutlineWidthMode } from '@pixiv/three-vrm';
 import { GrabVrmPlugin } from '../../../plugins/grab-vrm-plugin';
 import { TimeSyncTestPlugin } from '../../../plugins/time-sync-test-plugin'; // Import the new plugin
 import { ChatService } from '../../chat-service';
+import { CustomTriggerManager } from '../../../core/custom-trigger-manager';
+import { SystemControls } from '../../../plugin-api/system-controls';
 
 interface VRMCanvasProps {
-  onLoad: (managers: { vrmManager: VRMManager; pluginManager: PluginManager; chatService: ChatService }) => void;
+  onLoad: (managers: { 
+    vrmManager: VRMManager; 
+    pluginManager: PluginManager; 
+    chatService: ChatService;
+    customTriggerManager: CustomTriggerManager;
+  }) => void;
 }
 
 const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
@@ -65,8 +72,25 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
 
     // --- Plugin System ---
     const triggerEngine = new TriggerEngine();
-    const pluginContext = createPluginContext(vrmManager, triggerEngine, renderer);
+    
+    // 1. Create a mutable SystemControls object
+    const systemControls: SystemControls = {
+      toggleTts: (enable: boolean) => toggleTts(enable),
+      toggleMouseIgnore: () => window.electronAPI.toggleMouseIgnore(),
+      setMasterVolume: (volume: number) => setMasterVolume(volume),
+      // Placeholders for custom trigger functions
+      registerCustomTrigger: (trigger: any) => {
+        console.warn('registerCustomTrigger called before CustomTriggerManager was initialized.');
+      },
+      unregisterCustomTrigger: (triggerId: string) => {
+        console.warn('unregisterCustomTrigger called before CustomTriggerManager was initialized.');
+      },
+    };
 
+    // 2. Create PluginContext with the mutable SystemControls
+    const pluginContext = createPluginContext(vrmManager, triggerEngine, renderer, systemControls);
+
+    // 3. Create PluginManager
     const pluginManager = new PluginManager(pluginContext);
     pluginManager.register(new AutoLookAtPlugin());
     pluginManager.register(new AutoBlinkPlugin());
@@ -76,11 +100,19 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     pluginManager.register(new GrabVrmPlugin());
     pluginManager.register(new TimeSyncTestPlugin()); // Register the new plugin
 
+    // 4. Create CustomTriggerManager
+    const customTriggerManager = new CustomTriggerManager(pluginContext);
+    customTriggerManager.loadAndRegisterAll(); // Load triggers from storage
+
+    // 5. Now, wire up the actual implementations to SystemControls
+    systemControls.registerCustomTrigger = customTriggerManager.registerTrigger.bind(customTriggerManager);
+    systemControls.unregisterCustomTrigger = customTriggerManager.unregisterTrigger.bind(customTriggerManager);
+
     // --- Chat Service ---
     const chatService = new ChatService(vrmManager, pluginManager);
 
     // Pass managers up to the provider
-    onLoad({ vrmManager, pluginManager, chatService });
+    onLoad({ vrmManager, pluginManager, chatService, customTriggerManager });
 
     const setOutlineMode = (mode: typeof MToonMaterialOutlineWidthMode.WorldCoordinates | typeof MToonMaterialOutlineWidthMode.ScreenCoordinates) => {
         if (vrmManager.currentVrm) {

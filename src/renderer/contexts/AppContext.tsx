@@ -5,10 +5,12 @@ import { VRMManager } from '../vrm-manager';
 import { PluginManager } from '../../plugins/plugin-manager';
 import { ChatService } from '../chat-service';
 import { LlmSettings, DEFAULT_LLM_SETTINGS } from '../../core/llm-settings';
+import { CustomTriggerManager } from '../../core/custom-trigger-manager';
 
 interface AppContextType {
   vrmManager: VRMManager | null;
   pluginManager: PluginManager | null;
+  customTriggerManager: CustomTriggerManager | null;
   chatService: ChatService | null;
   directionalLight: THREE.DirectionalLight | null;
   ambientLight: THREE.AmbientLight | null;
@@ -36,6 +38,7 @@ export const useAppContext = () => {
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [vrmManager, setVrmManager] = useState<VRMManager | null>(null);
   const [pluginManager, setPluginManager] = useState<PluginManager | null>(null);
+  const [customTriggerManager, setCustomTriggerManager] = useState<CustomTriggerManager | null>(null);
   const [chatService, setChatService] = useState<ChatService | null>(null);
   const [directionalLight, setDirectionalLight] = useState<THREE.DirectionalLight | null>(null);
   const [ambientLight, setAmbientLight] = useState<THREE.AmbientLight | null>(null);
@@ -62,9 +65,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => unsubscribe();
   }, []);
 
-  const handleManagersLoad = useCallback((managers: { vrmManager: VRMManager; pluginManager: PluginManager }) => {
+  const handleManagersLoad = useCallback((managers: { 
+    vrmManager: VRMManager; 
+    pluginManager: PluginManager;
+    customTriggerManager: CustomTriggerManager;
+  }) => {
     setVrmManager(managers.vrmManager);
     setPluginManager(managers.pluginManager);
+    setCustomTriggerManager(managers.customTriggerManager);
     setChatService(new ChatService(managers.vrmManager, managers.pluginManager));
   }, []);
 
@@ -87,6 +95,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const value = { 
     vrmManager, 
     pluginManager, 
+    customTriggerManager,
     chatService,
     directionalLight,
     ambientLight,

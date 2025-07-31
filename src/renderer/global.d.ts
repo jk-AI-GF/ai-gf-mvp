@@ -74,6 +74,10 @@ declare global {
       getAllMods: () => Promise<{ name: string; version: string; path: string; }[]>;
       getModSettings: () => Promise<Record<string, boolean>>;
       setModEnabled: (modName: string, isEnabled: boolean) => Promise<{ success: boolean }>;
+
+      // --- Custom Triggers ---
+      getCustomTriggers: () => Promise<any[]>;
+      setCustomTriggers: (triggers: any[]) => void;
     };
   }
 }

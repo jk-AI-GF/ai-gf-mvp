@@ -59,6 +59,10 @@ import { LlmSettings } from '../core/llm-settings';
   getAllMods: () => ipcRenderer.invoke('get-all-mods'),
   getModSettings: () => ipcRenderer.invoke('get-mod-settings'),
   setModEnabled: (modName: string, isEnabled: boolean) => ipcRenderer.invoke('set-mod-enabled', modName, isEnabled),
+
+  // --- Custom Triggers ---
+  getCustomTriggers: () => ipcRenderer.invoke('get-custom-triggers'),
+  setCustomTriggers: (triggers: any[]) => ipcRenderer.send('set-custom-triggers', triggers),
 };
 
 console.log('Preload script loaded.');

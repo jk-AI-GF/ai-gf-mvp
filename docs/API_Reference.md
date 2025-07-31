@@ -319,3 +319,19 @@ context.system.toggleMouseIgnore();
 // 전체 볼륨을 50%로 설정
 context.system.setMasterVolume(0.5);
 ```
+
+---
+
+### `registerCustomTrigger(trigger)`
+
+UI나 외부 스크립트에서 생성된 JSON 형식의 트리거 정의를 시스템에 동적으로 등록합니다.
+
+-   **`trigger`** (`object`): 등록할 트리거의 상세 정보가 담긴 객체. 이 객체의 구조는 `Development_Guide.md`의 커스텀 트리거 생성 가이드에 자세히 설명되어 있습니다.
+
+---
+
+### `unregisterCustomTrigger(triggerId)`
+
+`registerCustomTrigger`를 통해 등록된 트리거를 ID를 기반으로 시스템에서 제거합니다.
+
+-   **`triggerId`** (`string`): 제거할 트리거의 고유 ID.
