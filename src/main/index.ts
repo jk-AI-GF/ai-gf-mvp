@@ -17,17 +17,16 @@ interface StoreSchema {
   persona: string;
   llmSettings: LlmSettings;
   mouseIgnoreShortcut: string;
-  customTriggers: any[]; // We'll use 'any' for now, as the CustomTrigger interface is in the renderer.
+  // customTriggers is now managed as individual files.
 }
 
 // Store 인스턴스 생성
-const store = new Store<StoreSchema>({
+const store = new Store<Omit<StoreSchema, 'customTriggers'>>({
   defaults: {
     windowOpacity: 1.0,
     persona: '당신은 친절하고 상냥한 AI 여자친구입니다. 항상 사용자에게 긍정적이고 다정한 태도로 대화에 임해주세요.',
     llmSettings: DEFAULT_LLM_SETTINGS,
     mouseIgnoreShortcut: 'CommandOrControl+Shift+O',
-    customTriggers: [],
   }
 });
 
@@ -209,7 +208,7 @@ app.on('ready', async () => {
   // Ensure userdata directories exist on startup
   try {
     const userDataPath = getUserDataPath();
-    const requiredDirs = ['vrm', 'poses', 'mods', 'animations', 'persona'];
+    const requiredDirs = ['vrm', 'poses', 'mods', 'animations', 'persona', 'triggers'];
     for (const dir of requiredDirs) {
       fs.mkdirSync(path.join(userDataPath, dir), { recursive: true });
     }
@@ -253,13 +252,61 @@ app.on('ready', async () => {
     store.set('llmSettings', settings);
   });
 
-  // --- Custom Triggers ---
-  ipcMain.handle('get-custom-triggers', () => {
-    return store.get('customTriggers', []);
+  // --- Custom Triggers (File-based) ---
+  ipcMain.handle('get-custom-triggers', async () => {
+    const triggersDir = resolveUserDataPath('triggers');
+    try {
+      const files = await fsp.readdir(triggersDir);
+      const triggerPromises = files
+        .filter(file => file.endsWith('.json'))
+        .map(async file => {
+          try {
+            const filePath = path.join(triggersDir, file);
+            const content = await fsp.readFile(filePath, 'utf-8');
+            return JSON.parse(content);
+          } catch (err) {
+            console.error(`Failed to read or parse trigger file: ${file}`, err);
+            return null;
+          }
+        });
+      const triggers = (await Promise.all(triggerPromises)).filter(Boolean);
+      return triggers;
+    } catch (error) {
+      console.error('Failed to get custom triggers:', error);
+      // If the directory doesn't exist, return an empty array
+      if (error.code === 'ENOENT') {
+        return [];
+      }
+      throw error;
+    }
   });
 
-  ipcMain.on('set-custom-triggers', (event, triggers: any[]) => {
-    store.set('customTriggers', triggers);
+  ipcMain.handle('save-custom-trigger', async (event, trigger: any) => {
+    const triggersDir = resolveUserDataPath('triggers');
+    const filePath = path.join(triggersDir, `${trigger.id}.json`);
+    try {
+      await fsp.writeFile(filePath, JSON.stringify(trigger, null, 2), 'utf-8');
+      return { success: true };
+    } catch (error) {
+      console.error(`Failed to save trigger ${trigger.id}:`, error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('delete-custom-trigger', async (event, triggerId: string) => {
+    const triggersDir = resolveUserDataPath('triggers');
+    const filePath = path.join(triggersDir, `${triggerId}.json`);
+    try {
+      await fsp.unlink(filePath);
+      return { success: true };
+    } catch (error) {
+      console.error(`Failed to delete trigger ${triggerId}:`, error);
+      // If the file doesn't exist, it's not a critical error
+      if (error.code === 'ENOENT') {
+        return { success: true, message: 'File not found, considered deleted.' };
+      }
+      return { success: false, error: error.message };
+    }
   });
 
   // Initialize core components

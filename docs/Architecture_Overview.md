@@ -23,13 +23,18 @@
 
 이 디렉토리는 사용자에게 보여지는 모든 것을 담당합니다.
 
--   **`renderer.tsx`**: React 애플리케이션의 진입점입니다. `AppProvider`와 `App` 컴포넌트를 실제 DOM에 렌더링하는 역할을 합니다.
+-   **`renderer.tsx`**: React 애플리케이션의 진입점입니다. `AppContextProvider`와 `App` 컴포넌트를 실제 DOM에 렌더링하는 역할을 합니다.
 
 -   **`App.tsx`**: 모든 2D UI 컴포넌트(패널, 메뉴, 버튼 등)를 포함하고 배치하는 최상위 React 컴포넌트입니다. 애플리케이션의 전체적인 레이아웃과 각 패널의 `open/close` 상태를 관리합니다.
+    -   **주요 역할**:
+        -   모든 패널(Creator, Editor, Settings 등)의 열림/닫힘 상태 관리.
+        -   **커스텀 트리거의 중앙 상태 관리**: `electron-store`에서 불러온 모든 커스텀 트리거 목록을 state로 관리하며, `CreatorPanel`과 `TriggerEditorPanel`에 데이터를 전달하고 이들로부터 발생한 변경(추가, 수정, 삭제) 요청을 처리하여 전체 시스템에 반영하는 **Single Source of Truth** 역할을 수행합니다.
 
 -   **`contexts/AppContext.tsx`**: **애플리케이션의 심장부**입니다. `vrmManager`, `pluginManager` 등 애플리케이션의 핵심적인 관리자(Manager) 인스턴스를 생성하고, React Context API를 통해 모든 하위 컴포넌트에 이들을 제공합니다.
 
 -   **`components/`**: UI 컴포넌트들이 위치합니다.
+    -   **`CreatorPanel.tsx`**: 사용자가 생성한 커스텀 트리거 목록을 보여주고, 수정/삭제/활성화 등 기본적인 관리를 할 수 있는 UI를 제공합니다.
+    -   **`TriggerEditorPanel.tsx`**: 단일 커스텀 트리거를 생성하거나 편집하는 상세 폼 UI를 제공합니다.
     -   **`Sidebar.tsx`**: 화면 좌측에 위치하는 사이드바 메뉴입니다. '편집 모드' 토글, '마우스 무시' 토글, 설정, 플러그인/모드 관리, 애플리케이션 종료 등 전역적인 기능과 관련된 버튼들을 포함합니다.
     -   **`EditMenu.tsx`**: '편집 모드'일 때 화면 우측에 나타나는 세로 메뉴입니다. VRM 모델 로드, 관절/표정/메쉬/포즈/애니메이션 등 캐릭터를 직접 편집하고 제어하기 위한 버튼들을 포함합니다.
     -   **`scene/`**: 3D 렌더링과 관련된 React 컴포넌트들이 위치합니다.

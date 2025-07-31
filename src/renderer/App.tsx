@@ -103,28 +103,39 @@ const App: React.FC = () => {
 
   const handleSaveTrigger = async (trigger: CustomTrigger) => {
     const isEditing = customTriggers.some(t => t.id === trigger.id);
-    const updatedTriggers = isEditing 
-      ? customTriggers.map(t => t.id === trigger.id ? trigger : t)
-      : [...customTriggers, trigger];
-    
-    setCustomTriggers(updatedTriggers);
-    await window.electronAPI.setCustomTriggers(updatedTriggers);
+    const { success, error } = await window.electronAPI.saveCustomTrigger(trigger);
 
-    if (pluginManager) {
-      if (isEditing) {
-        pluginManager.context.system.unregisterCustomTrigger(trigger.id);
+    if (success) {
+      const updatedTriggers = isEditing 
+        ? customTriggers.map(t => t.id === trigger.id ? trigger : t)
+        : [...customTriggers, trigger];
+      setCustomTriggers(updatedTriggers);
+
+      if (pluginManager) {
+        if (isEditing) {
+          pluginManager.context.system.unregisterCustomTrigger(trigger.id);
+        }
+        if (trigger.enabled) {
+          pluginManager.context.system.registerCustomTrigger(trigger);
+        }
       }
-      if (trigger.enabled) {
-        pluginManager.context.system.registerCustomTrigger(trigger);
-      }
+    } else {
+      console.error('Failed to save trigger:', error);
+      // Optionally, show an error message to the user
     }
   };
 
   const handleDeleteTrigger = async (triggerId: string) => {
-    const updatedTriggers = customTriggers.filter(t => t.id !== triggerId);
-    setCustomTriggers(updatedTriggers);
-    await window.electronAPI.setCustomTriggers(updatedTriggers);
-    pluginManager?.context.system.unregisterCustomTrigger(triggerId);
+    const { success, error } = await window.electronAPI.deleteCustomTrigger(triggerId);
+
+    if (success) {
+      const updatedTriggers = customTriggers.filter(t => t.id !== triggerId);
+      setCustomTriggers(updatedTriggers);
+      pluginManager?.context.system.unregisterCustomTrigger(triggerId);
+    } else {
+      console.error('Failed to delete trigger:', error);
+      // Optionally, show an error message to the user
+    }
   };
 
   const [panelPositions, setPanelPositions] = useState({

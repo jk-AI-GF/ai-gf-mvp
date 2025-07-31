@@ -62,7 +62,8 @@ import { LlmSettings } from '../core/llm-settings';
 
   // --- Custom Triggers ---
   getCustomTriggers: () => ipcRenderer.invoke('get-custom-triggers'),
-  setCustomTriggers: (triggers: any[]) => ipcRenderer.send('set-custom-triggers', triggers),
+  saveCustomTrigger: (trigger: any) => ipcRenderer.invoke('save-custom-trigger', trigger),
+  deleteCustomTrigger: (triggerId: string) => ipcRenderer.invoke('delete-custom-trigger', triggerId),
 };
 
 console.log('Preload script loaded.');
