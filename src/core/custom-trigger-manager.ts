@@ -42,12 +42,48 @@ export class CustomTriggerManager {
    */
   async loadAndRegisterAll() {
     console.log('[CustomTriggerManager] Loading and registering all custom triggers...');
-    const triggers: CustomTrigger[] = await window.electronAPI.getCustomTriggers();
+    let triggers: CustomTrigger[] = await window.electronAPI.getCustomTriggers();
+    
+    // Migrate old data structures before registering
+    triggers = await this.migrateAndSaveTriggers(triggers);
+
     triggers.forEach(trigger => {
       if (trigger.enabled) {
         this.registerTrigger(trigger)
       }
     });
+  }
+
+  /**
+   * Checks for legacy data formats in triggers and migrates them to the current format.
+   * If any changes are made, it saves the updated trigger back to storage.
+   * @param triggers The array of triggers to migrate.
+   * @returns The migrated array of triggers.
+   */
+  private async migrateAndSaveTriggers(triggers: CustomTrigger[]): Promise<CustomTrigger[]> {
+    let hasChanges = false;
+    const migratedTriggers = triggers.map(trigger => {
+      // Migration: 'speak' action to 'playTTS'
+      if (trigger.action.type === 'speak' as any) {
+        console.log(`[CustomTriggerManager] Migrating legacy 'speak' action for trigger: "${trigger.name}"`);
+        trigger.action.type = 'playTTS';
+        hasChanges = true;
+      }
+      // Add other future migrations here...
+
+      if (hasChanges) {
+        // If a change was made, save this specific trigger back.
+        // This is safer than saving all triggers in a loop.
+        window.electronAPI.saveCustomTrigger(trigger);
+      }
+      return trigger;
+    });
+
+    if (hasChanges) {
+      console.log('[CustomTriggerManager] Finished migrating triggers.');
+    }
+
+    return migratedTriggers;
   }
 
   /**
