@@ -27,7 +27,11 @@ interface Message {
 }
 
 const App: React.FC = () => {
-  const { chatService, isUiInteractive, persona, llmSettings, pluginManager } = useAppContext();
+  const { 
+    chatService, isUiInteractive, persona, llmSettings, pluginManager, 
+    actionRegistry, // Get the fully initialized registry from context
+  } = useAppContext();
+
   const [isSettingsModalOpen, setSettingsModalOpen] = useState(false);
   const [isJointPanelOpen, setJointPanelOpen] = useState(false);
   const [isExpressionPanelOpen, setExpressionPanelOpen] = useState(false);
@@ -50,20 +54,48 @@ const App: React.FC = () => {
   const isInitialMount = useRef(true);
 
   useEffect(() => {
+    if (!actionRegistry) return;
+
+    // 등록된 액션 명세를 메인 프로세스로 전송 (직렬화 가능한 부분만)
+    const definitions = actionRegistry.getAllActionDefinitions();
+    const serializableDefinitions = definitions.map(def => {
+      const params = def.params.map(p => {
+        const { validation, ...rest } = p;
+        return rest;
+      });
+      return { ...def, params };
+    });
+
+    window.electronAPI.invoke('set-action-definitions', serializableDefinitions)
+      .then(() => console.log('[Renderer] Action definitions sent to main process.'))
+      .catch(err => console.error('[Renderer] Failed to send action definitions:', err));
+
+    // 메인 프로세스로부터의 액션 실행 요청 리스너 설정
+    const unsubscribe = window.electronAPI.on('execute-action', (actionName: string, args: any[]) => {
+      console.log(`[Renderer] Received action execution request: ${actionName}`, args);
+      const action = actionRegistry.get(actionName);
+      if (action && typeof action.implementation === 'function') {
+        try {
+          action.implementation(...args);
+        } catch (error) {
+          console.error(`[Renderer] Error executing action "${actionName}":`, error);
+        }
+      } else {
+        console.warn(`[Renderer] Action "${actionName}" not found or not implemented.`);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [actionRegistry]);
+
+
+  useEffect(() => {
     const loadTriggers = async () => {
       const savedTriggers = await window.electronAPI.getCustomTriggers();
       setCustomTriggers(savedTriggers || []);
     };
     loadTriggers();
   }, []);
-
-  useEffect(() => {
-    if (!pluginManager) return;
-    const unsubscribe = window.electronAPI.on('set-hitboxes-visible', (visible: boolean) => {
-      pluginManager.context.actions.setHitboxesVisible(visible);
-    });
-    return () => unsubscribe();
-  }, [pluginManager]);
 
   useEffect(() => {
     const handleNewMessage = (message: Message) => setChatMessages((prev) => [...prev, message]);

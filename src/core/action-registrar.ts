@@ -1,0 +1,239 @@
+
+import * as THREE from 'three';
+import { ActionRegistry } from './action-registry';
+import { VRMManager } from '../renderer/vrm-manager';
+import eventBus from './event-bus';
+import { playTTS } from '../renderer/audio-service';
+import { ActionDefinition } from '../plugin-api/actions';
+import { WebGLRenderer } from 'three';
+
+// action-registrar.ts
+// 이 파일은 모든 시스템 액션을 ActionRegistry에 등록하는 역할을 합니다.
+// 렌더러 프로세스에서만 사용됩니다.
+
+export function registerCoreActions(
+  registry: ActionRegistry,
+  vrmManager: VRMManager,
+  renderer: WebGLRenderer,
+) {
+  // getAvailableActions는 특별한 케이스로, 레지스트리 자체에서 정보를 가져옵니다.
+  // 별도로 등록하지 않고 context-factory에서 직접 처리합니다.
+
+  registry.register(
+    {
+      name: 'playAnimation',
+      description: '캐릭터 애니메이션을 재생합니다.',
+      params: [
+        { 
+          name: 'animationName', 
+          type: 'string', 
+          description: '애니메이션 파일 이름',
+          validation: (value: any) => (typeof value === 'string' && value.trim() !== '') || '애니메이션 이름은 필수입니다.'
+        },
+        { name: 'loop', type: 'boolean', defaultValue: false, description: '반복 여부' },
+        { name: 'crossFadeDuration', type: 'number', defaultValue: 0.5, description: '페이드 시간(초)' },
+      ],
+    },
+    (animationName: string, loop?: boolean, crossFadeDuration?: number) => {
+      return vrmManager.loadAndPlayAnimation(animationName, loop, crossFadeDuration);
+    }
+  );
+
+  registry.register(
+    {
+      name: 'playTTS',
+      description: 'TTS 음성을 재생합니다.',
+      params: [{ 
+        name: 'text', 
+        type: 'string', 
+        description: '재생할 내용',
+        validation: (value: any) => (typeof value === 'string' && value.trim() !== '') || '재생할 내용은 필수입니다.'
+      }],
+    },
+    (text: string) => {
+      playTTS(text);
+    }
+  );
+
+  registry.register(
+    {
+      name: 'showMessage',
+      description: '화면에 말풍선 메시지를 표시합니다.',
+      params: [
+        { name: 'message', type: 'string', description: '표시할 메시지' },
+        { name: 'duration', type: 'number', defaultValue: 5, description: '표시 시간(초)' },
+      ],
+    },
+    (message: string, duration?: number) => {
+      eventBus.emit('ui:showFloatingMessage', { text: message, duration });
+    }
+  );
+
+  registry.register(
+    {
+      name: 'setExpression',
+      description: '캐릭터의 표정을 부드럽게 변경합니다.',
+      params: [
+        { name: 'expressionName', type: 'string', description: '표정 이름' },
+        { name: 'weight', type: 'number', defaultValue: 1.0, description: '강도 (0-1)' },
+        { name: 'duration', type: 'number', defaultValue: 0.1, description: '변경 시간(초)' },
+      ],
+    },
+    (expressionName: string, weight: number, duration?: number) => {
+      vrmManager.animateExpression(expressionName, weight, duration);
+    }
+  );
+
+  registry.register(
+    {
+      name: 'setExpressionWeight',
+      description: '캐릭터 표정 가중치를 즉시 설정합니다.',
+      params: [
+        { name: 'expressionName', type: 'string', description: '표정 이름' },
+        { name: 'weight', type: 'number', defaultValue: 1.0, description: '강도 (0-1)' },
+      ],
+    },
+    (expressionName: string, weight: number) => {
+      if (vrmManager.currentVrm?.expressionManager) {
+        vrmManager.currentVrm.expressionManager.setValue(expressionName, weight);
+      }
+    }
+  );
+
+  registry.register(
+    {
+      name: 'setPose',
+      description: '캐릭터의 포즈를 설정합니다.',
+      params: [{ name: 'poseName', type: 'string', description: '포즈 파일 이름' }],
+    },
+    (poseName: string) => {
+      vrmManager.loadAndApplyPose(poseName);
+    }
+  );
+
+  registry.register(
+    {
+      name: 'lookAt',
+      description: '캐릭터의 시선을 고정합니다.',
+      params: [
+        {
+          name: 'target',
+          type: 'enum',
+          options: ['camera', 'mouse', 'null'],
+          description: '바라볼 대상',
+        },
+      ],
+    },
+    (target: 'camera' | 'mouse' | [number, number, number] | null) => {
+      if (target === 'camera' || target === 'mouse') {
+        vrmManager.lookAt(target);
+      } else if (Array.isArray(target)) {
+        vrmManager.lookAt(new THREE.Vector3(target[0], target[1], target[2]));
+      } else {
+        vrmManager.lookAt(null);
+      }
+    }
+  );
+
+  registry.register(
+    {
+      name: 'changeBackground',
+      description: '배경 이미지를 변경합니다.',
+      params: [{ name: 'imagePath', type: 'string', description: '이미지 파일 경로' }],
+    },
+    (imagePath: string) => {
+      document.body.style.backgroundImage = `url('${imagePath}')`;
+      document.body.style.backgroundColor = 'transparent';
+      document.body.style.backgroundSize = 'cover';
+      document.body.style.backgroundPosition = 'center';
+      renderer.setClearAlpha(0);
+    }
+  );
+
+  registry.register(
+    {
+      name: 'setHitboxesVisible',
+      description: '히트박스 가시성을 설정합니다.',
+      params: [{ name: 'visible', type: 'boolean', description: '표시 여부' }],
+    },
+    (visible: boolean) => {
+      vrmManager.setHitboxesVisible(visible);
+    }
+  );
+
+  registry.register(
+    {
+      name: 'resetPose',
+      description: '캐릭터를 기본 T-Pose로 되돌립니다.',
+      params: [],
+    },
+    () => {
+      vrmManager.resetToTPose();
+    }
+  );
+
+  registry.register(
+    {
+      name: 'saveCurrentPose',
+      description: '현재 포즈를 파일로 저장합니다.',
+      params: [],
+    },
+    () => {
+      vrmManager.saveCurrentPose();
+    }
+  );
+
+  registry.register(
+    {
+      name: 'loadCharacter',
+      description: '다른 VRM 모델을 불러옵니다.',
+      params: [{ name: 'fileName', type: 'string', description: 'VRM 파일 이름' }],
+    },
+    (fileName: string) => {
+      return vrmManager.loadVRM(fileName);
+    }
+  );
+
+  registry.register(
+    {
+      name: 'setCameraMode',
+      description: '카메라 모드를 변경합니다.',
+      params: [
+        {
+          name: 'mode',
+          type: 'enum',
+          options: ['orbit', 'fixed'],
+          description: '카메라 모드',
+        },
+      ],
+    },
+    (mode: 'orbit' | 'fixed') => {
+      eventBus.emit('camera:setMode', { mode });
+    }
+  );
+
+  registry.register(
+    {
+      name: 'setContext',
+      description: '전역 컨텍스트에 값을 저장합니다.',
+      params: [
+        { name: 'key', type: 'string', description: '저장할 키' },
+        { name: 'value', type: 'string', description: '저장할 값 (문자열, 숫자, boolean만 가능)' },
+      ],
+    },
+    (key: string, value: any) => {
+      window.electronAPI.send('context:set', key, value);
+    }
+  );
+
+  registry.register(
+    {
+        name: 'getContext',
+        description: '전역 컨텍스트에서 값을 가져옵니다.',
+        params: [{ name: 'key', type: 'string', description: '가져올 키' }],
+    },
+    (key: string) => {
+        return window.electronAPI.invoke('context:get', key);
+    }
+  );
+}

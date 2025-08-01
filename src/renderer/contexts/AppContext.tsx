@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import * as THREE from 'three';
 import VRMCanvas from '../components/scene/VRMCanvas';
 import { VRMManager } from '../vrm-manager';
@@ -6,11 +6,13 @@ import { PluginManager } from '../../plugins/plugin-manager';
 import { ChatService } from '../chat-service';
 import { LlmSettings, DEFAULT_LLM_SETTINGS } from '../../core/llm-settings';
 import { CustomTriggerManager } from '../../core/custom-trigger-manager';
+import { ActionRegistry } from '../../core/action-registry'; // 추가
 
 interface AppContextType {
   vrmManager: VRMManager | null;
   pluginManager: PluginManager | null;
   customTriggerManager: CustomTriggerManager | null;
+  actionRegistry: ActionRegistry | null; // 추가
   chatService: ChatService | null;
   directionalLight: THREE.DirectionalLight | null;
   ambientLight: THREE.AmbientLight | null;
@@ -18,6 +20,7 @@ interface AppContextType {
   windowOpacity: number;
   persona: string;
   llmSettings: LlmSettings;
+  renderer: THREE.WebGLRenderer | null; // 추가
   setWindowOpacity: (opacity: number) => void;
   setPersona: (persona: string) => void;
   setLlmSettings: (settings: Partial<LlmSettings>) => void;
@@ -35,10 +38,11 @@ export const useAppContext = () => {
   return context;
 };
 
-export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [vrmManager, setVrmManager] = useState<VRMManager | null>(null);
   const [pluginManager, setPluginManager] = useState<PluginManager | null>(null);
   const [customTriggerManager, setCustomTriggerManager] = useState<CustomTriggerManager | null>(null);
+  const [actionRegistry, setActionRegistry] = useState<ActionRegistry | null>(null); // 추가
   const [chatService, setChatService] = useState<ChatService | null>(null);
   const [directionalLight, setDirectionalLight] = useState<THREE.DirectionalLight | null>(null);
   const [ambientLight, setAmbientLight] = useState<THREE.AmbientLight | null>(null);
@@ -46,14 +50,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [windowOpacity, setWindowOpacityState] = useState(1.0);
   const [persona, setPersonaState] = useState('');
   const [llmSettings, setLlmSettingsState] = useState<LlmSettings>(DEFAULT_LLM_SETTINGS);
+  const [renderer, setRenderer] = useState<THREE.WebGLRenderer | null>(null); // 추가
 
   useEffect(() => {
-    // Fetch all settings when the app loads
     window.electronAPI.getWindowOpacity().then(setWindowOpacityState);
     window.electronAPI.getPersona().then(setPersonaState);
     window.electronAPI.getLlmSettings().then(settings => {
       if (settings) {
-        // 저장된 설정과 기본 설정을 병합하여 항상 모든 필드를 보장
         setLlmSettingsState(prev => ({ ...prev, ...settings }));
       }
     });
@@ -69,10 +72,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     vrmManager: VRMManager; 
     pluginManager: PluginManager;
     customTriggerManager: CustomTriggerManager;
+    actionRegistry: ActionRegistry; // 추가
+    renderer: THREE.WebGLRenderer; // 추가
   }) => {
     setVrmManager(managers.vrmManager);
     setPluginManager(managers.pluginManager);
     setCustomTriggerManager(managers.customTriggerManager);
+    setActionRegistry(managers.actionRegistry); // 추가
+    setRenderer(managers.renderer); // 추가
     setChatService(new ChatService(managers.vrmManager, managers.pluginManager));
   }, []);
 
@@ -96,6 +103,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     vrmManager, 
     pluginManager, 
     customTriggerManager,
+    actionRegistry, // 추가
     chatService,
     directionalLight,
     ambientLight,
@@ -103,6 +111,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     windowOpacity,
     persona,
     llmSettings,
+    renderer, // 추가
     setWindowOpacity,
     setPersona,
     setLlmSettings,
@@ -112,9 +121,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   return (
     <AppContext.Provider value={value}>
-      <VRMCanvas 
-        onLoad={handleManagersLoad} 
-      />
+      <VRMCanvas onLoad={handleManagersLoad} />
       {vrmManager && pluginManager && chatService && children}
     </AppContext.Provider>
   );

@@ -6,7 +6,7 @@ import { VRMManager } from '../../vrm-manager';
 import { PluginManager } from '../../../plugins/plugin-manager';
 import eventBus from '../../../core/event-bus';
 import { TriggerEngine } from '../../../core/trigger-engine';
-import { initAudioContext, playTTS } from '../../audio-service';
+import { initAudioContext, playTTS, toggleTts, setMasterVolume } from '../../audio-service';
 import { AutoLookAtPlugin } from '../../../plugins/auto-look-at-plugin';
 import { AutoBlinkPlugin } from '../../../plugins/auto-blink-plugin';
 import { AutoIdleAnimationPlugin } from '../../../plugins/auto-idle-animation-plugin';
@@ -16,18 +16,19 @@ import { ActionTestPlugin } from '../../../plugins/action-test-plugin';
 import { MToonMaterialOutlineWidthMode } from '@pixiv/three-vrm';
 import { GrabVrmPlugin } from '../../../plugins/grab-vrm-plugin';
 import { TimeSyncTestPlugin } from '../../../plugins/time-sync-test-plugin';
-import { LlmResponseHandlerPlugin } from '../../../plugins/LlmResponseHandlerPlugin'; // Import the new plugin
-import { ChatService } from '../../chat-service';
+import { LlmResponseHandlerPlugin } from '../../../plugins/LlmResponseHandlerPlugin';
 import { CustomTriggerManager } from '../../../core/custom-trigger-manager';
 import { SystemControls } from '../../../plugin-api/system-controls';
-import { toggleTts, setMasterVolume } from '../../audio-service';
+import { registerCoreActions } from '../../../core/action-registrar';
+import { ActionRegistry } from '../../../core/action-registry'; // 추가
 
 interface VRMCanvasProps {
   onLoad: (managers: { 
     vrmManager: VRMManager; 
     pluginManager: PluginManager; 
-    chatService: ChatService;
     customTriggerManager: CustomTriggerManager;
+    actionRegistry: ActionRegistry; // 추가
+    renderer: THREE.WebGLRenderer; // 추가
   }) => void;
 }
 
@@ -55,13 +56,13 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
         1000
     );
     orthographicCamera.position.set(0, 0.98, 1.0);
-    orthographicCamera.zoom = 1.4; // Zoom을 조정하여 캐릭터 크기를 맞춥니다.
+    orthographicCamera.zoom = 1.4;
     orthographicCamera.updateProjectionMatrix();
 
     let activeCamera: THREE.Camera = orthographicCamera;
 
     const controls = new OrbitControls(perspectiveCamera, renderer.domElement);
-    controls.enabled = false; // Default to disabled as cameraMode is 'fixed'
+    controls.enabled = false;
     controls.target.set(0, 0.6, 0);
     controls.update();
 
@@ -69,30 +70,25 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     const vrmManager = new VRMManager(scene, activeCamera, plane, eventBus);
     vrmManager.loadVRM('VRM/Liqu.vrm');
 
-    // --- Edit Mode State ---
-    let isEditMode = false;
-
     // --- Plugin System ---
     const triggerEngine = new TriggerEngine();
-    
-    // 1. Create a mutable SystemControls object
+    const actionRegistry = new ActionRegistry();
+
+    // 1. Register all core actions BEFORE creating the context
+    registerCoreActions(actionRegistry, vrmManager, renderer);
+
     const systemControls: SystemControls = {
       toggleTts: (enable: boolean) => toggleTts(enable),
       toggleMouseIgnore: () => window.electronAPI.toggleMouseIgnore(),
       setMasterVolume: (volume: number) => setMasterVolume(volume),
-      // Placeholders for custom trigger functions
-      registerCustomTrigger: (trigger: any) => {
-        console.warn('registerCustomTrigger called before CustomTriggerManager was initialized.');
-      },
-      unregisterCustomTrigger: (triggerId: string) => {
-        console.warn('unregisterCustomTrigger called before CustomTriggerManager was initialized.');
-      },
+      registerCustomTrigger: (trigger: any) => {},
+      unregisterCustomTrigger: (triggerId: string) => {},
     };
 
-    // 2. Create PluginContext with the mutable SystemControls
-    const pluginContext = createPluginContext(vrmManager, triggerEngine, renderer, systemControls);
+    // 2. Create context - it will now be populated with actions
+    const pluginContext = createPluginContext(vrmManager, triggerEngine, systemControls, actionRegistry);
 
-    // 3. Create PluginManager
+    // 3. Create and setup managers
     const pluginManager = new PluginManager(pluginContext);
     pluginManager.register(new AutoLookAtPlugin());
     pluginManager.register(new AutoBlinkPlugin());
@@ -101,35 +97,16 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     pluginManager.register(new ActionTestPlugin());
     pluginManager.register(new GrabVrmPlugin());
     pluginManager.register(new TimeSyncTestPlugin());
-    pluginManager.register(new LlmResponseHandlerPlugin()); // Register the new plugin
+    pluginManager.register(new LlmResponseHandlerPlugin());
 
-    // 4. Create CustomTriggerManager
     const customTriggerManager = new CustomTriggerManager(pluginContext);
-    customTriggerManager.loadAndRegisterAll(); // Load triggers from storage
+    customTriggerManager.loadAndRegisterAll();
 
-    // 5. Now, wire up the actual implementations to SystemControls
     systemControls.registerCustomTrigger = customTriggerManager.registerTrigger.bind(customTriggerManager);
     systemControls.unregisterCustomTrigger = customTriggerManager.unregisterTrigger.bind(customTriggerManager);
 
-    // --- Chat Service ---
-    const chatService = new ChatService(vrmManager, pluginManager);
-
-    // Pass managers up to the provider
-    onLoad({ vrmManager, pluginManager, chatService, customTriggerManager });
-
-    // Send available actions to the main process after sanitizing them for IPC
-    pluginContext.actions.getAvailableActions().then(actions => {
-      // Sanitize actions for IPC by removing non-serializable parts (functions)
-      const sanitizedActions = actions.map(action => ({
-        ...action,
-        params: action.params.map(param => {
-          const { validation, ...rest } = param; // Destructure to remove 'validation'
-          return rest;
-        })
-      }));
-      console.log('[Renderer] Sending sanitized available actions to main process:', sanitizedActions);
-      window.electronAPI.send('available-actions-update', sanitizedActions);
-    });
+    // 4. Pass all managers and the registry up to the App component
+    onLoad({ vrmManager, pluginManager, customTriggerManager, actionRegistry, renderer });
 
     const setOutlineMode = (mode: typeof MToonMaterialOutlineWidthMode.WorldCoordinates | typeof MToonMaterialOutlineWidthMode.ScreenCoordinates) => {
         if (vrmManager.currentVrm) {
@@ -147,7 +124,6 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
         }
     };
 
-    // Set initial outline mode based on the default camera
     eventBus.on('vrm:loaded', () => {
         if (cameraMode === 'fixed') {
             setOutlineMode(MToonMaterialOutlineWidthMode.ScreenCoordinates);
@@ -166,12 +142,10 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
         triggerEngine.evaluateTriggers();
 
         if (vrmManager.currentVrm) {
-            // The plugin manager now internally handles the edit mode state
             pluginManager.update(delta, vrmManager.currentVrm);
             
             const head = vrmManager.currentVrm.humanoid.getNormalizedBoneNode('head');
             if (head) {
-                // 강제로 월드 행렬을 업데이트하여 최신 위치를 보장합니다.
                 head.updateWorldMatrix(true, false);
                 const headPosition = head.getWorldPosition(tempVector);
 
@@ -217,7 +191,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
             activeCamera.aspect = aspect;
             activeCamera.updateProjectionMatrix();
         } else if (activeCamera instanceof THREE.OrthographicCamera) {
-            const frustumHeight = 3; // 기준 높이
+            const frustumHeight = 3;
             activeCamera.left = -frustumHeight * aspect / 2;
             activeCamera.right = frustumHeight * aspect / 2;
             activeCamera.top = frustumHeight / 2;
@@ -236,7 +210,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
             controls.enabled = false;
             eventBus.emit('camera:modeChanged', 'follow');
             setOutlineMode(MToonMaterialOutlineWidthMode.ScreenCoordinates);
-        } else { // 'orbit'
+        } else {
             cameraMode = 'orbit';
             activeCamera = perspectiveCamera;
             perspectiveCamera.aspect = window.innerWidth / window.innerHeight;
@@ -248,8 +222,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     };
 
     const handleEditModeChange = (data: { isEditMode: boolean }) => {
-        isEditMode = data.isEditMode;
-        pluginManager.setEditMode(isEditMode);
+        pluginManager.setEditMode(data.isEditMode);
         handleSetCameraMode(data.isEditMode ? 'orbit' : 'fixed');
     };
 
@@ -261,23 +234,19 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     document.addEventListener('mousedown', handleMouseClick);
     document.addEventListener('click', initAudioContext, { once: true });
     const unsubTts = window.electronAPI.on('tts-speak', (text: string) => playTTS(text));
-    const unsubSetExpressionWeight = window.electronAPI.on('set-expression-weight', (expressionName: string, weight: number) => {
-        if (vrmManager.currentVrm?.expressionManager) {
-            vrmManager.currentVrm.expressionManager.setValue(expressionName, weight);
-        }
-    });
+    
     eventBus.on('camera:requestState', requestCameraState);
     eventBus.on('camera:setMode', ({ mode }) => handleSetCameraMode(mode));
+    eventBus.on('ui:editModeToggled', handleEditModeChange);
 
     // --- Cleanup ---
     return () => {
         window.removeEventListener('resize', handleResize);
         document.removeEventListener('mousedown', handleMouseClick);
         unsubTts();
-        unsubSetExpressionWeight();
-        eventBus.off('ui:editModeToggled', handleEditModeChange);
         eventBus.off('camera:requestState', requestCameraState);
         eventBus.off('camera:setMode', ({ mode }) => handleSetCameraMode(mode));
+        eventBus.off('ui:editModeToggled', handleEditModeChange);
     };
   }, [onLoad]);
 

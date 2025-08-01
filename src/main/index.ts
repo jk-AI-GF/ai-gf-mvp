@@ -12,6 +12,7 @@ import { LlmSettings, DEFAULT_LLM_SETTINGS } from '../core/llm-settings';
 import { getAssetsPath, getUserDataPath, resolveAssetsPath, resolveUserDataPath } from './path-utils';
 import { CustomTrigger } from '../core/custom-trigger-manager';
 import { ActionDefinition } from '../plugin-api/actions';
+import { ActionRegistry } from '../core/action-registry'; // 추가
 
 // Define the schema for electron-store
 interface StoreSchema {
@@ -376,9 +377,26 @@ app.on('ready', async () => {
 
   ipcMain.on('toggle-mouse-ignore', toggleMouseIgnore);
 
-  ipcMain.on('available-actions-update', (event, actions: ActionDefinition[]) => {
-    console.log('[Main] Received available actions update from renderer.');
+  let modsLoaded = false; // 모드가 로드되었는지 확인하는 플래그
+
+  // 렌더러로부터 액션 명세를 받아 캐시에 저장하고 모드를 로드
+  ipcMain.handle('set-action-definitions', (event, actions: ActionDefinition[]) => {
+    console.log('[Main] Received action definitions from renderer.');
     availableActionsCache = actions;
+    
+    if (!modsLoaded) {
+      console.log('[Main] Action definitions received, loading mods...');
+      modLoader.loadMods();
+      modsLoaded = true;
+    }
+    
+    return true;
+  });
+
+  // ModLoader로부터의 액션 요청을 렌더러로 전달
+  ipcMain.on('proxy-action', (event, actionName: string, args: any[]) => {
+    const targetWindow = overlayWindow?.isVisible() ? overlayWindow : mainWindow;
+    targetWindow?.webContents.send('execute-action', actionName, args);
   });
 
   mainWindow.on('blur', () => {
@@ -404,51 +422,10 @@ app.on('ready', async () => {
     ipcMain,
     () => availableActionsCache // Pass a function to get the cache
   );
-  modLoader.loadMods();
+  // 앱 시작 시 바로 로드하지 않고, 액션 정의를 받은 후 로드하도록 변경
+  // modLoader.loadMods();
 
   // ... (rest of the IPC handlers remain the same)
-  ipcMain.handle('play-animation', async (event, animationName: string, loop: boolean, crossFadeDuration: number) => {
-    if (overlayWindow) {
-      overlayWindow.webContents.send('play-animation-in-renderer', animationName, loop, crossFadeDuration);
-    }
-  });
-
-  ipcMain.handle('show-message', async (event, message: string, duration: number) => {
-    if (overlayWindow) {
-      overlayWindow.webContents.send('show-message-in-renderer', message, duration);
-    }
-  });
-
-  ipcMain.handle('set-expression', async (event, expressionName: string, weight: number, duration: number) => {
-    if (overlayWindow) {
-      overlayWindow.webContents.send('set-expression-in-renderer', expressionName, weight, duration);
-    }
-  });
-
-  ipcMain.handle('set-pose', async (event, poseName: string) => {
-    if (overlayWindow) {
-      overlayWindow.webContents.send('set-pose-in-renderer', poseName);
-    }
-  });
-
-  ipcMain.handle('look-at', async (event, target: 'camera' | [number, number, number] | null) => {
-    if (overlayWindow) {
-      overlayWindow.webContents.send('look-at-in-renderer', target);
-    }
-  });
-
-  ipcMain.handle('list-directory', async (event, dirPath: string, basePath: 'assets' | 'userData' = 'assets') => {
-    try {
-      const fullPath = basePath === 'assets' ? resolveAssetsPath(dirPath) : resolveUserDataPath(dirPath);
-      const dirents = await fs.promises.readdir(fullPath, { withFileTypes: true });
-      const files = dirents.filter(dirent => dirent.isFile()).map(dirent => dirent.name);
-      const directories = dirents.filter(dirent => dirent.isDirectory()).map(dirent => dirent.name);
-      return { files, directories };
-    } catch (error) {
-      console.error(`Failed to list directory ${dirPath}:`, error);
-      return { files: [], directories: [], error: error.message };
-    }
-  });
 
   ipcMain.handle('save-vrma-pose', async (event, vrmaData: ArrayBuffer) => {
     if (mainWindow) mainWindow.setAlwaysOnTop(false);

@@ -20,7 +20,7 @@ export type AppEvents = {
   /** 채팅 및 LLM */
   'chat:newMessage': { role: string, text: string };
   'llm:responseReceived': { text: string, expression: string };
-  'ui:showFloatingMessage': { text: string };
+  'ui:showFloatingMessage': { text: string; duration?: number };
   'ui:updateFloatingMessagePosition': { left: number; top: number; visible: boolean; };
 
   /** 플러그인 */

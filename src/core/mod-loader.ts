@@ -120,74 +120,7 @@ export class ModLoader {
           get: (key: string) => this.contextStore.get(key),
           set: (key: string, value: any) => this.contextStore.set(key, value),
           getAll: () => this.contextStore.getAll(),
-          actions: {
-            getAvailableActions: (): Promise<ActionDefinition[]> => {
-              // Return the cached actions from the main process
-              return Promise.resolve(this.getAvailableActions());
-            },
-            playAnimation: (animationName: string, loop?: boolean, crossFadeDuration?: number) => {
-              this.sendToRenderer('play-animation', animationName, loop, crossFadeDuration);
-            },
-            showMessage: (message: string, duration?: number) => {
-              this.sendToRenderer('show-message', message, duration);
-            },
-            setExpression: (expressionName: string, weight: number, duration?: number) => {
-              this.sendToRenderer('set-expression', expressionName, weight, duration);
-            },
-            setExpressionWeight: (expressionName: string, weight: number) => {
-              this.sendToRenderer('set-expression-weight', expressionName, weight);
-            },
-            setPose: (poseName: string) => {
-              this.sendToRenderer('set-pose', poseName);
-            },
-            lookAt: (target: 'camera' | [number, number, number] | null) => {
-              this.sendToRenderer('look-at', target);
-            },
-            setContext: (key: string, value: any) => {
-              this.contextStore.set(key, value);
-            },
-            changeBackground: async (imagePath: string) => {
-              try {
-                // 모드 폴더 내의 상대 경로로만 작동하도록 설계
-                const fullPath = path.join(modPath, imagePath);
-
-                // 보안 검사: 모드 폴더 외부로 접근하는 것을 방지
-                if (!fullPath.startsWith(modPath)) {
-                  console.error(`[ModLoader] Security violation: Mod ${manifest.name} attempted to access file outside its directory: ${imagePath}`);
-                  return;
-                }
-
-                const fileBuffer = await fs.readFile(fullPath);
-                const mimeType = mime.getType(fullPath) || 'application/octet-stream';
-                const dataUrl = `data:${mimeType};base64,${fileBuffer.toString('base64')}`;
-                
-                this.sendToRenderer('change-background', dataUrl);
-              } catch (error) {
-                console.error(`[ModLoader] Error in changeBackground for mod ${manifest.name}:`, error);
-              }
-            },
-            getContext: (key: string): any => {
-              return this.contextStore.get(key);
-            },
-            playTTS: (text: string) => {
-              this.sendToRenderer('tts-speak', text);
-            },
-            setHitboxesVisible: (visible: boolean) => {
-              this.sendToRenderer('set-hitboxes-visible', visible);
-            },
-            resetPose: () => {
-              this.sendToRenderer('reset-pose');
-            },
-            saveCurrentPose: () => {
-              this.sendToRenderer('save-current-pose');
-            },
-            loadCharacter: async (fileName: string) => {
-              this.sendToRenderer('load-character', fileName);
-            },
-            setCameraMode: (mode: 'orbit' | 'fixed') => {
-              this.sendToRenderer('set-camera-mode', mode);
-            },
-          },
+          actions: this.createActionProxies(modPath, manifest.name), // 동적 프록시 생성
           system: {
             toggleTts: (enable: boolean) => {
               this.sendToRenderer('toggle-tts', enable);
@@ -229,5 +162,61 @@ export class ModLoader {
         console.error('Error details:', error.message, error.stack);
       }
     }
+  }
+
+  private createActionProxies(modPath: string, modName: string): any {
+    const proxies: { [key: string]: (...args: any[]) => any } = {};
+
+    // getAvailableActions는 항상 로컬 캐시에서 처리
+    proxies['getAvailableActions'] = () => Promise.resolve(this.getAvailableActions());
+
+    const actionDefinitions = this.getAvailableActions();
+
+    for (const actionDef of actionDefinitions) {
+      const actionName = actionDef.name;
+
+      if (actionName === 'getAvailableActions') continue;
+
+      // 메인 프로세스에서 직접 처리해야 하는 액션들
+      if (actionName === 'setContext') {
+        proxies[actionName] = (key: string, value: any) => {
+          this.contextStore.set(key, value);
+        };
+        continue;
+      }
+      if (actionName === 'getContext') {
+        proxies[actionName] = (key: string) => {
+          return this.contextStore.get(key);
+        };
+        continue;
+      }
+
+      // 특별한 파일 처리 로직이 필요한 액션
+      if (actionName === 'changeBackground') {
+        proxies[actionName] = async (imagePath: string) => {
+          try {
+            const fullPath = path.join(modPath, imagePath);
+            if (!fullPath.startsWith(modPath)) {
+              console.error(`[ModLoader] Security violation: Mod ${modName} attempted to access file outside its directory: ${imagePath}`);
+              return;
+            }
+            const fileBuffer = await fs.readFile(fullPath);
+            const mimeType = mime.getType(fullPath) || 'application/octet-stream';
+            const dataUrl = `data:${mimeType};base64,${fileBuffer.toString('base64')}`;
+            this.sendToRenderer('proxy-action', actionName, [dataUrl]);
+          } catch (error) {
+            console.error(`[ModLoader] Error in ${actionName} for mod ${modName}:`, error);
+          }
+        };
+        continue;
+      }
+
+      // 나머지 모든 액션은 렌더러로 요청을 보내는 일반 프록시로 생성
+      proxies[actionName] = (...args: any[]) => {
+        this.sendToRenderer('proxy-action', actionName, args);
+      };
+    }
+
+    return proxies;
   }
 }
