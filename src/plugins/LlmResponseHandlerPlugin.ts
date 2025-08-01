@@ -35,7 +35,7 @@ export class LlmResponseHandlerPlugin implements IPlugin {
 
     // Use the actions API to make the character perform the actions
     this.context.actions.setExpression(expression, 1.0, 0.5);
-    this.context.actions.speak(text);
+    this.context.actions.playTTS(text);
   };
 
   public update(delta: number): void {

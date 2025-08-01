@@ -87,7 +87,7 @@
 
 플러그인이든 UI 컴포넌트든, 캐릭터와 상호작용할 때는 다음의 표준화된 인터페이스를 사용하는 것이 권장됩니다.
 
--   **`pluginManager.context.actions`**: 로직을 제어하는 가장 표준적인 방법입니다. `playAnimation`, `setExpression`, `speak`, `lookAt` 등의 함수를 제공합니다.
+-   **`pluginManager.context.actions`**: 로직을 제어하는 가장 표준적인 방법입니다. `playAnimation`, `setExpression`, `playTTS`, `lookAt` 등의 함수를 제공합니다.
 -   **`pluginManager.context.system`**: TTS 토글, 마스터 볼륨 조절 등 시스템 레벨의 기능을 제어합니다.
 
 ## 4. 기능 추가 가이드 (How to Add a New Feature)
@@ -219,7 +219,7 @@ export class ProactiveDialoguePlugin implements Plugin {
       },
       // Action: 자발적인 대화를 시작한다.
       action: () => {
-        this.context.actions.speak("무슨 생각 하세요?");
+        this.context.actions.playTTS("무슨 생각 하세요?");
         // Action이 실행되면, 다시 조건을 만족하지 않도록 상태를 업데이트해야 함
         this.context.characterState.lastSpokenTimestamp = Date.now();
       }
@@ -372,8 +372,8 @@ const LightPanel: React.FC<LightPanelProps> = ({ onClose }) => {
     -   **`연산자`**: `==`, `!=`, `>`, `<`, `exists` (값이 존재함), `not exists` (값이 존재하지 않음) 등 비교 연산자입니다.
     -   **`비교 값`**: 컨텍스트 키에서 가져온 값을 비교할 대상 값입니다.
 -   **액션 (Then)**: 조건이 충족되었을 때 실행될 행동입니다.
-    -   **`액션 선택`**: `playAnimation`, `speak` 등 `Actions API`에 등록된 모든 행동을 선택할 수 있습니다.
-    -   **`파라미터`**: 선택한 행동에 필요한 인자들을 입력합니다. (예: `speak` 액션의 경우 말할 내용)
+    -   **`액션 선택`**: `playAnimation`, `playTTS` 등 `Actions API`에 등록된 모든 행동을 선택할 수 있습니다.
+    -   **`파라미터`**: 선택한 행동에 필요한 인자들을 입력합니다. (예: `playTTS` 액션의 경우 재생할 내용)
 
 ### 사용 예시: "사랑해" 라고 말하면 하트 날리기
 
@@ -386,8 +386,8 @@ const LightPanel: React.FC<LightPanelProps> = ({ onClose }) => {
     -   **연산자**: `==`
     -   **비교 값**: `사랑해`
 6.  **액션 (Then)**:
-    -   **액션 선택**: `speak`
+    -   **액션 선택**: `playTTS`
     -   **파라미터**: `"저도 사랑해요."` 라고 입력합니다.
 7.  **"저장"** 버튼을 클릭합니다.
 
-이제 사용자가 채팅으로 "사랑해"를 입력하면, `chat:newMessage` 이벤트가 발생하고, 등록된 트리거가 이벤트 데이터의 `text` 필드가 "사랑해"와 일치하는지 검사합니다. 조건이 참이므로 `speak` 액션이 실행되어 캐릭터가 "저도 사랑해요."라고 말하게 됩니다.
+이제 사용자가 채팅으로 "사랑해"를 입력하면, `chat:newMessage` 이벤트가 발생하고, 등록된 트리거가 이벤트 데이터의 `text` 필드가 "사랑해"와 일치하는지 검사합니다. 조건이 참이므로 `playTTS` 액션이 실행되어 캐릭터가 "저도 사랑해요."라고 말하게 됩니다.

@@ -163,15 +163,15 @@ actions.setPose('Stand_01.vrma');
 
 ---
 
-### `speak(text)`
+### `playTTS(text)`
 
-캐릭터가 주어진 텍스트를 말하게 합니다. (TTS 기능 및 자막 표시)
+TTS(Text-to-Speech)를 사용하여 문장을 재생합니다.
 
--   **`text`** (`string`): 캐릭터가 말할 내용.
+-   **`text`** (`string`): 재생할 내용.
 
 **예시:**
 ```typescript
-actions.speak("안녕하세요! 만나서 반가워요.");
+actions.playTTS("안녕하세요! 만나서 반가워요.");
 ```
 
 ---
@@ -199,7 +199,7 @@ actions.lookAt(null);
 
 ### `showMessage(message, duration)`
 
-화면에 채팅 메시지를 표시합니다. `speak`와 달리 음성은 나오지 않습니다.
+화면에 채팅 메시지를 표시합니다. `playTTS`와 달리 음성은 나오지 않습니다.
 
 -   **`message`** (`string`): 표시할 메시지.
 -   **`duration`** (`number`, Optional): 메시지가 표시될 시간(초). (현재 미사용)
@@ -387,7 +387,7 @@ context.registerTrigger({
   condition: () => Date.now() - context.characterState.lastSpokenTimestamp > 30000,
   // Action: 말하고, 마지막으로 말한 시간을 업데이트한다.
   action: () => {
-    context.actions.speak("안녕하세요!");
+    context.actions.playTTS("안녕하세요!");
     context.characterState.lastSpokenTimestamp = Date.now();
   }
 });

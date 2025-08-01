@@ -95,6 +95,6 @@ export class ProactiveDialoguePlugin implements IPlugin {
     this.context.actions.showMessage(phrase);
     
     // Use the context action to play TTS
-    this.context.actions.speak(phrase);
+    this.context.actions.playTTS(phrase);
   }
 }

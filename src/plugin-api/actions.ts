@@ -85,10 +85,10 @@ export interface Actions {
   changeBackground(imagePath: string): void;
 
   /**
-   * TTS를 사용하여 문장을 말합니다.
-   * @param text 말할 내용
+   * TTS를 사용하여 문장을 재생합니다.
+   * @param text 재생할 내용
    */
-  speak(text: string): void;
+  playTTS(text: string): void;
 
   /**
    * VRM 모델의 히트박스 가시성을 설정합니다.

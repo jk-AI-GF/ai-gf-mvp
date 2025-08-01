@@ -169,8 +169,8 @@ export class ModLoader {
             getContext: (key: string): any => {
               return this.contextStore.get(key);
             },
-            speak: (text: string) => {
-              this.sendToRenderer('speak', text);
+            playTTS: (text: string) => {
+              this.sendToRenderer('tts-speak', text);
             },
             setHitboxesVisible: (visible: boolean) => {
               this.sendToRenderer('set-hitboxes-visible', visible);

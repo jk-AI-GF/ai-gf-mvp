@@ -26,7 +26,7 @@
     "value": "morning"
   },
   "action": {
-    "type": "speak",
+    "type": "playTTS",
     "params": ["좋은 아침이에요!"]
   }
 }

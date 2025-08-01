@@ -27,17 +27,38 @@ const availableActions: ActionDefinition[] = [
     ],
   },
   {
-    name: 'speak',
-    description: '캐릭터가 말을 합니다 (TTS).',
-    params: [{ name: 'text', type: 'string', description: '말할 내용' }],
+    name: 'playTTS',
+    description: 'TTS 음성을 재생합니다.',
+    params: [{ 
+      name: 'text', 
+      type: 'string', 
+      description: '재생할 내용',
+      validation: (value: any) => (typeof value === 'string' && value.trim() !== '') || '재생할 내용은 필수입니다.'
+    }],
+  },
+  {
+    name: 'showMessage',
+    description: '화면에 말풍선 메시지를 표시합니다.',
+    params: [
+      { name: 'message', type: 'string', description: '표시할 메시지' },
+      { name: 'duration', type: 'number', defaultValue: 5, description: '표시 시간(초)' },
+    ],
   },
   {
     name: 'setExpression',
-    description: '캐릭터의 표정을 변경합니다.',
+    description: '캐릭터의 표정을 부드럽게 변경합니다.',
     params: [
       { name: 'expressionName', type: 'string', description: '표정 이름' },
       { name: 'weight', type: 'number', defaultValue: 1.0, description: '강도 (0-1)' },
       { name: 'duration', type: 'number', defaultValue: 0.1, description: '변경 시간(초)' },
+    ],
+  },
+  {
+    name: 'setExpressionWeight',
+    description: '캐릭터 표정 가중치를 즉시 설정합니다.',
+    params: [
+      { name: 'expressionName', type: 'string', description: '표정 이름' },
+      { name: 'weight', type: 'number', defaultValue: 1.0, description: '강도 (0-1)' },
     ],
   },
   {
@@ -58,9 +79,29 @@ const availableActions: ActionDefinition[] = [
     ],
   },
   {
+    name: 'changeBackground',
+    description: '배경 이미지를 변경합니다.',
+    params: [{ name: 'imagePath', type: 'string', description: '이미지 파일 경로' }],
+  },
+  {
+    name: 'setHitboxesVisible',
+    description: '히트박스 가시성을 설정합니다.',
+    params: [{ name: 'visible', type: 'boolean', description: '표시 여부' }],
+  },
+  {
     name: 'resetPose',
     description: '캐릭터를 기본 T-Pose로 되돌립니다.',
     params: [],
+  },
+  {
+    name: 'saveCurrentPose',
+    description: '현재 포즈를 파일로 저장합니다.',
+    params: [],
+  },
+  {
+    name: 'loadCharacter',
+    description: '다른 VRM 모델을 불러옵니다.',
+    params: [{ name: 'fileName', type: 'string', description: 'VRM 파일 이름' }],
   },
   {
     name: 'setCameraMode',
@@ -72,6 +113,14 @@ const availableActions: ActionDefinition[] = [
         options: ['orbit', 'fixed'],
         description: '카메라 모드',
       },
+    ],
+  },
+  {
+    name: 'setContext',
+    description: '전역 컨텍스트에 값을 저장합니다.',
+    params: [
+      { name: 'key', type: 'string', description: '저장할 키' },
+      { name: 'value', type: 'string', description: '저장할 값 (문자열, 숫자, boolean만 가능)' },
     ],
   },
 ];
@@ -119,7 +168,7 @@ export function createPluginContext(
       document.body.style.backgroundPosition = 'center';
       renderer.setClearAlpha(0);
     },
-    speak: (text: string) => {
+    playTTS: (text: string) => {
       playTTS(text);
     },
     setHitboxesVisible: (visible: boolean) => {
