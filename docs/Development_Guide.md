@@ -174,6 +174,88 @@ export default App;
 
 이제 애플리케이션을 실행하면 화면에 "Jump!" 버튼이 나타나고, 버튼을 클릭하면 캐릭터가 점프 애니메이션을 재생할 것입니다.
 
+### 4.1. 새로운 액션(Action) 추가 가이드
+
+`Actions` API에 새로운 기능을 추가하는 것은 플러그인과 모드의 능력을 확장하는 가장 직접적인 방법입니다. 현재 아키텍처에서 새로운 액션을 추가하는 절차는 다음과 같습니다.
+
+**예시: 캐릭터의 투명도를 조절하는 `setOpacity(opacity)` 액션 추가하기**
+
+#### 1단계: `actions.ts` - 인터페이스 정의
+
+`src/plugin-api/actions.ts` 파일의 `Actions` 인터페이스에 새로운 액션의 타입 시그니처를 추가합니다.
+
+```typescript
+// src/plugin-api/actions.ts
+export interface Actions {
+  // ... 기존 액션들
+  setOpacity(opacity: number): void;
+}
+```
+
+#### 2단계: `context-factory.ts` - 구현 및 메타데이터 추가
+
+`src/plugin-api/context-factory.ts` 파일에서 두 가지 작업을 수행해야 합니다.
+
+1.  **실제 구현**: `actions` 객체 내부에 `setOpacity` 함수의 실제 로직을 작성합니다. 이 로직은 `vrmManager` 등 렌더러의 핵심 객체에 접근하여 실제 동작을 수행합니다.
+2.  **메타데이터 정의**: `availableActions` 배열에 `setOpacity` 액션의 정보를 수동으로 추가합니다. 이 정보는 `TriggerEditorPanel`에서 UI를 동적으로 생성하는 데 사용됩니다.
+
+```typescript
+// src/plugin-api/context-factory.ts
+
+// 1. 메타데이터 배열에 액션 정보 추가
+const availableActions: ActionDefinition[] = [
+  // ... 기존 액션 정의들
+  {
+    name: 'setOpacity',
+    description: '캐릭터의 투명도를 조절합니다.',
+    params: [
+      { name: 'opacity', type: 'number', description: '투명도 (0.0 ~ 1.0)', defaultValue: 1.0 }
+    ]
+  }
+];
+
+// ...
+
+// 2. actions 객체에 실제 구현 추가
+const actions: Actions = {
+  // ... 기존 액션 구현들
+  setOpacity: (opacity: number) => {
+    if (vrmManager.currentVrm) {
+      vrmManager.currentVrm.scene.traverse((obj) => {
+        if (obj.isMesh) {
+          // ... (투명도 설정 로직)
+        }
+      });
+    }
+  },
+  // ...
+};
+```
+
+#### 3단계: `mod-loader.ts` - IPC 프록시 추가
+
+메인 프로세스에서 실행되는 모드(User Mod)가 이 액션을 호출할 수 있도록, `src/core/mod-loader.ts`에 IPC 통신을 위한 프록시 함수를 추가해야 합니다.
+
+```typescript
+// src/core/mod-loader.ts
+const pluginContext: PluginContext = {
+  // ...
+  actions: {
+    // ... 기존 프록시 함수들
+    setOpacity: (opacity: number) => {
+      this.sendToRenderer('set-opacity', opacity); // 'set-opacity' 채널로 데이터 전송
+    },
+  },
+  // ...
+};
+```
+
+#### 아키텍처의 한계와 미래
+
+이처럼 현재는 액션 하나를 추가하기 위해 여러 파일을 수정해야 하는 번거로움이 있습니다. 이는 코드 중복과 실수 유발 가능성을 높이는 기술 부채로 작용할 수 있습니다.
+
+향후에는 `ActionRegistry`와 같은 중앙 관리 시스템을 도입하여, 액션의 **정의, 구현, 메타데이터를 한 곳에서 등록**하면 시스템의 다른 모든 부분(API 인터페이스, UI, IPC 프록시)이 자동으로 업데이트되는 구조로 개선하는 것을 목표로 합니다. 이 리팩토링이 완료되면 개발 생산성과 안정성이 크게 향상될 것입니다.
+
 ## 5. 고급: Trigger 시스템 활용하기
 
 Trigger 시스템은 **"어떤 조건이 충족되었을 때, 특정 행동을 실행"**하는 로직을 만들 때 사용되는 강력한 아키텍처입니다. 이는 프로젝트의 핵심 목표인 **모딩(Modding) 생태계**를 구축하는 데 매우 중요한 역할을 합니다.

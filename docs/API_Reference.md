@@ -224,6 +224,20 @@ actions.changeBackground('MyMod/assets/background.png');
 
 ---
 
+### `setHitboxesVisible(visible)`
+
+VRM 모델의 히트박스 가시성을 설정합니다. 디버깅이나 특정 상호작용 개발에 유용합니다.
+
+-   **`visible`** (`boolean`): 히트박스를 표시할지 여부.
+
+**예시:**
+```typescript
+// 히트박스 보이기
+actions.setHitboxesVisible(true);
+```
+
+---
+
 ### `resetPose()`
 
 캐릭터의 포즈를 기본 T-Pose로 초기화합니다.
@@ -252,36 +266,38 @@ actions.changeBackground('MyMod/assets/background.png');
 
 ---
 
-## 3. ContextStore API (`context.get`, `context.set`)
+### `setContext(key, value)`
 
-`ContextStore`는 메인 프로세스와 렌더러 프로세스 간에 공유되는 키-값(Key-Value) 저장소입니다. 모드 간의 데이터 공유나 상태 저장을 위해 사용됩니다. `PluginContext`의 최상위 메서드를 통해 직접 접근할 수 있습니다.
+모든 플러그인과 모드가 공유하는 전역 키-값(Key-Value) 저장소에 데이터를 저장합니다. 이 데이터는 애플리케이션이 실행되는 동안 유지됩니다.
 
-### `set(key, value)`
-- **설명**: 공유 컨텍스트 저장소에 값을 저장합니다.
-- **`key`** (`string`): 데이터를 저장할 키.
-- **`value`** (`any`): 저장할 값.
-
-### `get(key)`
-- **설명**: 공유 컨텍스트 저장소에서 값을 가져옵니다.
-- **`key`** (`string`): 가져올 값의 키.
-- **반환값**: `Promise<any>`
-
-### `getAll()`
-- **설명**: 공유 컨텍스트 저장소의 모든 키-값 쌍을 가져옵니다.
-- **반환값**: `Promise<Record<string, any>>`
+-   **`key`** (`string`): 데이터를 저장할 고유한 키.
+-   **`value`** (`string` | `number` | `boolean`): 저장할 값. 복잡한 객체 대신 간단한 타입을 사용하는 것을 권장합니다.
 
 **예시:**
 ```typescript
-// 플레이어의 점수를 저장
-context.set('playerScore', 100);
-
-// 저장된 점수를 읽어옴
-const score = await context.get('playerScore');
+// 현재 게임의 난이도를 'easy'로 설정
+actions.setContext('gameDifficulty', 'easy');
 ```
 
 ---
 
-## 4. 경로 API (`window.electronAPI`)
+### `getContext(key)`
+
+전역 키-값 저장소에서 데이터를 가져옵니다. 이 함수는 비동기로 작동하며 `Promise`를 반환합니다.
+
+-   **`key`** (`string`): 가져올 데이터의 키.
+-   **반환값**: `Promise<any>` - 키에 해당하는 값.
+
+**예시:**
+```typescript
+// 현재 게임 난이도를 가져와서 출력
+const difficulty = await actions.getContext('gameDifficulty');
+console.log(difficulty); // 'easy'
+```
+
+---
+
+## 3. 경로 API (`window.electronAPI`)
 
 렌더러 프로세스에서 `assets` 또는 `userdata` 폴더의 절대 경로를 안전하게 얻기 위한 API입니다. 파일 목록을 가져오거나 특정 파일의 경로를 해석하는 데 사용됩니다.
 
