@@ -14,6 +14,7 @@ export interface ActionParam {
   defaultValue?: any;
   options?: string[]; // for 'enum' type
   description?: string;
+  validation?: (value: any) => boolean | string;
 }
 
 /**

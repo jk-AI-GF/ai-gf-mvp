@@ -4,8 +4,11 @@ interface CssExports {
   'actionParams': string;
   'addButton': string;
   'content': string;
+  'contextHint': string;
   'form': string;
   'formButtons': string;
+  'paramControl': string;
+  'paramError': string;
   'triggerItem': string;
 }
 export const cssExports: CssExports;

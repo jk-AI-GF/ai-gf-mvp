@@ -117,10 +117,18 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     // Pass managers up to the provider
     onLoad({ vrmManager, pluginManager, chatService, customTriggerManager });
 
-    // Send available actions to the main process
+    // Send available actions to the main process after sanitizing them for IPC
     pluginContext.actions.getAvailableActions().then(actions => {
-      console.log('[Renderer] Sending available actions to main process:', actions);
-      window.electronAPI.send('available-actions-update', actions);
+      // Sanitize actions for IPC by removing non-serializable parts (functions)
+      const sanitizedActions = actions.map(action => ({
+        ...action,
+        params: action.params.map(param => {
+          const { validation, ...rest } = param; // Destructure to remove 'validation'
+          return rest;
+        })
+      }));
+      console.log('[Renderer] Sending sanitized available actions to main process:', sanitizedActions);
+      window.electronAPI.send('available-actions-update', sanitizedActions);
     });
 
     const setOutlineMode = (mode: typeof MToonMaterialOutlineWidthMode.WorldCoordinates | typeof MToonMaterialOutlineWidthMode.ScreenCoordinates) => {
@@ -155,6 +163,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
         requestAnimationFrame(animate);
         const delta = clock.getDelta();
         vrmManager.update(delta);
+        triggerEngine.evaluateTriggers();
 
         if (vrmManager.currentVrm) {
             // The plugin manager now internally handles the edit mode state

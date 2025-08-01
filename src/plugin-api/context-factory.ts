@@ -16,7 +16,12 @@ const availableActions: ActionDefinition[] = [
     name: 'playAnimation',
     description: '캐릭터 애니메이션을 재생합니다.',
     params: [
-      { name: 'animationName', type: 'string', description: '애니메이션 파일 이름' },
+      { 
+        name: 'animationName', 
+        type: 'string', 
+        description: '애니메이션 파일 이름',
+        validation: (value: any) => (typeof value === 'string' && value.trim() !== '') || '애니메이션 이름은 필수입니다.'
+      },
       { name: 'loop', type: 'boolean', defaultValue: false, description: '반복 여부' },
       { name: 'crossFadeDuration', type: 'number', defaultValue: 0.5, description: '페이드 시간(초)' },
     ],

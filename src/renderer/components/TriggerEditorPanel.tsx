@@ -3,7 +3,7 @@ import Panel from './Panel';
 import styles from './TriggerEditorPanel.module.css';
 import { useAppContext } from '../contexts/AppContext';
 import { ActionDefinition, ActionParam } from '../../plugin-api/actions';
-import { KNOWN_EVENTS } from '../../core/known-events';
+import { EVENT_DEFINITIONS } from '../../core/event-definitions';
 import { CustomTrigger } from '../../core/custom-trigger-manager';
 
 interface TriggerEditorPanelProps {
@@ -33,8 +33,15 @@ const TriggerEditorPanel: React.FC<TriggerEditorPanelProps> = ({
   const [availableActions, setAvailableActions] = useState<ActionDefinition[]>([]);
   const [selectedAction, setSelectedAction] = useState<ActionDefinition | null>(null);
   const [actionParams, setActionParams] = useState<Record<string, any>>({});
+  const [paramErrors, setParamErrors] = useState<Record<string, string>>({});
 
-  const availableEvents = KNOWN_EVENTS;
+  const availableEvents = EVENT_DEFINITIONS;
+
+  const availableContextKeys = useMemo(() => {
+    if (triggerType !== 'event') return [];
+    const selectedEventDef = availableEvents.find(e => e.name === eventName);
+    return selectedEventDef ? selectedEventDef.keys : [];
+  }, [triggerType, eventName, availableEvents]);
 
   useEffect(() => {
     const fetchActions = async () => {
@@ -76,20 +83,33 @@ const TriggerEditorPanel: React.FC<TriggerEditorPanelProps> = ({
   const handleActionChange = (actionName: string) => {
     const newAction = availableActions.find(a => a.name === actionName) || null;
     setSelectedAction(newAction);
-    // Reset params when action changes
+    
+    // Reset params and errors when action changes
     const defaultParams: Record<string, any> = {};
     newAction?.params.forEach(p => {
       defaultParams[p.name] = p.defaultValue;
     });
     setActionParams(defaultParams);
+    setParamErrors({}); // Clear previous errors
   };
 
   const handleParamChange = (paramName: string, value: any) => {
+    // Update param value
     setActionParams(prev => ({ ...prev, [paramName]: value }));
+
+    // Validate param value
+    const paramDef = selectedAction?.params.find(p => p.name === paramName);
+    if (paramDef?.validation) {
+      const validationResult = paramDef.validation(value);
+      setParamErrors(prev => ({
+        ...prev,
+        [paramName]: typeof validationResult === 'string' ? validationResult : '',
+      }));
+    }
   };
 
   const handleSave = () => {
-    if (!selectedAction) return;
+    if (!selectedAction || Object.values(paramErrors).some(e => e)) return;
 
     // Convert params object to array in the correct order before saving
     const paramsArray = selectedAction.params.map(p => actionParams[p.name]);
@@ -137,26 +157,38 @@ const TriggerEditorPanel: React.FC<TriggerEditorPanelProps> = ({
 
     return selectedAction.params.map((param: ActionParam) => {
       const value = actionParams[param.name] ?? param.defaultValue;
-      switch (param.type) {
-        case 'string':
-          return <input key={param.name} type="text" placeholder={param.description} value={value || ''} onChange={e => handleParamChange(param.name, e.target.value)} />;
-        case 'number':
-          return <input key={param.name} type="number" placeholder={param.description} value={value || 0} onChange={e => handleParamChange(param.name, parseFloat(e.target.value))} />;
-        case 'boolean':
-          return <label key={param.name}><input type="checkbox" checked={!!value} onChange={e => handleParamChange(param.name, e.target.checked)} /> {param.description}</label>;
-        case 'enum':
-          return (
-            <select key={param.name} value={value} onChange={e => handleParamChange(param.name, e.target.value)}>
-              {param.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-            </select>
-          );
-        default:
-          return null;
-      }
+      const error = paramErrors[param.name];
+
+      const renderInput = () => {
+        switch (param.type) {
+          case 'string':
+            return <input key={param.name} type="text" placeholder={param.description} value={value || ''} onChange={e => handleParamChange(param.name, e.target.value)} />;
+          case 'number':
+            return <input key={param.name} type="number" placeholder={param.description} value={value || 0} onChange={e => handleParamChange(param.name, parseFloat(e.target.value))} />;
+          case 'boolean':
+            return <label key={param.name}><input type="checkbox" checked={!!value} onChange={e => handleParamChange(param.name, e.target.checked)} /> {param.description}</label>;
+          case 'enum':
+            return (
+              <select key={param.name} value={value} onChange={e => handleParamChange(param.name, e.target.value)}>
+                {param.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              </select>
+            );
+          default:
+            return null;
+        }
+      };
+
+      return (
+        <div key={param.name} className={styles.paramControl}>
+          {renderInput()}
+          {error && <span className={styles.paramError}>{error}</span>}
+        </div>
+      );
     });
   };
 
   const panelTitle = triggerToEdit ? "트리거 편집" : "새 트리거 생성";
+  const isSaveDisabled = !name || !selectedAction || Object.values(paramErrors).some(e => e);
 
   return (
     <Panel title={panelTitle} onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
@@ -166,7 +198,7 @@ const TriggerEditorPanel: React.FC<TriggerEditorPanelProps> = ({
         <h4>실행 시점 (WHEN)</h4>
         <select value={triggerType} onChange={e => setTriggerType(e.target.value as any)}>
           <option value="event">특정 이벤트 발생 시</option>
-          <option value="polling" disabled>상태 변경 시 (미구현)</option>
+          <option value="polling">상태 변경 시 (주기적 확인)</option>
         </select>
         {triggerType === 'event' && (
           <select value={eventName} onChange={e => setEventName(e.target.value)}>
@@ -175,6 +207,11 @@ const TriggerEditorPanel: React.FC<TriggerEditorPanelProps> = ({
         )}
 
         <h4>조건 (IF)</h4>
+        {availableContextKeys.length > 0 && (
+          <div className={styles.contextHint}>
+            사용 가능 키: {availableContextKeys.join(', ')}
+          </div>
+        )}
         <input type="text" placeholder="키 (예: event.text)" value={conditionKey} onChange={e => setConditionKey(e.target.value)} />
         <select value={conditionOp} onChange={e => setConditionOp(e.target.value as any)}>
           <option value="==">==</option>
@@ -195,7 +232,7 @@ const TriggerEditorPanel: React.FC<TriggerEditorPanelProps> = ({
         </div>
 
         <div className={styles.formButtons}>
-          <button onClick={handleSave} disabled={!name || !selectedAction}>저장</button>
+          <button onClick={handleSave} disabled={isSaveDisabled}>저장</button>
           <button onClick={onClose}>취소</button>
         </div>
       </div>

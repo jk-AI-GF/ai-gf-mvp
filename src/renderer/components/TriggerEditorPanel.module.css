@@ -80,3 +80,23 @@
   border-radius: 4px;
   cursor: pointer;
 }
+
+.contextHint {
+  font-size: 0.8em;
+  color: #666;
+  background-color: #f9f9f9;
+  padding: 5px;
+  border-radius: 3px;
+  border: 1px solid #eee;
+}
+
+.paramControl {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.paramError {
+  color: #d9534f; /* Bootstrap's danger color */
+  font-size: 0.85em;
+}
