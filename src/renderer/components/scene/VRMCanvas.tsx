@@ -117,6 +117,12 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     // Pass managers up to the provider
     onLoad({ vrmManager, pluginManager, chatService, customTriggerManager });
 
+    // Send available actions to the main process
+    pluginContext.actions.getAvailableActions().then(actions => {
+      console.log('[Renderer] Sending available actions to main process:', actions);
+      window.electronAPI.send('available-actions-update', actions);
+    });
+
     const setOutlineMode = (mode: typeof MToonMaterialOutlineWidthMode.WorldCoordinates | typeof MToonMaterialOutlineWidthMode.ScreenCoordinates) => {
         if (vrmManager.currentVrm) {
             vrmManager.currentVrm.scene.traverse((object) => {
@@ -251,7 +257,6 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
             vrmManager.currentVrm.expressionManager.setValue(expressionName, weight);
         }
     });
-    eventBus.on('ui:editModeToggled', handleEditModeChange);
     eventBus.on('camera:requestState', requestCameraState);
     eventBus.on('camera:setMode', ({ mode }) => handleSetCameraMode(mode));
 

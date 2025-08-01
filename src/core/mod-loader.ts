@@ -9,6 +9,7 @@ import { TriggerEngine } from './trigger-engine';
 import { Trigger } from '../plugin-api/triggers';
 import { ContextStore } from './context-store';
 import { ModSettingsManager } from './mod-settings-manager';
+import { ActionDefinition } from '../plugin-api/actions';
 
 // 모드 메타데이터 인터페이스
 interface ModManifest {
@@ -31,6 +32,7 @@ export class ModLoader {
   private modSettingsManager: ModSettingsManager;
   private sendToRenderer: (channel: string, ...args: any[]) => void;
   private ipcMain: IpcMain;
+  private getAvailableActions: () => ActionDefinition[];
 
   constructor(
     userDataPath: string, 
@@ -41,7 +43,8 @@ export class ModLoader {
     contextStore: ContextStore, 
     modSettingsManager: ModSettingsManager,
     sendToRenderer: (channel: string, ...args: any[]) => void,
-    ipcMain: IpcMain
+    ipcMain: IpcMain,
+    getAvailableActions: () => ActionDefinition[]
   ) {
     // 개발 환경에서는 프로젝트 루트의 userdata/mods를 사용하고,
     // 배포 환경에서는 Electron의 userData 경로를 사용합니다.
@@ -54,6 +57,7 @@ export class ModLoader {
     this.modSettingsManager = modSettingsManager;
     this.sendToRenderer = sendToRenderer;
     this.ipcMain = ipcMain;
+    this.getAvailableActions = getAvailableActions;
     console.log(`[ModLoader] Initialized. Mods directory: ${this.modsDir}`);
   }
 
@@ -117,6 +121,10 @@ export class ModLoader {
           set: (key: string, value: any) => this.contextStore.set(key, value),
           getAll: () => this.contextStore.getAll(),
           actions: {
+            getAvailableActions: (): Promise<ActionDefinition[]> => {
+              // Return the cached actions from the main process
+              return Promise.resolve(this.getAvailableActions());
+            },
             playAnimation: (animationName: string, loop?: boolean, crossFadeDuration?: number) => {
               this.sendToRenderer('play-animation', animationName, loop, crossFadeDuration);
             },

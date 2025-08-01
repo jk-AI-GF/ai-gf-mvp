@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Panel from './Panel';
 import styles from './TriggerEditorPanel.module.css';
 import { useAppContext } from '../contexts/AppContext';
-import { Actions } from '../../plugin-api/actions';
+import { ActionDefinition, ActionParam } from '../../plugin-api/actions';
 import { KNOWN_EVENTS } from '../../core/known-events';
 import { CustomTrigger } from '../../core/custom-trigger-manager';
 
@@ -24,16 +24,30 @@ const TriggerEditorPanel: React.FC<TriggerEditorPanelProps> = ({
   const { pluginManager } = useAppContext();
   
   const [name, setName] = useState('');
-  const [triggerType, setTriggerType] = useState<'polling' | 'event'>('polling');
+  const [triggerType, setTriggerType] = useState<'polling' | 'event'>('event');
   const [eventName, setEventName] = useState('chat:newMessage');
   const [conditionKey, setConditionKey] = useState('');
   const [conditionOp, setConditionOp] = useState<'==' | '!=' | '>' | '<' | 'exists' | 'not exists'>('==');
   const [conditionValue, setConditionValue] = useState<string | number | boolean>('');
-  const [actionType, setActionType] = useState<keyof Actions>('speak');
-  const [actionParams, setActionParams] = useState<any[]>([]);
+  
+  const [availableActions, setAvailableActions] = useState<ActionDefinition[]>([]);
+  const [selectedAction, setSelectedAction] = useState<ActionDefinition | null>(null);
+  const [actionParams, setActionParams] = useState<Record<string, any>>({});
 
-  const availableActions = pluginManager ? Object.keys(pluginManager.context.actions) as (keyof Actions)[] : [];
   const availableEvents = KNOWN_EVENTS;
+
+  useEffect(() => {
+    const fetchActions = async () => {
+      if (pluginManager) {
+        const actions = await pluginManager.context.actions.getAvailableActions();
+        setAvailableActions(actions);
+        if (!triggerToEdit) {
+          setSelectedAction(actions[0] || null);
+        }
+      }
+    };
+    fetchActions();
+  }, [pluginManager, triggerToEdit]);
 
   useEffect(() => {
     if (triggerToEdit) {
@@ -43,14 +57,43 @@ const TriggerEditorPanel: React.FC<TriggerEditorPanelProps> = ({
       setConditionKey(triggerToEdit.condition.key);
       setConditionOp(triggerToEdit.condition.operator);
       setConditionValue(triggerToEdit.condition.value);
-      setActionType(triggerToEdit.action.type);
-      setActionParams(triggerToEdit.action.params);
+      
+      const actionDef = availableActions.find(a => a.name === triggerToEdit.action.type);
+      setSelectedAction(actionDef || null);
+      
+      // Convert params array back to object for editing
+      const paramsObject: Record<string, any> = {};
+      actionDef?.params.forEach((param, index) => {
+        paramsObject[param.name] = triggerToEdit.action.params[index];
+      });
+      setActionParams(paramsObject);
+
     } else {
       resetForm();
     }
-  }, [triggerToEdit]);
+  }, [triggerToEdit, availableActions]);
+
+  const handleActionChange = (actionName: string) => {
+    const newAction = availableActions.find(a => a.name === actionName) || null;
+    setSelectedAction(newAction);
+    // Reset params when action changes
+    const defaultParams: Record<string, any> = {};
+    newAction?.params.forEach(p => {
+      defaultParams[p.name] = p.defaultValue;
+    });
+    setActionParams(defaultParams);
+  };
+
+  const handleParamChange = (paramName: string, value: any) => {
+    setActionParams(prev => ({ ...prev, [paramName]: value }));
+  };
 
   const handleSave = () => {
+    if (!selectedAction) return;
+
+    // Convert params object to array in the correct order before saving
+    const paramsArray = selectedAction.params.map(p => actionParams[p.name]);
+
     const newTrigger: CustomTrigger = {
       id: triggerToEdit ? triggerToEdit.id : Date.now().toString(),
       name,
@@ -63,46 +106,54 @@ const TriggerEditorPanel: React.FC<TriggerEditorPanelProps> = ({
         value: conditionValue,
       },
       action: {
-        type: actionType,
-        params: actionParams,
+        type: selectedAction.name,
+        params: paramsArray,
       },
     };
     onSave(newTrigger);
-    onClose(); // Close panel after saving
+    onClose();
   };
   
   const resetForm = () => {
     setName('');
-    setTriggerType('polling');
+    setTriggerType('event');
     setEventName('chat:newMessage');
     setConditionKey('');
     setConditionOp('==');
     setConditionValue('');
-    setActionType('speak');
-    setActionParams([]);
+    if (availableActions.length > 0) {
+      setSelectedAction(availableActions[0]);
+      const defaultParams: Record<string, any> = {};
+      availableActions[0].params.forEach(p => {
+        defaultParams[p.name] = p.defaultValue;
+      });
+      setActionParams(defaultParams);
+    }
   }
 
   const renderActionParams = () => {
-    switch (actionType) {
-      case 'speak':
-        return <input type="text" placeholder="Message" value={actionParams[0] || ''} onChange={e => setActionParams([e.target.value])} />;
-      case 'playAnimation':
-        return (
-          <>
-            <input type="text" placeholder="Animation Name" value={actionParams[0] || ''} onChange={e => setActionParams([e.target.value, actionParams[1]])} />
-            <label><input type="checkbox" checked={actionParams[1] || false} onChange={e => setActionParams([actionParams[0], e.target.checked])} /> Loop</label>
-          </>
-        );
-      case 'setExpression':
-         return (
-          <>
-            <input type="text" placeholder="Expression Name" value={actionParams[0] || ''} onChange={e => setActionParams([e.target.value, actionParams[1]])} />
-            <input type="number" step="0.1" min="0" max="1" placeholder="Weight" value={actionParams[1] || 1.0} onChange={e => setActionParams([actionParams[0], parseFloat(e.target.value)])} />
-          </>
-        );
-      default:
-        return <p>This action requires no parameters or is not yet configured in the UI.</p>;
-    }
+    if (!selectedAction) return <p>Select an action.</p>;
+    if (selectedAction.params.length === 0) return <p>This action takes no parameters.</p>;
+
+    return selectedAction.params.map((param: ActionParam) => {
+      const value = actionParams[param.name] ?? param.defaultValue;
+      switch (param.type) {
+        case 'string':
+          return <input key={param.name} type="text" placeholder={param.description} value={value || ''} onChange={e => handleParamChange(param.name, e.target.value)} />;
+        case 'number':
+          return <input key={param.name} type="number" placeholder={param.description} value={value || 0} onChange={e => handleParamChange(param.name, parseFloat(e.target.value))} />;
+        case 'boolean':
+          return <label key={param.name}><input type="checkbox" checked={!!value} onChange={e => handleParamChange(param.name, e.target.checked)} /> {param.description}</label>;
+        case 'enum':
+          return (
+            <select key={param.name} value={value} onChange={e => handleParamChange(param.name, e.target.value)}>
+              {param.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+            </select>
+          );
+        default:
+          return null;
+      }
+    });
   };
 
   const panelTitle = triggerToEdit ? "트리거 편집" : "새 트리거 생성";
@@ -114,8 +165,8 @@ const TriggerEditorPanel: React.FC<TriggerEditorPanelProps> = ({
         
         <h4>실행 시점 (WHEN)</h4>
         <select value={triggerType} onChange={e => setTriggerType(e.target.value as any)}>
-          <option value="polling">상태 변경 시 (주기적 확인)</option>
           <option value="event">특정 이벤트 발생 시</option>
+          <option value="polling" disabled>상태 변경 시 (미구현)</option>
         </select>
         {triggerType === 'event' && (
           <select value={eventName} onChange={e => setEventName(e.target.value)}>
@@ -136,15 +187,15 @@ const TriggerEditorPanel: React.FC<TriggerEditorPanelProps> = ({
         <input type="text" placeholder="비교 값" value={String(conditionValue)} onChange={e => setConditionValue(e.target.value)} />
 
         <h4>액션 (THEN)</h4>
-        <select value={actionType} onChange={e => { setActionType(e.target.value as any); setActionParams([]); }}>
-          {availableActions.map(name => <option key={name} value={name}>{name}</option>)}
+        <select value={selectedAction?.name || ''} onChange={e => handleActionChange(e.target.value)}>
+          {availableActions.map(action => <option key={action.name} value={action.name}>{action.name} ({action.description})</option>)}
         </select>
         <div className={styles.actionParams}>
           {renderActionParams()}
         </div>
 
         <div className={styles.formButtons}>
-          <button onClick={handleSave}>저장</button>
+          <button onClick={handleSave} disabled={!name || !selectedAction}>저장</button>
           <button onClick={onClose}>취소</button>
         </div>
       </div>

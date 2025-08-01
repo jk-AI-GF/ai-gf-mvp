@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { VRMManager } from '../renderer/vrm-manager';
-import { Actions } from './actions';
+import { Actions, ActionDefinition } from './actions';
 import { SystemControls } from './system-controls';
 import { PluginContext } from './plugin-context';
 import eventBus from '../core/event-bus';
@@ -11,6 +11,66 @@ import { playTTS } from '../renderer/audio-service';
 // This factory creates the context object that plugins will use to interact with the system.
 // It encapsulates the direct dependencies on managers and services.
 
+const availableActions: ActionDefinition[] = [
+  {
+    name: 'playAnimation',
+    description: '캐릭터 애니메이션을 재생합니다.',
+    params: [
+      { name: 'animationName', type: 'string', description: '애니메이션 파일 이름' },
+      { name: 'loop', type: 'boolean', defaultValue: false, description: '반복 여부' },
+      { name: 'crossFadeDuration', type: 'number', defaultValue: 0.5, description: '페이드 시간(초)' },
+    ],
+  },
+  {
+    name: 'speak',
+    description: '캐릭터가 말을 합니다 (TTS).',
+    params: [{ name: 'text', type: 'string', description: '말할 내용' }],
+  },
+  {
+    name: 'setExpression',
+    description: '캐릭터의 표정을 변경합니다.',
+    params: [
+      { name: 'expressionName', type: 'string', description: '표정 이름' },
+      { name: 'weight', type: 'number', defaultValue: 1.0, description: '강도 (0-1)' },
+      { name: 'duration', type: 'number', defaultValue: 0.1, description: '변경 시간(초)' },
+    ],
+  },
+  {
+    name: 'setPose',
+    description: '캐릭터의 포즈를 설정합니다.',
+    params: [{ name: 'poseName', type: 'string', description: '포즈 파일 이름' }],
+  },
+  {
+    name: 'lookAt',
+    description: '캐릭터의 시선을 고정합니다.',
+    params: [
+      {
+        name: 'target',
+        type: 'enum',
+        options: ['camera', 'mouse', 'null'],
+        description: '바라볼 대상',
+      },
+    ],
+  },
+  {
+    name: 'resetPose',
+    description: '캐릭터를 기본 T-Pose로 되돌립니다.',
+    params: [],
+  },
+  {
+    name: 'setCameraMode',
+    description: '카메라 모드를 변경합니다.',
+    params: [
+      {
+        name: 'mode',
+        type: 'enum',
+        options: ['orbit', 'fixed'],
+        description: '카메라 모드',
+      },
+    ],
+  },
+];
+
 export function createPluginContext(
   vrmManager: VRMManager,
   triggerEngine: TriggerEngine,
@@ -19,6 +79,7 @@ export function createPluginContext(
 ): PluginContext {
 
   const actions: Actions = {
+    getAvailableActions: () => Promise.resolve(availableActions),
     playAnimation: async (animationName: string, loop?: boolean, crossFadeDuration?: number) => {
       await vrmManager.loadAndPlayAnimation(animationName, loop, crossFadeDuration);
     },

@@ -62,6 +62,47 @@ export interface IPlugin {
 
 ---
 
+### `getAvailableActions()`
+
+현재 시스템에서 사용 가능한 모든 액션의 목록과 정의를 반환합니다. 이 API는 트리거 에디터와 같이 사용자가 선택할 수 있는 액션 목록을 동적으로 생성하는 데 사용됩니다.
+
+-   **반환값**: `Promise<ActionDefinition[]>`
+
+#### `ActionDefinition` 인터페이스
+
+각 액션의 구조를 정의합니다.
+
+```typescript
+interface ActionDefinition {
+  name: string; // 액션의 고유 이름 (예: "playAnimation")
+  description: string; // 액션에 대한 설명
+  params: ActionParam[]; // 액션이 필요로 하는 파라미터 목록
+}
+```
+
+#### `ActionParam` 인터페이스
+
+액션이 받는 각 파라미터의 타입과 속성을 정의합니다. 이 정보를 사용하여 UI에서 적절한 입력 필드(텍스트 박스, 체크박스, 드롭다운 등)를 동적으로 생성할 수 있습니다.
+
+```typescript
+interface ActionParam {
+  name: string; // 파라미터 이름 (예: "animationName")
+  type: 'string' | 'number' | 'boolean' | 'enum'; // 파라미터 타입
+  description: string; // 파라미터에 대한 설명
+  defaultValue?: any; // 기본값
+  options?: string[]; // type이 'enum'일 경우, 선택 가능한 옵션 목록
+}
+```
+
+**예시:**
+`TriggerEditorPanel.tsx`는 이 API를 호출하여 다음과 같이 동적으로 UI를 구성합니다.
+1. `getAvailableActions()`를 호출하여 모든 `ActionDefinition`을 가져옵니다.
+2. 액션의 `name`과 `description`을 사용하여 드롭다운 목록을 채웁니다.
+3. 사용자가 특정 액션을 선택하면, 해당 액션의 `params` 배열을 순회합니다.
+4. 각 `ActionParam`의 `type`에 따라 텍스트 입력, 숫자 입력, 체크박스, 선택 목록 등의 UI 컴포넌트를 동적으로 렌더링합니다.
+
+---
+
 ### `playAnimation(animationName, loop, crossFadeDuration)`
 
 캐릭터에게 특정 애니메이션을 재생하도록 지시합니다. 이 함수는 `userdata/animations` 폴더와 `assets/Animation` 폴더에서 순서대로 파일을 검색합니다.

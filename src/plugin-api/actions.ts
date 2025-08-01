@@ -1,10 +1,40 @@
 
 
 /**
+ * 액션 파라미터의 타입을 정의합니다.
+ */
+export type ActionParamType = 'string' | 'number' | 'boolean' | 'enum';
+
+/**
+ * 액션 파라미터의 상세 정의입니다.
+ */
+export interface ActionParam {
+  name: string;
+  type: ActionParamType;
+  defaultValue?: any;
+  options?: string[]; // for 'enum' type
+  description?: string;
+}
+
+/**
+ * 단일 액션의 정의입니다. UI에서 이 정보를 사용하여 동적으로 폼을 생성합니다.
+ */
+export interface ActionDefinition {
+  name: keyof Actions;
+  description: string;
+  params: ActionParam[];
+}
+
+/**
  * 모드가 게임에 영향을 줄 수 있는 함수 호출을 정의하는 인터페이스입니다.
  * 이 인터페이스의 구현체는 PluginContext를 통해 모드에 노출됩니다.
  */
 export interface Actions {
+  /**
+   * TriggerEditorPanel 등에서 사용할 수 있는 모든 액션의 목록과 명세를 반환합니다.
+   */
+  getAvailableActions(): Promise<ActionDefinition[]>;
+
   /**
    * VRM 모델의 특정 애니메이션을 재생합니다.
    * @param animationName 재생할 애니메이션의 이름 (예: 'idle', 'wave')

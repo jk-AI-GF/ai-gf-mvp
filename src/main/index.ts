@@ -11,6 +11,7 @@ import { ModSettingsManager } from '../core/mod-settings-manager';
 import { LlmSettings, DEFAULT_LLM_SETTINGS } from '../core/llm-settings';
 import { getAssetsPath, getUserDataPath, resolveAssetsPath, resolveUserDataPath } from './path-utils';
 import { CustomTrigger } from '../core/custom-trigger-manager';
+import { ActionDefinition } from '../plugin-api/actions';
 
 // Define the schema for electron-store
 interface StoreSchema {
@@ -50,6 +51,7 @@ let tray: Tray | null = null;
 let overlayWindow: BrowserWindow | null = null;
 let mainWindow: BrowserWindow | null = null;
 let isIgnoringMouseEvents = false;
+let availableActionsCache: ActionDefinition[] = [];
 
 // --- Path and Resource IPC Handlers ---
 ipcMain.handle('get-path', async (event, pathName: 'assets' | 'userData') => {
@@ -374,6 +376,11 @@ app.on('ready', async () => {
 
   ipcMain.on('toggle-mouse-ignore', toggleMouseIgnore);
 
+  ipcMain.on('available-actions-update', (event, actions: ActionDefinition[]) => {
+    console.log('[Main] Received available actions update from renderer.');
+    availableActionsCache = actions;
+  });
+
   mainWindow.on('blur', () => {
     if (mainWindow && !mainWindow.isDestroyed() && isIgnoringMouseEvents) {
       mainWindow.hide();
@@ -394,7 +401,8 @@ app.on('ready', async () => {
       const targetWindow = overlayWindow?.isVisible() ? overlayWindow : mainWindow;
       targetWindow?.webContents.send(channel, ...args);
     },
-    ipcMain
+    ipcMain,
+    () => availableActionsCache // Pass a function to get the cache
   );
   modLoader.loadMods();
 
