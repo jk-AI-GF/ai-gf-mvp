@@ -174,87 +174,81 @@ export default App;
 
 이제 애플리케이션을 실행하면 화면에 "Jump!" 버튼이 나타나고, 버튼을 클릭하면 캐릭터가 점프 애니메이션을 재생할 것입니다.
 
-### 4.1. 새로운 액션(Action) 추가 가이드
+### 4.1. 새로운 액션(Action) 추가 가이드 (신규 아키텍처)
 
-`Actions` API에 새로운 기능을 추가하는 것은 플러그인과 모드의 능력을 확장하는 가장 직접적인 방법입니다. 현재 아키텍처에서 새로운 액션을 추가하는 절차는 다음과 같습니다.
+`ActionRegistry`가 도입되면서 새로운 액션을 추가하는 과정이 매우 간단해졌습니다. 더 이상 여러 파일을 오가며 인터페이스, 구현, IPC 프록시를 수동으로 추가할 필요가 없습니다.
+
+**이제 새로운 액션을 추가하려면 `src/core/action-registrar.ts` 파일 하나만 수정하면 됩니다.**
 
 **예시: 캐릭터의 투명도를 조절하는 `setOpacity(opacity)` 액션 추가하기**
 
-#### 1단계: `actions.ts` - 인터페이스 정의
+#### 1단계: `action-registrar.ts`에 액션 등록하기
 
-`src/plugin-api/actions.ts` 파일의 `Actions` 인터페이스에 새로운 액션의 타입 시그니처를 추가합니다.
+`src/core/action-registrar.ts` 파일을 열고, `registerCoreActions` 함수 내부에 있는 `actionRegistry.register()` 호출 목록에 새로운 액션을 추가합니다.
 
 ```typescript
-// src/plugin-api/actions.ts
-export interface Actions {
-  // ... 기존 액션들
-  setOpacity(opacity: number): void;
+// src/core/action-registrar.ts
+
+import { ActionRegistry } from './action-registry';
+import { PluginContext } from '../plugin-api/plugin-context';
+// ... 다른 import들
+
+export function registerCoreActions(
+  actionRegistry: ActionRegistry,
+  context: () => PluginContext
+) {
+  // ... 기존에 등록된 다른 액션들
+  
+  actionRegistry.register({
+    // 1. 액션의 고유 이름 (API 호출 시 사용)
+    name: 'setOpacity',
+    // 2. 액션에 대한 설명 (UI 툴팁 등에 사용)
+    description: '캐릭터의 투명도를 조절합니다.',
+    // 3. 액션이 받을 파라미터 정의 (UI 폼 자동 생성에 사용)
+    params: [
+      {
+        name: 'opacity',
+        type: 'number',
+        description: '투명도 (0.0 ~ 1.0)',
+        defaultValue: 1.0,
+      },
+    ],
+    // 4. 액션의 실제 실행 로직
+    execute: (ctx, params) => {
+      const vrmManager = ctx.vrmManager;
+      if (vrmManager?.currentVrm) {
+        const opacity = params.opacity as number;
+        
+        // Three.js 메쉬 순회하며 투명도 설정
+        vrmManager.currentVrm.scene.traverse((obj) => {
+          if ((obj as THREE.Mesh).isMesh) {
+            const mesh = obj as THREE.Mesh;
+            // 모든 재질을 순회하며 투명도 관련 속성 설정
+            const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+            materials.forEach(material => {
+              material.transparent = opacity < 1.0;
+              material.opacity = opacity;
+              material.needsUpdate = true;
+            });
+          }
+        });
+      }
+    },
+  });
+
+  // ... 다른 액션 등록 계속
 }
 ```
 
-#### 2단계: `context-factory.ts` - 구현 및 메타데이터 추가
+이것으로 작업은 끝입니다.
 
-`src/plugin-api/context-factory.ts` 파일에서 두 가지 작업을 수행해야 합니다.
+`action-registrar.ts`에 액션을 등록하면, 시스템이 나머지 모든 것을 자동으로 처리합니다.
 
-1.  **실제 구현**: `actions` 객체 내부에 `setOpacity` 함수의 실제 로직을 작성합니다. 이 로직은 `vrmManager` 등 렌더러의 핵심 객체에 접근하여 실제 동작을 수행합니다.
-2.  **메타데이터 정의**: `availableActions` 배열에 `setOpacity` 액션의 정보를 수동으로 추가합니다. 이 정보는 `TriggerEditorPanel`에서 UI를 동적으로 생성하는 데 사용됩니다.
+-   **`PluginContext`에 자동 추가**: `context-factory.ts`가 `ActionRegistry`를 읽어 `pluginContext.actions.setOpacity` 함수를 동적으로 생성합니다.
+-   **IPC 프록시 자동 생성**: `mod-loader.ts`가 렌더러로부터 액션 명세를 받아 메인 프로세스 모드(Mod)가 `setOpacity`를 호출할 수 있도록 IPC 프록시를 자동으로 만듭니다.
+-   **UI에 자동 반영**: `TriggerEditorPanel`과 같은 UI 컴포넌트가 `getAvailableActions` API를 호출하면, 방금 등록한 `setOpacity` 액션의 정보(`description`, `params` 등)가 동적으로 포함되어 사용자에게 보여집니다.
 
-```typescript
-// src/plugin-api/context-factory.ts
-
-// 1. 메타데이터 배열에 액션 정보 추가
-const availableActions: ActionDefinition[] = [
-  // ... 기존 액션 정의들
-  {
-    name: 'setOpacity',
-    description: '캐릭터의 투명도를 조절합니다.',
-    params: [
-      { name: 'opacity', type: 'number', description: '투명도 (0.0 ~ 1.0)', defaultValue: 1.0 }
-    ]
-  }
-];
-
-// ...
-
-// 2. actions 객체에 실제 구현 추가
-const actions: Actions = {
-  // ... 기존 액션 구현들
-  setOpacity: (opacity: number) => {
-    if (vrmManager.currentVrm) {
-      vrmManager.currentVrm.scene.traverse((obj) => {
-        if (obj.isMesh) {
-          // ... (투명도 설정 로직)
-        }
-      });
-    }
-  },
-  // ...
-};
-```
-
-#### 3단계: `mod-loader.ts` - IPC 프록시 추가
-
-메인 프로세스에서 실행되는 모드(User Mod)가 이 액션을 호출할 수 있도록, `src/core/mod-loader.ts`에 IPC 통신을 위한 프록시 함수를 추가해야 합니다.
-
-```typescript
-// src/core/mod-loader.ts
-const pluginContext: PluginContext = {
-  // ...
-  actions: {
-    // ... 기존 프록시 함수들
-    setOpacity: (opacity: number) => {
-      this.sendToRenderer('set-opacity', opacity); // 'set-opacity' 채널로 데이터 전송
-    },
-  },
-  // ...
-};
-```
-
-#### 아키텍처의 한계와 미래
-
-이처럼 현재는 액션 하나를 추가하기 위해 여러 파일을 수정해야 하는 번거로움이 있습니다. 이는 코드 중복과 실수 유발 가능성을 높이는 기술 부채로 작용할 수 있습니다.
-
-향후에는 `ActionRegistry`와 같은 중앙 관리 시스템을 도입하여, 액션의 **정의, 구현, 메타데이터를 한 곳에서 등록**하면 시스템의 다른 모든 부분(API 인터페이스, UI, IPC 프록시)이 자동으로 업데이트되는 구조로 개선하는 것을 목표로 합니다. 이 리팩토링이 완료되면 개발 생산성과 안정성이 크게 향상될 것입니다.
+이 새로운 아키텍처는 개발 생산성을 극대화하고, 실수를 줄이며, 프로젝트의 확장성을 크게 향상시킵니다.
 
 ## 5. 고급: Trigger 시스템 활용하기
 
@@ -437,7 +431,76 @@ const LightPanel: React.FC<LightPanelProps> = ({ onClose }) => {
 
 이러한 중앙 집중식 구조를 반드시 따라야 합니다. 자세한 구현 예시는 `docs/Electron-Store_Usage.md` 문서를 참고하세요.
 
-## 8. 고급: 사용자 정의 트리거 시스템 (Custom Triggers)
+## 8. 자동화된 테스트 (Automated Testing)
+
+프로젝트의 안정성과 유지보수성을 높이기 위해, 우리는 `Jest`와 `React Testing Library`를 사용한 자동화된 테스트를 도입했습니다. 새로운 기능을 추가하거나 기존 코드를 리팩토링할 때는 반드시 관련 테스트 코드를 작성하거나 수정하는 것을 원칙으로 합니다.
+
+### 테스트 실행 방법
+
+프로젝트의 모든 테스트를 실행하려면, 다음 명령어를 사용하세요.
+
+```bash
+npm test
+```
+
+Jest는 `*.test.ts(x)` 또는 `*.spec.ts(x)` 패턴을 가진 모든 파일을 찾아 테스트를 실행합니다.
+
+### 테스트 작성 가이드
+
+-   **파일 위치**: 테스트 파일은 테스트하려는 대상 파일과 같은 디렉토리에 위치시키는 것을 원칙으로 합니다. 예를 들어, `src/core/action-registry.ts`의 테스트 파일은 `src/core/action-registry.test.ts`입니다.
+-   **단위 테스트**: 특정 함수나 클래스의 기능이 독립적으로 올바르게 작동하는지 검증합니다. 의존성이 있는 다른 모듈은 `jest.fn()` 등을 사용하여 모킹(mocking)해야 합니다.
+-   **컴포넌트 테스트**: React 컴포넌트가 주어진 `props`에 따라 올바르게 렌더링되고, 사용자의 상호작용(클릭, 입력 등)에 예상대로 반응하는지 검증합니다. `@testing-library/react`의 `render`, `screen`, `fireEvent` 등의 유틸리티를 사용합니다.
+
+### 테스트 작성 예시 (`ActionRegistry` 단위 테스트)
+
+다음은 `src/core/action-registry.test.ts`의 일부로, `ActionRegistry` 클래스의 핵심 기능을 검증하는 단위 테스트의 예시입니다.
+
+```typescript
+// src/core/action-registry.test.ts
+
+import { ActionRegistry } from './action-registry';
+import { PluginContext } from '../plugin-api/plugin-context';
+import { ActionDefinition, ActionImplementation } from '../plugin-api/actions';
+
+describe('ActionRegistry', () => {
+  let actionRegistry: ActionRegistry;
+  let mockContext: PluginContext;
+
+  beforeEach(() => {
+    actionRegistry = new ActionRegistry();
+    mockContext = { /* ... 모킹된 컨텍스트 ... */ } as any;
+  });
+
+  test('should register an action', () => {
+    const mockDefinition: ActionDefinition = {
+      name: 'testAction',
+      description: 'A test action',
+      params: [],
+    };
+    const mockImplementation: ActionImplementation = jest.fn();
+
+    actionRegistry.register(mockDefinition, mockImplementation);
+
+    const actions = actionRegistry.getAllActions();
+    expect(actions).toHaveLength(1);
+    expect(actions[0].definition.name).toBe('testAction');
+  });
+
+  test('should execute a registered action', () => {
+    const mockExecute = jest.fn();
+    const mockDefinition: ActionDefinition = { /* ... */ };
+
+    actionRegistry.register(mockDefinition, mockExecute);
+
+    const actionToExecute = actionRegistry.get('executableAction');
+    actionToExecute?.implementation(mockContext, {});
+
+    expect(mockExecute).toHaveBeenCalledTimes(1);
+  });
+});
+```
+
+## 9. 고급: 사용자 정의 트리거 시스템 (Custom Triggers)
 
 사용자 정의 트리거 시스템은 코딩 없이 UI를 통해 **"언제(When), 어떤 조건에서(If), 무엇을 할지(Then)"**를 직접 설정하여 캐릭터의 상호작용을 무한히 확장할 수 있게 해주는 강력한 기능입니다. 이 모든 로직은 `CustomTriggerPanel`을 통해 관리됩니다.
 
