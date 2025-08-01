@@ -66,6 +66,28 @@ export interface Actions {
   setHitboxesVisible(visible: boolean): void;
 
   /**
+   * 캐릭터의 포즈를 기본 T-Pose로 초기화합니다.
+   */
+  resetPose(): void;
+
+  /**
+   * 현재 캐릭터의 포즈를 파일로 저장하도록 다이얼로그를 엽니다.
+   */
+  saveCurrentPose(): void;
+
+  /**
+   * 지정된 파일 이름의 VRM 모델을 로드하여 캐릭터를 교체합니다.
+   * @param fileName `userdata/vrm` 또는 `assets/VRM` 폴더에 있는 VRM 파일의 이름
+   */
+  loadCharacter(fileName: string): Promise<void>;
+
+  /**
+   * 카메라 모드를 변경합니다.
+   * @param mode 'orbit' (자유 시점) 또는 'fixed' (고정 시점)
+   */
+  setCameraMode(mode: 'orbit' | 'fixed'): void;
+
+  /**
    * 전역 컨텍스트 저장소에 키-값 데이터를 저장합니다.
    * @param key 저장할 데이터의 키
    * @param value 저장할 데이터

@@ -15,7 +15,8 @@ import { ProactiveDialoguePlugin } from '../../../plugins/proactive-dialogue-plu
 import { ActionTestPlugin } from '../../../plugins/action-test-plugin';
 import { MToonMaterialOutlineWidthMode } from '@pixiv/three-vrm';
 import { GrabVrmPlugin } from '../../../plugins/grab-vrm-plugin';
-import { TimeSyncTestPlugin } from '../../../plugins/time-sync-test-plugin'; // Import the new plugin
+import { TimeSyncTestPlugin } from '../../../plugins/time-sync-test-plugin';
+import { LlmResponseHandlerPlugin } from '../../../plugins/LlmResponseHandlerPlugin'; // Import the new plugin
 import { ChatService } from '../../chat-service';
 import { CustomTriggerManager } from '../../../core/custom-trigger-manager';
 import { SystemControls } from '../../../plugin-api/system-controls';
@@ -99,7 +100,8 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     pluginManager.register(new ProactiveDialoguePlugin());
     pluginManager.register(new ActionTestPlugin());
     pluginManager.register(new GrabVrmPlugin());
-    pluginManager.register(new TimeSyncTestPlugin()); // Register the new plugin
+    pluginManager.register(new TimeSyncTestPlugin());
+    pluginManager.register(new LlmResponseHandlerPlugin()); // Register the new plugin
 
     // 4. Create CustomTriggerManager
     const customTriggerManager = new CustomTriggerManager(pluginContext);
@@ -210,29 +212,30 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
         renderer.setSize(window.innerWidth, window.innerHeight);
     };
 
-    const handleEditModeChange = (data: { isEditMode: boolean }) => {
-        isEditMode = data.isEditMode; // Update the local state
-        pluginManager.setEditMode(isEditMode); // Inform the plugin manager
-
-        const newMode = data.isEditMode ? 'orbit' : 'fixed';
-        if (cameraMode === newMode) return; // Already in the correct camera mode
+    const handleSetCameraMode = (newMode: 'orbit' | 'fixed') => {
+        if (cameraMode === newMode) return;
 
         if (newMode === 'fixed') {
             cameraMode = 'fixed';
             activeCamera = orthographicCamera;
             controls.enabled = false;
-            eventBus.emit('camera:modeChanged', 'follow'); // Emitting 'follow' for UI
+            eventBus.emit('camera:modeChanged', 'follow');
             setOutlineMode(MToonMaterialOutlineWidthMode.ScreenCoordinates);
         } else { // 'orbit'
             cameraMode = 'orbit';
             activeCamera = perspectiveCamera;
-            // Ensure aspect ratio is correct when switching back
             perspectiveCamera.aspect = window.innerWidth / window.innerHeight;
             perspectiveCamera.updateProjectionMatrix();
             controls.enabled = true;
-            eventBus.emit('camera:modeChanged', 'free'); // Emitting 'free' for UI
+            eventBus.emit('camera:modeChanged', 'free');
             setOutlineMode(MToonMaterialOutlineWidthMode.WorldCoordinates);
         }
+    };
+
+    const handleEditModeChange = (data: { isEditMode: boolean }) => {
+        isEditMode = data.isEditMode;
+        pluginManager.setEditMode(isEditMode);
+        handleSetCameraMode(data.isEditMode ? 'orbit' : 'fixed');
     };
 
     const requestCameraState = () => {
@@ -250,6 +253,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     });
     eventBus.on('ui:editModeToggled', handleEditModeChange);
     eventBus.on('camera:requestState', requestCameraState);
+    eventBus.on('camera:setMode', ({ mode }) => handleSetCameraMode(mode));
 
     // --- Cleanup ---
     return () => {
@@ -259,6 +263,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
         unsubSetExpressionWeight();
         eventBus.off('ui:editModeToggled', handleEditModeChange);
         eventBus.off('camera:requestState', requestCameraState);
+        eventBus.off('camera:setMode', ({ mode }) => handleSetCameraMode(mode));
     };
   }, [onLoad]);
 

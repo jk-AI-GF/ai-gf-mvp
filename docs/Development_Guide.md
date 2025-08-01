@@ -27,7 +27,6 @@
 -   **`assets` 폴더**: **애플리케이션의 핵심 리소스**가 위치합니다.
     -   **역할**: 앱 아이콘, 기본 제공 애니메이션/포즈 등 앱의 기본 작동에 필수적인, 개발자가 제공하는 파일들을 관리합니다.
     -   **특징**: 사용자가 직접 수정하는 것을 권장하지 않으며, 앱과 함께 패키징되어 배포됩니다.
-    -   **접근 방법**: 코드에서는 `resolveAssetsPath()` 유틸리티 함수를 통해 접근합니다.
 
 -   **`userdata` 폴더**: **사용자가 직접 추가하고 관리하는 모든 리소스**가 위치합니다.
     -   **역할**: 사용자가 다운로드한 VRM 모델, 직접 만든 포즈, 커스텀 애니메이션, 모드 등을 저장합니다.
@@ -35,13 +34,12 @@
         -   **개발 환경**: 프로젝트 루트의 `userdata/` 폴더
         -   **배포 환경**: `C:\Users\<사용자>\AppData\Roaming\<앱이름>` 과 같이 운영체제가 지정한 안전한 경로. 이를 통해 **앱을 업데이트해도 사용자의 데이터가 삭제되지 않습니다.**
     -   **특징**: 앱이 시작될 때 `vrm`, `poses`, `animations`, `mods`, `persona` 와 같은 하위 폴더들이 자동으로 생성됩니다. UI 컴포넌트(예: `AnimationPanel`)는 `userdata`와 `assets` 양쪽의 리소스 목록을 모두 불러와 사용자에게 통합된 목록을 보여주는 것을 목표로 해야 합니다.
-    -   **접근 방법**: 코드에서는 `resolveUserDataPath()` 유틸리티 함수를 통해 접근합니다.
 
 이러한 구조 덕분에, 개발 환경과 배포 환경의 경로 차이가 코드 수준에서 완벽하게 추상화되어, 개발자는 경로 걱정 없이 로직에만 집중할 수 있습니다.
 
 ### 경로 처리 시스템 (`path-utils.ts` & `preload.ts`)
 
-모든 경로 관련 로직은 메인 프로세스의 `src/main/path-utils.ts`에 중앙화되어 있습니다. 이 유틸리티 함수들은 `preload.ts`를 통해 `window.electronAPI.resolvePath()` 와 같은 안전한 API 형태로 렌더러 프로세스에 노출됩니다. 이를 통해 렌더러는 파일 시스템에 직접 접근하지 않고도 필요한 리소스의 절대 경로를 얻을 수 있습니다.
+모든 경로 관련 로직은 메인 프로세스의 `src/main/path-utils.ts`에 중앙화되어 있습니다. 이 유틸리티 함수들은 `preload.ts`를 통해 `window.electronAPI.resolvePath(base, subpath)` 와 같은 안전한 API 형태로 렌더러 프로세스에 노출됩니다. 이를 통해 렌더러는 파일 시스템에 직접 접근하지 않고도 필요한 리소스의 절대 경로를 얻을 수 있습니다.
 
 ### 렌더링 파이프라인 (Rendering Pipeline)
 
@@ -126,9 +124,9 @@ const JumpButton: React.FC = () => {
     }
 
     // 표준 Actions 인터페이스를 통해 애니메이션을 재생합니다.
-    // 첫 번째 인자: 애니메이션 파일 경로 (vrma, fbx 등)
+    // 첫 번째 인자: 애니메이션 파일 이름 (vrma, fbx 등)
     // 두 번째 인자: 반복 여부 (loop)
-    pluginManager.context.actions.playAnimation('Animation/Jump.vrma', false);
+    pluginManager.context.actions.playAnimation('Jump.vrma', false);
   };
 
   return (
@@ -190,7 +188,7 @@ Trigger 시스템은 **"어떤 조건이 충족되었을 때, 특정 행동을 �
 
 ### Trigger의 구조
 
-Trigger는 두 가지 핵심 요소로 구성됩니다.
+Trigger는 두 가지 핵심 요소로 구성된 객체입니다.
 
 1.  `condition`: `() => boolean` 형태의 함수. `true`를 반환하면 Trigger가 발동됩니다.
 2.  `action`: `() => void` 형태의 함수. `condition`이 `true`가 되었을 때 실행될 로직입니다.
@@ -212,20 +210,20 @@ export class ProactiveDialoguePlugin implements Plugin {
     const thirtySeconds = 30 * 1000;
 
     // Trigger 등록
-    context.registerTrigger(
+    context.registerTrigger({
       // Condition: 마지막 대화 후 30초가 지났는가?
-      () => {
+      condition: () => {
         const lastSpoken = this.context.characterState.lastSpokenTimestamp;
         const now = Date.now();
         return now - lastSpoken > thirtySeconds;
       },
       // Action: 자발적인 대화를 시작한다.
-      () => {
+      action: () => {
         this.context.actions.speak("무슨 생각 하세요?");
         // Action이 실행되면, 다시 조건을 만족하지 않도록 상태를 업데이트해야 함
         this.context.characterState.lastSpokenTimestamp = Date.now();
       }
-    );
+    });
   }
 
   // ... (생략)

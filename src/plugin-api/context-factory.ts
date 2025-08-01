@@ -59,6 +59,18 @@ export function createPluginContext(
     setHitboxesVisible: (visible: boolean) => {
       vrmManager.setHitboxesVisible(visible);
     },
+    resetPose: () => {
+      vrmManager.resetToTPose();
+    },
+    saveCurrentPose: () => {
+      vrmManager.saveCurrentPose();
+    },
+    loadCharacter: async (fileName: string) => {
+      await vrmManager.loadVRM(fileName);
+    },
+    setCameraMode: (mode: 'orbit' | 'fixed') => {
+      eventBus.emit('camera:setMode', { mode });
+    },
     setContext: (key: string, value: any) => {
       window.electronAPI.send('context:set', key, value);
     },

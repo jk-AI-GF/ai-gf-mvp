@@ -167,6 +167,18 @@ export class ModLoader {
             setHitboxesVisible: (visible: boolean) => {
               this.sendToRenderer('set-hitboxes-visible', visible);
             },
+            resetPose: () => {
+              this.sendToRenderer('reset-pose');
+            },
+            saveCurrentPose: () => {
+              this.sendToRenderer('save-current-pose');
+            },
+            loadCharacter: async (fileName: string) => {
+              this.sendToRenderer('load-character', fileName);
+            },
+            setCameraMode: (mode: 'orbit' | 'fixed') => {
+              this.sendToRenderer('set-camera-mode', mode);
+            },
           },
           system: {
             toggleTts: (enable: boolean) => {

@@ -110,9 +110,12 @@ export class ChatService {
         text = text.replace(/<표정:\s*(.*?)\s*>/, '').trim();
       }
 
-      this.pluginManager.context.actions.setExpression(expression, 1.0, 0.5);
-      this.pluginManager.context.actions.speak(text);
-      
+      // The service's responsibility ends here. It emits an event with the processed
+      // data from the LLM. Other parts of the system (like a dedicated plugin)
+      // will listen for this event and decide how to make the character act.
+      eventBus.emit('llm:responseReceived', { text, expression });
+
+      // Keep the original events for UI updates
       eventBus.emit('chat:newMessage', { role: 'assistant', text });
       eventBus.emit('ui:showFloatingMessage', { text });
 

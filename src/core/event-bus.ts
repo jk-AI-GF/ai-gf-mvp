@@ -5,20 +5,27 @@ export type AppEvents = {
   /** VRM 로드/해제 */
   'vrm:loaded': { vrm: VRM; expressionNames: string[] };
   'vrm:unloaded': void;
-  'vrm:poseApplied': void; // 포즈가 적용되었을 때 발생하는 이벤트
+  'vrm:poseApplied': { poseName: string };
+  'vrm:animationFinished': { clipName: string };
 
   /** 카메라 */
   'camera:toggleMode': void;
   'camera:modeChanged': 'free' | 'follow';
   'camera:requestState': void;
+  'camera:setMode': { mode: 'orbit' | 'fixed' };
 
   /** UI */
   'ui:editModeToggled': { isEditMode: boolean };
 
-  /** 채팅 */
+  /** 채팅 및 LLM */
   'chat:newMessage': { role: string, text: string };
+  'llm:responseReceived': { text: string, expression: string };
   'ui:showFloatingMessage': { text: string };
   'ui:updateFloatingMessagePosition': { left: number; top: number; visible: boolean; };
+
+  /** 플러그인 */
+  'plugin:enabled': { pluginName: string };
+  'plugin:disabled': { pluginName: string };
 
   /** 액션/애니메이션 */
   'action:play-expression': { name: string; weight: number; fadeIn?: number; duration?: number };

@@ -459,7 +459,7 @@ export class VRMManager {
         newAction.clampWhenFinished = true;
         newAction.play();
         this.currentVrm.scene.updateMatrixWorld(true);
-        eventBus.emit('vrm:poseApplied');
+        this.eventBus.emit('vrm:poseApplied', { poseName: poseClip.name });
     }
 
     public playAnimation(clip: THREE.AnimationClip, loop = false, crossFadeDuration = 0.5): void {
@@ -472,6 +472,14 @@ export class VRMManager {
         newAction.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 0);
         if (!loop) {
             newAction.clampWhenFinished = true;
+            
+            const listener = (e: any) => {
+                if (e.action === newAction) {
+                    this.eventBus.emit('vrm:animationFinished', { clipName: clip.name });
+                    this.mixer?.removeEventListener('finished', listener);
+                }
+            };
+            this.mixer.addEventListener('finished', listener);
         }
         
         newAction.play();
@@ -483,7 +491,7 @@ export class VRMManager {
         this.mixer.stopAllAction();
         this.currentAction = null;
         this.currentVrm.humanoid.resetNormalizedPose();
-        this.eventBus.emit('vrm:poseApplied'); // Notify UI that the pose has changed
+        this.eventBus.emit('vrm:poseApplied', { poseName: 'T-Pose' });
     }
 
     private animateVrmDrop(vrm: VRM, duration: number, startY: number, endY: number): Promise<void> {

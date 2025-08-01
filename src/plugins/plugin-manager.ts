@@ -113,6 +113,7 @@ export class PluginManager {
     if (plugin && plugin.enabled) {
       plugin.enabled = false;
       plugin.onDisable();
+      this.context.eventBus.emit('plugin:disabled', { pluginName: name });
       console.log(`Plugin disabled: ${name}`);
     }
   }
@@ -126,6 +127,7 @@ export class PluginManager {
     if (plugin && !plugin.enabled) {
       plugin.enabled = true;
       plugin.onEnable();
+      this.context.eventBus.emit('plugin:enabled', { pluginName: name });
       console.log(`Plugin enabled: ${name}`);
     }
   }

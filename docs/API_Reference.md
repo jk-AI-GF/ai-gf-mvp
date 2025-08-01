@@ -54,13 +54,11 @@ export interface IPlugin {
 
 ---
 
-## 2. Actions API
+## 2. Actions API (`context.actions`)
 
-`Actions`는 플러그인 및 모드가 렌더러 프로세스 전반에 안전하게 영향을 미치기 위해 제공되는 **표준화된 게이트웨이(Gateway)**입니다. 캐릭터의 동작 제어뿐만 아니라, UI, 환경, 전역 상태 등 렌더러가 관리하는 여러 요소와 상호작용할 수 있는 공식적인 통로입니다.
+`Actions`는 플러그인 및 모드가 렌더러 프로세스 전반에 안전하게 영향을 미치기 위해 제공되는 **표준화된 게이트웨이(Gateway)**입니다. 캐릭터의 동작 제어뿐만 아니라, UI, 환경 등 렌더러가 관리하는 여러 요소와 상호작용할 수 있는 공식적인 통로입니다.
 
 이를 통해 외부 코드(플러그인, 모드)는 렌더러의 복잡한 내부 구현(DOM 구조, Three.js 객체 등)을 직접 알 필요 없이, **시스템이 허용한 범위 내에서** 다양한 기능을 실행할 수 있습니다.
-
-모든 `Actions`는 플러그인 또는 UI 컴포넌트에서 `pluginManager.context.actions`를 통해 접근할 수 있습니다.
 
 ---
 
@@ -82,16 +80,31 @@ actions.playAnimation('Jump.vrma', false);
 
 ### `setExpression(expressionName, weight, duration)`
 
-캐릭터의 표정을 변경합니다.
+캐릭터의 표정을 부드럽게 애니메이션하며 변경합니다.
 
 -   **`expressionName`** (`string`): VRM 모델에 포함된 표정의 이름. (예: `happy`, `sad`, `angry`)
--   **`weight`** (`number`): 표정의 강도 (0.0 ~ 1.0).
--   **`duration`** (`number`, Optional, Default: `0.1`): 표정이 최대 강도에 도달하기까지 걸리는 시간(초).
+-   **`weight`** (`number`): 표정의 목표 강도 (0.0 ~ 1.0).
+-   **`duration`** (`number`, Optional, Default: `0.1`): 목표 강도에 도달하기까지 걸리는 시간(초).
 
 **예시:**
 ```typescript
 // 0.5초에 걸쳐 행복한 표정을 짓게 함
 actions.setExpression('happy', 1.0, 0.5);
+```
+
+---
+
+### `setExpressionWeight(expressionName, weight)`
+
+캐릭터 표정의 가중치를 즉시 설정합니다. 애니메이션 없이 바로 적용됩니다.
+
+-   **`expressionName`** (`string`): VRM 모델에 포함된 표정의 이름.
+-   **`weight`** (`number`): 표정의 강도 (0.0 ~ 1.0).
+
+**예시:**
+```typescript
+// 'angry' 표정의 강도를 0.8로 즉시 설정
+actions.setExpressionWeight('angry', 0.8);
 ```
 
 ---
@@ -170,23 +183,64 @@ actions.changeBackground('MyMod/assets/background.png');
 
 ---
 
-### `getContext(key)` & `setContext(key, value)`
+### `resetPose()`
 
-전역 컨텍스트 저장소에 데이터를 읽거나 씁니다. 모드 간의 데이터 공유나 상태 저장을 위해 사용됩니다.
+캐릭터의 포즈를 기본 T-Pose로 초기화합니다.
 
--   **`key`** (`string`): 데이터의 키.
--   **`value`** (`any`): 저장할 데이터.
+---
+
+### `saveCurrentPose()`
+
+현재 캐릭터의 포즈를 파일로 저장하도록 다이얼로그를 엽니다.
+
+---
+
+### `loadCharacter(fileName)`
+
+지정된 파일 이름의 VRM 모델을 로드하여 캐릭터를 교체합니다.
+
+-   **`fileName`** (`string`): `userdata/vrm` 또는 `assets/VRM` 폴더에 있는 VRM 파일의 이름.
+
+---
+
+### `setCameraMode(mode)`
+
+카메라 모드를 변경합니다.
+
+-   **`mode`** (`'orbit' | 'fixed'`): `'orbit'` (자유 시점) 또는 `'fixed'` (고정 시점).
+
+---
+
+## 3. ContextStore API (`context.get`, `context.set`)
+
+`ContextStore`는 메인 프로세스와 렌더러 프로세스 간에 공유되는 키-값(Key-Value) 저장소입니다. 모드 간의 데이터 공유나 상태 저장을 위해 사용됩니다. `PluginContext`의 최상위 메서드를 통해 직접 접근할 수 있습니다.
+
+### `set(key, value)`
+- **설명**: 공유 컨텍스트 저장소에 값을 저장합니다.
+- **`key`** (`string`): 데이터를 저장할 키.
+- **`value`** (`any`): 저장할 값.
+
+### `get(key)`
+- **설명**: 공유 컨텍스트 저장소에서 값을 가져옵니다.
+- **`key`** (`string`): 가져올 값의 키.
+- **반환값**: `Promise<any>`
+
+### `getAll()`
+- **설명**: 공유 컨텍스트 저장소의 모든 키-값 쌍을 가져옵니다.
+- **반환값**: `Promise<Record<string, any>>`
 
 **예시:**
 ```typescript
 // 플레이어의 점수를 저장
-actions.setContext('playerScore', 100);
+context.set('playerScore', 100);
 
 // 저장된 점수를 읽어옴
-const score = await actions.getContext('playerScore');
+const score = await context.get('playerScore');
 ```
 
-## 3. 경로 API (`window.electronAPI`)
+---
+
+## 4. 경로 API (`window.electronAPI`)
 
 렌더러 프로세스에서 `assets` 또는 `userdata` 폴더의 절대 경로를 안전하게 얻기 위한 API입니다. 파일 목록을 가져오거나 특정 파일의 경로를 해석하는 데 사용됩니다.
 
@@ -211,7 +265,9 @@ const mods = await window.electronAPI.listDirectory('mods', 'userData');
 const jumpPath = await window.electronAPI.resolvePath('assets', 'Animation/Jump.vrma');
 ```
 
-## 4. EventBus API
+---
+
+## 5. EventBus API (`context.eventBus`)
 
 `EventBus`는 시스템의 여러 부분(UI, 플러그인, 코어 시스템)이 서로 직접적인 의존성 없이 통신할 수 있게 해주는 발행/구독 시스템입니다. `pluginContext.eventBus` 또는 `import eventBus from '../core/event-bus'`를 통해 접근할 수 있습니다.
 
@@ -238,6 +294,23 @@ const jumpPath = await window.electronAPI.resolvePath('assets', 'Animation/Jump.
 -   **데이터**: `{ left: number, top: number, visible: boolean }`
 -   **주요 구독자**: `FloatingMessageManager.tsx`
 
+#### `llm:responseReceived`
+-   **설명**: `ChatService`가 LLM으로부터 응답을 받아 처리를 완료했을 때 발행됩니다.
+-   **데이터**: `{ text: string, expression: string }`
+-   **주요 구독자**: `LlmResponseHandlerPlugin`
+
+#### `vrm:animationFinished`
+-   **설명**: 반복되지 않는 애니메이션의 재생이 완료되었을 때 발행됩니다.
+-   **데이터**: `{ clipName: string }`
+
+#### `vrm:poseApplied`
+-   **설명**: 캐릭터에 새로운 포즈가 적용되었을 때 발행됩니다.
+-   **데이터**: `{ poseName: string }`
+
+#### `plugin:enabled` / `plugin:disabled`
+-   **설명**: 플러그인이 활성화되거나 비활성화될 때 발행됩니다.
+-   **데이터**: `{ pluginName: string }`
+
 ### 사용 방법
 
 ```typescript
@@ -253,32 +326,37 @@ const unsubscribe = eventBus.on('myCustomEvent', (data) => {
 // unsubscribe();
 ```
 
-## 5. Trigger API
+---
 
-`Trigger`는 **"어떤 조건이 충족되었을 때, 특정 행동을 실행"**하는 로직을 선언적으로 등록하는 시스템입니다. 복잡한 상호작용을 모듈화하고 재사용 가능하게 만드는 데 사용됩니다. `pluginContext.registerTrigger`를 통해 접근합니다.
+## 6. Trigger API (`context.registerTrigger`)
 
-### `registerTrigger(condition, action)`
+`Trigger`는 **"어떤 조건이 충족되었을 때, 특정 행동을 실행"**하는 로직을 선언적으로 등록하는 시스템입니다. 복잡한 상호작용을 모듈화하고 재사용 가능하게 만드는 데 사용됩니다.
 
--   **`condition`** (`() => boolean`): 매 프레임 또는 주기적으로 평가될 조건 함수. `true`를 반환하면 `action`이 실행됩니다.
--   **`action`** (`() => void`): `condition`이 `true`를 반환했을 때 실행될 함수.
+### `registerTrigger(trigger)`
+
+-   **`trigger`** (`{ condition: () => boolean, action: () => void }`): `condition`과 `action` 함수를 포함하는 객체입니다.
+    -   **`condition`**: 매 프레임 또는 주기적으로 평가될 조건 함수. `true`를 반환하면 `action`이 실행됩니다.
+    -   **`action`**: `condition`이 `true`를 반환했을 때 실행될 함수.
 
 **예시:**
 ```typescript
 // 30초마다 "안녕하세요"라고 말하는 Trigger
-context.registerTrigger(
+context.registerTrigger({
   // Condition: 마지막으로 말한 시간으로부터 30초가 지났는가?
-  () => Date.now() - context.characterState.lastSpokenTimestamp > 30000,
+  condition: () => Date.now() - context.characterState.lastSpokenTimestamp > 30000,
   // Action: 말하고, 마지막으로 말한 시간을 업데이트한다.
-  () => {
+  action: () => {
     context.actions.speak("안녕하세요!");
     context.characterState.lastSpokenTimestamp = Date.now();
   }
-);
+});
 ```
 
-## 6. SystemControls API
+---
 
-`SystemControls`는 애플리케이션의 시스템 레벨 설정을 제어하는 인터페이스입니다. `Actions`가 캐릭터의 '행동'을 다룬다면, `SystemControls`는 TTS나 볼륨과 같은 시스템의 '상태'나 '설정'을 변경하는 데 사용됩니다. `pluginContext.system`을 통해 접근할 수 있습니다.
+## 7. SystemControls API (`context.system`)
+
+`SystemControls`는 애플리케이션의 시스템 레벨 설정을 제어하는 인터페이스입니다. `Actions`가 캐릭터의 '행동'을 다룬다면, `SystemControls`는 TTS나 볼륨과 같은 시스템의 '상태'나 '설정'을 변경하는 데 사용됩니다.
 
 ---
 
@@ -319,19 +397,3 @@ context.system.toggleMouseIgnore();
 // 전체 볼륨을 50%로 설정
 context.system.setMasterVolume(0.5);
 ```
-
----
-
-### `registerCustomTrigger(trigger)`
-
-UI나 외부 스크립트에서 생성된 JSON 형식의 트리거 정의를 시스템에 동적으로 등록합니다.
-
--   **`trigger`** (`object`): 등록할 트리거의 상세 정보가 담긴 객체. 이 객체의 구조는 `Development_Guide.md`의 커스텀 트리거 생성 가이드에 자세히 설명되어 있습니다.
-
----
-
-### `unregisterCustomTrigger(triggerId)`
-
-`registerCustomTrigger`를 통해 등록된 트리거를 ID를 기반으로 시스템에서 제거합니다.
-
--   **`triggerId`** (`string`): 제거할 트리거의 고유 ID.
