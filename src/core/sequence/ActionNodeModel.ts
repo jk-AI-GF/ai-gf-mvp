@@ -2,6 +2,12 @@ import { BaseNode, IPort } from "./BaseNode";
 import { PluginContext } from "../../plugin-api/plugin-context";
 import { ActionDefinition } from "../../plugin-api/actions";
 
+export interface SerializedActionNodeData {
+    nodeType: 'ActionNodeModel';
+    actionName: string;
+    paramValues: Record<string, any>;
+}
+
 export class ActionNodeModel extends BaseNode {
     public readonly actionDefinition: ActionDefinition;
     // 노드 내부에 저장될 파라미터 값
@@ -91,5 +97,13 @@ export class ActionNodeModel extends BaseNode {
         // 내장 파라미터 값을 깊은 복사하여 새로운 인스턴스에 할당합니다.
         newInstance.paramValues = JSON.parse(JSON.stringify(this.paramValues));
         return newInstance;
+    }
+
+    serialize(): SerializedActionNodeData {
+        return {
+            nodeType: 'ActionNodeModel',
+            actionName: this.actionDefinition.name,
+            paramValues: this.paramValues,
+        };
     }
 }

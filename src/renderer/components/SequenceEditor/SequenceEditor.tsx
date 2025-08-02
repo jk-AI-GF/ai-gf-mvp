@@ -35,12 +35,40 @@ import { BaseNode, IPort } from '../../../core/sequence/BaseNode';
 let id = 0;
 const getId = () => `dndnode_${id++}`;
 
+// Add serialization interfaces
+interface SerializedNodeData {
+  nodeType: 'ActionNodeModel' | 'ManualStartNodeModel' | string;
+  actionName?: string;
+  paramValues?: Record<string, any>;
+}
+
+interface SerializedNode {
+  id: string;
+  type: string;
+  position: { x: number; y: number };
+  data: SerializedNodeData;
+}
+
+interface SerializedEdge {
+  id: string;
+  source: string;
+  sourceHandle?: string | null;
+  target: string;
+  targetHandle?: string | null;
+}
+
+interface SerializedSequence {
+  nodes: SerializedNode[];
+  edges: SerializedEdge[];
+}
+
+
 const SequenceEditorComponent: React.FC = () => {
   const { actionRegistry, sequenceEngine } = useAppContext();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const { screenToFlowPosition, toObject } = useReactFlow();
+  const { screenToFlowPosition, getNodes, getEdges, fitView } = useReactFlow();
   const [actions, setActions] = useState<ActionDefinition[]>([]);
 
   useEffect(() => {
@@ -50,45 +78,100 @@ const SequenceEditorComponent: React.FC = () => {
   }, [actionRegistry]);
 
   const handleSave = useCallback(async () => {
-    // TODO: The new node data (class instances) are not serializable by default.
-    // We need to implement a custom serialization method (e.g., toJSON) on BaseNode
-    // and its children before saving.
-    alert("저장 기능은 리팩토링 중입니다. BaseNode의 직렬화 구현이 필요합니다.");
-    // const flow = toObject();
-    // try {
-    //   const result = await window.electronAPI.saveSequence(JSON.stringify(flow, null, 2));
-    //   if (result.success) {
-    //     console.log('시퀀스가 성공적으로 저장되었습니다:', result.filePath);
-    //   } else if (!result.canceled) {
-    //     console.error('시퀀스 저장 실패:', result.error);
-    //   }
-    // } catch (error) {
-    //   console.error('시퀀스 저장 중 예외 발생:', error);
-    // }
-  }, [toObject]);
+    const currentNodes = getNodes();
+    const currentEdges = getEdges();
+
+    const serializedNodes: SerializedNode[] = currentNodes.map((node) => {
+      const model = node.data as BaseNode;
+      return {
+        id: node.id,
+        type: node.type as string,
+        position: node.position,
+        data: model.serialize() as SerializedNodeData,
+      };
+    });
+
+    const serializedSequence: SerializedSequence = {
+      nodes: serializedNodes,
+      edges: currentEdges,
+    };
+
+    try {
+      const result = await window.electronAPI.saveSequence(JSON.stringify(serializedSequence, null, 2));
+      if (result.success) {
+        console.log('시퀀스가 성공적으로 저장되었습니다:', result.filePath);
+      } else if (!result.canceled) {
+        console.error('시퀀스 저장 실패:', result.error);
+      }
+    } catch (error) {
+      console.error('시퀀스 저장 중 예외 발생:', error);
+    }
+  }, [getNodes, getEdges]);
 
   const handleLoad = useCallback(async () => {
-    // TODO: The deserialization logic also needs to be implemented to
-    // recreate the class instances from the JSON data.
-    alert("불러오기 기능은 리팩토링 중입니다. 직렬화된 데이터로부터 노드 모델 인스턴스를 재구성하는 로직이 필요합니다.");
-    // try {
-    //   const result = await window.electronAPI.loadSequence();
-    //   if (result.success && result.data) {
-    //     const flow = JSON.parse(result.data);
-    //     if (flow && flow.nodes && flow.edges) {
-    //       setNodes(flow.nodes || []);
-    //       setEdges(flow.edges || []);
-    //       console.log('시퀀스를 성공적으로 불러왔습니다.');
-    //     } else {
-    //        console.error('잘못된 시퀀스 파일 형식입니다.');
-    //     }
-    //   } else if (!result.canceled) {
-    //     console.error('시퀀스 불러오기 실패:', result.error);
-    //   }
-    // } catch (error) {
-    //   console.error('시퀀스 불러오기 중 예외 발생:', error);
-    // }
-  }, [setNodes, setEdges]);
+    try {
+      const result = await window.electronAPI.loadSequence();
+      if (!result.success || !result.data) {
+        if (result.error) {
+          console.error('시퀀스 불러오기 실패:', result.error);
+        }
+        return;
+      }
+
+      const serializedSequence: SerializedSequence = JSON.parse(result.data);
+      if (!serializedSequence || !serializedSequence.nodes || !serializedSequence.edges) {
+        console.error('잘못된 시퀀스 파일 형식입니다.');
+        return;
+      }
+
+      const newNodes: Node[] = serializedSequence.nodes.map((sNode) => {
+        let model: BaseNode;
+        const data = sNode.data;
+
+        switch (data.nodeType) {
+          case 'ActionNodeModel':
+            const actionDef = actionRegistry.getActionDefinition(data.actionName);
+            if (!actionDef) {
+              console.error(`Action "${data.actionName}" not found in registry. Cannot load node ${sNode.id}.`);
+              return null;
+            }
+            const actionModel = new ActionNodeModel(sNode.id, actionDef);
+            if (data.paramValues) {
+              actionModel.paramValues = data.paramValues;
+            }
+            model = actionModel;
+            break;
+          
+          case 'ManualStartNodeModel':
+            model = new ManualStartNodeModel(sNode.id);
+            break;
+
+          default:
+            console.error(`Unknown node type "${data.nodeType}" for node ${sNode.id}.`);
+            return null;
+        }
+
+        return {
+          id: sNode.id,
+          type: sNode.type,
+          position: sNode.position,
+          data: model,
+        };
+      }).filter(Boolean) as Node[];
+
+      setNodes(newNodes);
+      setEdges(serializedSequence.edges);
+
+      setTimeout(() => {
+        fitView();
+      }, 50);
+
+      console.log('시퀀스를 성공적으로 불러왔습니다.');
+
+    } catch (error) {
+      console.error('시퀀스 불러오기 중 예외 발생:', error);
+    }
+  }, [setNodes, setEdges, actionRegistry, fitView]);
 
   const handleRun = useCallback(() => {
     if (!sequenceEngine) {
@@ -96,10 +179,9 @@ const SequenceEditorComponent: React.FC = () => {
       return;
     }
     console.log("Running sequence from editor...");
-    // We don't need to use toObject() anymore, we can pass the state directly
-    sequenceEngine.run(nodes, edges);
-  }, [sequenceEngine, nodes, edges]);
-
+    sequenceEngine.run(getNodes(), getEdges());
+  }, [sequenceEngine, getNodes, getEdges]);
+  
   const onConnect = useCallback((params: Connection) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -124,7 +206,7 @@ const SequenceEditorComponent: React.FC = () => {
           id: newNodeId,
           type: 'manualStartNode',
           position,
-          data: new ManualStartNodeModel(newNodeId), // 모델 인스턴스 생성
+          data: new ManualStartNodeModel(newNodeId),
         };
       } else if (droppedData.type === 'actionNode') {
         const actionDef = actions.find(a => a.name === droppedData.name);
@@ -134,10 +216,10 @@ const SequenceEditorComponent: React.FC = () => {
           id: newNodeId,
           type: 'actionNode',
           position,
-          data: new ActionNodeModel(newNodeId, actionDef), // 모델 인스턴스 생성
+          data: new ActionNodeModel(newNodeId, actionDef),
         };
       } else {
-        return; // 알 수 없는 노드 타입
+        return;
       }
 
       setNodes((nds) => nds.concat(newNode));
@@ -146,8 +228,9 @@ const SequenceEditorComponent: React.FC = () => {
   );
 
   const isValidConnection = (connection: Connection) => {
-    const sourceNode = nodes.find(node => node.id === connection.source);
-    const targetNode = nodes.find(node => node.id === connection.target);
+    const currentNodes = getNodes();
+    const sourceNode = currentNodes.find(node => node.id === connection.source);
+    const targetNode = currentNodes.find(node => node.id === connection.target);
     if (!sourceNode || !targetNode) return false;
 
     const sourceInstance = sourceNode.data as BaseNode;
@@ -159,7 +242,6 @@ const SequenceEditorComponent: React.FC = () => {
 
     if (!sourcePort || !targetPort) return false;
     
-    // 같은 타입의 포트끼리만 연결 허용
     return sourcePort.type === targetPort.type;
   };
 

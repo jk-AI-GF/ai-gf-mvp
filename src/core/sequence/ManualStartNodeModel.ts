@@ -1,6 +1,10 @@
 import { BaseNode, IPort } from "./BaseNode";
 import { PluginContext } from "../../plugin-api/plugin-context";
 
+export interface SerializedManualStartNodeData {
+    nodeType: 'ManualStartNodeModel';
+}
+
 export class ManualStartNodeModel extends BaseNode {
     constructor(id: string) {
         const outputs: IPort[] = [
@@ -20,5 +24,11 @@ export class ManualStartNodeModel extends BaseNode {
 
     clone(): BaseNode {
         return new ManualStartNodeModel(this.id);
+    }
+
+    serialize(): SerializedManualStartNodeData {
+        return {
+            nodeType: 'ManualStartNodeModel',
+        };
     }
 }

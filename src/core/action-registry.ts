@@ -23,4 +23,8 @@ export class ActionRegistry {
   getAllActionDefinitions(): ActionDefinition[] {
     return Array.from(this.actions.values()).map(a => a.definition);
   }
+
+  getActionDefinition(name: string): ActionDefinition | undefined {
+    return this.actions.get(name)?.definition;
+  }
 }

@@ -45,4 +45,9 @@ export abstract class BaseNode {
      * 현재 노드의 모든 상태를 복사한 새로운 인스턴스를 반환합니다.
      */
     abstract clone(): BaseNode;
+
+    /**
+     * 노드의 상태를 직렬화 가능한 객체로 변환합니다.
+     */
+    abstract serialize(): object;
 }
