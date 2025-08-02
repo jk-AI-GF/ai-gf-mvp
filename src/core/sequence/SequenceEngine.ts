@@ -2,15 +2,13 @@ import { Node, Edge } from 'reactflow';
 import { PluginContext } from '../../plugin-api/plugin-context';
 import { BaseNode } from './BaseNode';
 import { ManualStartNodeModel } from './ManualStartNodeModel';
+import { EventNodeModel } from './EventNodeModel';
 
-/**
- * 시퀀스 그래프를 실행하는 리팩토링된 엔진입니다.
- * 이제 노드의 'type' 대신, 노드 데이터에 포함된 BaseNode 인스턴스의 execute() 메서드를 호출합니다.
- */
 export class SequenceEngine {
   private pluginContext: PluginContext;
   private nodeMap: Map<string, Node> = new Map();
-  private edgeMap: Map<string, Edge[]> = new Map(); // key: sourceNodeId
+  private edgeMap: Map<string, Edge[]> = new Map();
+  private activeListeners: (() => void)[] = []; // To store unsubscribe functions
 
   constructor(pluginContext: PluginContext) {
     if (!pluginContext) {
@@ -20,32 +18,57 @@ export class SequenceEngine {
   }
 
   /**
-   * 시퀀스 실행을 시작합니다.
-   * @param nodes 그래프의 모든 노드
-   * @param edges 그래프의 모든 엣지
+   * Clears all active event listeners.
    */
-  public async run(nodes: Node[], edges: Edge[]): Promise<void> {
-    console.log('Running sequence with refactored engine...');
+  private clearListeners() {
+    this.activeListeners.forEach(unsubscribe => unsubscribe());
+    this.activeListeners = [];
+  }
+
+  /**
+   * Sets up event listeners for all event nodes in the graph.
+   * This should be called whenever a new sequence is loaded.
+   * @param nodes The nodes of the sequence graph.
+   * @param edges The edges of the sequence graph.
+   */
+  public setup(nodes: Node[], edges: Edge[]): void {
+    this.clearListeners();
+    this.buildMaps(nodes, edges);
+
+    const eventNodes = nodes.filter(n => n.data instanceof EventNodeModel);
+
+    console.log(`[SequenceEngine] Setting up ${eventNodes.length} event node(s).`);
+
+    eventNodes.forEach(node => {
+      const eventModel = node.data as EventNodeModel;
+      const unsubscribe = this.pluginContext.eventBus.on(eventModel.eventName as any, (payload: any) => {
+        console.log(`[SequenceEngine] Event '${eventModel.eventName}' triggered.`);
+        // Pass the event payload as the initial set of outputs for the event node
+        this.executeFrom(node, payload);
+      });
+      this.activeListeners.push(unsubscribe);
+    });
+  }
+
+  /**
+   * Manually runs the sequence from all ManualStartNodes.
+   * @param nodes The nodes of the sequence graph.
+   * @param edges The edges of the sequence graph.
+   */
+  public async runManual(nodes: Node[], edges: Edge[]): Promise<void> {
+    console.log('[SequenceEngine] Running sequence manually...');
     this.buildMaps(nodes, edges);
 
     const startNodes = nodes.filter(n => n.data instanceof ManualStartNodeModel);
 
     if (startNodes.length === 0) {
-      console.error('SequenceEngine: No ManualStartNode found.');
+      console.warn('[SequenceEngine] No ManualStartNode found for manual run.');
       return;
     }
 
-    console.log(`Found ${startNodes.length} start node(s).`);
-    
-    // 모든 시작 노드로부터 병렬로 실행을 시작합니다.
-    await Promise.all(startNodes.map(startNode => this.executeFrom(startNode)));
-
-    console.log('All parallel sequence executions initiated.');
+    await Promise.all(startNodes.map(startNode => this.executeFrom(startNode, {})));
   }
 
-  /**
-   * 노드와 엣지를 쉽게 찾을 수 있도록 맵을 빌드합니다.
-   */
   private buildMaps(nodes: Node[], edges: Edge[]) {
     this.nodeMap.clear();
     this.edgeMap.clear();
@@ -58,45 +81,27 @@ export class SequenceEngine {
     });
   }
 
-  /**
-   * 특정 노드부터 실행을 시작하고, 실행 흐름을 따라 재귀적으로 다음 노드를 실행합니다.
-   * @param node 실행을 시작할 노드
-   */
-  private async executeFrom(node: Node): Promise<void> {
+  private async executeFrom(node: Node, initialOutputs: Record<string, any>): Promise<void> {
     const nodeInstance = node.data as BaseNode;
     if (!nodeInstance || typeof nodeInstance.execute !== 'function') {
-        console.error(`Node ${node.id} does not have a valid BaseNode instance.`);
-        return;
+      console.error(`Node ${node.id} does not have a valid BaseNode instance.`);
+      return;
     }
 
     console.log(`Executing node: ${node.id} (${nodeInstance.name})`);
 
-    // 데이터 흐름 구현 (1단계): 연결된 값 계산
-    // TODO: 이 로직은 재귀 호출과 순환 참조를 처리할 수 있도록 더 정교해져야 합니다.
-    const connectedInputs: Record<string, any> = {};
-    const inputEdges = Array.from(this.edgeMap.values()).flat().filter(e => e.target === node.id);
+    // For EventNode, the initialOutputs from the event payload are passed directly.
+    // For other nodes, this will be an empty object.
+    const result = await nodeInstance.execute(this.pluginContext, initialOutputs);
 
-    for (const edge of inputEdges) {
-        const sourceNode = this.nodeMap.get(edge.source);
-        const sourceInstance = sourceNode?.data as BaseNode;
-        if (sourceInstance && edge.targetHandle) {
-            // 여기서 실제로는 sourceNode를 먼저 실행하고 그 결과(outputs)를 받아와야 하지만,
-            // 지금은 데이터 흐름을 완전히 구현하지 않았으므로 일단 개념만 남겨둡니다.
-            // connectedInputs[edge.targetHandle] = await this.getValueFromOutput(sourceNode, edge.sourceHandle);
-        }
-    }
-
-    // BaseNode의 execute를 호출합니다.
-    // 모델 내에서 연결된 값과 내장된 값을 합치는 로직이 처리됩니다.
-    const result = await nodeInstance.execute(this.pluginContext, connectedInputs);
-
-    // execute 결과에 따라 다음 실행 노드를 찾아 재귀 호출합니다.
     if (result.nextExec) {
       const nextEdge = this.edgeMap.get(node.id)?.find(e => e.sourceHandle === result.nextExec);
       if (nextEdge) {
         const nextNode = this.nodeMap.get(nextEdge.target);
         if (nextNode) {
-          await this.executeFrom(nextNode);
+          // The outputs of the current node become the inputs for the next.
+          // This is a simplified data flow model.
+          await this.executeFrom(nextNode, result.outputs);
         }
       }
     }

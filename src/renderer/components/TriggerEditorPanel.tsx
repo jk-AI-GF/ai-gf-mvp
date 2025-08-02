@@ -40,7 +40,8 @@ const TriggerEditorPanel: React.FC<TriggerEditorPanelProps> = ({
   const availableContextKeys = useMemo(() => {
     if (triggerType !== 'event') return [];
     const selectedEventDef = availableEvents.find(e => e.name === eventName);
-    return selectedEventDef ? selectedEventDef.keys : [];
+    // Refactored to use payloadSchema instead of keys
+    return selectedEventDef ? selectedEventDef.payloadSchema.map(p => `event.${p.key}`) : [];
   }, [triggerType, eventName, availableEvents]);
 
   useEffect(() => {

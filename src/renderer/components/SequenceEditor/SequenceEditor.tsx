@@ -14,13 +14,15 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { useAppContext } from '../../contexts/AppContext';
 import { ActionDefinition, ActionParam } from '../../../plugin-api/actions';
-import ActionNode from './ActionNode'; // Import the custom node
+import ActionNode from './ActionNode';
 import ManualStartNode from './ManualStartNode';
+import EventNode from './EventNode'; // Import the new event node
 
 // Define node types for React Flow
 const nodeTypes = {
   actionNode: ActionNode,
   manualStartNode: ManualStartNode,
+  eventNode: EventNode, // Add the new event node type
 };
 
 interface SequenceEditorProps {
@@ -30,16 +32,19 @@ interface SequenceEditorProps {
 
 import { ActionNodeModel } from '../../../core/sequence/ActionNodeModel';
 import { ManualStartNodeModel } from '../../../core/sequence/ManualStartNodeModel';
+import { EventNodeModel } from '../../../core/sequence/EventNodeModel';
 import { BaseNode, IPort } from '../../../core/sequence/BaseNode';
+import { EVENT_DEFINITIONS, EventDefinition } from '../../../core/event-definitions';
 
 let id = 0;
 const getId = () => `dndnode_${id++}`;
 
 // Add serialization interfaces
 interface SerializedNodeData {
-  nodeType: 'ActionNodeModel' | 'ManualStartNodeModel' | string;
+  nodeType: 'ActionNodeModel' | 'ManualStartNodeModel' | 'EventNodeModel' | string;
   actionName?: string;
   paramValues?: Record<string, any>;
+  eventName?: string;
 }
 
 interface SerializedNode {
@@ -70,11 +75,20 @@ const SequenceEditorComponent: React.FC = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const { screenToFlowPosition, getNodes, getEdges, fitView } = useReactFlow();
   const [actions, setActions] = useState<ActionDefinition[]>([]);
+  const [events, setEvents] = useState<EventDefinition[]>([]);
+
+  // Setup sequence engine listeners whenever nodes or edges change
+  useEffect(() => {
+    if (sequenceEngine) {
+      sequenceEngine.setup(nodes, edges);
+    }
+  }, [nodes, edges, sequenceEngine]);
 
   useEffect(() => {
     if (actionRegistry) {
       setActions(actionRegistry.getAllActionDefinitions());
     }
+    setEvents(EVENT_DEFINITIONS);
   }, [actionRegistry]);
 
   const handleSave = useCallback(async () => {
@@ -146,6 +160,15 @@ const SequenceEditorComponent: React.FC = () => {
             model = new ManualStartNodeModel(sNode.id);
             break;
 
+          case 'EventNodeModel':
+            const eventDef = EVENT_DEFINITIONS.find(e => e.name === data.eventName);
+            if (!eventDef) {
+              console.error(`Event "${data.eventName}" not found in definitions. Cannot load node ${sNode.id}.`);
+              return null;
+            }
+            model = new EventNodeModel(sNode.id, eventDef);
+            break;
+
           default:
             console.error(`Unknown node type "${data.nodeType}" for node ${sNode.id}.`);
             return null;
@@ -179,7 +202,7 @@ const SequenceEditorComponent: React.FC = () => {
       return;
     }
     console.log("Running sequence from editor...");
-    sequenceEngine.run(getNodes(), getEdges());
+    sequenceEngine.runManual(getNodes(), getEdges());
   }, [sequenceEngine, getNodes, getEdges]);
   
   const onConnect = useCallback((params: Connection) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
@@ -218,13 +241,23 @@ const SequenceEditorComponent: React.FC = () => {
           position,
           data: new ActionNodeModel(newNodeId, actionDef),
         };
+      } else if (droppedData.type === 'eventNode') {
+        const eventDef = events.find(e => e.name === droppedData.name);
+        if (!eventDef) return;
+
+        newNode = {
+          id: newNodeId,
+          type: 'eventNode',
+          position,
+          data: new EventNodeModel(newNodeId, eventDef),
+        };
       } else {
         return;
       }
 
       setNodes((nds) => nds.concat(newNode));
     },
-    [screenToFlowPosition, setNodes, actions],
+    [screenToFlowPosition, setNodes, actions, events],
   );
 
   const isValidConnection = (connection: Connection) => {
@@ -247,7 +280,7 @@ const SequenceEditorComponent: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', height: '100%' }}>
-      <Sidebar actions={actions} />
+      <Sidebar actions={actions} events={events} />
       <div style={{ flex: 1, height: '100%', position: 'relative' }} ref={reactFlowWrapper}>
         <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 10, display: 'flex', gap: '10px' }}>
           <button onClick={handleRun} className="button-run" style={{background: '#4CAF50', color: 'white'}}>실행</button>
