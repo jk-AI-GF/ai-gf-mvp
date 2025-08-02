@@ -10,6 +10,7 @@ interface CreatorPanelProps {
   onDeleteTrigger: (triggerId: string) => void;
   onToggleTrigger: (triggerId: string, enabled: boolean) => void;
   onOpenContextViewer: () => void;
+  onOpenSequenceEditor: () => void;
   triggers: CustomTrigger[];
   initialPos: { x: number, y: number };
   onDragEnd: (pos: { x: number, y: number }) => void;
@@ -22,6 +23,7 @@ const CreatorPanel: React.FC<CreatorPanelProps> = ({
   onDeleteTrigger,
   onToggleTrigger,
   onOpenContextViewer,
+  onOpenSequenceEditor,
   triggers,
   initialPos, 
   onDragEnd 
@@ -30,7 +32,13 @@ const CreatorPanel: React.FC<CreatorPanelProps> = ({
     <Panel title="크리에이터 패널" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
       <div className={styles.container}>
         <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>커스텀 트리거</h3>
+          <h3 className={styles.sectionTitle}>시퀀스 (BETA)</h3>
+          <button className={styles.addButton} onClick={onOpenSequenceEditor}>
+            시퀀스 에디터 열기
+          </button>
+        </div>
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>커스텀 트리거 (Legacy)</h3>
           <div className={styles.triggerList}>
             {triggers.length === 0 && <p className={styles.emptyMessage}>생성된 트리거가 없습니다.</p>}
             {triggers.map(trigger => (

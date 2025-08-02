@@ -14,6 +14,7 @@ import LightPanel from './components/LightPanel';
 import TriggerEditorPanel from './components/TriggerEditorPanel';
 import CreatorPanel from './components/CreatorPanel';
 import ContextStoreDebugPanel from './components/ContextStoreDebugPanel';
+import SequenceEditor from './components/SequenceEditor/SequenceEditor';
 import Chat from './components/Chat';
 import FloatingMessageManager from './components/FloatingMessageManager';
 import UIModeNotification from './components/UIModeNotification';
@@ -45,6 +46,7 @@ const App: React.FC = () => {
   const [isCreatorPanelOpen, setCreatorPanelOpen] = useState(false);
   const [isTriggerEditorPanelOpen, setTriggerEditorPanelOpen] = useState(false);
   const [isContextDebugPanelOpen, setContextDebugPanelOpen] = useState(false);
+  const [isSequenceEditorOpen, setSequenceEditorOpen] = useState(false);
   
   const [customTriggers, setCustomTriggers] = useState<CustomTrigger[]>([]);
   const [editingTrigger, setEditingTrigger] = useState<CustomTrigger | null>(null);
@@ -115,7 +117,7 @@ const App: React.FC = () => {
       [setSettingsModalOpen, setJointPanelOpen, setExpressionPanelOpen, setPluginsPanelOpen, 
        setMeshPanelOpen, setModManagementPanelOpen, setPosePanelOpen, setAnimationPanelOpen, 
        setMaterialPanelOpen, setLightPanelOpen, setCreatorPanelOpen, setTriggerEditorPanelOpen,
-       setContextDebugPanelOpen]
+       setContextDebugPanelOpen, setSequenceEditorOpen]
       .forEach(setter => setter(false));
     }
     return () => clearTimeout(timer);
@@ -254,6 +256,7 @@ const App: React.FC = () => {
         onDeleteTrigger={handleDeleteTrigger}
         onToggleTrigger={handleToggleTrigger}
         onOpenContextViewer={() => setContextDebugPanelOpen(p => !p)}
+        onOpenSequenceEditor={() => setSequenceEditorOpen(p => !p)}
       />}
 
       {isTriggerEditorPanelOpen && <TriggerEditorPanel 
@@ -263,6 +266,11 @@ const App: React.FC = () => {
         onSave={handleSaveTrigger}
         triggerToEdit={editingTrigger}
       />}
+
+      <SequenceEditor
+        isOpen={isSequenceEditorOpen}
+        onClose={() => setSequenceEditorOpen(false)}
+      />
 
       {isContextDebugPanelOpen && <ContextStoreDebugPanel
         onClose={() => setContextDebugPanelOpen(false)}
