@@ -15,16 +15,21 @@ import 'reactflow/dist/style.css';
 import { useAppContext } from '../../contexts/AppContext';
 import { ActionDefinition, ActionParam } from '../../../plugin-api/actions';
 import ActionNode from './ActionNode'; // Import the custom node
+import ManualStartNode from './ManualStartNode';
 
 // Define node types for React Flow
 const nodeTypes = {
   actionNode: ActionNode,
+  manualStartNode: ManualStartNode,
 };
 
 interface SequenceEditorProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+import { ActionNodeModel } from '../../../core/sequence/ActionNodeModel';
+import { ManualStartNodeModel } from '../../../core/sequence/ManualStartNodeModel';
 
 let id = 0;
 const getId = () => `dndnode_${id++}`;
@@ -44,52 +49,55 @@ const SequenceEditorComponent: React.FC = () => {
   }, [actionRegistry]);
 
   const handleSave = useCallback(async () => {
-    const flow = toObject();
-    try {
-      const result = await window.electronAPI.saveSequence(JSON.stringify(flow, null, 2));
-      if (result.success) {
-        console.log('시퀀스가 성공적으로 저장되었습니다:', result.filePath);
-        // TODO: 사용자에게 성공 피드백 제공
-      } else if (!result.canceled) {
-        console.error('시퀀스 저장 실패:', result.error);
-        // TODO: 사용자에게 오류 피드백 제공
-      }
-    } catch (error) {
-      console.error('시퀀스 저장 중 예외 발생:', error);
-    }
+    // TODO: The new node data (class instances) are not serializable by default.
+    // We need to implement a custom serialization method (e.g., toJSON) on BaseNode
+    // and its children before saving.
+    alert("저장 기능은 리팩토링 중입니다. BaseNode의 직렬화 구현이 필요합니다.");
+    // const flow = toObject();
+    // try {
+    //   const result = await window.electronAPI.saveSequence(JSON.stringify(flow, null, 2));
+    //   if (result.success) {
+    //     console.log('시퀀스가 성공적으로 저장되었습니다:', result.filePath);
+    //   } else if (!result.canceled) {
+    //     console.error('시퀀스 저장 실패:', result.error);
+    //   }
+    // } catch (error) {
+    //   console.error('시퀀스 저장 중 예외 발생:', error);
+    // }
   }, [toObject]);
 
   const handleLoad = useCallback(async () => {
-    try {
-      const result = await window.electronAPI.loadSequence();
-      if (result.success && result.data) {
-        const flow = JSON.parse(result.data);
-        if (flow && flow.nodes && flow.edges) {
-          setNodes(flow.nodes || []);
-          setEdges(flow.edges || []);
-          console.log('시퀀스를 성공적으로 불러왔습니다.');
-          // TODO: 불러온 후 view fit 등 처리
-        } else {
-           console.error('잘못된 시퀀스 파일 형식입니다.');
-        }
-      } else if (!result.canceled) {
-        console.error('시퀀스 불러오기 실패:', result.error);
-      }
-    } catch (error) {
-      console.error('시퀀스 불러오기 중 예외 발생:', error);
-    }
+    // TODO: The deserialization logic also needs to be implemented to
+    // recreate the class instances from the JSON data.
+    alert("불러오기 기능은 리팩토링 중입니다. 직렬화된 데이터로부터 노드 모델 인스턴스를 재구성하는 로직이 필요합니다.");
+    // try {
+    //   const result = await window.electronAPI.loadSequence();
+    //   if (result.success && result.data) {
+    //     const flow = JSON.parse(result.data);
+    //     if (flow && flow.nodes && flow.edges) {
+    //       setNodes(flow.nodes || []);
+    //       setEdges(flow.edges || []);
+    //       console.log('시퀀스를 성공적으로 불러왔습니다.');
+    //     } else {
+    //        console.error('잘못된 시퀀스 파일 형식입니다.');
+    //     }
+    //   } else if (!result.canceled) {
+    //     console.error('시퀀스 불러오기 실패:', result.error);
+    //   }
+    // } catch (error) {
+    //   console.error('시퀀스 불러오기 중 예외 발생:', error);
+    // }
   }, [setNodes, setEdges]);
 
   const handleRun = useCallback(() => {
     if (!sequenceEngine) {
       console.error("SequenceEngine is not initialized.");
-      // TODO: Show error to user
       return;
     }
     console.log("Running sequence from editor...");
-    const flow = toObject();
-    sequenceEngine.run(flow.nodes, flow.edges);
-  }, [sequenceEngine, toObject]);
+    // We don't need to use toObject() anymore, we can pass the state directly
+    sequenceEngine.run(nodes, edges);
+  }, [sequenceEngine, nodes, edges]);
 
   const onConnect = useCallback((params: Connection) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
 
@@ -105,17 +113,32 @@ const SequenceEditorComponent: React.FC = () => {
       if (!reactflowData) return;
 
       const droppedData = JSON.parse(reactflowData);
-      const actionDef = actions.find(a => a.name === droppedData.name);
-      if (!actionDef) return;
-
       const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+      const newNodeId = getId();
       
-      const newNode: Node = {
-        id: getId(),
-        type: 'actionNode', // Use our custom node type
-        position,
-        data: { definition: actionDef }, // Pass the full definition to the node
-      };
+      let newNode: Node;
+
+      if (droppedData.type === 'manualStartNode') {
+        newNode = {
+          id: newNodeId,
+          type: 'manualStartNode',
+          position,
+          data: new ManualStartNodeModel(newNodeId), // 모델 인스턴스 생성
+        };
+      } else if (droppedData.type === 'actionNode') {
+        const actionDef = actions.find(a => a.name === droppedData.name);
+        if (!actionDef) return;
+        
+        newNode = {
+          id: newNodeId,
+          type: 'actionNode',
+          position,
+          data: new ActionNodeModel(newNodeId, actionDef), // 모델 인스턴스 생성
+        };
+      } else {
+        return; // 알 수 없는 노드 타입
+      }
+
       setNodes((nds) => nds.concat(newNode));
     },
     [screenToFlowPosition, setNodes, actions],
@@ -124,26 +147,19 @@ const SequenceEditorComponent: React.FC = () => {
   const isValidConnection = (connection: Connection) => {
     const sourceNode = nodes.find(node => node.id === connection.source);
     const targetNode = nodes.find(node => node.id === connection.target);
+    if (!sourceNode || !targetNode) return false;
 
-    if (!sourceNode || !targetNode) {
-      return false;
-    }
+    const sourceInstance = sourceNode.data as BaseNode;
+    const targetInstance = targetNode.data as BaseNode;
+    if (!sourceInstance || !targetInstance) return false;
 
-    const getHandleType = (node: Node, handleId: string | null) => {
-      if (handleId === 'exec-in' || handleId === 'exec-out') {
-        return 'execution';
-      }
-      // For data handles, find the corresponding parameter
-      const param = node.data.definition?.params.find((p: ActionParam) => p.name === handleId);
-      return param ? param.type : null;
-    };
+    const sourcePort = sourceInstance.outputs.find(p => p.name === connection.sourceHandle);
+    const targetPort = targetInstance.inputs.find(p => p.name === connection.targetHandle);
 
-    const sourceType = getHandleType(sourceNode, connection.sourceHandle);
-    const targetType = getHandleType(targetNode, connection.targetHandle);
+    if (!sourcePort || !targetPort) return false;
     
-    console.log(`Connecting ${sourceType} to ${targetType}`);
-
-    return sourceType !== null && sourceType === targetType;
+    // 같은 타입의 포트끼리만 연결 허용
+    return sourcePort.type === targetPort.type;
   };
 
   return (
@@ -163,8 +179,8 @@ const SequenceEditorComponent: React.FC = () => {
           onConnect={onConnect}
           onDrop={onDrop}
           onDragOver={onDragOver}
-          isValidConnection={isValidConnection} // Add the validation logic
-          nodeTypes={nodeTypes} // Register the custom node
+          isValidConnection={isValidConnection}
+          nodeTypes={nodeTypes}
           fitView
         >
           <Background />

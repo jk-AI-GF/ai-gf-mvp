@@ -23,6 +23,26 @@ const Sidebar: React.FC<SidebarProps> = ({ actions }) => {
       background: '#2a2a2a',
       overflowY: 'auto',
     }}>
+      <h3 style={{ color: '#eee', textAlign: 'center', marginBottom: '15px' }}>Event Nodes</h3>
+      <div
+        onDragStart={(event) => onDragStart(event, 'manualStartNode', 'Manual Start')}
+        draggable
+        style={{
+          padding: '10px 15px',
+          margin: '0 10px 10px 10px',
+          background: '#2E7D32',
+          color: '#fff',
+          border: '1px solid #1B5E20',
+          borderRadius: '5px',
+          cursor: 'grab',
+          textAlign: 'center',
+        }}
+      >
+        Manual Start
+      </div>
+
+      <hr style={{ borderColor: '#444', margin: '20px 10px' }} />
+
       <h3 style={{ color: '#eee', textAlign: 'center', marginBottom: '15px' }}>Action Nodes</h3>
       {actions.map((action) => (
         <div
