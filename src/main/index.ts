@@ -86,6 +86,35 @@ ipcMain.handle('fs:exists', async (event, filePath: string) => {
   }
 });
 
+ipcMain.handle('list-directory', async (event, dirPath: string, basePath: 'assets' | 'userData') => {
+  try {
+    let fullPath: string;
+    let rootPath: string;
+
+    if (basePath === 'userData') {
+      rootPath = getUserDataPath();
+      fullPath = resolveUserDataPath(dirPath);
+    } else { // 'assets'
+      rootPath = getAssetsPath();
+      fullPath = resolveAssetsPath(dirPath);
+    }
+
+    // Security check
+    if (!fullPath.startsWith(rootPath)) {
+      throw new Error(`Security violation: Attempted to access directory outside of the allowed path: ${dirPath}`);
+    }
+
+    const files = await fsp.readdir(fullPath);
+    return { files }; // Return in the expected object format
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      return { files: [] }; // Directory not found is not a critical error, return empty list
+    }
+    console.error(`[IPC:list-directory] Error listing directory ${dirPath}:`, error);
+    return { error: error.message }; // Return error in the expected object format
+  }
+});
+
 
 const createOverlayWindow = (): void => {
   const primaryDisplay = screen.getPrimaryDisplay();

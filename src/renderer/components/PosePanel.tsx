@@ -45,8 +45,38 @@ const PosePanel: React.FC<PosePanelProps> = ({ onClose, initialPos, onDragEnd })
   }, []);
 
   useEffect(() => {
+    const fetchPoses = async () => {
+      setError(null);
+      try {
+        // Fetch from both userdata and assets
+        const [userResult, assetsResult] = await Promise.all([
+          window.electronAPI.listDirectory('poses', 'userData'),
+          window.electronAPI.listDirectory('Pose', 'assets')
+        ]);
+
+        if (userResult.error || assetsResult.error) {
+          const errorMessage = userResult.error || assetsResult.error;
+          console.error('Error fetching poses:', errorMessage);
+          throw new Error('포즈 목록을 불러오는 중 오류가 발생했습니다.');
+        }
+
+        // Combine and deduplicate file lists
+        const combinedFiles = new Set([...(userResult.files || []), ...(assetsResult.files || [])]);
+        const vrmaFiles = Array.from(combinedFiles).filter((file: string) => file.toLowerCase().endsWith('.vrma'));
+        
+        setPoseFiles(vrmaFiles);
+
+        if (vrmaFiles.length === 0) {
+          setError('저장된 포즈 파일(.vrma)이 없습니다.');
+        }
+      } catch (err) {
+        console.error('Failed to list poses:', err);
+        setError(err.message || '알 수 없는 오류가 발생했습니다.');
+      }
+    };
+
     fetchPoses();
-  }, [fetchPoses]);
+  }, []);
 
   const handlePoseClick = (fileName: string) => {
     if (pluginManager) {
