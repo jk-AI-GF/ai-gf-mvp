@@ -13,8 +13,13 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { useAppContext } from '../../contexts/AppContext';
-import { ActionDefinition } from '../../../plugin-api/actions';
-import Sidebar from './Sidebar';
+import { ActionDefinition, ActionParam } from '../../../plugin-api/actions';
+import ActionNode from './ActionNode'; // Import the custom node
+
+// Define node types for React Flow
+const nodeTypes = {
+  actionNode: ActionNode,
+};
 
 interface SequenceEditorProps {
   isOpen: boolean;
@@ -51,18 +56,47 @@ const SequenceEditorComponent: React.FC = () => {
       const reactflowData = event.dataTransfer.getData('application/reactflow');
       if (!reactflowData) return;
 
-      const data = JSON.parse(reactflowData);
+      const droppedData = JSON.parse(reactflowData);
+      const actionDef = actions.find(a => a.name === droppedData.name);
+      if (!actionDef) return;
+
       const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+      
       const newNode: Node = {
         id: getId(),
-        type: 'default',
+        type: 'actionNode', // Use our custom node type
         position,
-        data: { label: `${data.name} Node` },
+        data: { definition: actionDef }, // Pass the full definition to the node
       };
       setNodes((nds) => nds.concat(newNode));
     },
-    [screenToFlowPosition, setNodes],
+    [screenToFlowPosition, setNodes, actions],
   );
+
+  const isValidConnection = (connection: Connection) => {
+    const sourceNode = nodes.find(node => node.id === connection.source);
+    const targetNode = nodes.find(node => node.id === connection.target);
+
+    if (!sourceNode || !targetNode) {
+      return false;
+    }
+
+    const getHandleType = (node: Node, handleId: string | null) => {
+      if (handleId === 'exec-in' || handleId === 'exec-out') {
+        return 'execution';
+      }
+      // For data handles, find the corresponding parameter
+      const param = node.data.definition?.params.find((p: ActionParam) => p.name === handleId);
+      return param ? param.type : null;
+    };
+
+    const sourceType = getHandleType(sourceNode, connection.sourceHandle);
+    const targetType = getHandleType(targetNode, connection.targetHandle);
+    
+    console.log(`Connecting ${sourceType} to ${targetType}`);
+
+    return sourceType !== null && sourceType === targetType;
+  };
 
   return (
     <div style={{ display: 'flex', height: '100%' }}>
@@ -76,6 +110,8 @@ const SequenceEditorComponent: React.FC = () => {
           onConnect={onConnect}
           onDrop={onDrop}
           onDragOver={onDragOver}
+          isValidConnection={isValidConnection} // Add the validation logic
+          nodeTypes={nodeTypes} // Register the custom node
           fitView
         >
           <Background />
@@ -86,6 +122,8 @@ const SequenceEditorComponent: React.FC = () => {
     </div>
   );
 };
+
+// --- The rest of the file remains the same ---
 
 const FullScreenModal: React.FC<{ children: React.ReactNode; onClose: () => void }> = ({ children, onClose }) => (
     <div style={{
@@ -130,5 +168,8 @@ const SequenceEditor: React.FC<SequenceEditorProps> = (props) => {
     </FullScreenModal>
   );
 };
+
+// Need to re-import Sidebar for the main component
+import Sidebar from './Sidebar';
 
 export default SequenceEditor;
