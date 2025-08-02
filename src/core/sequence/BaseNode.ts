@@ -6,9 +6,12 @@ import { PluginContext } from "../../plugin-api/plugin-context";
 export interface IPort {
     name: string;
     // 'execution'은 실행 흐름, 나머지는 데이터 타입을 나타냅니다.
-    type: 'execution' | 'string' | 'number' | 'boolean' | 'any';
+    // ActionParamType을 포함하도록 확장되었습니다.
+    type: 'execution' | 'string' | 'number' | 'boolean' | 'enum' | 'any';
     // 'in'은 입력, 'out'은 출력 포트를 의미합니다.
     direction: 'in' | 'out';
+    // enum 타입일 경우, 선택 가능한 옵션
+    options?: string[];
 }
 
 /**
@@ -37,4 +40,9 @@ export abstract class BaseNode {
         context: PluginContext,
         inputs: Record<string, any>
     ): Promise<{ nextExec?: string; outputs: Record<string, any> }>;
+
+    /**
+     * 현재 노드의 모든 상태를 복사한 새로운 인스턴스를 반환합니다.
+     */
+    abstract clone(): BaseNode;
 }

@@ -30,6 +30,7 @@ interface SequenceEditorProps {
 
 import { ActionNodeModel } from '../../../core/sequence/ActionNodeModel';
 import { ManualStartNodeModel } from '../../../core/sequence/ManualStartNodeModel';
+import { BaseNode, IPort } from '../../../core/sequence/BaseNode';
 
 let id = 0;
 const getId = () => `dndnode_${id++}`;
@@ -153,8 +154,8 @@ const SequenceEditorComponent: React.FC = () => {
     const targetInstance = targetNode.data as BaseNode;
     if (!sourceInstance || !targetInstance) return false;
 
-    const sourcePort = sourceInstance.outputs.find(p => p.name === connection.sourceHandle);
-    const targetPort = targetInstance.inputs.find(p => p.name === connection.targetHandle);
+    const sourcePort = sourceInstance.outputs.find((p: IPort) => p.name === connection.sourceHandle);
+    const targetPort = targetInstance.inputs.find((p: IPort) => p.name === connection.targetHandle);
 
     if (!sourcePort || !targetPort) return false;
     

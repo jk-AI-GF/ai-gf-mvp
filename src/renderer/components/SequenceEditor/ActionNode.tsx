@@ -2,17 +2,7 @@ import React, { memo, useCallback } from 'react';
 import { Handle, Position, NodeProps, useReactFlow, useStoreApi } from 'reactflow';
 import { ActionNodeModel } from '../../../core/sequence/ActionNodeModel';
 import { IPort } from '../../../core/sequence/BaseNode';
-
-// 포트의 데이터 타입에 따라 색상을 반환하는 헬퍼 함수
-const getPortColor = (type: IPort['type']) => {
-  switch (type) {
-    case 'string': return '#e6db74'; // Yellow
-    case 'number': return '#a6e22e'; // Green
-    case 'boolean': return '#f92672'; // Red
-    case 'execution': return '#ffffff'; // White
-    default: return '#ae81ff'; // Purple for 'any'
-  }
-};
+import { getPortColor } from './node-style-utils';
 
 // 노드 내부의 입력 필드 컴포넌트
 const EmbeddedInput = ({ param, value, onParamChange }: { param: IPort, value: any, onParamChange: (val: any) => void }) => {
@@ -45,16 +35,16 @@ const ActionNode: React.FC<NodeProps<ActionNodeModel>> = ({ id, data }) => {
   const store = useStoreApi();
 
   const onParamChange = useCallback((paramName: string, value: any) => {
-    data.setParamValue(paramName, value);
-    // React Flow에 노드 데이터가 변경되었음을 알려 리렌더링을 유발합니다.
-    // 불변성을 유지하며 노드 목록을 업데이트합니다.
+    // 불변성을 유지하기 위해 노드 데이터를 직접 수정하지 않고 복제합니다.
+    const newModel = data.clone() as ActionNodeModel;
+    newModel.setParamValue(paramName, value);
+
     const { nodeInternals } = store.getState();
     setNodes(
       Array.from(nodeInternals.values()).map((node) => {
         if (node.id === id) {
-          // 데이터 객체 내부의 속성이 변경되었으므로, React Flow가 변경을 감지하도록
-          // 새로운 데이터 객체를 생성하여 할당합니다.
-          return { ...node, data: { ...node.data } };
+          // 복제된 새 모델 인스턴스로 데이터를 교체합니다.
+          return { ...node, data: newModel };
         }
         return node;
       })

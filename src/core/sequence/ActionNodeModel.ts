@@ -5,7 +5,7 @@ import { ActionDefinition } from "../../plugin-api/actions";
 export class ActionNodeModel extends BaseNode {
     public readonly actionDefinition: ActionDefinition;
     // 노드 내부에 저장될 파라미터 값
-    public paramValues: Record<string, any> = {};
+    public paramValues: Record<string, any>;
 
     constructor(id: string, actionDefinition: ActionDefinition) {
         const inputs: IPort[] = [
@@ -15,20 +15,31 @@ export class ActionNodeModel extends BaseNode {
             { name: 'exec-out', type: 'execution', direction: 'out' }
         ];
 
+        // super()를 호출하기 위해 먼저 inputs 배열을 구성합니다.
         if (actionDefinition.params) {
             actionDefinition.params.forEach(param => {
                 inputs.push({
                     name: param.name,
                     type: param.type,
-                    direction: 'in'
+                    direction: 'in',
+                    options: param.options, // enum 옵션 추가
                 });
-                // 파라미터의 기본값으로 paramValues 초기화
-                this.paramValues[param.name] = param.defaultValue ?? this.getDefaultValueForType(param.type);
             });
         }
         
+        // 'this'에 접근하기 전에 super()를 먼저 호출해야 합니다.
         super(id, actionDefinition.description || actionDefinition.name, inputs, outputs);
+
+        // super() 호출 후 'this'에 안전하게 접근할 수 있습니다.
         this.actionDefinition = actionDefinition;
+        this.paramValues = {};
+
+        // paramValues를 초기화합니다.
+        if (actionDefinition.params) {
+            actionDefinition.params.forEach(param => {
+                this.paramValues[param.name] = param.defaultValue ?? this.getDefaultValueForType(param.type);
+            });
+        }
     }
 
     /**
@@ -71,6 +82,14 @@ export class ActionNodeModel extends BaseNode {
             console.error(`Error executing action "${actionName}" on node ${this.id}:`, error);
         }
 
+        // 다음 노드로 실행을 넘기도록 신호를 보냅니다.
         return { nextExec: 'exec-out', outputs: {} };
+    }
+
+    clone(): BaseNode {
+        const newInstance = new ActionNodeModel(this.id, this.actionDefinition);
+        // 내장 파라미터 값을 깊은 복사하여 새로운 인스턴스에 할당합니다.
+        newInstance.paramValues = JSON.parse(JSON.stringify(this.paramValues));
+        return newInstance;
     }
 }

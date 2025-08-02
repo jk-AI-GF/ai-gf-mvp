@@ -17,4 +17,8 @@ export class ManualStartNodeModel extends BaseNode {
         // 별도의 데이터를 생성하지 않고, 'exec-out' 포트로 실행 신호를 보냅니다.
         return { nextExec: 'exec-out', outputs: {} };
     }
+
+    clone(): BaseNode {
+        return new ManualStartNodeModel(this.id);
+    }
 }
