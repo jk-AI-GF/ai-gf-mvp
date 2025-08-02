@@ -65,6 +65,10 @@ import { CustomTrigger } from '../core/custom-trigger-manager';
   getCustomTriggers: (): Promise<CustomTrigger[]> => ipcRenderer.invoke('get-custom-triggers'),
   saveCustomTrigger: (trigger: CustomTrigger) => ipcRenderer.invoke('save-custom-trigger', trigger),
   deleteCustomTrigger: (triggerId: string) => ipcRenderer.invoke('delete-custom-trigger', triggerId),
+
+  // --- Sequence API ---
+  saveSequence: (sequenceData: string) => ipcRenderer.invoke('save-sequence', sequenceData),
+  loadSequence: () => ipcRenderer.invoke('load-sequence'),
 };
 
 console.log('Preload script loaded.');

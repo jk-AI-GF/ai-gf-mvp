@@ -212,7 +212,7 @@ app.on('ready', async () => {
   // Ensure userdata directories exist on startup
   try {
     const userDataPath = getUserDataPath();
-    const requiredDirs = ['vrm', 'poses', 'mods', 'animations', 'persona', 'triggers'];
+    const requiredDirs = ['vrm', 'poses', 'mods', 'animations', 'persona', 'triggers', 'sequences'];
     for (const dir of requiredDirs) {
       fs.mkdirSync(path.join(userDataPath, dir), { recursive: true });
     }
@@ -310,6 +310,69 @@ app.on('ready', async () => {
         return { success: true, message: 'File not found, considered deleted.' };
       }
       return { success: false, error: error.message };
+    }
+  });
+
+  // --- Sequences ---
+  ipcMain.handle('save-sequence', async (event, sequenceData: string) => {
+    if (mainWindow) mainWindow.setAlwaysOnTop(false);
+    try {
+      const { canceled, filePath } = await dialog.showSaveDialog({
+        title: '시퀀스 저장',
+        defaultPath: path.join(getUserDataPath(), 'sequences', `sequence-${Date.now()}.json`),
+        filters: [
+          { name: 'JSON Files', extensions: ['json'] },
+          { name: 'All Files', extensions: ['*'] }
+        ]
+      });
+
+      if (canceled || !filePath) {
+        return { success: false, canceled: true };
+      }
+
+      await fsp.writeFile(filePath, sequenceData, 'utf-8');
+      return { success: true, filePath };
+    } catch (error) {
+      console.error('Failed to save sequence:', error);
+      return { success: false, error: error.message };
+    } finally {
+       if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.hide();
+        mainWindow.show();
+        mainWindow.setAlwaysOnTop(true, 'screen-saver');
+      }
+    }
+  });
+
+  ipcMain.handle('load-sequence', async () => {
+    if (mainWindow) mainWindow.setAlwaysOnTop(false);
+    try {
+      const { canceled, filePaths } = await dialog.showOpenDialog({
+        title: '시퀀스 불러오기',
+        defaultPath: path.join(getUserDataPath(), 'sequences'),
+        filters: [
+          { name: 'JSON Files', extensions: ['json'] },
+          { name: 'All Files', extensions: ['*'] },
+        ],
+        properties: ['openFile'],
+      });
+
+      if (canceled || filePaths.length === 0) {
+        return { success: false, canceled: true };
+      }
+
+      const filePath = filePaths[0];
+      const data = await fsp.readFile(filePath, 'utf-8');
+      return { success: true, data, filePath };
+    } catch (error) {
+      console.error('Failed to load sequence:', error);
+      return { success: false, error: error.message };
+    } finally {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.hide();
+        mainWindow.show();
+        mainWindow.setAlwaysOnTop(true, 'screen-saver');
+      }
     }
   });
 

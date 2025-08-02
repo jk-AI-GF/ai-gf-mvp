@@ -80,6 +80,10 @@ declare global {
       getCustomTriggers: () => Promise<CustomTrigger[]>;
       saveCustomTrigger: (trigger: CustomTrigger) => Promise<{ success: boolean; error?: string }>;
       deleteCustomTrigger: (triggerId: string) => Promise<{ success: boolean; error?: string }>;
+
+      // --- Sequence API ---
+      saveSequence: (sequenceData: string) => Promise<{ success: boolean; canceled: boolean; filePath?: string; error?: string }>;
+      loadSequence: () => Promise<{ success: boolean; canceled: boolean; data?: string; filePath?: string; error?: string }>;
     };
   }
 }

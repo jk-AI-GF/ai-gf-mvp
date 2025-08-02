@@ -30,11 +30,11 @@ let id = 0;
 const getId = () => `dndnode_${id++}`;
 
 const SequenceEditorComponent: React.FC = () => {
-  const { actionRegistry } = useAppContext();
+  const { actionRegistry, sequenceEngine } = useAppContext();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, toObject } = useReactFlow();
   const [actions, setActions] = useState<ActionDefinition[]>([]);
 
   useEffect(() => {
@@ -42,6 +42,54 @@ const SequenceEditorComponent: React.FC = () => {
       setActions(actionRegistry.getAllActionDefinitions());
     }
   }, [actionRegistry]);
+
+  const handleSave = useCallback(async () => {
+    const flow = toObject();
+    try {
+      const result = await window.electronAPI.saveSequence(JSON.stringify(flow, null, 2));
+      if (result.success) {
+        console.log('시퀀스가 성공적으로 저장되었습니다:', result.filePath);
+        // TODO: 사용자에게 성공 피드백 제공
+      } else if (!result.canceled) {
+        console.error('시퀀스 저장 실패:', result.error);
+        // TODO: 사용자에게 오류 피드백 제공
+      }
+    } catch (error) {
+      console.error('시퀀스 저장 중 예외 발생:', error);
+    }
+  }, [toObject]);
+
+  const handleLoad = useCallback(async () => {
+    try {
+      const result = await window.electronAPI.loadSequence();
+      if (result.success && result.data) {
+        const flow = JSON.parse(result.data);
+        if (flow && flow.nodes && flow.edges) {
+          setNodes(flow.nodes || []);
+          setEdges(flow.edges || []);
+          console.log('시퀀스를 성공적으로 불러왔습니다.');
+          // TODO: 불러온 후 view fit 등 처리
+        } else {
+           console.error('잘못된 시퀀스 파일 형식입니다.');
+        }
+      } else if (!result.canceled) {
+        console.error('시퀀스 불러오기 실패:', result.error);
+      }
+    } catch (error) {
+      console.error('시퀀스 불러오기 중 예외 발생:', error);
+    }
+  }, [setNodes, setEdges]);
+
+  const handleRun = useCallback(() => {
+    if (!sequenceEngine) {
+      console.error("SequenceEngine is not initialized.");
+      // TODO: Show error to user
+      return;
+    }
+    console.log("Running sequence from editor...");
+    const flow = toObject();
+    sequenceEngine.run(flow.nodes, flow.edges);
+  }, [sequenceEngine, toObject]);
 
   const onConnect = useCallback((params: Connection) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
 
@@ -101,7 +149,12 @@ const SequenceEditorComponent: React.FC = () => {
   return (
     <div style={{ display: 'flex', height: '100%' }}>
       <Sidebar actions={actions} />
-      <div style={{ flex: 1, height: '100%' }} ref={reactFlowWrapper}>
+      <div style={{ flex: 1, height: '100%', position: 'relative' }} ref={reactFlowWrapper}>
+        <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 10, display: 'flex', gap: '10px' }}>
+          <button onClick={handleRun} className="button-run" style={{background: '#4CAF50', color: 'white'}}>실행</button>
+          <button onClick={handleSave} className="button-primary">저장</button>
+          <button onClick={handleLoad} className="button-secondary">불러오기</button>
+        </div>
         <ReactFlow
           nodes={nodes}
           edges={edges}
