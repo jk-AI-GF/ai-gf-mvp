@@ -5,15 +5,38 @@ import { ManualStartNodeModel } from './ManualStartNodeModel';
 import { EventNodeModel } from './EventNodeModel';
 
 interface ActiveSequence {
-  nodes: Node[];
+  nodes: Node<BaseNode>[];
   edges: Edge[];
   listeners: (() => void)[];
 }
 
+/**
+ * 시퀀스 실행의 단일 인스턴스에 대한 컨텍스트를 관리합니다.
+ * 노드 간 데이터 흐름을 위해 모든 노드의 출력 값을 저장합니다.
+ */
+class ExecutionContext {
+  // 키: `${nodeId}-${outputHandleName}`, 값: 실제 데이터
+  private outputValues: Map<string, any> = new Map();
+
+  setValue(nodeId: string, handleName: string, value: any): void {
+    const key = `${nodeId}-${handleName}`;
+    this.outputValues.set(key, value);
+    console.log(`[ExecutionContext] Set value for ${key}:`, value);
+  }
+
+  getValue(nodeId: string, handleName: string): any {
+    const key = `${nodeId}-${handleName}`;
+    if (!this.outputValues.has(key)) {
+      // console.warn(`[ExecutionContext] Value for ${key} not found.`);
+      return undefined;
+    }
+    return this.outputValues.get(key);
+  }
+}
+
+
 export class SequenceEngine {
   private pluginContext: PluginContext;
-  private nodeMap: Map<string, Node> = new Map();
-  private edgeMap: Map<string, Edge[]> = new Map();
   
   // filePath를 키로 사용하여 활성화된 시퀀스와 리스너를 관리합니다.
   private activeSequences: Map<string, ActiveSequence> = new Map();
@@ -25,19 +48,11 @@ export class SequenceEngine {
     this.pluginContext = pluginContext;
   }
 
-  /**
-   * 특정 시퀀스를 활성화하고 이벤트 리스너를 등록합니다.
-   * @param sequenceId 고유한 시퀀스 식별자 (예: 파일 경로)
-   * @param nodes 시퀀스의 노드
-   * @param edges 시퀀스의 엣지
-   */
-  public activateSequence(sequenceId: string, nodes: Node[], edges: Edge[]): void {
+  public activateSequence(sequenceId: string, nodes: Node<BaseNode>[], edges: Edge[]): void {
     if (this.activeSequences.has(sequenceId)) {
-      console.warn(`[SequenceEngine] Sequence '${sequenceId}' is already active. Deactivating before reactivating.`);
       this.deactivateSequence(sequenceId);
     }
 
-    this.buildMaps(nodes, edges); // 임시로 전체 맵을 사용. 개별 맵으로 변경 필요
     const eventNodes = nodes.filter(n => n.data instanceof EventNodeModel);
     const newListeners: (() => void)[] = [];
 
@@ -47,6 +62,7 @@ export class SequenceEngine {
       const eventModel = node.data as EventNodeModel;
       const unsubscribe = this.pluginContext.eventBus.on(eventModel.eventName as any, (payload: any) => {
         console.log(`[SequenceEngine] Event '${eventModel.eventName}' triggered for sequence '${sequenceId}'.`);
+        // 이벤트가 발생하면, 페이로드와 함께 새로운 실행을 시작합니다.
         this.executeFrom(node, payload, nodes, edges);
       });
       newListeners.push(unsubscribe);
@@ -55,10 +71,6 @@ export class SequenceEngine {
     this.activeSequences.set(sequenceId, { nodes, edges, listeners: newListeners });
   }
 
-  /**
-   * 특정 시퀀스를 비활성화하고 이벤트 리스너를 해제합니다.
-   * @param sequenceId 비활성화할 시퀀스의 식별자
-   */
   public deactivateSequence(sequenceId: string): void {
     const sequence = this.activeSequences.get(sequenceId);
     if (sequence) {
@@ -68,16 +80,8 @@ export class SequenceEngine {
     }
   }
 
-  /**
-   * Manually runs a sequence from all ManualStartNodes.
-   * This is typically used for testing in the editor.
-   * @param nodes The nodes of the sequence graph.
-   * @param edges The edges of the sequence graph.
-   */
-  public async runManual(nodes: Node[], edges: Edge[]): Promise<void> {
+  public async runManual(nodes: Node<BaseNode>[], edges: Edge[]): Promise<void> {
     console.log('[SequenceEngine] Running sequence manually...');
-    this.buildMaps(nodes, edges);
-
     const startNodes = nodes.filter(n => n.data instanceof ManualStartNodeModel);
 
     if (startNodes.length === 0) {
@@ -88,53 +92,69 @@ export class SequenceEngine {
     await Promise.all(startNodes.map(startNode => this.executeFrom(startNode, {}, nodes, edges)));
   }
 
-  private buildMaps(nodes: Node[], edges: Edge[]) {
-    this.nodeMap.clear();
-    this.edgeMap.clear();
-    nodes.forEach(n => this.nodeMap.set(n.id, n));
-    edges.forEach(e => {
-      if (!this.edgeMap.has(e.source)) {
-        this.edgeMap.set(e.source, []);
+  private async executeFrom(startNode: Node<BaseNode>, initialOutputs: Record<string, any>, sequenceNodes: Node<BaseNode>[], sequenceEdges: Edge[]): Promise<void> {
+    const executionContext = new ExecutionContext();
+    const nodeMap = new Map(sequenceNodes.map(n => [n.id, n]));
+    
+    // 데이터 엣지만 따로 맵으로 만들어 입력 값 계산 시 사용
+    const dataEdgesByTarget: Map<string, Edge[]> = new Map();
+    sequenceEdges.forEach(edge => {
+      if (edge.targetHandle && edge.targetHandle !== 'exec-in') {
+        const edges = dataEdgesByTarget.get(edge.target) || [];
+        edges.push(edge);
+        dataEdgesByTarget.set(edge.target, edges);
       }
-      this.edgeMap.get(e.source)!.push(e);
-    });
-  }
-
-  private async executeFrom(startNode: Node, initialOutputs: Record<string, any>, sequenceNodes: Node[], sequenceEdges: Edge[]): Promise<void> {
-    // 실행 시점의 맵을 해당 시퀀스의 노드/엣지로만 구성
-    const localNodeMap = new Map(sequenceNodes.map(n => [n.id, n]));
-    const localEdgeMap: Map<string, Edge[]> = new Map();
-    sequenceEdges.forEach(e => {
-      if (!localEdgeMap.has(e.source)) {
-        localEdgeMap.set(e.source, []);
-      }
-      localEdgeMap.get(e.source)!.push(e);
     });
 
+    // 실행 큐: 다음에 실행할 노드를 관리
+    const executionQueue: Node<BaseNode>[] = [startNode];
+    
+    // 초기값(이벤트 페이로드 등)을 컨텍스트에 저장
+    for (const key in initialOutputs) {
+      executionContext.setValue(startNode.id, key, initialOutputs[key]);
+    }
 
-    const executeNode = async (currentNode: Node, currentInputs: Record<string, any>) => {
-      const nodeInstance = currentNode.data as BaseNode;
-      if (!nodeInstance || typeof nodeInstance.execute !== 'function') {
-        console.error(`Node ${currentNode.id} does not have a valid BaseNode instance.`);
-        return;
+    while (executionQueue.length > 0) {
+      const currentNode = executionQueue.shift()!;
+      const nodeInstance = currentNode.data;
+
+      // 1. 입력 데이터 계산
+      const dataInputs: Record<string, any> = {};
+      const connectedDataEdges = dataEdgesByTarget.get(currentNode.id) || [];
+      
+      for (const edge of connectedDataEdges) {
+        const sourceValue = executionContext.getValue(edge.source, edge.sourceHandle!);
+        if (sourceValue !== undefined) {
+          dataInputs[edge.targetHandle!] = sourceValue;
+        }
       }
 
-      console.log(`Executing node: ${currentNode.id} (${nodeInstance.name})`);
+      // 2. 노드 실행
+      console.log(`[SequenceEngine] Executing node: ${currentNode.id} (${nodeInstance.name}) with inputs:`, dataInputs);
+      const result = await nodeInstance.execute(this.pluginContext, dataInputs);
 
-      const result = await nodeInstance.execute(this.pluginContext, currentInputs);
+      // 3. 출력 데이터 저장
+      if (result.outputs) {
+        for (const outputName in result.outputs) {
+          executionContext.setValue(currentNode.id, outputName, result.outputs[outputName]);
+        }
+      }
 
+      // 4. 다음 실행 노드 큐에 추가
       if (result.nextExec) {
-        const nextEdge = localEdgeMap.get(currentNode.id)?.find(e => e.sourceHandle === result.nextExec);
-        if (nextEdge) {
-          const nextNode = localNodeMap.get(nextEdge.target);
+        const nextExecutionEdge = sequenceEdges.find(
+          e => e.source === currentNode.id && e.sourceHandle === result.nextExec
+        );
+
+        if (nextExecutionEdge) {
+          const nextNode = nodeMap.get(nextExecutionEdge.target);
           if (nextNode) {
-            await executeNode(nextNode, result.outputs);
+            executionQueue.push(nextNode);
           }
         }
       }
-    };
-
-    await executeNode(startNode, initialOutputs);
+    }
+    console.log('[SequenceEngine] Execution finished.');
   }
 }
 

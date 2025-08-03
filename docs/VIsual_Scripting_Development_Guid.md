@@ -188,3 +188,52 @@ Node Graph나 오브젝트 시스템은 점진적으로 붙여도 됨.
 
 이처럼 `dynamicOptions`는 중앙화된 로직을 통해 다양한 파라미터에 동적 드롭다운 UI를 간결하고 확장 가능하게 구현하는 방법을 제공합니다.
 
+---
+
+## 데이터 흐름(Data Flow) 구현
+
+단순히 실행 순서만 연결하는 것을 넘어, 한 노드의 실행 결과를 다른 노드의 입력으로 사용하는 데이터 흐름 기능을 구현하여 시퀀스의 표현력을 극대화합니다. 예를 들어, `getContext` 액션으로 가져온 값을 `showMessage` 액션의 메시지로 전달할 수 있습니다.
+
+### 구현 원리
+
+1.  **액션 반환 값 정의 (`returnType`)**:
+    *   `src/plugin-api/actions.ts`의 `ActionDefinition` 인터페이스에 `returnType?: 'string' | 'number' | 'boolean' | 'any'` 필드를 추가합니다.
+    *   `action-registrar.ts`에서 값을 반환하는 액션(예: `getContext`)을 등록할 때, 이 `returnType`을 명시해줍니다.
+    *   `ActionNodeModel`은 이 `returnType`을 보고, 노드에 `returnValue`라는 이름의 출력 데이터 포트(Output Data Port)를 동적으로 생성합니다.
+
+2.  **실행 엔진(SequenceEngine) v2**:
+    *   **ExecutionContext**: 시퀀스가 한 번 실행되는 동안, 모든 노드의 출력값을 저장하는 `ExecutionContext` 클래스를 도입합니다. 이 컨텍스트는 `Map`을 사용하여 `"{nodeId}-{outputHandleName}"` 형태의 키로 각 포트의 출력값을 관리합니다.
+    *   **데이터 중심 실행**: `SequenceEngine`의 실행 로직을 재귀 방식에서 큐(Queue) 기반의 `while` 루프로 변경합니다.
+        1.  **입력 계산**: 노드를 실행하기 직전, 해당 노드의 모든 입력 데이터 포트에 연결된 엣지를 찾습니다.
+        2.  **값 조회**: `ExecutionContext`에서 엣지 출발점의 출력값을 조회합니다.
+        3.  **입력 전달**: 조회한 값들을 모아 현재 노드의 `execute` 메소드에 `inputs` 인자로 전달합니다.
+        4.  **출력 저장**: 노드 실행이 끝나면, `execute`가 반환한 `outputs` 객체(`{ returnValue: ... }`)를 `ExecutionContext`에 기록하여 다음 노드가 사용할 수 있도록 합니다.
+
+### 구현 예시: `getContext`의 결과를 `showMessage`로 전달하기
+
+1.  **`action-registrar.ts` 수정**:
+    `getContext` 액션 정의에 `returnType: 'any'`를 추가합니다.
+
+    ```typescript
+    // ...
+    {
+      name: 'getContext',
+      description: '전역 컨텍스트에서 값을 가져옵니다.',
+      params: [{ name: 'key', type: 'string', description: '가져올 키' }],
+      returnType: 'any', // 반환 값 타입 명시
+    },
+    // ...
+    ```
+
+2.  **`ActionNodeModel.ts` 수정**:
+    *   생성자에서 `actionDefinition.returnType`이 있으면, `outputs` 배열에 `returnValue` 데이터 포트를 추가합니다.
+    *   `execute` 메소드에서, 실제 액션 함수(`context.actions[...]`)를 실행한 후 반환된 값을 `{ returnValue: actionResult }` 형태로 `outputs` 객체에 담아 반환합니다.
+
+3.  **시퀀스 에디터에서 연결**:
+    *   이제 시퀀스 에디터에서 `getContext` 노드를 보면 `returnValue`라는 출력 포트가 생긴 것을 확인할 수 있습니다.
+    *   이 `returnValue` 포트와 `showMessage` 노드의 `message` 입력 포트를 엣지로 연결합니다.
+
+4.  **실행**:
+    *   시퀀스가 실행되면, `SequenceEngine`은 `getContext`의 결과를 `ExecutionContext`에 저장합니다.
+    *   그 다음 `showMessage` 노드를 실행할 때, `message` 입력에 `getContext`의 결과가 연결된 것을 확인하고, `ExecutionContext`에서 해당 값을 가져와 `showMessage`의 입력으로 전달합니다. 결과적으로 `getContext`가 가져온 값이 화면에 메시지로 표시됩니다.
+

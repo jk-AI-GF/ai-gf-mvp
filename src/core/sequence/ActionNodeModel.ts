@@ -33,6 +33,15 @@ export class ActionNodeModel extends BaseNode {
                 });
             });
         }
+
+        // actionDefinition에서 returnType을 확인하고 출력 포트를 추가합니다.
+        if (actionDefinition.returnType) {
+            outputs.push({
+                name: 'returnValue', // 반환 값 포트의 고정된 이름
+                type: actionDefinition.returnType,
+                direction: 'out',
+            });
+        }
         
         // 'this'에 접근하기 전에 super()를 먼저 호출해야 합니다.
         super(id, actionDefinition.description || actionDefinition.name, inputs, outputs);
@@ -81,16 +90,24 @@ export class ActionNodeModel extends BaseNode {
 
         // 최종 파라미터 계산: 연결된 입력값이 있으면 그것을 사용하고, 없으면 내장된 값을 사용
         const finalParams = { ...this.paramValues, ...connectedInputs };
+        
+        const outputs: Record<string, any> = {};
 
         console.log(`Executing action: ${actionName} with final params:`, finalParams);
         try {
-            await action(finalParams);
+            // 액션을 실행하고 반환 값을 받습니다.
+            const actionResult = await action(finalParams);
+            
+            // 반환 값이 있고, 액션 정의에 returnType이 명시되어 있다면 outputs에 저장합니다.
+            if (this.actionDefinition.returnType && actionResult !== undefined) {
+                outputs['returnValue'] = actionResult;
+            }
         } catch (error) {
             console.error(`Error executing action "${actionName}" on node ${this.id}:`, error);
         }
 
         // 다음 노드로 실행을 넘기도록 신호를 보냅니다.
-        return { nextExec: 'exec-out', outputs: {} };
+        return { nextExec: 'exec-out', outputs };
     }
 
     clone(): BaseNode {

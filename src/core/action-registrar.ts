@@ -232,6 +232,7 @@ export function registerCoreActions(
         name: 'getContext',
         description: '전역 컨텍스트에서 값을 가져옵니다.',
         params: [{ name: 'key', type: 'string', description: '가져올 키' }],
+        returnType: 'any',
     },
     (key: string) => {
         return window.electronAPI.invoke('context:get', key);
