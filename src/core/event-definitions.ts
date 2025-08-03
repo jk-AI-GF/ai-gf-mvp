@@ -22,20 +22,36 @@ export interface EventDefinition {
 }
 
 export const EVENT_DEFINITIONS: EventDefinition[] = [
+  // Chat
   {
     name: 'chat:newMessage',
     description: '새 채팅 메시지 수신',
     payloadSchema: [
-        { key: 'role', type: 'string', description: '메시지 발신자' },
+        { key: 'role', type: 'string', description: '메시지 발신자 (user, assistant)' },
         { key: 'text', type: 'string', description: '메시지 내용' }
     ],
   },
   {
+    name: 'llm:responseReceived',
+    description: 'LLM 응답 수신',
+    payloadSchema: [
+        { key: 'text', type: 'string', description: '응답 텍스트' },
+        { key: 'expression', type: 'string', description: '추천 표정' }
+    ],
+  },
+  // VRM
+  {
     name: 'vrm:loaded',
     description: 'VRM 모델 로드 완료',
     payloadSchema: [
-        // 현재 복잡한 객체는 지원하지 않으므로, 필요한 단순 데이터만 정의합니다.
+        // { key: 'vrm', type: 'any', description: '로드된 VRM 객체' }, // 복잡한 객체는 일단 제외
+        { key: 'expressionNames', type: 'any', description: '표정 이름 목록 (string[])' },
     ],
+  },
+  {
+    name: 'vrm:unloaded',
+    description: 'VRM 모델 언로드',
+    payloadSchema: [],
   },
   {
     name: 'vrm:animationFinished',
@@ -51,11 +67,86 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
         { key: 'poseName', type: 'string', description: '적용된 포즈 이름' }
     ],
   },
+  // Interaction
   {
     name: 'character_part_clicked',
     description: '캐릭터 신체 부위 클릭',
     payloadSchema: [
         { key: 'partName', type: 'string', description: '클릭된 부위 이름' }
     ],
+  },
+  {
+    name: 'character_part_right_clicked',
+    description: '캐릭터 신체 부위 우클릭',
+    payloadSchema: [
+        { key: 'partName', type: 'string', description: '우클릭된 부위 이름' }
+    ],
+  },
+  // UI
+  {
+    name: 'ui:showFloatingMessage',
+    description: '플로팅 메시지 표시',
+    payloadSchema: [
+        { key: 'text', type: 'string', description: '표시할 메시지' },
+        { key: 'duration', type: 'number', description: '표시 시간(초)' }
+    ],
+  },
+  {
+    name: 'ui:updateFloatingMessagePosition',
+    description: '플로팅 메시지 위치 업데이트',
+    payloadSchema: [
+        { key: 'left', type: 'number', description: 'x 좌표' },
+        { key: 'top', type: 'number', description: 'y 좌표' },
+        { key: 'visible', type: 'boolean', description: '표시 여부' }
+    ],
+  },
+  {
+    name: 'ui:editModeToggled',
+    description: '편집 모드 활성/비활성',
+    payloadSchema: [
+        { key: 'isEditMode', type: 'boolean', description: '편집 모드 여부' }
+    ],
+  },
+  // Camera
+  {
+    name: 'camera:setMode',
+    description: '카메라 모드 설정',
+    payloadSchema: [
+        { key: 'mode', type: 'string', description: '카메라 모드 (orbit, fixed)' }
+    ],
+  },
+  {
+    name: 'camera:modeChanged',
+    description: '카메라 모드 변경됨',
+    payloadSchema: [
+        { key: 'mode', type: 'string', description: '변경된 카메라 모드 (follow, free)' }
+    ],
+  },
+  // System
+  {
+    name: 'system:mouse-ignore-toggle',
+    description: '마우스 이벤트 무시 전환',
+    payloadSchema: [
+        { key: 'isIgnoring', type: 'boolean', description: '무시 여부' }
+    ],
+  },
+  {
+    name: 'plugin:enabled',
+    description: '플러그인 활성화됨',
+    payloadSchema: [
+        { key: 'pluginName', type: 'string', description: '플러그인 이름' }
+    ],
+  },
+  {
+    name: 'plugin:disabled',
+    description: '플러그인 비활성화됨',
+    payloadSchema: [
+        { key: 'pluginName', type: 'string', description: '플러그인 이름' }
+    ],
+  },
+  {
+    name: 'sequences-updated',
+    description: '시퀀스 목록 업데이트됨',
+    payloadSchema: [],
   },
 ];

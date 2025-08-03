@@ -15,7 +15,15 @@ export interface SerializedOperatorNodeData {
     operator: Operator;
 }
 
-const OPERATOR_CONFIG = {
+// IPort['type']을 사용하여 IPort의 type 속성과 동일한 타입을 사용하도록 명시
+type PortType = IPort['type'];
+
+interface OperatorConfig {
+    inputs: { name: string; type: PortType }[];
+    output: { name: string; type: PortType };
+}
+
+const OPERATOR_CONFIG: Record<Operator, OperatorConfig> = {
     // Math
     '+': { inputs: [{ name: 'a', type: 'number' }, { name: 'b', type: 'number' }], output: { name: 'result', type: 'number' } },
     '-': { inputs: [{ name: 'a', type: 'number' }, { name: 'b', type: 'number' }], output: { name: 'result', type: 'number' } },

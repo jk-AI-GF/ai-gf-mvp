@@ -325,7 +325,11 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
   return (
     <div style={{ display: 'flex', height: '100%' }}>
       <Sidebar actions={actions} events={events} />
-      <div style={{ flex: 1, height: '100%', position: 'relative' }} ref={reactFlowWrapper}>
+      <div 
+        style={{ flex: 1, height: '100%', position: 'relative' }} 
+        ref={reactFlowWrapper}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 10, display: 'flex', gap: '10px' }}>
           <button onClick={handleRun} className="button-run" style={{background: '#4CAF50', color: 'white'}}>실행</button>
           <button onClick={handleSave} className="button-primary">저장</button>
@@ -342,6 +346,8 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
           isValidConnection={isValidConnection}
           nodeTypes={nodeTypes}
           defaultEdgeOptions={defaultEdgeOptions}
+          panOnDrag={[1, 2]}
+          selectionOnDrag={true}
           fitView
         >
           <Background />
