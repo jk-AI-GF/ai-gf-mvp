@@ -21,7 +21,13 @@ export interface ActionParam {
   options?: string[]; // for 'enum' type
   description?: string;
   validation?: (value: any) => boolean | string;
+  dynamicOptions?: 'animations' | string; // UI 힌트: 이 파라미터의 옵션을 동적으로 가져와야 함
 }
+
+/**
+ * 액션이 반환할 수 있는 데이터 타입을 정의합니다.
+ */
+export type ActionReturnType = 'string' | 'number' | 'boolean' | 'any';
 
 /**
  * 단일 액션의 정의입니다. UI에서 이 정보를 사용하여 동적으로 폼을 생성합니다.
@@ -30,6 +36,7 @@ export interface ActionDefinition {
   name: string; // keyof Actions 대신 string으로 변경
   description: string;
   params: ActionParam[];
+  returnType?: ActionReturnType; // 액션의 반환 값 타입
 }
 
 /**

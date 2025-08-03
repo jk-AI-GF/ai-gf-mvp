@@ -28,6 +28,7 @@ export function registerCoreActions(
           name: 'animationName', 
           type: 'string', 
           description: '애니메이션 파일 이름',
+          dynamicOptions: 'animations', // UI 힌트 추가
           validation: (value: any) => (typeof value === 'string' && value.trim() !== '') || '애니메이션 이름은 필수입니다.'
         },
         { name: 'loop', type: 'boolean', defaultValue: false, description: '반복 여부' },
@@ -64,7 +65,7 @@ export function registerCoreActions(
         { name: 'duration', type: 'number', defaultValue: 5, description: '표시 시간(초)' },
       ],
     },
-    (message: string, duration?: number) => {
+    ({ message, duration }: { message: string; duration?: number }) => {
       eventBus.emit('ui:showFloatingMessage', { text: message, duration });
     }
   );

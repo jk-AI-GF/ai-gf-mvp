@@ -12,6 +12,8 @@ export interface IPort {
     direction: 'in' | 'out';
     // enum 타입일 경우, 선택 가능한 옵션
     options?: string[];
+    // UI 힌트: 이 포트의 옵션을 동적으로 가져와야 함
+    dynamicOptions?: 'animations' | string;
 }
 
 /**

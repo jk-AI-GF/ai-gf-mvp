@@ -1,16 +1,66 @@
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useState, useEffect } from 'react';
 import { Handle, Position, NodeProps, useReactFlow, useStoreApi } from 'reactflow';
 import { ActionNodeModel } from '../../../core/sequence/ActionNodeModel';
 import { IPort } from '../../../core/sequence/BaseNode';
 import { getPortColor } from './node-style-utils';
 
+// 동적 옵션을 위한 드롭다운 컴포넌트
+const DynamicSelectInput = ({ value, onParamChange }: { value: any, onParamChange: (val: any) => void }) => {
+  const [options, setOptions] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAnimations = async () => {
+      try {
+        const [userResult, assetsResult] = await Promise.all([
+          window.electronAPI.listDirectory('animations', 'userData'),
+          window.electronAPI.listDirectory('Animation', 'assets')
+        ]);
+
+        if (userResult.error || assetsResult.error) {
+          throw new Error(userResult.error || assetsResult.error);
+        }
+
+        const combinedFiles = new Set([...(userResult.files || []), ...(assetsResult.files || [])]);
+        const animFiles = Array.from(combinedFiles).filter((file: string) => 
+          file.toLowerCase().endsWith('.vrma') || file.toLowerCase().endsWith('.fbx')
+        );
+        setOptions(animFiles);
+      } catch (err) {
+        console.error('Failed to fetch animation files for dropdown:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAnimations();
+  }, []);
+
+  if (isLoading) {
+    return <select style={inputStyle} disabled><option>로딩 중...</option></select>;
+  }
+
+  return (
+    <select value={value} onChange={e => onParamChange(e.target.value)} style={inputStyle}>
+      <option value="">-- 애니메이션 선택 --</option>
+      {options.map(file => <option key={file} value={file}>{file}</option>)}
+    </select>
+  );
+};
+
+
 // 노드 내부의 입력 필드 컴포넌트
 const EmbeddedInput = ({ param, value, onParamChange }: { param: IPort, value: any, onParamChange: (val: any) => void }) => {
+  // 동적 옵션 힌트 확인
+  if (param.dynamicOptions === 'animations') {
+    return <DynamicSelectInput value={value} onParamChange={onParamChange} />;
+  }
+
   switch (param.type) {
     case 'string':
-      return <input type="text" value={value} onChange={e => onParamChange(e.target.value)} style={inputStyle} />;
+      return <input type="text" value={value || ''} onChange={e => onParamChange(e.target.value)} style={inputStyle} />;
     case 'number':
-      return <input type="number" value={value} onChange={e => onParamChange(parseFloat(e.target.value) || 0)} style={inputStyle} />;
+      return <input type="number" value={value || 0} onChange={e => onParamChange(parseFloat(e.target.value) || 0)} style={inputStyle} />;
     case 'boolean':
       return <input type="checkbox" checked={!!value} onChange={e => onParamChange(e.target.checked)} style={{ marginLeft: '5px' }} />;
     default:

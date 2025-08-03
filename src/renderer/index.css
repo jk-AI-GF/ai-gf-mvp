@@ -86,14 +86,14 @@ body {
 }
 
 /* 기본 연결선 스타일 */
-.react-flow__edge-path {
-  stroke: #555;
-  stroke-width: 2px;
+.react-flow__edge-path, .react-flow__connection-path {
+  stroke: #555 !important;
+  stroke-width: 2px !important;
 }
 
 /* 선택된 연결선 하이라이트 */
 .react-flow__edge.selected .react-flow__edge-path {
-  stroke: #FFC107;
-  stroke-width: 3px;
+  stroke: #FFC107 !important;
+  stroke-width: 3px !important;
 }
 

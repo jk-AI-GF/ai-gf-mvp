@@ -29,6 +29,7 @@ export class ActionNodeModel extends BaseNode {
                     type: param.type,
                     direction: 'in',
                     options: param.options, // enum 옵션 추가
+                    dynamicOptions: param.dynamicOptions,
                 });
             });
         }

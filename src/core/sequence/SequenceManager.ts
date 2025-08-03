@@ -182,8 +182,8 @@ export class SequenceManager {
         const data = sNode.data;
         let model: BaseNode;
 
-        switch (data.nodeType) {
-          case 'ActionNodeModel':
+        switch (sNode.type) {
+          case 'actionNode':
             const actionDef = this.actionRegistry.getActionDefinition(data.actionName);
             if (!actionDef) {
               console.error(`Action "${data.actionName}" not found in registry. Cannot load node ${sNode.id}.`);
@@ -196,11 +196,11 @@ export class SequenceManager {
             model = actionModel;
             break;
           
-          case 'ManualStartNodeModel':
+          case 'manualStartNode':
             model = new ManualStartNodeModel(sNode.id);
             break;
 
-          case 'EventNodeModel':
+          case 'eventNode':
             const eventDef = EVENT_DEFINITIONS.find(e => e.name === data.eventName);
             if (!eventDef) {
               console.error(`Event "${data.eventName}" not found in definitions. Cannot load node ${sNode.id}.`);
@@ -210,7 +210,7 @@ export class SequenceManager {
             break;
 
           default:
-            console.error(`Unknown node type "${data.nodeType}" for node ${sNode.id}.`);
+            console.error(`Unknown node type "${sNode.type}" for node ${sNode.id}.`);
             return null;
         }
 

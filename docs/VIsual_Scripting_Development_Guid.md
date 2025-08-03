@@ -138,3 +138,53 @@ UI는 나중에 붙이기 때문에,
 
 Node Graph나 오브젝트 시스템은 점진적으로 붙여도 됨.
 
+---
+
+## 동적 파라미터 UI 구현 (`dynamicOptions`)
+
+시퀀스 에디터의 사용성을 높이기 위해, 특정 액션 파라미터의 값을 사용자가 직접 입력하는 대신 시스템에 등록된 목록(예: 애니메이션, 포즈)에서 선택하게 할 수 있습니다. 이를 위해 `dynamicOptions` 속성을 사용합니다.
+
+### 구현 원리
+
+1.  **액션 정의에 힌트 추가**: `src/core/action-registrar.ts`의 액션 정의에서, 동적 목록이 필요한 파라미터에 `dynamicOptions: 'key'`를 추가합니다. 이 `key`는 UI가 어떤 종류의 데이터를 가져와야 하는지 알려주는 식별자입니다.
+
+2.  **UI 컴포넌트에서 힌트 감지**: `ActionNode.tsx`와 같은 UI 컴포넌트는 노드를 렌더링할 때 파라미터에 `dynamicOptions` 속성이 있는지 확인합니다.
+
+3.  **데이터 로딩 및 드롭다운 렌더링**:
+    *   속성이 감지되면, 일반 입력 필드 대신 드롭다운(`<select>`) 컴포넌트를 렌더링합니다.
+    *   `dynamicOptions`의 `key` 값(예: 'animations')에 따라 `window.electronAPI`의 적절한 함수를 호출하여 데이터 목록을 비동기적으로 가져옵니다.
+    *   가져온 목록을 드롭다운의 옵션으로 채웁니다.
+
+### 구현 예시: `playAnimation` 액션
+
+`playAnimation` 액션의 `animationName` 파라미터에 사용 가능한 애니메이션 파일 목록을 드롭다운으로 제공하는 과정입니다.
+
+1.  **`action-registrar.ts` 수정**:
+    `playAnimation` 액션의 `animationName` 파라미터에 `dynamicOptions: 'animations'`를 추가합니다.
+
+    ```typescript
+    // ...
+    {
+      name: 'animationName',
+      type: 'string',
+      description: '애니메이션 파일 이름',
+      dynamicOptions: 'animations', // UI 힌트 추가
+      validation: (value: any) => (typeof value === 'string' && value.trim() !== '') || '애니메이션 이름은 필수입니다.'
+    },
+    // ...
+    ```
+
+2.  **`ActionNode.tsx` 수정**:
+    *   `EmbeddedInput` 컴포넌트 내에서 `param.dynamicOptions === 'animations'`인지 확인합니다.
+    *   true일 경우, `window.electronAPI.listDirectory`를 호출하여 `userdata/animations`와 `assets/Animation` 폴더의 파일 목록을 가져오는 `DynamicSelectInput`과 같은 별도의 컴포넌트를 렌더링합니다.
+    *   가져온 파일 목록(.vrma, .fbx)을 드롭다운 메뉴에 표시합니다.
+
+### 확장성: `setPose` 액션에 적용하기
+
+이 구조는 다른 액션에도 쉽게 확장할 수 있습니다. 예를 들어, `setPose` 액션의 `poseName` 파라미터에 사용 가능한 포즈 목록을 제공하고 싶다면 다음과 같이 진행할 수 있습니다.
+
+1.  **액션 정의 수정**: `action-registrar.ts`에서 `setPose` 액션의 `poseName` 파라미터에 `dynamicOptions: 'poses'` 힌트를 추가합니다.
+2.  **UI 컴포넌트 확장**: `ActionNode.tsx`의 `DynamicSelectInput` 컴포넌트(또는 유사한 컴포넌트)가 `'poses'` 키를 인식하도록 확장합니다. `'poses'` 키가 감지되면 `userdata/poses` 폴더에서 `.vrma` 파일을 가져오도록 로직을 추가하면 됩니다.
+
+이처럼 `dynamicOptions`는 중앙화된 로직을 통해 다양한 파라미터에 동적 드롭다운 UI를 간결하고 확장 가능하게 구현하는 방법을 제공합니다.
+
