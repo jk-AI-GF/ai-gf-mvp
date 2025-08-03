@@ -2,7 +2,9 @@ import { Node, Edge } from 'reactflow';
 import { PluginContext } from '../../plugin-api/plugin-context';
 import { BaseNode } from './BaseNode';
 import { ManualStartNodeModel } from './ManualStartNodeModel';
+import { ActionNodeModel } from './ActionNodeModel';
 import { EventNodeModel } from './EventNodeModel';
+import { LiteralNodeModel } from './LiteralNodeModel';
 
 interface ActiveSequence {
   nodes: Node<BaseNode>[];
@@ -106,6 +108,18 @@ export class SequenceEngine {
       }
     });
 
+    // 데이터 전용 노드(예: LiteralNode)를 미리 실행하여 컨텍스트에 값을 채웁니다.
+    for (const node of sequenceNodes) {
+      if (node.data instanceof LiteralNodeModel) {
+        const result = await node.data.execute(this.pluginContext, {});
+        if (result.outputs) {
+          for (const outputName in result.outputs) {
+            executionContext.setValue(node.id, outputName, result.outputs[outputName]);
+          }
+        }
+      }
+    }
+
     // 실행 큐: 다음에 실행할 노드를 관리
     const executionQueue: Node<BaseNode>[] = [startNode];
     
@@ -129,9 +143,16 @@ export class SequenceEngine {
         }
       }
 
+      // 내장 파라미터 값과 연결된 입력 값을 병합합니다.
+      // 연결된 값(dataInputs)이 내장 값보다 우선순위가 높습니다.
+      let finalInputs = dataInputs;
+      if (nodeInstance instanceof ActionNodeModel) {
+        finalInputs = { ...nodeInstance.paramValues, ...dataInputs };
+      }
+
       // 2. 노드 실행
-      console.log(`[SequenceEngine] Executing node: ${currentNode.id} (${nodeInstance.name}) with inputs:`, dataInputs);
-      const result = await nodeInstance.execute(this.pluginContext, dataInputs);
+      console.log(`[SequenceEngine] Executing node: ${currentNode.id} (${nodeInstance.name}) with inputs:`, finalInputs);
+      const result = await nodeInstance.execute(this.pluginContext, finalInputs);
 
       // 3. 출력 데이터 저장
       if (result.outputs) {

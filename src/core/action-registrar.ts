@@ -245,8 +245,8 @@ export function registerCoreActions(
       description: '콘솔에 디버그 메시지를 출력합니다.',
       params: [{ name: 'message', type: 'any', description: '출력할 메시지' }],
     },
-    (params: { message: any }) => {
-      console.log('[SEQUENCE DEBUG]', params.message);
+    (message: any) => {
+      console.log('[SEQUENCE DEBUG]', message);
     }
   );
 }

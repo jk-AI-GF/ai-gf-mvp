@@ -91,12 +91,15 @@ export class ActionNodeModel extends BaseNode {
         // 최종 파라미터 계산: 연결된 입력값이 있으면 그것을 사용하고, 없으면 내장된 값을 사용
         const finalParams = { ...this.paramValues, ...connectedInputs };
         
+        // 액션 정의에 따라 파라미터 순서를 맞춰 배열로 변환
+        const args = this.actionDefinition.params.map(p => finalParams[p.name]);
+
         const outputs: Record<string, any> = {};
 
-        console.log(`Executing action: ${actionName} with final params:`, finalParams);
+        console.log(`Executing action: ${actionName} with final params:`, finalParams, 'and args:', args);
         try {
             // 액션을 실행하고 반환 값을 받습니다.
-            const actionResult = await action(finalParams);
+            const actionResult = await action(...args);
             
             // 반환 값이 있고, 액션 정의에 returnType이 명시되어 있다면 outputs에 저장합니다.
             if (this.actionDefinition.returnType && actionResult !== undefined) {

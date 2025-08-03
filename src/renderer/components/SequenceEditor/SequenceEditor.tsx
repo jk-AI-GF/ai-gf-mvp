@@ -308,7 +308,8 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
 
     if (!sourcePort || !targetPort) return false;
     
-    return sourcePort.type === targetPort.type;
+    // 'any' 타입의 입력 포트는 모든 타입의 출력을 받을 수 있도록 허용
+    return targetPort.type === 'any' || sourcePort.type === targetPort.type;
   };
 
   return (

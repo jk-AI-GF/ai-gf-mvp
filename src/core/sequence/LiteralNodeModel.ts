@@ -71,7 +71,6 @@ export class LiteralNodeModel extends BaseNode {
 
     clone(): BaseNode {
         const newInstance = new LiteralNodeModel(this.id, this.dataType, this.value);
-        newInstance.value = JSON.parse(JSON.stringify(this.value));
         return newInstance;
     }
 

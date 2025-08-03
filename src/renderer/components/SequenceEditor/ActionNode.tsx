@@ -57,6 +57,7 @@ const EmbeddedInput = ({ param, value, onParamChange }: { param: IPort, value: a
   }
 
   switch (param.type) {
+    case 'any':
     case 'string':
       return <input type="text" value={value || ''} onChange={e => onParamChange(e.target.value)} style={inputStyle} />;
     case 'number':
