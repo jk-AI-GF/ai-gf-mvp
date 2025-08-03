@@ -28,6 +28,7 @@ const nodeTypes = {
 interface SequenceEditorProps {
   isOpen: boolean;
   onClose: () => void;
+  sequenceToLoad?: string | null;
 }
 
 import { ActionNodeModel } from '../../../core/sequence/ActionNodeModel';
@@ -35,6 +36,7 @@ import { ManualStartNodeModel } from '../../../core/sequence/ManualStartNodeMode
 import { EventNodeModel } from '../../../core/sequence/EventNodeModel';
 import { BaseNode, IPort } from '../../../core/sequence/BaseNode';
 import { EVENT_DEFINITIONS, EventDefinition } from '../../../core/event-definitions';
+import eventBus from '../../../core/event-bus';
 
 let id = 0;
 const getId = () => `dndnode_${id++}`;
@@ -68,7 +70,7 @@ interface SerializedSequence {
 }
 
 
-const SequenceEditorComponent: React.FC = () => {
+const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClose: () => void }> = ({ sequenceToLoad, onClose }) => {
   const { actionRegistry, sequenceEngine } = useAppContext();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -77,12 +79,86 @@ const SequenceEditorComponent: React.FC = () => {
   const [actions, setActions] = useState<ActionDefinition[]>([]);
   const [events, setEvents] = useState<EventDefinition[]>([]);
 
-  // Setup sequence engine listeners whenever nodes or edges change
-  useEffect(() => {
-    if (sequenceEngine) {
-      sequenceEngine.setup(nodes, edges);
+  const loadSequenceData = useCallback((sequenceJsonString: string) => {
+    const serializedSequence: SerializedSequence = JSON.parse(sequenceJsonString);
+    if (!serializedSequence || !serializedSequence.nodes || !serializedSequence.edges) {
+      console.error('잘못된 시퀀스 파일 형식입니다.');
+      return;
     }
-  }, [nodes, edges, sequenceEngine]);
+
+    const newNodes: Node[] = serializedSequence.nodes.map((sNode) => {
+      let model: BaseNode;
+      const data = sNode.data;
+
+      switch (data.nodeType) {
+        case 'ActionNodeModel':
+          const actionDef = actionRegistry.getActionDefinition(data.actionName);
+          if (!actionDef) {
+            console.error(`Action "${data.actionName}" not found in registry. Cannot load node ${sNode.id}.`);
+            return null;
+          }
+          const actionModel = new ActionNodeModel(sNode.id, actionDef);
+          if (data.paramValues) {
+            actionModel.paramValues = data.paramValues;
+          }
+          model = actionModel;
+          break;
+        
+        case 'ManualStartNodeModel':
+          model = new ManualStartNodeModel(sNode.id);
+          break;
+
+        case 'EventNodeModel':
+          const eventDef = EVENT_DEFINITIONS.find(e => e.name === data.eventName);
+          if (!eventDef) {
+            console.error(`Event "${data.eventName}" not found in definitions. Cannot load node ${sNode.id}.`);
+            return null;
+          }
+          model = new EventNodeModel(sNode.id, eventDef);
+          break;
+
+        default:
+          console.error(`Unknown node type "${data.nodeType}" for node ${sNode.id}.`);
+          return null;
+      }
+
+      return {
+        id: sNode.id,
+        type: sNode.type,
+        position: sNode.position,
+        data: model,
+      };
+    }).filter(Boolean) as Node[];
+
+    setNodes(newNodes);
+    setEdges(serializedSequence.edges);
+
+    setTimeout(() => {
+      fitView();
+    }, 50);
+
+    console.log('시퀀스를 성공적으로 불러왔습니다.');
+  }, [setNodes, setEdges, actionRegistry, fitView]);
+
+  // Auto-load sequence if sequenceToLoad is provided
+  useEffect(() => {
+    if (sequenceToLoad) {
+      const load = async () => {
+        try {
+          const filePath = await window.electronAPI.resolvePath('userData', `sequences/${sequenceToLoad}`);
+          const sequenceJSON = await window.electronAPI.readAbsoluteFile(filePath);
+          if (sequenceJSON instanceof ArrayBuffer) {
+            loadSequenceData(new TextDecoder().decode(sequenceJSON));
+          } else {
+            console.error(`Failed to read sequence file for editing: ${sequenceToLoad}`, sequenceJSON.error);
+          }
+        } catch (error) {
+          console.error(`Error auto-loading sequence ${sequenceToLoad}:`, error);
+        }
+      };
+      load();
+    }
+  }, [sequenceToLoad, loadSequenceData]);
 
   useEffect(() => {
     if (actionRegistry) {
@@ -114,6 +190,7 @@ const SequenceEditorComponent: React.FC = () => {
       const result = await window.electronAPI.saveSequence(JSON.stringify(serializedSequence, null, 2));
       if (result.success) {
         console.log('시퀀스가 성공적으로 저장되었습니다:', result.filePath);
+        eventBus.emit('sequences-updated');
       } else if (!result.canceled) {
         console.error('시퀀스 저장 실패:', result.error);
       }
@@ -125,76 +202,15 @@ const SequenceEditorComponent: React.FC = () => {
   const handleLoad = useCallback(async () => {
     try {
       const result = await window.electronAPI.loadSequence();
-      if (!result.success || !result.data) {
-        if (result.error) {
-          console.error('시퀀스 불러오기 실패:', result.error);
-        }
-        return;
+      if (result.success && result.data) {
+        loadSequenceData(result.data);
+      } else if (result.error) {
+        console.error('시퀀스 불러오기 실패:', result.error);
       }
-
-      const serializedSequence: SerializedSequence = JSON.parse(result.data);
-      if (!serializedSequence || !serializedSequence.nodes || !serializedSequence.edges) {
-        console.error('잘못된 시퀀스 파일 형식입니다.');
-        return;
-      }
-
-      const newNodes: Node[] = serializedSequence.nodes.map((sNode) => {
-        let model: BaseNode;
-        const data = sNode.data;
-
-        switch (data.nodeType) {
-          case 'ActionNodeModel':
-            const actionDef = actionRegistry.getActionDefinition(data.actionName);
-            if (!actionDef) {
-              console.error(`Action "${data.actionName}" not found in registry. Cannot load node ${sNode.id}.`);
-              return null;
-            }
-            const actionModel = new ActionNodeModel(sNode.id, actionDef);
-            if (data.paramValues) {
-              actionModel.paramValues = data.paramValues;
-            }
-            model = actionModel;
-            break;
-          
-          case 'ManualStartNodeModel':
-            model = new ManualStartNodeModel(sNode.id);
-            break;
-
-          case 'EventNodeModel':
-            const eventDef = EVENT_DEFINITIONS.find(e => e.name === data.eventName);
-            if (!eventDef) {
-              console.error(`Event "${data.eventName}" not found in definitions. Cannot load node ${sNode.id}.`);
-              return null;
-            }
-            model = new EventNodeModel(sNode.id, eventDef);
-            break;
-
-          default:
-            console.error(`Unknown node type "${data.nodeType}" for node ${sNode.id}.`);
-            return null;
-        }
-
-        return {
-          id: sNode.id,
-          type: sNode.type,
-          position: sNode.position,
-          data: model,
-        };
-      }).filter(Boolean) as Node[];
-
-      setNodes(newNodes);
-      setEdges(serializedSequence.edges);
-
-      setTimeout(() => {
-        fitView();
-      }, 50);
-
-      console.log('시퀀스를 성공적으로 불러왔습니다.');
-
     } catch (error) {
       console.error('시퀀스 불러오기 중 예외 발생:', error);
     }
-  }, [setNodes, setEdges, actionRegistry, fitView]);
+  }, [loadSequenceData]);
 
   const handleRun = useCallback(() => {
     if (!sequenceEngine) {
@@ -348,7 +364,7 @@ const SequenceEditor: React.FC<SequenceEditorProps> = (props) => {
   return (
     <FullScreenModal onClose={props.onClose}>
       <ReactFlowProvider>
-        <SequenceEditorComponent />
+        <SequenceEditorComponent sequenceToLoad={props.sequenceToLoad} onClose={props.onClose} />
       </ReactFlowProvider>
     </FullScreenModal>
   );

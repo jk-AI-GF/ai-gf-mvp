@@ -21,6 +21,12 @@ import UIModeNotification from './components/UIModeNotification';
 import eventBus from '../core/event-bus';
 import { useAppContext } from './contexts/AppContext';
 import { CustomTrigger } from '../core/custom-trigger-manager';
+import { Node } from 'reactflow';
+import { BaseNode } from '../core/sequence/BaseNode';
+import { ActionNodeModel } from '../core/sequence/ActionNodeModel';
+import { ManualStartNodeModel } from '../core/sequence/ManualStartNodeModel';
+import { EventNodeModel } from '../core/sequence/EventNodeModel';
+import { EVENT_DEFINITIONS } from '../core/event-definitions';
 
 interface Message {
   role: string;
@@ -30,7 +36,8 @@ interface Message {
 const App: React.FC = () => {
   const { 
     chatService, isUiInteractive, persona, llmSettings, pluginManager, 
-    actionRegistry, // Get the fully initialized registry from context
+    actionRegistry,
+    sequenceEngine,
   } = useAppContext();
 
   const [isSettingsModalOpen, setSettingsModalOpen] = useState(false);
@@ -47,18 +54,195 @@ const App: React.FC = () => {
   const [isTriggerEditorPanelOpen, setTriggerEditorPanelOpen] = useState(false);
   const [isContextDebugPanelOpen, setContextDebugPanelOpen] = useState(false);
   const [isSequenceEditorOpen, setSequenceEditorOpen] = useState(false);
+  const [sequenceToEdit, setSequenceToEdit] = useState<string | null>(null);
   
   const [customTriggers, setCustomTriggers] = useState<CustomTrigger[]>([]);
   const [editingTrigger, setEditingTrigger] = useState<CustomTrigger | null>(null);
-
+  
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [notification, setNotification] = useState({ show: false, message: '' });
+  const [activeSequences, setActiveSequences] = useState<string[]>([]);
+  const [allSequences, setAllSequences] = useState<string[]>([]);
   const isInitialMount = useRef(true);
+
+  const fetchAllSequences = async () => {
+    try {
+      const sequenceFiles = await window.electronAPI.getSequences();
+      setAllSequences(sequenceFiles);
+    } catch (error) {
+      console.error("Failed to fetch sequences:", error);
+    }
+  };
+
+  const handleDeleteSequence = async (sequenceFile: string) => {
+    const confirmed = window.confirm(`'${sequenceFile}' 시퀀스를 정말로 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`);
+    if (!confirmed) return;
+
+    const result = await window.electronAPI.deleteSequence(sequenceFile);
+    if (result.success) {
+      console.log(`Sequence ${sequenceFile} deleted successfully.`);
+      if (activeSequences.includes(sequenceFile)) {
+        const updatedActive = activeSequences.filter(s => s !== sequenceFile);
+        setActiveSequences(updatedActive);
+        window.electronAPI.setActiveSequences(updatedActive);
+        sequenceEngine?.deactivateSequence(sequenceFile);
+      }
+      fetchAllSequences();
+    } else {
+      console.error(`Failed to delete sequence ${sequenceFile}:`, result.error);
+    }
+  };
+
+  const handleEditSequence = (sequenceFile: string | null) => {
+    setSequenceToEdit(sequenceFile);
+    setSequenceEditorOpen(true);
+  };
+
+  const handleCloseSequenceEditor = () => {
+    setSequenceEditorOpen(false);
+    setSequenceToEdit(null);
+  };
+
+  const handleManualStartSequence = async (sequenceFile: string) => {
+    if (!sequenceEngine || !actionRegistry) {
+      console.error("SequenceEngine or ActionRegistry not available to manually start sequence.");
+      return;
+    }
+    try {
+      console.log(`Manually starting sequence: ${sequenceFile}`);
+      const filePath = await window.electronAPI.resolvePath('userData', `sequences/${sequenceFile}`);
+      const sequenceJSON = await window.electronAPI.readAbsoluteFile(filePath);
+      if (!(sequenceJSON instanceof ArrayBuffer)) {
+        console.error(`Failed to read sequence file buffer for manual start: ${sequenceFile}`, sequenceJSON);
+        return;
+      }
+      const sequenceData = JSON.parse(new TextDecoder().decode(sequenceJSON));
+
+      // Deserialize plain objects from JSON into class instances
+      const deserializedNodes: Node[] = sequenceData.nodes.map((sNode: any) => {
+        let model: BaseNode;
+        const data = sNode.data;
+
+        switch (data.nodeType) {
+          case 'ActionNodeModel':
+            const actionDef = actionRegistry.getActionDefinition(data.actionName);
+            if (!actionDef) {
+              console.error(`Action "${data.actionName}" not found in registry. Cannot load node ${sNode.id}.`);
+              return null;
+            }
+            const actionModel = new ActionNodeModel(sNode.id, actionDef);
+            if (data.paramValues) {
+              actionModel.paramValues = data.paramValues;
+            }
+            model = actionModel;
+            break;
+          
+          case 'ManualStartNodeModel':
+            model = new ManualStartNodeModel(sNode.id);
+            break;
+
+          case 'EventNodeModel':
+            const eventDef = EVENT_DEFINITIONS.find(e => e.name === data.eventName);
+            if (!eventDef) {
+              console.error(`Event "${data.eventName}" not found in definitions. Cannot load node ${sNode.id}.`);
+              return null;
+            }
+            model = new EventNodeModel(sNode.id, eventDef);
+            break;
+
+          default:
+            console.error(`Unknown node type "${data.nodeType}" for node ${sNode.id}.`);
+            return null;
+        }
+
+        return {
+          id: sNode.id,
+          type: sNode.type,
+          position: sNode.position,
+          data: model,
+        };
+      }).filter(Boolean) as Node[];
+
+      sequenceEngine.runManual(deserializedNodes, sequenceData.edges);
+    } catch (error) {
+      console.error(`Failed to manually start sequence ${sequenceFile}:`, error);
+    }
+  };
+
+  const handleToggleSequence = async (sequenceFile: string, shouldActivate: boolean) => {
+    if (!sequenceEngine) {
+      console.error("SequenceEngine not available to toggle sequence.");
+      return;
+    }
+
+    const updatedActiveSequences = shouldActivate
+      ? [...new Set([...activeSequences, sequenceFile])]
+      : activeSequences.filter(name => name !== sequenceFile);
+
+    setActiveSequences(updatedActiveSequences);
+    window.electronAPI.setActiveSequences(updatedActiveSequences);
+
+    if (shouldActivate) {
+      try {
+        const filePath = await window.electronAPI.resolvePath('userData', `sequences/${sequenceFile}`);
+        const sequenceJSON = await window.electronAPI.readAbsoluteFile(filePath);
+        if (!(sequenceJSON instanceof ArrayBuffer)) {
+          console.error(`Failed to read sequence file buffer for activation: ${sequenceFile}`, sequenceJSON);
+          return;
+        }
+        const sequenceData = JSON.parse(new TextDecoder().decode(sequenceJSON));
+        sequenceEngine.activateSequence(sequenceFile, sequenceData.nodes, sequenceData.edges);
+      } catch (error) {
+        console.error(`Failed to activate sequence ${sequenceFile}:`, error);
+      }
+    } else {
+      sequenceEngine.deactivateSequence(sequenceFile);
+    }
+  };
+
+  // Load sequences and active status from store on startup
+  useEffect(() => {
+    fetchAllSequences();
+    window.electronAPI.getActiveSequences().then(setActiveSequences);
+    
+    const unsubscribe = eventBus.on('sequences-updated', fetchAllSequences);
+    return () => unsubscribe();
+  }, []);
+
+  // When the sequence engine is ready, activate all sequences that are marked as active
+  useEffect(() => {
+    if (!sequenceEngine) return;
+
+    const loadAndActivate = async (sequenceFile: string) => {
+      try {
+        const filePath = await window.electronAPI.resolvePath('userData', `sequences/${sequenceFile}`);
+        const fileExists = await window.electronAPI.fileExists(filePath);
+        if (!fileExists) {
+          console.warn(`Sequence file not found, cannot activate: ${sequenceFile}`);
+          return;
+        }
+        const sequenceJSON = await window.electronAPI.readAbsoluteFile(filePath);
+        if (!(sequenceJSON instanceof ArrayBuffer)) {
+          console.error(`Failed to read sequence file buffer: ${sequenceFile}`, sequenceJSON);
+          return;
+        }
+        const sequenceData = JSON.parse(new TextDecoder().decode(sequenceJSON));
+        sequenceEngine.activateSequence(sequenceFile, sequenceData.nodes, sequenceData.edges);
+      } catch (error) {
+        console.error(`Failed to load and activate sequence ${sequenceFile}:`, error);
+      }
+    };
+
+    activeSequences.forEach(loadAndActivate);
+
+    return () => {
+      activeSequences.forEach(sequenceFile => sequenceEngine.deactivateSequence(sequenceFile));
+    };
+  }, [sequenceEngine, activeSequences]);
 
   useEffect(() => {
     if (!actionRegistry) return;
 
-    // 등록된 액션 명세를 메인 프로세스로 전송 (직렬화 가능한 부분만)
     const definitions = actionRegistry.getAllActionDefinitions();
     const serializableDefinitions = definitions.map(def => {
       const params = def.params.map(p => {
@@ -72,7 +256,6 @@ const App: React.FC = () => {
       .then(() => console.log('[Renderer] Action definitions sent to main process.'))
       .catch(err => console.error('[Renderer] Failed to send action definitions:', err));
 
-    // 메인 프로세스로부터의 액션 실행 요청 리스너 설정
     const unsubscribe = window.electronAPI.on('execute-action', (actionName: string, args: any[]) => {
       console.log(`[Renderer] Received action execution request: ${actionName}`, args);
       const action = actionRegistry.get(actionName);
@@ -90,7 +273,6 @@ const App: React.FC = () => {
     return () => unsubscribe();
   }, [actionRegistry]);
 
-
   useEffect(() => {
     const loadTriggers = async () => {
       const savedTriggers = await window.electronAPI.getCustomTriggers();
@@ -100,7 +282,21 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const handleNewMessage = (message: Message) => setChatMessages((prev) => [...prev, message]);
+    const handleNewMessage = (data: Message | any) => {
+      let newMessage: Message;
+      if (typeof data === 'object' && data !== null && typeof data.text === 'string') {
+        newMessage = {
+          role: data.role || 'system',
+          text: data.text,
+        };
+      } else {
+        newMessage = {
+          role: 'system',
+          text: `[SYSTEM] Received non-standard message: ${JSON.stringify(data)}`,
+        };
+      }
+      setChatMessages((prev) => [...prev, newMessage]);
+    };
     const unsubscribe = eventBus.on('chat:newMessage', handleNewMessage);
     return () => unsubscribe();
   }, []);
@@ -158,7 +354,6 @@ const App: React.FC = () => {
       }
     } else {
       console.error('Failed to save trigger:', error);
-      // Optionally, show an error message to the user
     }
   };
 
@@ -171,7 +366,6 @@ const App: React.FC = () => {
       pluginManager?.context.system.unregisterCustomTrigger(triggerId);
     } else {
       console.error('Failed to delete trigger:', error);
-      // Optionally, show an error message to the user
     }
   };
 
@@ -251,12 +445,18 @@ const App: React.FC = () => {
         initialPos={panelPositions.creator} 
         onDragEnd={(pos) => handlePanelDrag('creator', pos)}
         triggers={customTriggers}
+        sequences={allSequences}
         onOpenTriggerEditor={() => handleOpenTriggerEditor(null)}
         onEditTrigger={(trigger) => handleOpenTriggerEditor(trigger)}
         onDeleteTrigger={handleDeleteTrigger}
         onToggleTrigger={handleToggleTrigger}
         onOpenContextViewer={() => setContextDebugPanelOpen(p => !p)}
-        onOpenSequenceEditor={() => setSequenceEditorOpen(p => !p)}
+        onOpenSequenceEditor={handleEditSequence}
+        onEditSequence={handleEditSequence}
+        onDeleteSequence={handleDeleteSequence}
+        activeSequences={activeSequences}
+        onToggleSequence={handleToggleSequence}
+        onManualStartSequence={handleManualStartSequence}
       />}
 
       {isTriggerEditorPanelOpen && <TriggerEditorPanel 
@@ -269,7 +469,8 @@ const App: React.FC = () => {
 
       <SequenceEditor
         isOpen={isSequenceEditorOpen}
-        onClose={() => setSequenceEditorOpen(false)}
+        onClose={handleCloseSequenceEditor}
+        sequenceToLoad={sequenceToEdit}
       />
 
       {isContextDebugPanelOpen && <ContextStoreDebugPanel

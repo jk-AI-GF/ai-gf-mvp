@@ -9,6 +9,7 @@ interface CssExports {
   'deleteButton': string;
   'editButton': string;
   'emptyMessage': string;
+  'runButton': string;
   'section': string;
   'sectionTitle': string;
   'slider': string;

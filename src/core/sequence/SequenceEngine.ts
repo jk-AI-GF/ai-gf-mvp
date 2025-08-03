@@ -4,11 +4,19 @@ import { BaseNode } from './BaseNode';
 import { ManualStartNodeModel } from './ManualStartNodeModel';
 import { EventNodeModel } from './EventNodeModel';
 
+interface ActiveSequence {
+  nodes: Node[];
+  edges: Edge[];
+  listeners: (() => void)[];
+}
+
 export class SequenceEngine {
   private pluginContext: PluginContext;
   private nodeMap: Map<string, Node> = new Map();
   private edgeMap: Map<string, Edge[]> = new Map();
-  private activeListeners: (() => void)[] = []; // To store unsubscribe functions
+  
+  // filePath를 키로 사용하여 활성화된 시퀀스와 리스너를 관리합니다.
+  private activeSequences: Map<string, ActiveSequence> = new Map();
 
   constructor(pluginContext: PluginContext) {
     if (!pluginContext) {
@@ -18,40 +26,51 @@ export class SequenceEngine {
   }
 
   /**
-   * Clears all active event listeners.
+   * 특정 시퀀스를 활성화하고 이벤트 리스너를 등록합니다.
+   * @param sequenceId 고유한 시퀀스 식별자 (예: 파일 경로)
+   * @param nodes 시퀀스의 노드
+   * @param edges 시퀀스의 엣지
    */
-  private clearListeners() {
-    this.activeListeners.forEach(unsubscribe => unsubscribe());
-    this.activeListeners = [];
-  }
+  public activateSequence(sequenceId: string, nodes: Node[], edges: Edge[]): void {
+    if (this.activeSequences.has(sequenceId)) {
+      console.warn(`[SequenceEngine] Sequence '${sequenceId}' is already active. Deactivating before reactivating.`);
+      this.deactivateSequence(sequenceId);
+    }
 
-  /**
-   * Sets up event listeners for all event nodes in the graph.
-   * This should be called whenever a new sequence is loaded.
-   * @param nodes The nodes of the sequence graph.
-   * @param edges The edges of the sequence graph.
-   */
-  public setup(nodes: Node[], edges: Edge[]): void {
-    this.clearListeners();
-    this.buildMaps(nodes, edges);
-
+    this.buildMaps(nodes, edges); // 임시로 전체 맵을 사용. 개별 맵으로 변경 필요
     const eventNodes = nodes.filter(n => n.data instanceof EventNodeModel);
+    const newListeners: (() => void)[] = [];
 
-    console.log(`[SequenceEngine] Setting up ${eventNodes.length} event node(s).`);
+    console.log(`[SequenceEngine] Activating sequence '${sequenceId}' with ${eventNodes.length} event node(s).`);
 
     eventNodes.forEach(node => {
       const eventModel = node.data as EventNodeModel;
       const unsubscribe = this.pluginContext.eventBus.on(eventModel.eventName as any, (payload: any) => {
-        console.log(`[SequenceEngine] Event '${eventModel.eventName}' triggered.`);
-        // Pass the event payload as the initial set of outputs for the event node
-        this.executeFrom(node, payload);
+        console.log(`[SequenceEngine] Event '${eventModel.eventName}' triggered for sequence '${sequenceId}'.`);
+        this.executeFrom(node, payload, nodes, edges);
       });
-      this.activeListeners.push(unsubscribe);
+      newListeners.push(unsubscribe);
     });
+
+    this.activeSequences.set(sequenceId, { nodes, edges, listeners: newListeners });
   }
 
   /**
-   * Manually runs the sequence from all ManualStartNodes.
+   * 특정 시퀀스를 비활성화하고 이벤트 리스너를 해제합니다.
+   * @param sequenceId 비활성화할 시퀀스의 식별자
+   */
+  public deactivateSequence(sequenceId: string): void {
+    const sequence = this.activeSequences.get(sequenceId);
+    if (sequence) {
+      console.log(`[SequenceEngine] Deactivating sequence '${sequenceId}'.`);
+      sequence.listeners.forEach(unsubscribe => unsubscribe());
+      this.activeSequences.delete(sequenceId);
+    }
+  }
+
+  /**
+   * Manually runs a sequence from all ManualStartNodes.
+   * This is typically used for testing in the editor.
    * @param nodes The nodes of the sequence graph.
    * @param edges The edges of the sequence graph.
    */
@@ -66,7 +85,7 @@ export class SequenceEngine {
       return;
     }
 
-    await Promise.all(startNodes.map(startNode => this.executeFrom(startNode, {})));
+    await Promise.all(startNodes.map(startNode => this.executeFrom(startNode, {}, nodes, edges)));
   }
 
   private buildMaps(nodes: Node[], edges: Edge[]) {
@@ -81,30 +100,41 @@ export class SequenceEngine {
     });
   }
 
-  private async executeFrom(node: Node, initialOutputs: Record<string, any>): Promise<void> {
-    const nodeInstance = node.data as BaseNode;
-    if (!nodeInstance || typeof nodeInstance.execute !== 'function') {
-      console.error(`Node ${node.id} does not have a valid BaseNode instance.`);
-      return;
-    }
+  private async executeFrom(startNode: Node, initialOutputs: Record<string, any>, sequenceNodes: Node[], sequenceEdges: Edge[]): Promise<void> {
+    // 실행 시점의 맵을 해당 시퀀스의 노드/엣지로만 구성
+    const localNodeMap = new Map(sequenceNodes.map(n => [n.id, n]));
+    const localEdgeMap: Map<string, Edge[]> = new Map();
+    sequenceEdges.forEach(e => {
+      if (!localEdgeMap.has(e.source)) {
+        localEdgeMap.set(e.source, []);
+      }
+      localEdgeMap.get(e.source)!.push(e);
+    });
 
-    console.log(`Executing node: ${node.id} (${nodeInstance.name})`);
 
-    // For EventNode, the initialOutputs from the event payload are passed directly.
-    // For other nodes, this will be an empty object.
-    const result = await nodeInstance.execute(this.pluginContext, initialOutputs);
+    const executeNode = async (currentNode: Node, currentInputs: Record<string, any>) => {
+      const nodeInstance = currentNode.data as BaseNode;
+      if (!nodeInstance || typeof nodeInstance.execute !== 'function') {
+        console.error(`Node ${currentNode.id} does not have a valid BaseNode instance.`);
+        return;
+      }
 
-    if (result.nextExec) {
-      const nextEdge = this.edgeMap.get(node.id)?.find(e => e.sourceHandle === result.nextExec);
-      if (nextEdge) {
-        const nextNode = this.nodeMap.get(nextEdge.target);
-        if (nextNode) {
-          // The outputs of the current node become the inputs for the next.
-          // This is a simplified data flow model.
-          await this.executeFrom(nextNode, result.outputs);
+      console.log(`Executing node: ${currentNode.id} (${nodeInstance.name})`);
+
+      const result = await nodeInstance.execute(this.pluginContext, currentInputs);
+
+      if (result.nextExec) {
+        const nextEdge = localEdgeMap.get(currentNode.id)?.find(e => e.sourceHandle === result.nextExec);
+        if (nextEdge) {
+          const nextNode = localNodeMap.get(nextEdge.target);
+          if (nextNode) {
+            await executeNode(nextNode, result.outputs);
+          }
         }
       }
-    }
+    };
+
+    await executeNode(startNode, initialOutputs);
   }
 }
 

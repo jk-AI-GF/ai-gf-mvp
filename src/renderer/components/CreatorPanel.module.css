@@ -1,7 +1,8 @@
 .container {
   padding: 10px;
+  min-width: 320px; /* 패널의 최소 너비를 수동으로 지정 */
+  box-sizing: border-box;
   color: #333;
-  min-width: 300px;
 }
 
 .section {
@@ -29,16 +30,24 @@
   background-color: #f9f9f9;
   border-radius: 4px;
   border: 1px solid #eee;
+  overflow: hidden;
 }
 
 .triggerName {
   font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 10px;
+  /* 이름이 차지할 수 있는 최대 너비를 제한하여 버튼이 밀리는 것을 방지 */
+  max-width: 120px; 
 }
 
 .controls {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .addButton {
@@ -95,6 +104,14 @@
 }
 .deleteButton:hover {
   background-color: #c82333;
+}
+
+.runButton {
+  background-color: #28a745;
+  color: white;
+}
+.runButton:hover {
+  background-color: #218838;
 }
 
 .emptyMessage {

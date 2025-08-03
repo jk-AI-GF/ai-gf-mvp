@@ -20,6 +20,7 @@ interface StoreSchema {
   persona: string;
   llmSettings: LlmSettings;
   mouseIgnoreShortcut: string;
+  activeSequences: string[];
   // customTriggers is now managed as individual files.
 }
 
@@ -30,6 +31,7 @@ const store = new Store<Omit<StoreSchema, 'customTriggers'>>({
     persona: '당신은 친절하고 상냥한 AI 여자친구입니다. 항상 사용자에게 긍정적이고 다정한 태도로 대화에 임해주세요.',
     llmSettings: DEFAULT_LLM_SETTINGS,
     mouseIgnoreShortcut: 'CommandOrControl+Shift+O',
+    activeSequences: [], // 활성 시퀀스 목록 추가
   }
 });
 
@@ -37,6 +39,15 @@ process.on('uncaughtException', (error) => {
   const message = error.stack || error.message || 'Unknown error';
   dialog.showErrorBox('A JavaScript error occurred in the main process', message);
   app.quit();
+});
+
+// --- Active Sequences Store ---
+ipcMain.handle('get-active-sequences', () => {
+  return store.get('activeSequences', []);
+});
+
+ipcMain.on('set-active-sequences', (event, activeSequences: string[]) => {
+  store.set('activeSequences', activeSequences);
 });
 
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
@@ -343,6 +354,39 @@ app.on('ready', async () => {
   });
 
   // --- Sequences ---
+  ipcMain.handle('get-sequences', async () => {
+    const sequencesDir = resolveUserDataPath('sequences');
+    try {
+      const files = await fsp.readdir(sequencesDir);
+      // .json 파일만 필터링하고, 전체 경로 대신 파일 이름만 반환합니다.
+      return files.filter(file => file.endsWith('.json'));
+    } catch (error) {
+      console.error('Failed to get sequences:', error);
+      if (error.code === 'ENOENT') {
+        return []; // 디렉토리가 없으면 빈 배열 반환
+      }
+      throw error;
+    }
+  });
+
+  ipcMain.handle('delete-sequence', async (event, sequenceFile: string) => {
+    const sequencesDir = resolveUserDataPath('sequences');
+    const filePath = path.join(sequencesDir, sequenceFile);
+    
+    // Security check
+    if (path.dirname(filePath) !== sequencesDir) {
+      return { success: false, error: 'Security violation: Invalid file path.' };
+    }
+
+    try {
+      await fsp.unlink(filePath);
+      return { success: true };
+    } catch (error) {
+      console.error(`Failed to delete sequence ${sequenceFile}:`, error);
+      return { success: false, error: error.message };
+    }
+  });
+
   ipcMain.handle('save-sequence', async (event, sequenceData: string) => {
     if (mainWindow) mainWindow.setAlwaysOnTop(false);
     try {
