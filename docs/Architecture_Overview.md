@@ -33,10 +33,9 @@
         -   `ActionRegistry` 인스턴스를 생성하고, `action-registrar`를 통해 모든 코어 액션을 등록합니다.
         -   생성된 `ActionRegistry`를 `AppContext`를 통해 하위 컴포넌트에 제공합니다.
         -   렌더러 준비가 완료되면, 등록된 액션 명세를 `set-action-definitions` IPC 채널을 통해 메인 프로세스로 전송합니다.
+        -   **모든 시퀀스 관련 UI 이벤트(활성화, 삭제, 수동 실행 등)를 `SequenceManager`로 전달하는 역할을 합니다.**
 
--   **`contexts/AppContext.tsx`**: **애플리케이션의 심장부**입니다. `vrmManager`, `pluginManager`, `actionRegistry` 등 애플리케이션의 핵심 관리자 인스턴스를 생성하고, React Context API를 통해 모든 하위 컴포넌트에 이들을 제공합니다.
-
--   **`components/VRMCanvas.tsx`**: **3D 세계의 동적인 로직을 총괄**합니다. 카메라와 `OrbitControls`를 관리하고, `VRMManager`와 `PluginManager`를 초기화하며, 모든 3D 관련 이벤트 처리 및 애니메이션 루프를 담당합니다. 또한 `context-factory.ts`를 호출하여 `PluginContext`를 생성하고 `PluginManager`에 주입하는 역할을 합니다.
+-   **`contexts/AppContext.tsx`**: **애플리케이션의 심장부**입니다. `vrmManager`, `pluginManager`, `actionRegistry`, **`sequenceManager`** 등 애플리케이션의 핵심 관리자 인스턴스를 생성하고, React Context API를 통해 모든 하위 컴포넌트에 이들을 제공합니다.
 
 -   **`vrm-manager.ts`**: VRM 모델에 대한 저수준(low-level) 제어를 직접 담당하는 클래스입니다. VRM 파일 로딩, 애니메이션 재생, 표정 변화, 포즈 적용 등의 실제 로직이 여기에 구현되어 있습니다.
 
@@ -73,9 +72,10 @@
 -   **`event-definitions.ts`**: `AppEvents`에 정의된 이벤트 중, 시퀀스 에디터나 레거시 트리거 UI에 노출될 이벤트들의 상세 메타데이터(설명, 데이터 구조 등)를 정의합니다. `payloadSchema`를 통해 각 이벤트가 전달하는 데이터의 타입과 키를 명시하여, `EventNode`가 타입에 맞는 출력 포트를 생성하는 데 사용됩니다.
 
 -   **`sequence/`**: **비주얼 스크립팅 "시퀀스"의 핵심 로직(Model)과 실행 엔진**이 위치합니다.
+    -   **`SequenceManager.ts`**: **시퀀스의 전체 생명주기를 관리하는 중앙 관리자**입니다. 파일 I/O, (역)직렬화, 상태(활성화/비활성화) 관리, 실행 요청 중계 등 모든 시퀀스 관련 작업을 총괄합니다. `App.tsx`의 복잡성을 줄이고 역할을 분리하기 위해 도입되었습니다.
+    -   **`SequenceEngine.ts`**: `SequenceManager`의 요청을 받아 실제 시퀀스 그래프의 실행을 담당하는 엔진입니다. `EventNode`를 감지하여 `eventBus` 리스너를 동적으로 구독/해제하고, 노드 체인을 따라 실행을 전파하는 역할에 집중합니다.
     -   **`BaseNode.ts`**: 모든 시퀀스 노드의 공통 로직과 규약을 정의하는 추상 클래스입니다.
-    -   **`ActionNodeModel.ts`, `ManualStartNodeModel.ts`, `EventNodeModel.ts`**: `BaseNode`를 상속받아 각 노드 타입의 고유한 상태와 실행 로직을 구현하는 모델 클래스입니다. `EventNodeModel`은 특정 시스템 이벤트를 감지하여 시퀀스를 시작하는 진입점 역할을 합니다.
-    -   **`SequenceEngine.ts`**: 시퀀스 그래프의 실행을 총괄하는 엔진입니다. `setup` 메서드를 통해 그래프 내의 `EventNode`를 감지하고, 해당 `eventBus` 리스너를 동적으로 구독합니다. 이벤트가 발생하거나 수동 실행이 트리거되면, `executeFrom` 메서드를 통해 노드 체인을 따라 실행을 전파합니다.
+    -   **`ActionNodeModel.ts`, `ManualStartNodeModel.ts`, `EventNodeModel.ts`**: `BaseNode`를 상속받아 각 노드 타입의 고유한 상태와 실행 로직을 구현하는 모델 클래스입니다.
 
 -   **`trigger-engine.ts`**: `registerTrigger`를 통해 등록된 모든 트리거의 조건을 주기적으로 검사하고, 조건이 충족되면 해당 액션을 실행하는 엔진입니다.
 

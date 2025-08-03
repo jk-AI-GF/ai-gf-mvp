@@ -21,12 +21,6 @@ import UIModeNotification from './components/UIModeNotification';
 import eventBus from '../core/event-bus';
 import { useAppContext } from './contexts/AppContext';
 import { CustomTrigger } from '../core/custom-trigger-manager';
-import { Node } from 'reactflow';
-import { BaseNode } from '../core/sequence/BaseNode';
-import { ActionNodeModel } from '../core/sequence/ActionNodeModel';
-import { ManualStartNodeModel } from '../core/sequence/ManualStartNodeModel';
-import { EventNodeModel } from '../core/sequence/EventNodeModel';
-import { EVENT_DEFINITIONS } from '../core/event-definitions';
 
 interface Message {
   role: string;
@@ -37,7 +31,7 @@ const App: React.FC = () => {
   const { 
     chatService, isUiInteractive, persona, llmSettings, pluginManager, 
     actionRegistry,
-    sequenceEngine,
+    sequenceManager,
   } = useAppContext();
 
   const [isSettingsModalOpen, setSettingsModalOpen] = useState(false);
@@ -61,35 +55,47 @@ const App: React.FC = () => {
   
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [notification, setNotification] = useState({ show: false, message: '' });
-  const [activeSequences, setActiveSequences] = useState<string[]>([]);
+  
+  // Sequence state is now driven by the manager
   const [allSequences, setAllSequences] = useState<string[]>([]);
+  const [activeSequences, setActiveSequences] = useState<string[]>([]);
+  
   const isInitialMount = useRef(true);
 
-  const fetchAllSequences = async () => {
-    try {
-      const sequenceFiles = await window.electronAPI.getSequences();
-      setAllSequences(sequenceFiles);
-    } catch (error) {
-      console.error("Failed to fetch sequences:", error);
+  // Update local state when manager is available or changes
+  useEffect(() => {
+    if (sequenceManager) {
+      setAllSequences(sequenceManager.getAllSequenceFiles());
+      setActiveSequences(sequenceManager.getActiveSequenceFiles());
     }
-  };
+  }, [sequenceManager]);
+
+  // Listen for external updates (e.g., after saving in editor)
+  useEffect(() => {
+    const handleSequencesUpdated = async () => {
+      if (sequenceManager) {
+        await sequenceManager.initialize(); // Re-initialize to get the latest data
+        setAllSequences(sequenceManager.getAllSequenceFiles());
+        setActiveSequences(sequenceManager.getActiveSequenceFiles());
+      }
+    };
+    const unsubscribe = eventBus.on('sequences-updated', handleSequencesUpdated);
+    return () => unsubscribe();
+  }, [sequenceManager]);
+
 
   const handleDeleteSequence = async (sequenceFile: string) => {
+    if (!sequenceManager) return;
     const confirmed = window.confirm(`'${sequenceFile}' 시퀀스를 정말로 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`);
     if (!confirmed) return;
 
-    const result = await window.electronAPI.deleteSequence(sequenceFile);
-    if (result.success) {
-      console.log(`Sequence ${sequenceFile} deleted successfully.`);
-      if (activeSequences.includes(sequenceFile)) {
-        const updatedActive = activeSequences.filter(s => s !== sequenceFile);
-        setActiveSequences(updatedActive);
-        window.electronAPI.setActiveSequences(updatedActive);
-        sequenceEngine?.deactivateSequence(sequenceFile);
-      }
-      fetchAllSequences();
-    } else {
-      console.error(`Failed to delete sequence ${sequenceFile}:`, result.error);
+    try {
+      await sequenceManager.deleteSequence(sequenceFile);
+      setAllSequences(sequenceManager.getAllSequenceFiles());
+      setActiveSequences(sequenceManager.getActiveSequenceFiles());
+    } catch (error) {
+      console.error(`Failed to delete sequence ${sequenceFile}:`, error);
+      // Optionally show an error to the user
     }
   };
 
@@ -104,141 +110,21 @@ const App: React.FC = () => {
   };
 
   const handleManualStartSequence = async (sequenceFile: string) => {
-    if (!sequenceEngine || !actionRegistry) {
-      console.error("SequenceEngine or ActionRegistry not available to manually start sequence.");
+    if (!sequenceManager) {
+      console.error("SequenceManager not available.");
       return;
     }
-    try {
-      console.log(`Manually starting sequence: ${sequenceFile}`);
-      const filePath = await window.electronAPI.resolvePath('userData', `sequences/${sequenceFile}`);
-      const sequenceJSON = await window.electronAPI.readAbsoluteFile(filePath);
-      if (!(sequenceJSON instanceof ArrayBuffer)) {
-        console.error(`Failed to read sequence file buffer for manual start: ${sequenceFile}`, sequenceJSON);
-        return;
-      }
-      const sequenceData = JSON.parse(new TextDecoder().decode(sequenceJSON));
-
-      // Deserialize plain objects from JSON into class instances
-      const deserializedNodes: Node[] = sequenceData.nodes.map((sNode: any) => {
-        let model: BaseNode;
-        const data = sNode.data;
-
-        switch (data.nodeType) {
-          case 'ActionNodeModel':
-            const actionDef = actionRegistry.getActionDefinition(data.actionName);
-            if (!actionDef) {
-              console.error(`Action "${data.actionName}" not found in registry. Cannot load node ${sNode.id}.`);
-              return null;
-            }
-            const actionModel = new ActionNodeModel(sNode.id, actionDef);
-            if (data.paramValues) {
-              actionModel.paramValues = data.paramValues;
-            }
-            model = actionModel;
-            break;
-          
-          case 'ManualStartNodeModel':
-            model = new ManualStartNodeModel(sNode.id);
-            break;
-
-          case 'EventNodeModel':
-            const eventDef = EVENT_DEFINITIONS.find(e => e.name === data.eventName);
-            if (!eventDef) {
-              console.error(`Event "${data.eventName}" not found in definitions. Cannot load node ${sNode.id}.`);
-              return null;
-            }
-            model = new EventNodeModel(sNode.id, eventDef);
-            break;
-
-          default:
-            console.error(`Unknown node type "${data.nodeType}" for node ${sNode.id}.`);
-            return null;
-        }
-
-        return {
-          id: sNode.id,
-          type: sNode.type,
-          position: sNode.position,
-          data: model,
-        };
-      }).filter(Boolean) as Node[];
-
-      sequenceEngine.runManual(deserializedNodes, sequenceData.edges);
-    } catch (error) {
-      console.error(`Failed to manually start sequence ${sequenceFile}:`, error);
-    }
+    await sequenceManager.manualStartSequence(sequenceFile);
   };
 
   const handleToggleSequence = async (sequenceFile: string, shouldActivate: boolean) => {
-    if (!sequenceEngine) {
-      console.error("SequenceEngine not available to toggle sequence.");
+    if (!sequenceManager) {
+      console.error("SequenceManager not available.");
       return;
     }
-
-    const updatedActiveSequences = shouldActivate
-      ? [...new Set([...activeSequences, sequenceFile])]
-      : activeSequences.filter(name => name !== sequenceFile);
-
-    setActiveSequences(updatedActiveSequences);
-    window.electronAPI.setActiveSequences(updatedActiveSequences);
-
-    if (shouldActivate) {
-      try {
-        const filePath = await window.electronAPI.resolvePath('userData', `sequences/${sequenceFile}`);
-        const sequenceJSON = await window.electronAPI.readAbsoluteFile(filePath);
-        if (!(sequenceJSON instanceof ArrayBuffer)) {
-          console.error(`Failed to read sequence file buffer for activation: ${sequenceFile}`, sequenceJSON);
-          return;
-        }
-        const sequenceData = JSON.parse(new TextDecoder().decode(sequenceJSON));
-        sequenceEngine.activateSequence(sequenceFile, sequenceData.nodes, sequenceData.edges);
-      } catch (error) {
-        console.error(`Failed to activate sequence ${sequenceFile}:`, error);
-      }
-    } else {
-      sequenceEngine.deactivateSequence(sequenceFile);
-    }
+    await sequenceManager.toggleSequence(sequenceFile, shouldActivate);
+    setActiveSequences(sequenceManager.getActiveSequenceFiles());
   };
-
-  // Load sequences and active status from store on startup
-  useEffect(() => {
-    fetchAllSequences();
-    window.electronAPI.getActiveSequences().then(setActiveSequences);
-    
-    const unsubscribe = eventBus.on('sequences-updated', fetchAllSequences);
-    return () => unsubscribe();
-  }, []);
-
-  // When the sequence engine is ready, activate all sequences that are marked as active
-  useEffect(() => {
-    if (!sequenceEngine) return;
-
-    const loadAndActivate = async (sequenceFile: string) => {
-      try {
-        const filePath = await window.electronAPI.resolvePath('userData', `sequences/${sequenceFile}`);
-        const fileExists = await window.electronAPI.fileExists(filePath);
-        if (!fileExists) {
-          console.warn(`Sequence file not found, cannot activate: ${sequenceFile}`);
-          return;
-        }
-        const sequenceJSON = await window.electronAPI.readAbsoluteFile(filePath);
-        if (!(sequenceJSON instanceof ArrayBuffer)) {
-          console.error(`Failed to read sequence file buffer: ${sequenceFile}`, sequenceJSON);
-          return;
-        }
-        const sequenceData = JSON.parse(new TextDecoder().decode(sequenceJSON));
-        sequenceEngine.activateSequence(sequenceFile, sequenceData.nodes, sequenceData.edges);
-      } catch (error) {
-        console.error(`Failed to load and activate sequence ${sequenceFile}:`, error);
-      }
-    };
-
-    activeSequences.forEach(loadAndActivate);
-
-    return () => {
-      activeSequences.forEach(sequenceFile => sequenceEngine.deactivateSequence(sequenceFile));
-    };
-  }, [sequenceEngine, activeSequences]);
 
   useEffect(() => {
     if (!actionRegistry) return;

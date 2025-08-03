@@ -10,6 +10,9 @@ import ReactFlow, {
   Connection,
   useReactFlow,
   Node,
+  applyEdgeChanges,
+  EdgeChange,
+  EdgeSelectionChange,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { useAppContext } from '../../contexts/AppContext';
@@ -71,13 +74,18 @@ interface SerializedSequence {
 
 
 const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClose: () => void }> = ({ sequenceToLoad, onClose }) => {
-  const { actionRegistry, sequenceEngine } = useAppContext();
+  const { actionRegistry, sequenceManager } = useAppContext();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const { screenToFlowPosition, getNodes, getEdges, fitView } = useReactFlow();
   const [actions, setActions] = useState<ActionDefinition[]>([]);
   const [events, setEvents] = useState<EventDefinition[]>([]);
+
+  // Define default options for all edges to make them interactive
+  const defaultEdgeOptions = {
+    interactionWidth: 20, // Makes a 20px wide area around the edge clickable
+  };
 
   const loadSequenceData = useCallback((sequenceJsonString: string) => {
     const serializedSequence: SerializedSequence = JSON.parse(sequenceJsonString);
@@ -183,7 +191,9 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
 
     const serializedSequence: SerializedSequence = {
       nodes: serializedNodes,
-      edges: currentEdges,
+      edges: currentEdges.map(({ id, source, sourceHandle, target, targetHandle }) => ({
+        id, source, sourceHandle, target, targetHandle
+      })),
     };
 
     try {
@@ -213,13 +223,13 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
   }, [loadSequenceData]);
 
   const handleRun = useCallback(() => {
-    if (!sequenceEngine) {
-      console.error("SequenceEngine is not initialized.");
+    if (!sequenceManager) {
+      console.error("SequenceManager is not initialized.");
       return;
     }
     console.log("Running sequence from editor...");
-    sequenceEngine.runManual(getNodes(), getEdges());
-  }, [sequenceEngine, getNodes, getEdges]);
+    sequenceManager.runManualFromState(getNodes(), getEdges());
+  }, [sequenceManager, getNodes, getEdges]);
   
   const onConnect = useCallback((params: Connection) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
 
@@ -313,6 +323,7 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
           onDragOver={onDragOver}
           isValidConnection={isValidConnection}
           nodeTypes={nodeTypes}
+          defaultEdgeOptions={defaultEdgeOptions}
           fitView
         >
           <Background />

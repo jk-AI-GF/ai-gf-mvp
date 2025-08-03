@@ -1,0 +1,229 @@
+
+import { Node } from 'reactflow';
+import { ActionRegistry } from '../action-registry';
+import { EVENT_DEFINITIONS } from '../event-definitions';
+import { PluginContext } from '../../plugin-api/plugin-context';
+import { ActionNodeModel } from './ActionNodeModel';
+import { BaseNode } from './BaseNode';
+import { EventNodeModel } from './EventNodeModel';
+import { ManualStartNodeModel } from './ManualStartNodeModel';
+import { SequenceEngine } from './SequenceEngine';
+
+// 시퀀스 데이터의 구조를 정의합니다.
+interface SequenceData {
+  nodes: Node<BaseNode>[];
+  edges: any[];
+}
+
+/**
+ * 시퀀스의 전체 생명주기를 관리하는 중앙 클래스입니다.
+ * 파일 I/O, ( де)직렬화, 활성화/비활성화, 실행 등 모든 시퀀스 관련 작업을 처리합니다.
+ */
+export class SequenceManager {
+  private sequenceEngine: SequenceEngine;
+  private actionRegistry: ActionRegistry;
+  private pluginContext: PluginContext;
+
+  // 로드된 모든 시퀀스 파일의 이름을 추적합니다.
+  private allSequenceFiles: string[] = [];
+  // 활성화된 시퀀스 파일의 이름을 추적합니다.
+  private activeSequenceFiles: Set<string> = new Set();
+  // 메모리에 캐시된 시퀀스 데이터를 저장합니다.
+  private sequenceCache: Map<string, SequenceData> = new Map();
+
+  constructor(pluginContext: PluginContext) {
+    if (!pluginContext || !pluginContext.actionRegistry) {
+      throw new Error("SequenceManager requires a PluginContext with an ActionRegistry.");
+    }
+    this.pluginContext = pluginContext;
+    this.actionRegistry = pluginContext.actionRegistry;
+    this.sequenceEngine = new SequenceEngine(pluginContext);
+  }
+
+  /**
+   * userData/sequences 폴더에서 모든 시퀀스 파일 목록을 가져와 내부 상태를 초기화합니다.
+   */
+  public async initialize(): Promise<void> {
+    this.allSequenceFiles = await window.electronAPI.getSequences();
+    const activeFiles = await window.electronAPI.getActiveSequences();
+    this.activeSequenceFiles = new Set(activeFiles);
+
+    // 활성화된 시퀀스를 로드하고 활성화합니다.
+    for (const fileName of this.activeSequenceFiles) {
+      await this.activateSequence(fileName);
+    }
+  }
+
+  public getAllSequenceFiles(): string[] {
+    return this.allSequenceFiles;
+  }
+
+  public getActiveSequenceFiles(): string[] {
+    return Array.from(this.activeSequenceFiles);
+  }
+
+  /**
+   * 시퀀스를 활성화 또는 비활성화합니다.
+   * @param fileName - 토글할 시퀀스의 파일 이름입니다.
+   * @param shouldActivate - 활성화할지 여부입니다.
+   */
+  public async toggleSequence(fileName: string, shouldActivate: boolean): Promise<void> {
+    if (shouldActivate) {
+      this.activeSequenceFiles.add(fileName);
+      await this.activateSequence(fileName);
+    } else {
+      this.activeSequenceFiles.delete(fileName);
+      this.deactivateSequence(fileName);
+    }
+    await window.electronAPI.setActiveSequences(Array.from(this.activeSequenceFiles));
+  }
+
+  /**
+   * 시퀀스를 수동으로 한 번 실행합니다.
+   * @param fileName - 실행할 시퀀스의 파일 이름입니다.
+   */
+  public async manualStartSequence(fileName: string): Promise<void> {
+    try {
+      const sequenceData = await this.loadAndDeserializeSequence(fileName);
+      if (sequenceData) {
+        console.log(`[SequenceManager] Manually starting sequence: ${fileName}`);
+        await this.sequenceEngine.runManual(sequenceData.nodes, sequenceData.edges);
+      }
+    } catch (error) {
+      console.error(`[SequenceManager] Failed to manually start sequence ${fileName}:`, error);
+    }
+  }
+
+  /**
+   * 시퀀스 파일을 삭제합니다.
+   * @param fileName - 삭제할 시퀀스의 파일 이름입니다.
+   */
+  public async deleteSequence(fileName: string): Promise<void> {
+    // 먼저 비활성화합니다.
+    if (this.activeSequenceFiles.has(fileName)) {
+      await this.toggleSequence(fileName, false);
+    }
+
+    const result = await window.electronAPI.deleteSequence(fileName);
+    if (result.success) {
+      console.log(`[SequenceManager] Sequence ${fileName} deleted successfully.`);
+      this.allSequenceFiles = this.allSequenceFiles.filter(f => f !== fileName);
+      this.sequenceCache.delete(fileName);
+      // UI 업데이트를 위해 이벤트를 발생시킬 수 있습니다.
+      // this.pluginContext.eventBus.emit('sequences-updated');
+    } else {
+      console.error(`[SequenceManager] Failed to delete sequence ${fileName}:`, result.error);
+      throw new Error(result.error);
+    }
+  }
+
+  /**
+   * 에디터의 현재 노드/엣지 상태를 기반으로 시퀀스를 수동 실행합니다.
+   * @param nodes 실행할 노드 배열
+   * @param edges 실행할 엣지 배열
+   */
+  public async runManualFromState(nodes: Node[], edges: any[]): Promise<void> {
+    console.log(`[SequenceManager] Manually running sequence from editor state.`);
+    await this.sequenceEngine.runManual(nodes, edges);
+  }
+
+  /**
+   * 시퀀스를 활성화하고 이벤트 리스너를 등록합니다.
+   * @param fileName - 활성화할 시퀀스의 파일 이름입니다.
+   */
+  private async activateSequence(fileName: string): Promise<void> {
+    try {
+      const sequenceData = await this.loadAndDeserializeSequence(fileName);
+      if (sequenceData) {
+        this.sequenceEngine.activateSequence(fileName, sequenceData.nodes, sequenceData.edges);
+      }
+    } catch (error) {
+      console.error(`[SequenceManager] Failed to activate sequence ${fileName}:`, error);
+      // 활성화에 실패하면 목록에서 제거합니다.
+      this.activeSequenceFiles.delete(fileName);
+      await window.electronAPI.setActiveSequences(Array.from(this.activeSequenceFiles));
+    }
+  }
+
+  /**
+   * 시퀀스를 비활성화하고 이벤트 리스너를 해제합니다.
+   * @param fileName - 비활성화할 시퀀스의 파일 이름입니다.
+   */
+  private deactivateSequence(fileName: string): void {
+    this.sequenceEngine.deactivateSequence(fileName);
+  }
+
+  /**
+   * 파일에서 시퀀스 데이터를 로드하고 역직렬화합니다. 캐시를 활용합니다.
+   * @param fileName - 로드할 시퀀스의 파일 이름입니다.
+   * @returns 역직렬화된 시퀀스 데이터 또는 실패 시 null입니다.
+   */
+  private async loadAndDeserializeSequence(fileName: string): Promise<SequenceData | null> {
+    if (this.sequenceCache.has(fileName)) {
+      return this.sequenceCache.get(fileName)!;
+    }
+
+    try {
+      const filePath = await window.electronAPI.resolvePath('userData', `sequences/${fileName}`);
+      const fileExists = await window.electronAPI.fileExists(filePath);
+      if (!fileExists) {
+        console.warn(`[SequenceManager] Sequence file not found, cannot load: ${fileName}`);
+        return null;
+      }
+
+      const sequenceJSON = await window.electronAPI.readAbsoluteFile(filePath);
+      if (!(sequenceJSON instanceof ArrayBuffer)) {
+        console.error(`[SequenceManager] Failed to read sequence file buffer: ${fileName}`, sequenceJSON);
+        return null;
+      }
+      const sequenceData = JSON.parse(new TextDecoder().decode(sequenceJSON));
+
+      const deserializedNodes: Node<BaseNode>[] = sequenceData.nodes.map((sNode: any): Node<BaseNode> | null => {
+        const data = sNode.data;
+        let model: BaseNode;
+
+        switch (data.nodeType) {
+          case 'ActionNodeModel':
+            const actionDef = this.actionRegistry.getActionDefinition(data.actionName);
+            if (!actionDef) {
+              console.error(`Action "${data.actionName}" not found in registry. Cannot load node ${sNode.id}.`);
+              return null;
+            }
+            const actionModel = new ActionNodeModel(sNode.id, actionDef);
+            if (data.paramValues) {
+              actionModel.paramValues = data.paramValues;
+            }
+            model = actionModel;
+            break;
+          
+          case 'ManualStartNodeModel':
+            model = new ManualStartNodeModel(sNode.id);
+            break;
+
+          case 'EventNodeModel':
+            const eventDef = EVENT_DEFINITIONS.find(e => e.name === data.eventName);
+            if (!eventDef) {
+              console.error(`Event "${data.eventName}" not found in definitions. Cannot load node ${sNode.id}.`);
+              return null;
+            }
+            model = new EventNodeModel(sNode.id, eventDef);
+            break;
+
+          default:
+            console.error(`Unknown node type "${data.nodeType}" for node ${sNode.id}.`);
+            return null;
+        }
+
+        return { ...sNode, data: model };
+      }).filter((n: Node<BaseNode> | null): n is Node<BaseNode> => n !== null);
+
+      const result = { nodes: deserializedNodes, edges: sequenceData.edges };
+      this.sequenceCache.set(fileName, result);
+      return result;
+
+    } catch (error) {
+      console.error(`[SequenceManager] Failed to load and deserialize sequence ${fileName}:`, error);
+      return null;
+    }
+  }
+}

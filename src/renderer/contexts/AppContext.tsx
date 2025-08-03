@@ -7,14 +7,14 @@ import { ChatService } from '../chat-service';
 import { LlmSettings, DEFAULT_LLM_SETTINGS } from '../../core/llm-settings';
 import { CustomTriggerManager } from '../../core/custom-trigger-manager';
 import { ActionRegistry } from '../../core/action-registry'; // 추가
-import { SequenceEngine } from '../../core/sequence/SequenceEngine';
+import { SequenceManager } from '../../core/sequence/SequenceManager';
 
 interface AppContextType {
   vrmManager: VRMManager | null;
   pluginManager: PluginManager | null;
   customTriggerManager: CustomTriggerManager | null;
   actionRegistry: ActionRegistry | null; // 추가
-  sequenceEngine: SequenceEngine | null;
+  sequenceManager: SequenceManager | null;
   chatService: ChatService | null;
   directionalLight: THREE.DirectionalLight | null;
   ambientLight: THREE.AmbientLight | null;
@@ -45,7 +45,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [pluginManager, setPluginManager] = useState<PluginManager | null>(null);
   const [customTriggerManager, setCustomTriggerManager] = useState<CustomTriggerManager | null>(null);
   const [actionRegistry, setActionRegistry] = useState<ActionRegistry | null>(null); // 추가
-  const [sequenceEngine, setSequenceEngine] = useState<SequenceEngine | null>(null);
+  const [sequenceManager, setSequenceManager] = useState<SequenceManager | null>(null);
   const [chatService, setChatService] = useState<ChatService | null>(null);
   const [directionalLight, setDirectionalLight] = useState<THREE.DirectionalLight | null>(null);
   const [ambientLight, setAmbientLight] = useState<THREE.AmbientLight | null>(null);
@@ -85,13 +85,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setRenderer(managers.renderer); // 추가
     setChatService(new ChatService(managers.vrmManager, managers.pluginManager));
 
-    // Now that pluginManager is initialized, we can get its context and create the SequenceEngine
-    const context = managers.pluginManager.context; // Use the public property
+    // Now that pluginManager is initialized, we can get its context and create the SequenceManager
+    const context = managers.pluginManager.context;
     if (context) {
-      setSequenceEngine(new SequenceEngine(context));
-      console.log("SequenceEngine initialized.");
+      const seqManager = new SequenceManager(context);
+      seqManager.initialize().then(() => {
+        setSequenceManager(seqManager);
+        console.log("SequenceManager initialized and sequences loaded.");
+      }).catch(err => {
+        console.error("Failed to initialize SequenceManager:", err);
+      });
     } else {
-      console.error("Failed to get PluginContext, SequenceEngine could not be initialized.");
+      console.error("Failed to get PluginContext, SequenceManager could not be initialized.");
     }
   }, []);
 
@@ -116,7 +121,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     pluginManager, 
     customTriggerManager,
     actionRegistry, // 추가
-    sequenceEngine,
+    sequenceManager,
     chatService,
     directionalLight,
     ambientLight,

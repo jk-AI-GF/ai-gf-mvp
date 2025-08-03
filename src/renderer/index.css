@@ -77,3 +77,23 @@ body {
   pointer-events: auto;
 }
 
+/* --- React Flow Custom Styles --- */
+
+/* 선택된 노드에 둥근 테두리 효과 주기 */
+.react-flow__node.selected {
+  /* box-shadow를 사용하면 border-radius를 따라가므로 둥근 모서리에도 잘 적용됩니다. */
+  box-shadow: 0 0 0 2px #FFC107, 0 0 15px rgba(255, 193, 7, 0.5);
+}
+
+/* 기본 연결선 스타일 */
+.react-flow__edge-path {
+  stroke: #555;
+  stroke-width: 2px;
+}
+
+/* 선택된 연결선 하이라이트 */
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: #FFC107;
+  stroke-width: 3px;
+}
+

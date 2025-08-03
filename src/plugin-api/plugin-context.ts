@@ -5,6 +5,7 @@ import { Trigger, Condition, Action } from './triggers';
 import { Actions } from './actions';
 import { SystemControls } from './system-controls';
 import { characterState } from '../core/character-state';
+import { ActionRegistry } from '../core/action-registry';
 
 /**
  * 캐릭터 상태에 대한 인터페이스입니다.
@@ -65,6 +66,12 @@ export interface PluginContext {
    * VRM 관리자에 직접 접근합니다. (렌더러 프로세스에서만 사용 가능, 주의해서 사용)
    */
   vrmManager?: VRMManager;
+
+  /**
+   * 액션의 정의와 구현을 관리하는 중앙 레지스트리입니다.
+   * (렌더러 프로세스에서만 사용 가능)
+   */
+  actionRegistry?: ActionRegistry;
 
   // 향후 추가될 API 예시:
   // getCurrentPersona(): Persona;

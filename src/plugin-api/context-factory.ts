@@ -36,6 +36,7 @@ export function createPluginContext(
     getAll: () => window.electronAPI.invoke('context:getAll'),
     characterState: characterState,
     vrmManager: vrmManager,
+    actionRegistry: actionRegistry,
   };
 
   return pluginContext;
