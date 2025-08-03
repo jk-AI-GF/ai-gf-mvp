@@ -22,6 +22,7 @@ import ManualStartNode from './ManualStartNode';
 import EventNode from './EventNode'; // Import the new event node
 import LiteralNode from './LiteralNode'; // Import the new literal node
 import DelayNode from './DelayNode'; // Import the new delay node
+import BranchNode from './BranchNode'; // Import the new branch node
 
 // Define node types for React Flow
 const nodeTypes = {
@@ -30,6 +31,7 @@ const nodeTypes = {
   eventNode: EventNode, // Add the new event node type
   literalNode: LiteralNode,
   delayNode: DelayNode,
+  branchNode: BranchNode,
 };
 
 interface SequenceEditorProps {
@@ -43,6 +45,7 @@ import { ManualStartNodeModel } from '../../../core/sequence/ManualStartNodeMode
 import { EventNodeModel } from '../../../core/sequence/EventNodeModel';
 import { LiteralNodeModel } from '../../../core/sequence/LiteralNodeModel';
 import { DelayNodeModel } from '../../../core/sequence/DelayNodeModel';
+import { BranchNodeModel } from '../../../core/sequence/BranchNodeModel';
 import { BaseNode, IPort } from '../../../core/sequence/BaseNode';
 import { EVENT_DEFINITIONS, EventDefinition } from '../../../core/event-definitions';
 import eventBus from '../../../core/event-bus';
@@ -52,7 +55,7 @@ const getId = () => `dndnode_${id++}`;
 
 // Add serialization interfaces
 interface SerializedNodeData {
-  nodeType: 'ActionNodeModel' | 'ManualStartNodeModel' | 'EventNodeModel' | 'LiteralNodeModel' | 'DelayNodeModel' | string;
+  nodeType: 'ActionNodeModel' | 'ManualStartNodeModel' | 'EventNodeModel' | 'LiteralNodeModel' | 'DelayNodeModel' | 'BranchNodeModel' | string;
   actionName?: string;
   paramValues?: Record<string, any>;
   eventName?: string;
@@ -97,73 +100,24 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
   };
 
   const loadSequenceData = useCallback((sequenceJsonString: string) => {
-    const serializedSequence: SerializedSequence = JSON.parse(sequenceJsonString);
+    const serializedSequence = JSON.parse(sequenceJsonString);
     if (!serializedSequence || !serializedSequence.nodes || !serializedSequence.edges) {
       console.error('잘못된 시퀀스 파일 형식입니다.');
       return;
     }
 
-    const newNodes: Node[] = serializedSequence.nodes.map((sNode) => {
-      let model: BaseNode;
-      const data = sNode.data;
-
-      switch (data.nodeType) {
-        case 'ActionNodeModel':
-          const actionDef = actionRegistry.getActionDefinition(data.actionName);
-          if (!actionDef) {
-            console.error(`Action "${data.actionName}" not found in registry. Cannot load node ${sNode.id}.`);
-            return null;
-          }
-          const actionModel = new ActionNodeModel(sNode.id, actionDef);
-          if (data.paramValues) {
-            actionModel.paramValues = data.paramValues;
-          }
-          model = actionModel;
-          break;
-        
-        case 'ManualStartNodeModel':
-          model = new ManualStartNodeModel(sNode.id);
-          break;
-
-        case 'EventNodeModel':
-          const eventDef = EVENT_DEFINITIONS.find(e => e.name === data.eventName);
-          if (!eventDef) {
-            console.error(`Event "${data.eventName}" not found in definitions. Cannot load node ${sNode.id}.`);
-            return null;
-          }
-          model = new EventNodeModel(sNode.id, eventDef);
-          break;
-
-        case 'LiteralNodeModel':
-          model = new LiteralNodeModel(sNode.id, data.dataType, data.value);
-          break;
-
-        case 'DelayNodeModel':
-          model = new DelayNodeModel(sNode.id, data.delay);
-          break;
-
-        default:
-          console.error(`Unknown node type "${data.nodeType}" for node ${sNode.id}.`);
-          return null;
-      }
-
-      return {
-        id: sNode.id,
-        type: sNode.type,
-        position: sNode.position,
-        data: model,
-      };
-    }).filter(Boolean) as Node[];
+    // SequenceManager를 사용하여 역직렬화 로직을 중앙에서 처리합니다.
+    const { nodes: newNodes, edges: newEdges } = sequenceManager.deserializeSequence(serializedSequence);
 
     setNodes(newNodes);
-    setEdges(serializedSequence.edges);
+    setEdges(newEdges);
 
     setTimeout(() => {
       fitView();
     }, 50);
 
     console.log('시퀀스를 성공적으로 불러왔습니다.');
-  }, [setNodes, setEdges, actionRegistry, fitView]);
+  }, [setNodes, setEdges, sequenceManager, fitView]);
 
   // Auto-load sequence if sequenceToLoad is provided
   useEffect(() => {
@@ -307,6 +261,13 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
           type: 'delayNode',
           position,
           data: new DelayNodeModel(newNodeId),
+        };
+      } else if (droppedData.type === 'branchNode') {
+        newNode = {
+          id: newNodeId,
+          type: 'branchNode',
+          position,
+          data: new BranchNodeModel(newNodeId),
         };
       } else {
         return;

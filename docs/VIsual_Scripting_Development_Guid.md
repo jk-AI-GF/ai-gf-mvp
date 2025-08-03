@@ -237,3 +237,22 @@ Node Graph나 오브젝트 시스템은 점진적으로 붙여도 됨.
     *   시퀀스가 실행되면, `SequenceEngine`은 `getContext`의 결과를 `ExecutionContext`에 저장합니다.
     *   그 다음 `showMessage` 노드를 실행할 때, `message` 입력에 `getContext`의 결과가 연결된 것을 확인하고, `ExecutionContext`에서 해당 값을 가져와 `showMessage`의 입력으로 전달합니다. 결과적으로 `getContext`가 가져온 값이 화면에 메시지로 표시됩니다.
 
+### 핵심 제어 및 데이터 노드
+
+데이터 흐름 시스템을 기반으로, 다양한 제어 및 데이터 노드를 구현하여 복잡한 로직을 구성할 수 있습니다.
+
+*   **`Literal` (데이터 노드)**
+    *   **기능**: `string`, `number`, `boolean` 타입의 상수 값을 직접 입력하여 데이터 흐름에 제공합니다.
+    *   **주요 포트**: `returnValue` (출력)
+    *   **사용 예**: `showMessage` 노드의 `message` 포트에 특정 문자열을 연결하거나, `Delay` 노드의 `delay` 포트에 숫자 값을 연결하는 등, 고정된 값을 제공할 때 사용합니다.
+
+*   **`Delay` (제어 노드)**
+    *   **기능**: 실행 흐름을 지정된 시간(초)만큼 지연시킵니다.
+    *   **주요 포트**: `exec-in` (입력), `delay` (입력, number), `exec-out` (출력)
+    *   **사용 예**: 애니메이션 재생 후 3초 기다렸다가 다음 행동을 하도록 할 때 사용합니다. `delay` 포트에 `Literal` 노드를 연결하여 지연 시간을 동적으로 제어할 수 있습니다.
+
+*   **`Branch (If)` (제어 노드)**
+    *   **기능**: 입력된 `boolean` 값에 따라 실행 흐름을 `True` 또는 `False` 경로로 분기시킵니다.
+    *   **주요 포트**: `exec-in` (입력), `condition` (입력, boolean), `exec-true` (출력), `exec-false` (출력)
+    *   **사용 예**: 특정 조건(예: `getContext`로 가져온 값이 특정 상태인지 확인)에 따라 다른 애니메이션이나 메시지를 표시하고 싶을 때 사용합니다.
+

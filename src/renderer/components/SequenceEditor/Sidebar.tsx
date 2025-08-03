@@ -81,6 +81,22 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events }) => {
       >
         Delay
       </div>
+      <div
+        onDragStart={(event) => onDragStart(event, 'branchNode', 'Branch')}
+        draggable
+        style={{
+          padding: '10px 15px',
+          margin: '0 10px 10px 10px',
+          background: 'rgba(255, 82, 82, 0.3)',
+          color: '#ddd',
+          border: '1px solid rgba(255, 82, 82, 0.6)',
+          borderRadius: '5px',
+          cursor: 'grab',
+          textAlign: 'center',
+        }}
+      >
+        Branch (If)
+      </div>
       
       <hr style={{ borderColor: '#444', margin: '20px 10px' }} />
       

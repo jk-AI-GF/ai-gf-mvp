@@ -10,6 +10,7 @@ import { LiteralNodeModel } from './LiteralNodeModel';
 import { ManualStartNodeModel } from './ManualStartNodeModel';
 import { SequenceEngine } from './SequenceEngine';
 import { DelayNodeModel } from './DelayNodeModel';
+import { BranchNodeModel } from './BranchNodeModel';
 
 // 시퀀스 데이터의 구조를 정의합니다.
 interface SequenceData {
@@ -156,6 +157,62 @@ export class SequenceManager {
   }
 
   /**
+   * 시퀀스 JSON 객체를 실제 노드 모델 객체로 변환합니다.
+   * @param sequenceData - 파싱된 시퀀스 JSON 데이터입니다.
+   * @returns 역직렬화된 노드와 엣지를 포함하는 객체입니다.
+   */
+  public deserializeSequence(sequenceData: any): SequenceData {
+    const deserializedNodes: Node<BaseNode>[] = sequenceData.nodes.map((sNode: any): Node<BaseNode> | null => {
+      const data = sNode.data;
+      let model: BaseNode;
+
+      switch (sNode.type) {
+        case 'actionNode':
+          const actionDef = this.actionRegistry.getActionDefinition(data.actionName);
+          if (!actionDef) {
+            console.error(`Action "${data.actionName}" not found in registry. Cannot load node ${sNode.id}.`);
+            return null;
+          }
+          const actionModel = new ActionNodeModel(sNode.id, actionDef);
+          if (data.paramValues) {
+            actionModel.paramValues = data.paramValues;
+          }
+          model = actionModel;
+          break;
+        
+        case 'manualStartNode':
+          model = new ManualStartNodeModel(sNode.id);
+          break;
+
+        case 'eventNode':
+          const eventDef = EVENT_DEFINITIONS.find(e => e.name === data.eventName);
+          if (!eventDef) {
+            console.error(`Event "${data.eventName}" not found in definitions. Cannot load node ${sNode.id}.`);
+            return null;
+          }
+          model = new EventNodeModel(sNode.id, eventDef);
+          break;
+
+        case 'literalNode':
+          model = new LiteralNodeModel(sNode.id, data.dataType, data.value);
+          break;
+
+        case 'delayNode':
+          model = new DelayNodeModel(sNode.id, data.delay);
+          break;
+
+        default:
+          console.error(`Unknown node type "${sNode.type}" for node ${sNode.id}.`);
+          return null;
+      }
+
+      return { ...sNode, data: model };
+    }).filter((n: Node<BaseNode> | null): n is Node<BaseNode> => n !== null);
+
+    return { nodes: deserializedNodes, edges: sequenceData.edges };
+  }
+
+  /**
    * 파일에서 시퀀스 데이터를 로드하고 역직렬화합니다. 캐시를 활용합니다.
    * @param fileName - 로드할 시퀀스의 파일 이름입니다.
    * @returns 역직렬화된 시퀀스 데이터 또는 실패 시 null입니다.
@@ -180,54 +237,7 @@ export class SequenceManager {
       }
       const sequenceData = JSON.parse(new TextDecoder().decode(sequenceJSON));
 
-      const deserializedNodes: Node<BaseNode>[] = sequenceData.nodes.map((sNode: any): Node<BaseNode> | null => {
-        const data = sNode.data;
-        let model: BaseNode;
-
-        switch (sNode.type) {
-          case 'actionNode':
-            const actionDef = this.actionRegistry.getActionDefinition(data.actionName);
-            if (!actionDef) {
-              console.error(`Action "${data.actionName}" not found in registry. Cannot load node ${sNode.id}.`);
-              return null;
-            }
-            const actionModel = new ActionNodeModel(sNode.id, actionDef);
-            if (data.paramValues) {
-              actionModel.paramValues = data.paramValues;
-            }
-            model = actionModel;
-            break;
-          
-          case 'manualStartNode':
-            model = new ManualStartNodeModel(sNode.id);
-            break;
-
-          case 'eventNode':
-            const eventDef = EVENT_DEFINITIONS.find(e => e.name === data.eventName);
-            if (!eventDef) {
-              console.error(`Event "${data.eventName}" not found in definitions. Cannot load node ${sNode.id}.`);
-              return null;
-            }
-            model = new EventNodeModel(sNode.id, eventDef);
-            break;
-
-          case 'literalNode':
-            model = new LiteralNodeModel(sNode.id, data.dataType, data.value);
-            break;
-
-          case 'delayNode':
-            model = new DelayNodeModel(sNode.id, data.delay);
-            break;
-
-          default:
-            console.error(`Unknown node type "${sNode.type}" for node ${sNode.id}.`);
-            return null;
-        }
-
-        return { ...sNode, data: model };
-      }).filter((n: Node<BaseNode> | null): n is Node<BaseNode> => n !== null);
-
-      const result = { nodes: deserializedNodes, edges: sequenceData.edges };
+      const result = this.deserializeSequence(sequenceData);
       this.sequenceCache.set(fileName, result);
       return result;
 
