@@ -106,6 +106,21 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
       return;
     }
 
+    // --- BUG FIX: START ---
+    // 불러온 노드들의 ID를 분석하여 가장 큰 숫자 ID를 찾습니다.
+    let maxId = -1;
+    serializedSequence.nodes.forEach((node: SerializedNode) => {
+      if (node.id.startsWith('dndnode_')) {
+        const numPart = parseInt(node.id.split('_')[1], 10);
+        if (!isNaN(numPart) && numPart > maxId) {
+          maxId = numPart;
+        }
+      }
+    });
+    // 전역 ID 카운터를 불러온 노드 중 가장 큰 ID + 1로 설정하여 충돌을 방지합니다.
+    id = maxId + 1;
+    // --- BUG FIX: END ---
+
     // SequenceManager를 사용하여 역직렬화 로직을 중앙에서 처리합니다.
     const { nodes: newNodes, edges: newEdges } = sequenceManager.deserializeSequence(serializedSequence);
 

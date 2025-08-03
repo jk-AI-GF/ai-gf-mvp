@@ -9,7 +9,7 @@ export type ActionImplementation = (...args: any[]) => any;
 /**
  * 액션 파라미터의 타입을 정의합니다.
  */
-export type ActionParamType = 'string' | 'number' | 'boolean' | 'enum';
+export type ActionParamType = 'string' | 'number' | 'boolean' | 'enum' | 'any';
 
 /**
  * 액션 파라미터의 상세 정의입니다.

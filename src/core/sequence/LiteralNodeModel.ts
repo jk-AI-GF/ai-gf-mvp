@@ -25,10 +25,13 @@ export class LiteralNodeModel extends BaseNode {
     }
 
     private updateOutputPortType(): void {
-        const outputPort = this.outputs.find(p => p.name === 'returnValue');
-        if (outputPort) {
-            outputPort.type = this.dataType;
-        }
+        // 불변성을 유지하기 위해, 타입이 변경된 새로운 출력 포트 배열을 생성합니다.
+        this.outputs = this.outputs.map(port => {
+            if (port.name === 'returnValue') {
+                return { ...port, type: this.dataType };
+            }
+            return port;
+        });
     }
 
     setValue(value: any) {
