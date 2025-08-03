@@ -64,6 +64,46 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events }) => {
 
       <hr style={{ borderColor: '#444', margin: '20px 10px' }} />
 
+      <h3 style={{ color: '#eee', textAlign: 'center', marginBottom: '15px' }}>Control Nodes</h3>
+      <div
+        onDragStart={(event) => onDragStart(event, 'delayNode', 'Delay')}
+        draggable
+        style={{
+          padding: '10px 15px',
+          margin: '0 10px 10px 10px',
+          background: 'rgba(255, 152, 0, 0.3)',
+          color: '#ddd',
+          border: '1px solid rgba(255, 152, 0, 0.6)',
+          borderRadius: '5px',
+          cursor: 'grab',
+          textAlign: 'center',
+        }}
+      >
+        Delay
+      </div>
+      
+      <hr style={{ borderColor: '#444', margin: '20px 10px' }} />
+      
+      <h3 style={{ color: '#eee', textAlign: 'center', marginBottom: '15px' }}>Data Nodes</h3>
+      <div
+        onDragStart={(event) => onDragStart(event, 'literalNode', 'Literal')}
+        draggable
+        style={{
+          padding: '10px 15px',
+          margin: '0 10px 10px 10px',
+          background: 'rgba(33, 150, 243, 0.3)',
+          color: '#ddd',
+          border: '1px solid rgba(33, 150, 243, 0.6)',
+          borderRadius: '5px',
+          cursor: 'grab',
+          textAlign: 'center',
+        }}
+      >
+        Literal
+      </div>
+
+      <hr style={{ borderColor: '#444', margin: '20px 10px' }} />
+
       <h3 style={{ color: '#eee', textAlign: 'center', marginBottom: '15px' }}>Action Nodes</h3>
       {actions.map((action) => (
         <div

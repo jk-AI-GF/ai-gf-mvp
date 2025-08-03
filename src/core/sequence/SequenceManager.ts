@@ -6,8 +6,10 @@ import { PluginContext } from '../../plugin-api/plugin-context';
 import { ActionNodeModel } from './ActionNodeModel';
 import { BaseNode } from './BaseNode';
 import { EventNodeModel } from './EventNodeModel';
+import { LiteralNodeModel } from './LiteralNodeModel';
 import { ManualStartNodeModel } from './ManualStartNodeModel';
 import { SequenceEngine } from './SequenceEngine';
+import { DelayNodeModel } from './DelayNodeModel';
 
 // 시퀀스 데이터의 구조를 정의합니다.
 interface SequenceData {
@@ -207,6 +209,14 @@ export class SequenceManager {
               return null;
             }
             model = new EventNodeModel(sNode.id, eventDef);
+            break;
+
+          case 'literalNode':
+            model = new LiteralNodeModel(sNode.id, data.dataType, data.value);
+            break;
+
+          case 'delayNode':
+            model = new DelayNodeModel(sNode.id, data.delay);
             break;
 
           default:

@@ -16,16 +16,20 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { useAppContext } from '../../contexts/AppContext';
-import { ActionDefinition, ActionParam } from '../../../plugin-api/actions';
+import { ActionDefinition, ActionParam, ActionReturnType } from '../../../plugin-api/actions';
 import ActionNode from './ActionNode';
 import ManualStartNode from './ManualStartNode';
 import EventNode from './EventNode'; // Import the new event node
+import LiteralNode from './LiteralNode'; // Import the new literal node
+import DelayNode from './DelayNode'; // Import the new delay node
 
 // Define node types for React Flow
 const nodeTypes = {
   actionNode: ActionNode,
   manualStartNode: ManualStartNode,
   eventNode: EventNode, // Add the new event node type
+  literalNode: LiteralNode,
+  delayNode: DelayNode,
 };
 
 interface SequenceEditorProps {
@@ -37,6 +41,8 @@ interface SequenceEditorProps {
 import { ActionNodeModel } from '../../../core/sequence/ActionNodeModel';
 import { ManualStartNodeModel } from '../../../core/sequence/ManualStartNodeModel';
 import { EventNodeModel } from '../../../core/sequence/EventNodeModel';
+import { LiteralNodeModel } from '../../../core/sequence/LiteralNodeModel';
+import { DelayNodeModel } from '../../../core/sequence/DelayNodeModel';
 import { BaseNode, IPort } from '../../../core/sequence/BaseNode';
 import { EVENT_DEFINITIONS, EventDefinition } from '../../../core/event-definitions';
 import eventBus from '../../../core/event-bus';
@@ -46,10 +52,13 @@ const getId = () => `dndnode_${id++}`;
 
 // Add serialization interfaces
 interface SerializedNodeData {
-  nodeType: 'ActionNodeModel' | 'ManualStartNodeModel' | 'EventNodeModel' | string;
+  nodeType: 'ActionNodeModel' | 'ManualStartNodeModel' | 'EventNodeModel' | 'LiteralNodeModel' | 'DelayNodeModel' | string;
   actionName?: string;
   paramValues?: Record<string, any>;
   eventName?: string;
+  dataType?: ActionReturnType;
+  value?: any;
+  delay?: number;
 }
 
 interface SerializedNode {
@@ -123,6 +132,14 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
             return null;
           }
           model = new EventNodeModel(sNode.id, eventDef);
+          break;
+
+        case 'LiteralNodeModel':
+          model = new LiteralNodeModel(sNode.id, data.dataType, data.value);
+          break;
+
+        case 'DelayNodeModel':
+          model = new DelayNodeModel(sNode.id, data.delay);
           break;
 
         default:
@@ -276,6 +293,20 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
           type: 'eventNode',
           position,
           data: new EventNodeModel(newNodeId, eventDef),
+        };
+      } else if (droppedData.type === 'literalNode') {
+        newNode = {
+          id: newNodeId,
+          type: 'literalNode',
+          position,
+          data: new LiteralNodeModel(newNodeId),
+        };
+      } else if (droppedData.type === 'delayNode') {
+        newNode = {
+          id: newNodeId,
+          type: 'delayNode',
+          position,
+          data: new DelayNodeModel(newNodeId),
         };
       } else {
         return;
