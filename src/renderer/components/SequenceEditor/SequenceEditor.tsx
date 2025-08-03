@@ -23,6 +23,7 @@ import EventNode from './EventNode'; // Import the new event node
 import LiteralNode from './LiteralNode'; // Import the new literal node
 import DelayNode from './DelayNode'; // Import the new delay node
 import BranchNode from './BranchNode'; // Import the new branch node
+import OperatorNode from './OperatorNode';
 
 // Define node types for React Flow
 const nodeTypes = {
@@ -32,6 +33,7 @@ const nodeTypes = {
   literalNode: LiteralNode,
   delayNode: DelayNode,
   branchNode: BranchNode,
+  operatorNode: OperatorNode,
 };
 
 interface SequenceEditorProps {
@@ -46,6 +48,7 @@ import { EventNodeModel } from '../../../core/sequence/EventNodeModel';
 import { LiteralNodeModel } from '../../../core/sequence/LiteralNodeModel';
 import { DelayNodeModel } from '../../../core/sequence/DelayNodeModel';
 import { BranchNodeModel } from '../../../core/sequence/BranchNodeModel';
+import { OperatorNodeModel } from '../../../core/sequence/OperatorNodeModel';
 import { BaseNode, IPort } from '../../../core/sequence/BaseNode';
 import { EVENT_DEFINITIONS, EventDefinition } from '../../../core/event-definitions';
 import eventBus from '../../../core/event-bus';
@@ -55,7 +58,7 @@ const getId = () => `dndnode_${id++}`;
 
 // Add serialization interfaces
 interface SerializedNodeData {
-  nodeType: 'ActionNodeModel' | 'ManualStartNodeModel' | 'EventNodeModel' | 'LiteralNodeModel' | 'DelayNodeModel' | 'BranchNodeModel' | string;
+  nodeType: 'ActionNodeModel' | 'ManualStartNodeModel' | 'EventNodeModel' | 'LiteralNodeModel' | 'DelayNodeModel' | 'BranchNodeModel' | 'OperatorNodeModel' | string;
   actionName?: string;
   paramValues?: Record<string, any>;
   eventName?: string;
@@ -283,6 +286,13 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
           type: 'branchNode',
           position,
           data: new BranchNodeModel(newNodeId),
+        };
+      } else if (droppedData.type === 'operatorNode') {
+        newNode = {
+          id: newNodeId,
+          type: 'operatorNode',
+          position,
+          data: new OperatorNodeModel(newNodeId, droppedData.category, droppedData.operator),
         };
       } else {
         return;

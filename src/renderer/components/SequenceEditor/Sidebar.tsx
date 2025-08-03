@@ -7,10 +7,11 @@ interface SidebarProps {
   events: EventDefinition[];
 }
 
-const onDragStart = (event: React.DragEvent, nodeType: string, nodeName: string) => {
+const onDragStart = (event: React.DragEvent, nodeType: string, name: string, additionalData: Record<string, any> = {}) => {
   const data = {
     type: nodeType,
-    name: nodeName,
+    name,
+    ...additionalData,
   };
   event.dataTransfer.setData('application/reactflow', JSON.stringify(data));
   event.dataTransfer.effectAllowed = 'move';
@@ -155,6 +156,64 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events }) => {
 
       <hr style={{ borderColor: '#444', margin: '20px 10px' }} />
 
+      <h3 style={headerStyle} onClick={() => toggleSection('operators')}>
+        Operator Nodes {collapsedSections.operators ? '▼' : '▲'}
+      </h3>
+      {!collapsedSections.operators && (
+        <>
+          <div
+            onDragStart={(event) => onDragStart(event, 'operatorNode', 'Math Operation', { category: 'math', operator: '+' })}
+            draggable
+            style={{
+              padding: '10px 15px',
+              margin: '0 10px 10px 10px',
+              background: 'rgba(156, 39, 176, 0.3)',
+              color: '#ddd',
+              border: '1px solid rgba(156, 39, 176, 0.6)',
+              borderRadius: '5px',
+              cursor: 'grab',
+              textAlign: 'center',
+            }}
+          >
+            Math Operation
+          </div>
+          <div
+            onDragStart={(event) => onDragStart(event, 'operatorNode', 'Comparison', { category: 'comparison', operator: '==' })}
+            draggable
+            style={{
+              padding: '10px 15px',
+              margin: '0 10px 10px 10px',
+              background: 'rgba(76, 175, 80, 0.3)',
+              color: '#ddd',
+              border: '1px solid rgba(76, 175, 80, 0.6)',
+              borderRadius: '5px',
+              cursor: 'grab',
+              textAlign: 'center',
+            }}
+          >
+            Comparison
+          </div>
+          <div
+            onDragStart={(event) => onDragStart(event, 'operatorNode', 'Logic Operation', { category: 'logic', operator: 'AND' })}
+            draggable
+            style={{
+              padding: '10px 15px',
+              margin: '0 10px 10px 10px',
+              background: 'rgba(255, 193, 7, 0.3)',
+              color: '#ddd',
+              border: '1px solid rgba(255, 193, 7, 0.6)',
+              borderRadius: '5px',
+              cursor: 'grab',
+              textAlign: 'center',
+            }}
+          >
+            Logic Operation
+          </div>
+        </>
+      )}
+
+      <hr style={{ borderColor: '#444', margin: '20px 10px' }} />
+      
       <h3 style={headerStyle} onClick={() => toggleSection('actions')}>
         Action Nodes {collapsedSections.actions ? '▼' : '▲'}
       </h3>
