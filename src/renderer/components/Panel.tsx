@@ -8,10 +8,11 @@ interface PanelProps {
   onClose: () => void;
   initialPos: { x: number, y: number };
   onDragEnd: (pos: { x: number, y: number }) => void;
-  width?: string; // Optional width prop
+  width?: string;
+  height?: string; // Optional height prop
 }
 
-const Panel: React.FC<PanelProps> = ({ title, children, onClose, initialPos, onDragEnd, width }) => {
+const Panel: React.FC<PanelProps> = ({ title, children, onClose, initialPos, onDragEnd, width, height }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const handleRef = useRef<HTMLDivElement>(null);
   const { x, y } = useDraggable({ handleRef, initialPos, onDragEnd });
@@ -20,7 +21,8 @@ const Panel: React.FC<PanelProps> = ({ title, children, onClose, initialPos, onD
   const containerStyle = {
     top: y,
     left: x,
-    width: width, // Apply width if provided
+    width: width,
+    height: height, // Apply height if provided
   };
 
   return (

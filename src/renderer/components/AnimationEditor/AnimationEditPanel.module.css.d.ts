@@ -4,14 +4,12 @@ interface CssExports {
   'backButton': string;
   'container': string;
   'content': string;
+  'dopeSheetContainer': string;
   'editorLayout': string;
   'errorText': string;
   'footer': string;
   'keyframeEditorContainer': string;
-  'mainEditorArea': string;
   'placeholder': string;
-  'timelineContainer': string;
-  'trackListContainer': string;
 }
 export const cssExports: CssExports;
 export default cssExports;

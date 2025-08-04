@@ -3,8 +3,7 @@ import * as THREE from 'three';
 import Panel from '../Panel';
 import styles from './AnimationEditPanel.module.css';
 import { parseVrma } from './vrma-parser';
-import TrackListView from './TrackListView';
-import TimelineView from './TimelineView';
+import DopeSheetView from './DopeSheetView'; // 새로운 DopeSheetView를 임포트
 
 interface AnimationEditPanelProps {
   onClose: () => void;
@@ -20,7 +19,6 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
   animationName 
 }) => {
   const [animationClip, setAnimationClip] = useState<THREE.AnimationClip | null>(null);
-  const [selectedTrackName, setSelectedTrackName] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,10 +34,8 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
       setIsLoading(true);
       setError(null);
       setAnimationClip(null);
-      setSelectedTrackName(null);
 
       try {
-        // Find file path
         const userPath = await window.electronAPI.resolvePath('userData', `animations/${animationName}`);
         const assetPath = await window.electronAPI.resolvePath('assets', `Animation/${animationName}`);
         
@@ -54,13 +50,11 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
           throw new Error(`애니메이션 파일을 찾을 수 없습니다: ${animationName}`);
         }
 
-        // Read file as ArrayBuffer
         const result = await window.electronAPI.readAbsoluteFile(filePath);
         if (!(result instanceof ArrayBuffer)) {
           throw new Error('파일을 ArrayBuffer 형식으로 읽지 못했습니다.');
         }
 
-        // Parse using the new parser utility
         const clip = await parseVrma(result, animationName);
         setAnimationClip(clip);
         console.log('Parsed AnimationClip:', clip);
@@ -78,11 +72,6 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
 
   if (!animationName) return null;
 
-  const handleTrackSelect = (trackName: string) => {
-    setSelectedTrackName(trackName);
-    console.log("Selected Track:", trackName);
-  };
-
   const handleTimeChange = (newTime: number) => {
     setCurrentTime(newTime);
   };
@@ -95,33 +84,18 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
       return <p className={styles.errorText}>{error}</p>;
     }
     if (animationClip) {
-      // 모든 트랙의 키프레임 시간을 수집하고 중복을 제거합니다.
-      const allKeyframeTimes = Array.from(
-        new Set(animationClip.tracks.flatMap(track => Array.from(track.times)))
-      ).sort((a, b) => a - b);
-
       return (
         <div className={styles.editorLayout}>
-          <div className={styles.trackListContainer}>
-            <TrackListView 
+          <div className={styles.dopeSheetContainer}>
+            <DopeSheetView
               animationClip={animationClip}
-              selectedTrackName={selectedTrackName}
-              onTrackSelect={handleTrackSelect}
+              currentTime={currentTime}
+              onTimeChange={handleTimeChange}
             />
           </div>
-          <div className={styles.mainEditorArea}>
-            <div className={styles.timelineContainer}>
-              <TimelineView
-                duration={animationClip.duration}
-                currentTime={currentTime}
-                keyframes={allKeyframeTimes}
-                onTimeChange={handleTimeChange}
-              />
-            </div>
-            <div className={styles.keyframeEditorContainer}>
-              {/* KeyframeEditor will go here */}
-              <div className={styles.placeholder}>키프레임 편집기 영역</div>
-            </div>
+          <div className={styles.keyframeEditorContainer}>
+            {/* KeyframeEditor will go here */}
+            <div className={styles.placeholder}>키프레임 상세 편집기 영역</div>
           </div>
         </div>
       );
@@ -130,7 +104,7 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
   };
 
   return (
-    <Panel title={`에디터: ${animationName}`} onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd} width="800px">
+    <Panel title={`에디터: ${animationName}`} onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd} width="90vw" height="600px">
       <div className={styles.container}>
         <div className={styles.content}>
           {renderContent()}

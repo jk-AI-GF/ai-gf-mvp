@@ -16,30 +16,15 @@
 
 .editorLayout {
   display: flex;
+  flex-direction: column; /* Change to column for vertical layout */
   width: 100%;
   height: 100%;
   gap: 12px;
 }
 
-.trackListContainer {
-  flex: 0 0 220px; /* Do not grow, do not shrink, base width 220px */
-  height: 100%;
-  overflow: hidden;
-}
-
-.mainEditorArea {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  height: 100%;
-}
-
-.timelineContainer {
-  flex: 0 0 120px; /* Fixed height for timeline */
-  background-color: #333;
-  border-radius: 4px;
-  padding: 8px;
+.dopeSheetContainer {
+  flex: 1; /* Takes up available space */
+  min-height: 200px; /* Minimum height */
 }
 
 .keyframeEditorContainer {
@@ -47,6 +32,7 @@
   background-color: #333;
   border-radius: 4px;
   padding: 8px;
+  min-height: 100px;
 }
 
 .placeholder {
@@ -89,4 +75,3 @@
   background-color: #5a5a5a;
   border-color: #888;
 }
-  
