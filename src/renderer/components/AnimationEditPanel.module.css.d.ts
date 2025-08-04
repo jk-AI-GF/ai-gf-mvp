@@ -2,8 +2,11 @@
 // Please do not change this file!
 interface CssExports {
   'backButton': string;
+  'clipDetails': string;
   'container': string;
   'content': string;
+  'dataPreview': string;
+  'errorText': string;
   'info': string;
   'placeholder': string;
 }
