@@ -9,7 +9,7 @@ import MeshControlPanel from './components/MeshControlPanel';
 import ModManagementPanel from './components/ModManagementPanel';
 import PosePanel from './components/PosePanel';
 import AnimationPanel from './components/AnimationPanel';
-import AnimationEditPanel from './components/AnimationEditPanel';
+import AnimationEditPanel from './components/AnimationEditor/AnimationEditPanel';
 import MaterialPanel from './components/MaterialPanel';
 import LightPanel from './components/LightPanel';
 import TriggerEditorPanel from './components/TriggerEditorPanel';

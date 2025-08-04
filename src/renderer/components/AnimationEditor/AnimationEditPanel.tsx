@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import * as THREE from 'three';
-import Panel from './Panel';
+import Panel from '../Panel';
 import styles from './AnimationEditPanel.module.css';
-import { parseVrma } from '../vrma-parser';
+import { parseVrma } from './vrma-parser';
+import TrackListView from './TrackListView';
+import TimelineView from './TimelineView';
 
 interface AnimationEditPanelProps {
   onClose: () => void;
@@ -18,6 +20,8 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
   animationName 
 }) => {
   const [animationClip, setAnimationClip] = useState<THREE.AnimationClip | null>(null);
+  const [selectedTrackName, setSelectedTrackName] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,6 +36,7 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
       setIsLoading(true);
       setError(null);
       setAnimationClip(null);
+      setSelectedTrackName(null);
 
       try {
         // Find file path
@@ -73,6 +78,15 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
 
   if (!animationName) return null;
 
+  const handleTrackSelect = (trackName: string) => {
+    setSelectedTrackName(trackName);
+    console.log("Selected Track:", trackName);
+  };
+
+  const handleTimeChange = (newTime: number) => {
+    setCurrentTime(newTime);
+  };
+
   const renderContent = () => {
     if (isLoading) {
       return <p className={styles.placeholder}>애니메이션 로딩 및 파싱 중...</p>;
@@ -81,33 +95,52 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
       return <p className={styles.errorText}>{error}</p>;
     }
     if (animationClip) {
+      // 모든 트랙의 키프레임 시간을 수집하고 중복을 제거합니다.
+      const allKeyframeTimes = Array.from(
+        new Set(animationClip.tracks.flatMap(track => Array.from(track.times)))
+      ).sort((a, b) => a - b);
+
       return (
-        <>
-          <p className={styles.info}>
-            <strong>{animationClip.name}</strong> 클립 로드 완료.
-          </p>
-          <div className={styles.clipDetails}>
-            <span>재생 시간: {animationClip.duration.toFixed(2)}초</span>
-            <span>트랙 수: {animationClip.tracks.length}개</span>
+        <div className={styles.editorLayout}>
+          <div className={styles.trackListContainer}>
+            <TrackListView 
+              animationClip={animationClip}
+              selectedTrackName={selectedTrackName}
+              onTrackSelect={handleTrackSelect}
+            />
           </div>
-          <p className={styles.placeholder}>
-            다음 단계: 타임라인 및 키프레임 편집 UI 구현
-          </p>
-        </>
+          <div className={styles.mainEditorArea}>
+            <div className={styles.timelineContainer}>
+              <TimelineView
+                duration={animationClip.duration}
+                currentTime={currentTime}
+                keyframes={allKeyframeTimes}
+                onTimeChange={handleTimeChange}
+              />
+            </div>
+            <div className={styles.keyframeEditorContainer}>
+              {/* KeyframeEditor will go here */}
+              <div className={styles.placeholder}>키프레임 편집기 영역</div>
+            </div>
+          </div>
+        </div>
       );
     }
     return <p className={styles.placeholder}>데이터가 없습니다.</p>;
   };
 
   return (
-    <Panel title="애니메이션 편집" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
+    <Panel title={`에디터: ${animationName}`} onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd} width="800px">
       <div className={styles.container}>
         <div className={styles.content}>
           {renderContent()}
         </div>
-        <button onClick={onClose} className={styles.backButton}>
-          &larr; 목록으로 돌아가기
-        </button>
+        <div className={styles.footer}>
+            {/* PlaybackControls will go here */}
+            <button onClick={onClose} className={styles.backButton}>
+            &larr; 목록으로 돌아가기
+            </button>
+        </div>
       </div>
     </Panel>
   );

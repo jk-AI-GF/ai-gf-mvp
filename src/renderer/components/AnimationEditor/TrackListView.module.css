@@ -1,0 +1,51 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    background-color: #2c2c2c;
+    border-radius: 4px;
+    padding: 8px;
+    height: 100%; /* Fill available height */
+    min-height: 200px;
+  }
+  
+  .title {
+    font-size: 14px;
+    color: #ddd;
+    margin: 0 0 8px 4px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  
+  .list {
+    overflow-y: auto;
+    flex-grow: 1;
+  }
+  
+  .trackButton {
+    width: 100%;
+    padding: 8px 10px;
+    background-color: #3a3a3a;
+    border: 1px solid #555;
+    color: #eee;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 3px;
+    margin-bottom: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background-color 0.2s, border-color 0.2s;
+  }
+  
+  .trackButton:hover {
+    background-color: #4a4a4a;
+    border-color: #777;
+  }
+  
+  .trackButton.selected {
+    background-color: #007bff;
+    border-color: #0056b3;
+    font-weight: bold;
+  }
+  

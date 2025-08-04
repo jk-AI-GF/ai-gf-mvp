@@ -1,0 +1,49 @@
+.container {
+    width: 100%;
+    overflow-x: auto;
+    background-color: #252526;
+    border-radius: 4px;
+    padding: 5px 0;
+    cursor: pointer;
+    user-select: none;
+  }
+  
+  .timelineSvg {
+    display: block;
+  }
+  
+  .background {
+    fill: #3c3c3c;
+  }
+  
+  .majorTick,
+  .minorTick {
+    stroke: #6a6a6a;
+    stroke-width: 1;
+  }
+  
+  .tickLabel {
+    font-size: 10px;
+    fill: #aaa;
+    user-select: none;
+  }
+  
+  .keyframeMarker {
+    fill: #e5c07b; /* A nice yellow/gold color */
+    stroke: #2c2c2c;
+    stroke-width: 1;
+  }
+  
+  .playhead {
+    cursor: grab;
+  }
+  
+  .playhead line {
+    stroke: #f44747;
+    stroke-width: 2;
+  }
+  
+  .playhead polygon {
+    fill: #f44747;
+  }
+  
