@@ -8,9 +8,10 @@ interface AnimationPanelProps {
   onClose: () => void;
   initialPos: { x: number, y: number };
   onDragEnd: (pos: { x: number, y: number }) => void;
+  onEdit: (fileName: string) => void;
 }
 
-const AnimationPanel: React.FC<AnimationPanelProps> = ({ onClose, initialPos, onDragEnd }) => {
+const AnimationPanel: React.FC<AnimationPanelProps> = ({ onClose, initialPos, onDragEnd, onEdit }) => {
   const { pluginManager } = useAppContext(); // vrmManager에서 pluginManager로 변경
   const [animationFiles, setAnimationFiles] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -51,9 +52,8 @@ const AnimationPanel: React.FC<AnimationPanelProps> = ({ onClose, initialPos, on
     fetchAnimations();
   }, []);
 
-  const handleAnimationClick = (fileName: string) => {
+  const handlePlayClick = (fileName: string) => {
     if (pluginManager) {
-      // 파일 이름만 전달하도록 수정. vrm-manager가 경로를 처리함.
       pluginManager.context.actions.playAnimation(fileName, false);
     } else {
       console.error('pluginManager is not available.');
@@ -66,13 +66,23 @@ const AnimationPanel: React.FC<AnimationPanelProps> = ({ onClose, initialPos, on
       <div className={styles.content}>
         {error && <p className={styles.emptyMessage}>{error}</p>}
         {animationFiles.map((file) => (
-          <button
-            key={file}
-            onClick={() => handleAnimationClick(file)}
-            className={styles.listButton}
-          >
-            {file}
-          </button>
+          <div key={file} className={styles.animationItem}>
+            <span className={styles.fileName}>{file}</span>
+            <div className={styles.buttonGroup}>
+              <button
+                onClick={() => onEdit(file)}
+                className={`${styles.actionButton} ${styles.editButton}`}
+              >
+                편집
+              </button>
+              <button
+                onClick={() => handlePlayClick(file)}
+                className={`${styles.actionButton} ${styles.playButton}`}
+              >
+                재생
+              </button>
+            </div>
+          </div>
         ))}
       </div>
     </Panel>

@@ -1,0 +1,44 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 8px;
+    min-width: 300px;
+  }
+  
+  .content {
+    background-color: #2b2b2b;
+    padding: 12px;
+    border-radius: 4px;
+  }
+  
+  .info {
+    margin: 0 0 16px 0;
+    color: #eee;
+    font-size: 14px;
+    word-break: break-all;
+  }
+  
+  .placeholder {
+    margin: 0;
+    color: #999;
+    text-align: center;
+  }
+  
+  .backButton {
+    background-color: #4a4a4a;
+    border: 1px solid #666;
+    color: #eee;
+    padding: 10px 15px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.2s, border-color 0.2s;
+    align-self: flex-start; /* Align to the left */
+  }
+  
+  .backButton:hover {
+    background-color: #5a5a5a;
+    border-color: #888;
+  }
+  

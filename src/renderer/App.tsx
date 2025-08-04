@@ -9,6 +9,7 @@ import MeshControlPanel from './components/MeshControlPanel';
 import ModManagementPanel from './components/ModManagementPanel';
 import PosePanel from './components/PosePanel';
 import AnimationPanel from './components/AnimationPanel';
+import AnimationEditPanel from './components/AnimationEditPanel';
 import MaterialPanel from './components/MaterialPanel';
 import LightPanel from './components/LightPanel';
 import TriggerEditorPanel from './components/TriggerEditorPanel';
@@ -42,6 +43,8 @@ const App: React.FC = () => {
   const [isModManagementPanelOpen, setModManagementPanelOpen] = useState(false);
   const [isPosePanelOpen, setPosePanelOpen] = useState(false);
   const [isAnimationPanelOpen, setAnimationPanelOpen] = useState(false);
+  const [isAnimationEditPanelOpen, setAnimationEditPanelOpen] = useState(false);
+  const [animationToEdit, setAnimationToEdit] = useState<string | null>(null);
   const [isMaterialPanelOpen, setMaterialPanelOpen] = useState(false);
   const [isLightPanelOpen, setLightPanelOpen] = useState(false);
   const [isCreatorPanelOpen, setCreatorPanelOpen] = useState(false);
@@ -275,6 +278,18 @@ const App: React.FC = () => {
     }
   };
 
+  const handleOpenAnimationEditor = (fileName: string) => {
+    setAnimationToEdit(fileName);
+    setAnimationPanelOpen(false); // Close list panel
+    setAnimationEditPanelOpen(true); // Open editor panel
+  };
+
+  const handleCloseAnimationEditor = () => {
+    setAnimationEditPanelOpen(false);
+    setAnimationToEdit(null);
+    setAnimationPanelOpen(true); // Re-open list panel
+  };
+
   const [panelPositions, setPanelPositions] = useState({
     joint: { x: 20, y: 70 }, expression: { x: 390, y: 70 },
     plugins: { x: window.innerWidth - 740, y: 70 }, mesh: { x: window.innerWidth - 370, y: 70 },
@@ -282,6 +297,7 @@ const App: React.FC = () => {
     animation: { x: window.innerWidth - 370, y: 70 }, material: { x: 20, y: 400 },
     light: { x: 350, y: 400 }, triggerEditor: { x: window.innerWidth - 370, y: 400 },
     creator: { x: 20, y: 70 }, contextDebug: { x: window.innerWidth - 400, y: 70 },
+    animationEditor: { x: window.innerWidth / 2 - 200, y: window.innerHeight / 2 - 200 },
   });
 
   const handlePanelDrag = (panelId: keyof typeof panelPositions, pos: { x: number; y: number }) => {
@@ -322,7 +338,18 @@ const App: React.FC = () => {
       {isMeshPanelOpen && <MeshControlPanel onClose={() => setMeshPanelOpen(false)} initialPos={panelPositions.mesh} onDragEnd={(pos) => handlePanelDrag('mesh', pos)} />}
       {isModManagementPanelOpen && <ModManagementPanel onClose={() => setModManagementPanelOpen(false)} initialPos={panelPositions.mod} onDragEnd={(pos) => handlePanelDrag('mod', pos)} />}
       {isPosePanelOpen && <PosePanel onClose={() => setPosePanelOpen(false)} initialPos={panelPositions.pose} onDragEnd={(pos) => handlePanelDrag('pose', pos)} />}
-      {isAnimationPanelOpen && <AnimationPanel onClose={() => setAnimationPanelOpen(false)} initialPos={panelPositions.animation} onDragEnd={(pos) => handlePanelDrag('animation', pos)} />}
+      {isAnimationPanelOpen && <AnimationPanel 
+        onClose={() => setAnimationPanelOpen(false)} 
+        initialPos={panelPositions.animation} 
+        onDragEnd={(pos) => handlePanelDrag('animation', pos)}
+        onEdit={handleOpenAnimationEditor}
+      />}
+      {isAnimationEditPanelOpen && <AnimationEditPanel
+        onClose={handleCloseAnimationEditor}
+        initialPos={panelPositions.animationEditor}
+        onDragEnd={(pos) => handlePanelDrag('animationEditor', pos)}
+        animationName={animationToEdit}
+      />}
       {isMaterialPanelOpen && <MaterialPanel onClose={() => setMaterialPanelOpen(false)} initialPos={panelPositions.material} onDragEnd={(pos) => handlePanelDrag('material', pos)} />}
       {isLightPanelOpen && <LightPanel onClose={() => setLightPanelOpen(false)} initialPos={panelPositions.light} onDragEnd={(pos) => handlePanelDrag('light', pos)} />}
       
