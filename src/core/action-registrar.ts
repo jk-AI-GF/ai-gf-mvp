@@ -70,6 +70,53 @@ export function registerCoreActions(
     }
   );
 
+  (text: string) => {
+      playTTS(text);
+    }
+  ;
+
+  registry.register(
+    {
+      name: 'moveCharacterToScreenPosition',
+      description: '화면 비율 좌표로 캐릭터를 이동시킵니다.',
+      params: [
+        { name: 'x', type: 'number', description: '화면 X 좌표 (0.0 ~ 1.0)', defaultValue: 0.5 },
+        { name: 'y', type: 'number', description: '화면 Y 좌표 (0.0 ~ 1.0)', defaultValue: 0.5 },
+        { name: 'duration', type: 'number', description: '이동 시간(초)', defaultValue: 1.0 },
+      ],
+    },
+    (x: number, y: number, duration: number) => {
+      if (!vrmManager.currentVrm) return;
+
+      // 1. 화면 비율 좌표를 NDC(-1 to 1)로 변환
+      const ndc = new THREE.Vector2(
+        x * 2 - 1,
+        -(y * 2 - 1) // Y축은 반전
+      );
+
+      // 2. Raycaster 설정
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(ndc, vrmManager.activeCamera);
+
+      // 3. grab-vrm-plugin과 동일한 방식으로 평면 생성
+      // 카메라를 향하고, 현재 캐릭터의 위치를 통과하는 평면을 만듭니다.
+      const plane = new THREE.Plane();
+      plane.setFromNormalAndCoplanarPoint(
+        vrmManager.activeCamera.getWorldDirection(plane.normal),
+        vrmManager.currentVrm.scene.position
+      );
+      
+      // 4. 평면과의 교차점 계산
+      const targetPosition = new THREE.Vector3();
+      if (raycaster.ray.intersectPlane(plane, targetPosition)) {
+        // 교차점이 성공적으로 계산된 경우에만 이동을 실행합니다.
+        vrmManager.animateCharacterMove(targetPosition, duration);
+      } else {
+        console.warn("moveCharacterToScreenPosition: Could not find an intersection point on the dynamic plane.");
+      }
+    }
+  );
+
   registry.register(
     {
       name: 'setExpression',

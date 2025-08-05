@@ -508,6 +508,30 @@ export class VRMManager {
         });
     }
 
+    public animateCharacterMove(targetPosition: THREE.Vector3, duration: number): Promise<void> {
+        if (!this.currentVrm) return Promise.resolve();
+
+        const vrm = this.currentVrm;
+        const startPosition = vrm.scene.position.clone();
+
+        return new Promise((resolve) => {
+            const startTime = performance.now();
+            const step = () => {
+                const elapsedTime = (performance.now() - startTime) / 1000;
+                const progress = Math.min(elapsedTime / duration, 1);
+
+                vrm.scene.position.lerpVectors(startPosition, targetPosition, progress);
+
+                if (progress < 1) {
+                    requestAnimationFrame(step);
+                } else {
+                    resolve();
+                }
+            };
+            requestAnimationFrame(step);
+        });
+    }
+
     public animateExpression(expressionName: string, targetWeight: number, duration: number): void {
         if (!this.currentVrm?.expressionManager) return;
         const expressionManager = this.currentVrm.expressionManager;
