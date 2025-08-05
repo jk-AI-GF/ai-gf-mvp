@@ -33,7 +33,38 @@ export async function parseVrma(arrayBuffer: ArrayBuffer, fileName: string): Pro
   try {
     const gltf = await loader.parseAsync(arrayBuffer, '');
     if (gltf.animations && gltf.animations.length > 0) {
-      const clip = gltf.animations[0];
+      let clip = gltf.animations[0];
+      // 부수 효과를 피하려면 복제
+      clip = clip.clone();
+
+      // 중복 키프레임 제거
+      clip.optimize();  
+
+      // (옵션) 더 공격적으로 샘플링
+      clip.tracks = clip.tracks.map(track => {
+        const { times, values } = track;
+        const valueSize = track.getValueSize();
+        const threshold = 1e-3; // 값 변화 허용 오차
+        const newTimes = [];
+        const newValues = [];
+
+        for (let i = 0; i < times.length; i++) {
+          // 이전 키프레임과 비교하여 값 차이가 크지 않으면 건너뜁니다.
+          // (단순화를 위해 첫 번째 컴포넌트만 비교)
+          if (i === 0 || Math.abs(values[i * valueSize] - values[(i - 1) * valueSize]) > threshold) {
+            newTimes.push(times[i]);
+            for (let k = 0; k < valueSize; k++) {
+              newValues.push(values[i * valueSize + k]);
+            }
+          }
+        }
+
+        // `setTimes`/`setValues`는 이전 three.js 버전의 API입니다.
+        // 현재 버전에서는 생성자를 통해 새로운 KeyframeTrack을 생성해야 합니다.
+        // @ts-ignore - track.constructor가 생성자임에도 불구하고 TS가 추론하지 못하는 문제입니다.
+        return new track.constructor(track.name, newTimes, newValues);
+      });
+
       // Ensure the clip has a name
       if (!clip.name) {
         clip.name = fileName.replace(/\.[^/.]+$/, ""); // Remove extension
