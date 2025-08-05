@@ -98,61 +98,91 @@ export class SequenceEngine {
     const executionContext = new ExecutionContext();
     const nodeMap = new Map(sequenceNodes.map(n => [n.id, n]));
     
-    // 데이터 엣지만 따로 맵으로 만들어 입력 값 계산 시 사용
     const dataEdgesByTarget: Map<string, Edge[]> = new Map();
     sequenceEdges.forEach(edge => {
-      if (edge.targetHandle && edge.targetHandle !== 'exec-in') {
+      if (edge.targetHandle && !edge.targetHandle.startsWith('exec-')) {
         const edges = dataEdgesByTarget.get(edge.target) || [];
         edges.push(edge);
         dataEdgesByTarget.set(edge.target, edges);
       }
     });
 
-    // 데이터 전용 노드(예: LiteralNode)를 미리 실행하여 컨텍스트에 값을 채웁니다.
-    for (const node of sequenceNodes) {
-      if (node.data instanceof LiteralNodeModel) {
-        const result = await node.data.execute(this.pluginContext, {});
+    // 이미 실행된 노드를 추적하여 무한 루프와 중복 실행을 방지합니다.
+    const executedDataNodes: Set<string> = new Set();
+
+    /**
+     * 특정 노드의 특정 출력 핸들에서 나오는 값을 재귀적으로 계산하고 반환합니다.
+     * 만약 값이 컨텍스트에 없다면, 해당 값을 생성하는 소스 노드를 찾아 실행합니다.
+     */
+    const getNodeOutputValue = async (nodeId: string, handleName: string): Promise<any> => {
+      // 1. 컨텍스트에 값이 이미 있는지 확인
+      const existingValue = executionContext.getValue(nodeId, handleName);
+      if (existingValue !== undefined) {
+        return existingValue;
+      }
+
+      const sourceNode = nodeMap.get(nodeId);
+      if (!sourceNode) return undefined;
+
+      // 2. 데이터 전용 노드이고 아직 실행되지 않았다면 실행
+      const hasExecIn = sourceNode.data.inputs.some(p => p.type === 'execution');
+      if (!hasExecIn && !executedDataNodes.has(sourceNode.id)) {
+        console.log(`[SequenceEngine] Pull-executing data node: ${sourceNode.id} (${sourceNode.data.name})`);
+        
+        // 3. 이 노드의 입력 값을 재귀적으로 먼저 계산
+        const inputs = await calculateNodeInputs(sourceNode);
+        
+        // 4. 노드 실행 및 출력 저장
+        const result = await sourceNode.data.execute(this.pluginContext, inputs);
         if (result.outputs) {
           for (const outputName in result.outputs) {
-            executionContext.setValue(node.id, outputName, result.outputs[outputName]);
+            executionContext.setValue(sourceNode.id, outputName, result.outputs[outputName]);
           }
         }
+        executedDataNodes.add(sourceNode.id);
       }
-    }
+      
+      // 5. 이제 값이 컨텍스트에 있을 것이므로 다시 조회하여 반환
+      return executionContext.getValue(nodeId, handleName);
+    };
 
-    // 실행 큐: 다음에 실행할 노드를 관리
+    /**
+     * 특정 노드의 모든 입력 값을 계산하여 맵으로 반환합니다.
+     */
+    const calculateNodeInputs = async (node: Node<BaseNode>): Promise<Record<string, any>> => {
+      const inputs: Record<string, any> = {};
+      const connectedDataEdges = dataEdgesByTarget.get(node.id) || [];
+
+      for (const edge of connectedDataEdges) {
+        const sourceValue = await getNodeOutputValue(edge.source, edge.sourceHandle!);
+        if (sourceValue !== undefined) {
+          inputs[edge.targetHandle!] = sourceValue;
+        }
+      }
+      
+      // paramValues와 연결된 입력을 병합 (연결된 값이 우선)
+      if (node.data instanceof ActionNodeModel) {
+        return { ...node.data.paramValues, ...inputs };
+      }
+      return inputs;
+    };
+
+    // 실행 큐 및 초기화
     const executionQueue: Node<BaseNode>[] = [startNode];
-    
-    // 초기값(이벤트 페이로드 등)을 컨텍스트에 저장
     for (const key in initialOutputs) {
       executionContext.setValue(startNode.id, key, initialOutputs[key]);
     }
 
+    // 메인 실행 루프
     while (executionQueue.length > 0) {
       const currentNode = executionQueue.shift()!;
-      const nodeInstance = currentNode.data;
-
-      // 1. 입력 데이터 계산
-      const dataInputs: Record<string, any> = {};
-      const connectedDataEdges = dataEdgesByTarget.get(currentNode.id) || [];
       
-      for (const edge of connectedDataEdges) {
-        const sourceValue = executionContext.getValue(edge.source, edge.sourceHandle!);
-        if (sourceValue !== undefined) {
-          dataInputs[edge.targetHandle!] = sourceValue;
-        }
-      }
-
-      // 내장 파라미터 값과 연결된 입력 값을 병합합니다.
-      // 연결된 값(dataInputs)이 내장 값보다 우선순위가 높습니다.
-      let finalInputs = dataInputs;
-      if (nodeInstance instanceof ActionNodeModel) {
-        finalInputs = { ...nodeInstance.paramValues, ...dataInputs };
-      }
+      // 1. 현재 노드의 입력 계산 (데이터 종속성 해결)
+      const finalInputs = await calculateNodeInputs(currentNode);
 
       // 2. 노드 실행
-      console.log(`[SequenceEngine] Executing node: ${currentNode.id} (${nodeInstance.name}) with inputs:`, finalInputs);
-      const result = await nodeInstance.execute(this.pluginContext, finalInputs);
+      console.log(`[SequenceEngine] Executing node: ${currentNode.id} (${currentNode.data.name}) with inputs:`, finalInputs);
+      const result = await currentNode.data.execute(this.pluginContext, finalInputs);
 
       // 3. 출력 데이터 저장
       if (result.outputs) {
@@ -163,12 +193,12 @@ export class SequenceEngine {
 
       // 4. 다음 실행 노드 큐에 추가
       if (result.nextExec) {
-        const nextExecutionEdge = sequenceEdges.find(
+        const nextExecutionEdges = sequenceEdges.filter(
           e => e.source === currentNode.id && e.sourceHandle === result.nextExec
         );
 
-        if (nextExecutionEdge) {
-          const nextNode = nodeMap.get(nextExecutionEdge.target);
+        for (const edge of nextExecutionEdges) {
+          const nextNode = nodeMap.get(edge.target);
           if (nextNode) {
             executionQueue.push(nextNode);
           }
