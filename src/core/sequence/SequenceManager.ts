@@ -218,6 +218,50 @@ export class SequenceManager {
   }
 
   /**
+   * React Flow 객체를 저장 가능한 JSON 객체로 직렬화합니다.
+   * @param flow - React Flow 인스턴스에서 toObject()로 얻은 객체입니다.
+   * @returns 직렬화된 노드와 엣지를 포함하는 객체입니다.
+   */
+  public serializeSequence(flow: any): any {
+    const serializedNodes = flow.nodes.map((node: Node<BaseNode>) => {
+      // data 객체(모델)의 serialize 메서드를 호출하여 직렬화된 데이터를 가져옵니다.
+      const serializedData = node.data.serialize();
+      // 원래 노드에서 data를 제외한 나머지 속성을 복사하고, 직렬화된 데이터를 추가합니다.
+      const { data, ...rest } = node;
+      return { ...rest, data: serializedData };
+    });
+
+    return { nodes: serializedNodes, edges: flow.edges };
+  }
+
+  /**
+   * 직렬화된 시퀀스 데이터를 지정된 파일에 덮어씁니다.
+   * @param fileName - 저장할 시퀀스의 파일 이름입니다.
+   * @param flow - React Flow 인스턴스에서 toObject()로 얻은 객체입니다.
+   * @returns 성공 여부와 파일 경로를 포함하는 객체입니다.
+   */
+  public async saveSequenceToFile(fileName: string, flow: any): Promise<{ success: boolean; filePath?: string; error?: string }> {
+    try {
+      const serializableData = this.serializeSequence(flow);
+      const jsonString = JSON.stringify(serializableData, null, 2);
+      
+      // 메인 프로세스에 파일 저장을 요청합니다.
+      const result = await window.electronAPI.saveSequenceToFile(fileName, jsonString);
+
+      if (result.success) {
+        // 성공 시 캐시를 무효화하여 다음에 최신 버전을 로드하도록 합니다.
+        this.sequenceCache.delete(fileName);
+      }
+      
+      return result;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error(`[SequenceManager] Failed to save sequence to file ${fileName}:`, errorMessage);
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  /**
    * 파일에서 시퀀스 데이터를 로드하고 역직렬화합니다. 캐시를 활용합니다.
    * @param fileName - 로드할 시퀀스의 파일 이름입니다.
    * @returns 역직렬화된 시퀀스 데이터 또는 실패 시 null입니다.

@@ -417,6 +417,24 @@ app.on('ready', async () => {
     }
   });
 
+  ipcMain.handle('save-sequence-to-file', async (event, fileName: string, sequenceData: string) => {
+    const sequencesDir = resolveUserDataPath('sequences');
+    const filePath = path.join(sequencesDir, fileName);
+
+    // Security check to prevent writing outside the sequences directory
+    if (path.dirname(filePath) !== sequencesDir) {
+      return { success: false, error: 'Security violation: Invalid file path.' };
+    }
+
+    try {
+      await fsp.writeFile(filePath, sequenceData, 'utf-8');
+      return { success: true, filePath };
+    } catch (error) {
+      console.error(`Failed to save sequence to ${fileName}:`, error);
+      return { success: false, error: error.message };
+    }
+  });
+
   ipcMain.handle('load-sequence', async () => {
     if (mainWindow) mainWindow.setAlwaysOnTop(false);
     try {

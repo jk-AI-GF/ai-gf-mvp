@@ -165,38 +165,42 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
   }, [actionRegistry]);
 
   const handleSave = useCallback(async () => {
+    if (!sequenceManager) {
+      console.error("SequenceManager is not initialized.");
+      return;
+    }
     const currentNodes = getNodes();
     const currentEdges = getEdges();
 
-    const serializedNodes: SerializedNode[] = currentNodes.map((node) => {
-      const model = node.data as BaseNode;
-      return {
-        id: node.id,
-        type: node.type as string,
-        position: node.position,
-        data: model.serialize() as SerializedNodeData,
-      };
-    });
-
-    const serializedSequence: SerializedSequence = {
-      nodes: serializedNodes,
-      edges: currentEdges.map(({ id, source, sourceHandle, target, targetHandle }) => ({
-        id, source, sourceHandle, target, targetHandle
-      })),
-    };
+    const flow = { nodes: currentNodes, edges: currentEdges };
+    let result;
 
     try {
-      const result = await window.electronAPI.saveSequence(JSON.stringify(serializedSequence, null, 2));
+      if (sequenceToLoad) {
+        // Editing an existing sequence, overwrite it
+        result = await sequenceManager.saveSequenceToFile(sequenceToLoad, flow);
+      } else {
+        // Creating a new sequence, open save dialog
+        const serializableData = sequenceManager.serializeSequence(flow);
+        const jsonString = JSON.stringify(serializableData, null, 2);
+        result = await window.electronAPI.saveSequence(jsonString);
+      }
+
       if (result.success) {
         console.log('시퀀스가 성공적으로 저장되었습니다:', result.filePath);
         eventBus.emit('sequences-updated');
-      } else if (!result.canceled) {
+        onClose(); // 저장 후 에디터 닫기
+      } else if (result.error) {
         console.error('시퀀스 저장 실패:', result.error);
+        alert(`저장 실패: ${result.error}`);
       }
+      // 'canceled' case is handled by doing nothing.
+
     } catch (error) {
       console.error('시퀀스 저장 중 예외 발생:', error);
+      alert(`저장 중 오류 발생: ${error instanceof Error ? error.message : String(error)}`);
     }
-  }, [getNodes, getEdges]);
+  }, [getNodes, getEdges, sequenceManager, sequenceToLoad, onClose]);
 
   const handleLoad = useCallback(async () => {
     try {
