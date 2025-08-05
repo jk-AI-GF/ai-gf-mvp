@@ -201,6 +201,7 @@ const createWindow = (): void => {
     titleBarStyle: 'hidden',
     transparent: true,
     resizable: false,
+    fullscreen: true, // 이 옵션을 추가하여 전체 화면으로 시작합니다.
 
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,

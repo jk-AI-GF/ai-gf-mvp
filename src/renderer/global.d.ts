@@ -87,6 +87,7 @@ declare global {
       setActiveSequences: (activeSequences: string[]) => void;
       deleteSequence: (sequenceFile: string) => Promise<{ success: boolean; error?: string }>;
       saveSequence: (sequenceData: string) => Promise<{ success: boolean; canceled: boolean; filePath?: string; error?: string }>;
+      saveSequenceToFile: (fileName: string, sequenceData: string) => Promise<{ success: boolean; filePath?: string; error?: string }>;
       loadSequence: () => Promise<{ success: boolean; canceled: boolean; data?: string; filePath?: string; error?: string }>;
     };
   }
