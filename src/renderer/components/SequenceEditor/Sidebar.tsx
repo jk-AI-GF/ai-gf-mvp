@@ -136,22 +136,40 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events }) => {
         Data Nodes {collapsedSections.data ? '▼' : '▲'}
       </h3>
       {!collapsedSections.data && (
-        <div
-          onDragStart={(event) => onDragStart(event, 'literalNode', 'Literal')}
-          draggable
-          style={{
-            padding: '10px 15px',
-            margin: '0 10px 10px 10px',
-            background: 'rgba(33, 150, 243, 0.3)',
-            color: '#ddd',
-            border: '1px solid rgba(33, 150, 243, 0.6)',
-            borderRadius: '5px',
-            cursor: 'grab',
-            textAlign: 'center',
-          }}
-        >
-          Literal
-        </div>
+        <>
+          <div
+            onDragStart={(event) => onDragStart(event, 'literalNode', 'Literal')}
+            draggable
+            style={{
+              padding: '10px 15px',
+              margin: '0 10px 10px 10px',
+              background: 'rgba(33, 150, 243, 0.3)',
+              color: '#ddd',
+              border: '1px solid rgba(33, 150, 243, 0.6)',
+              borderRadius: '5px',
+              cursor: 'grab',
+              textAlign: 'center',
+            }}
+          >
+            Literal
+          </div>
+          <div
+            onDragStart={(event) => onDragStart(event, 'randomNode', 'Random Number')}
+            draggable
+            style={{
+              padding: '10px 15px',
+              margin: '0 10px 10px 10px',
+              background: 'rgba(33, 150, 243, 0.3)',
+              color: '#ddd',
+              border: '1px solid rgba(33, 150, 243, 0.6)',
+              borderRadius: '5px',
+              cursor: 'grab',
+              textAlign: 'center',
+            }}
+          >
+            Random Number
+          </div>
+        </>
       )}
 
       <hr style={{ borderColor: '#444', margin: '20px 10px' }} />

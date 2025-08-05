@@ -24,6 +24,7 @@ import LiteralNode from './LiteralNode'; // Import the new literal node
 import DelayNode from './DelayNode'; // Import the new delay node
 import BranchNode from './BranchNode'; // Import the new branch node
 import OperatorNode from './OperatorNode';
+import RandomNode from './RandomNode';
 
 // Define node types for React Flow
 const nodeTypes = {
@@ -34,6 +35,7 @@ const nodeTypes = {
   delayNode: DelayNode,
   branchNode: BranchNode,
   operatorNode: OperatorNode,
+  randomNode: RandomNode,
 };
 
 interface SequenceEditorProps {
@@ -49,6 +51,7 @@ import { LiteralNodeModel } from '../../../core/sequence/LiteralNodeModel';
 import { DelayNodeModel } from '../../../core/sequence/DelayNodeModel';
 import { BranchNodeModel } from '../../../core/sequence/BranchNodeModel';
 import { OperatorNodeModel } from '../../../core/sequence/OperatorNodeModel';
+import { RandomNodeModel } from '../../../core/sequence/RandomNodeModel';
 import { BaseNode, IPort } from '../../../core/sequence/BaseNode';
 import { EVENT_DEFINITIONS, EventDefinition } from '../../../core/event-definitions';
 import eventBus from '../../../core/event-bus';
@@ -297,6 +300,13 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
           type: 'operatorNode',
           position,
           data: new OperatorNodeModel(newNodeId, droppedData.category, droppedData.operator),
+        };
+      } else if (droppedData.type === 'randomNode') {
+        newNode = {
+          id: newNodeId,
+          type: 'randomNode',
+          position,
+          data: new RandomNodeModel(newNodeId),
         };
       } else {
         return;

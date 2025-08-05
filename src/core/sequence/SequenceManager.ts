@@ -9,6 +9,7 @@ import { EventNodeModel } from './EventNodeModel';
 import { LiteralNodeModel } from './LiteralNodeModel';
 import { ManualStartNodeModel } from './ManualStartNodeModel';
 import { OperatorNodeModel } from './OperatorNodeModel';
+import { RandomNodeModel } from './RandomNodeModel';
 import { SequenceEngine } from './SequenceEngine';
 import { DelayNodeModel } from './DelayNodeModel';
 import { BranchNodeModel } from './BranchNodeModel';
@@ -204,6 +205,10 @@ export class SequenceManager {
 
         case 'operatorNode':
           model = new OperatorNodeModel(sNode.id, data.category, data.operator);
+          break;
+
+        case 'randomNode':
+          model = new RandomNodeModel(sNode.id, data.min, data.max);
           break;
 
         default:
