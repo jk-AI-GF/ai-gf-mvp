@@ -8,6 +8,7 @@ import { BaseNode } from './BaseNode';
 import { EventNodeModel } from './EventNodeModel';
 import { LiteralNodeModel } from './LiteralNodeModel';
 import { ManualStartNodeModel } from './ManualStartNodeModel';
+import { OperatorNodeModel } from './OperatorNodeModel';
 import { SequenceEngine } from './SequenceEngine';
 import { DelayNodeModel } from './DelayNodeModel';
 import { BranchNodeModel } from './BranchNodeModel';
@@ -199,6 +200,10 @@ export class SequenceManager {
 
         case 'delayNode':
           model = new DelayNodeModel(sNode.id, data.delay);
+          break;
+
+        case 'operatorNode':
+          model = new OperatorNodeModel(sNode.id, data.category, data.operator);
           break;
 
         default:
