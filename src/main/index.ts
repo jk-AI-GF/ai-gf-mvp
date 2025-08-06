@@ -12,7 +12,6 @@ import { LlmSettings, DEFAULT_LLM_SETTINGS } from '../core/llm-settings';
 import { getAssetsPath, getUserDataPath, resolveAssetsPath, resolveUserDataPath } from './path-utils';
 import { CustomTrigger } from '../core/custom-trigger-manager';
 import { ActionDefinition } from '../plugin-api/actions';
-import { ActionRegistry } from '../core/action-registry'; // 추가
 
 // Define the schema for electron-store
 interface StoreSchema {
@@ -21,7 +20,6 @@ interface StoreSchema {
   llmSettings: LlmSettings;
   mouseIgnoreShortcut: string;
   activeSequences: string[];
-  // customTriggers is now managed as individual files.
 }
 
 // Store 인스턴스 생성
@@ -31,63 +29,57 @@ const store = new Store<Omit<StoreSchema, 'customTriggers'>>({
     persona: '당신은 친절하고 상냥한 AI 여자친구입니다. 항상 사용자에게 긍정적이고 다정한 태도로 대화에 임해주세요.',
     llmSettings: DEFAULT_LLM_SETTINGS,
     mouseIgnoreShortcut: 'CommandOrControl+Shift+O',
-    activeSequences: [], // 활성 시퀀스 목록 추가
+    activeSequences: [],
   }
 });
 
+// --- Global Variables ---
+let tray: Tray | null = null;
+let overlayWindow: BrowserWindow | null = null;
+let mainWindow: BrowserWindow | null = null;
+let isIgnoringMouseEvents = false;
+let availableActionsCache: ActionDefinition[] = [];
+let modLoader: ModLoader;
+let modsLoaded = false;
+
+// --- Early Error Handling ---
 process.on('uncaughtException', (error) => {
   const message = error.stack || error.message || 'Unknown error';
   dialog.showErrorBox('A JavaScript error occurred in the main process', message);
   app.quit();
 });
 
-// --- Active Sequences Store ---
-ipcMain.handle('get-active-sequences', () => {
-  return store.get('activeSequences', []);
-});
-
-ipcMain.on('set-active-sequences', (event, activeSequences: string[]) => {
-  store.set('activeSequences', activeSequences);
-});
-
+// --- Webpack Declarations ---
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 declare const OVERLAY_WINDOW_WEBPACK_ENTRY: string;
 
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
+// --- Squirrel Startup ---
 if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
-let tray: Tray | null = null;
-let overlayWindow: BrowserWindow | null = null;
-let mainWindow: BrowserWindow | null = null;
-let isIgnoringMouseEvents = false;
-let availableActionsCache: ActionDefinition[] = [];
+//==============================================================================
+// IPC HANDLER REGISTRATION
+// All handlers are registered here, before the app is ready.
+// This ensures that the renderer process can call them immediately.
+//==============================================================================
+
+// --- Active Sequences Store ---
+ipcMain.handle('get-active-sequences', () => {
+  return store.get('activeSequences', []);
+});
+ipcMain.on('set-active-sequences', (event, activeSequences: string[]) => {
+  store.set('activeSequences', activeSequences);
+});
 
 // --- Path and Resource IPC Handlers ---
-ipcMain.handle('get-path', async (event, pathName: 'assets' | 'userData') => {
-  switch (pathName) {
-    case 'assets':
-      return getAssetsPath();
-    case 'userData':
-      return getUserDataPath();
-    default:
-      throw new Error(`Unknown path name: ${pathName}`);
-  }
+ipcMain.handle('get-path', (event, pathName: 'assets' | 'userData') => {
+  return pathName === 'assets' ? getAssetsPath() : getUserDataPath();
 });
-
-ipcMain.handle('resolve-path', async (event, pathName: 'assets' | 'userData', subpath: string) => {
-  switch (pathName) {
-    case 'assets':
-      return resolveAssetsPath(subpath);
-    case 'userData':
-      return resolveUserDataPath(subpath);
-    default:
-      throw new Error(`Unknown path name: ${pathName}`);
-  }
+ipcMain.handle('resolve-path', (event, pathName: 'assets' | 'userData', subpath: string) => {
+  return pathName === 'assets' ? resolveAssetsPath(subpath) : resolveUserDataPath(subpath);
 });
-
 ipcMain.handle('fs:exists', async (event, filePath: string) => {
   try {
     await fsp.access(filePath);
@@ -96,113 +88,307 @@ ipcMain.handle('fs:exists', async (event, filePath: string) => {
     return false;
   }
 });
-
 ipcMain.handle('list-directory', async (event, dirPath: string, basePath: 'assets' | 'userData') => {
   try {
-    let fullPath: string;
-    let rootPath: string;
-
-    if (basePath === 'userData') {
-      rootPath = getUserDataPath();
-      fullPath = resolveUserDataPath(dirPath);
-    } else { // 'assets'
-      rootPath = getAssetsPath();
-      fullPath = resolveAssetsPath(dirPath);
-    }
-
-    // Security check
+    const rootPath = basePath === 'userData' ? getUserDataPath() : getAssetsPath();
+    const fullPath = basePath === 'userData' ? resolveUserDataPath(dirPath) : resolveAssetsPath(dirPath);
     if (!fullPath.startsWith(rootPath)) {
       throw new Error(`Security violation: Attempted to access directory outside of the allowed path: ${dirPath}`);
     }
-
     const files = await fsp.readdir(fullPath);
-    return { files }; // Return in the expected object format
+    return { files };
   } catch (error) {
-    if (error.code === 'ENOENT') {
-      return { files: [] }; // Directory not found is not a critical error, return empty list
-    }
-    console.error(`[IPC:list-directory] Error listing directory ${dirPath}:`, error);
-    return { error: error.message }; // Return error in the expected object format
+    return error.code === 'ENOENT' ? { files: [] } : { error: error.message };
   }
 });
 
-
-const createOverlayWindow = (): void => {
-  const primaryDisplay = screen.getPrimaryDisplay();
-  const { width, height } = primaryDisplay.size;
-
-  // Create the browser window.
-  overlayWindow = new BrowserWindow({
-    height,
-    width,
-    x: 0,
-    y: 0,
-    skipTaskbar: true,
-    frame: false,
-    titleBarStyle: 'hidden',
-    transparent: true,
-    alwaysOnTop: true,
-    show: false, // Start hidden
-    webPreferences: {
-      preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY, // Add preload script
-      webSecurity: true,
-      nodeIntegration: true,
-      contextIsolation: false,
-      webgl: true,
-    },
-  });
-
-  // and load the overlay.html of the app.
-  overlayWindow.loadURL(OVERLAY_WINDOW_WEBPACK_ENTRY);
-
-  overlayWindow.on('closed', () => {
-    overlayWindow = null;
-  });
-};
-
-const toggleOverlayWindow = (): void => {
-  if (!overlayWindow) {
-    console.log('Overlay window does not exist.');
-    return;
+// --- Settings IPC Handlers ---
+ipcMain.on('set-window-opacity', (event, opacity: number) => {
+  if (mainWindow) {
+    mainWindow.setOpacity(opacity);
   }
+  store.set('windowOpacity', opacity);
+});
+ipcMain.handle('get-window-opacity', () => store.get('windowOpacity', 1.0));
+ipcMain.on('set-persona', (event, persona: string) => store.set('persona', persona));
+ipcMain.handle('get-persona', () => store.get('persona'));
+ipcMain.handle('get-llm-settings', () => ({ ...DEFAULT_LLM_SETTINGS, ...store.get('llmSettings') }));
+ipcMain.on('set-llm-settings', (event, settings: LlmSettings) => store.set('llmSettings', settings));
 
-  if (overlayWindow.isVisible()) {
-    overlayWindow.hide();
-    mainWindow?.show(); // Show the main window when hiding the overlay
-  } else {
-    overlayWindow.show();
-    mainWindow?.hide(); // Hide the main window when showing the overlay
+// --- Custom Triggers (File-based) ---
+ipcMain.handle('get-custom-triggers', async () => {
+  const triggersDir = resolveUserDataPath('triggers');
+  try {
+    const files = await fsp.readdir(triggersDir);
+    const triggerPromises = files
+      .filter(file => file.endsWith('.json'))
+      .map(async file => {
+        try {
+          return JSON.parse(await fsp.readFile(path.join(triggersDir, file), 'utf-8'));
+        } catch (err) {
+          console.error(`Failed to read or parse trigger file: ${file}`, err);
+          return null;
+        }
+      });
+    return (await Promise.all(triggerPromises)).filter(Boolean);
+  } catch (error) {
+    return error.code === 'ENOENT' ? [] : Promise.reject(error);
+  }
+});
+ipcMain.handle('save-custom-trigger', async (event, trigger: CustomTrigger) => {
+  const filePath = path.join(resolveUserDataPath('triggers'), `${trigger.id}.json`);
+  try {
+    await fsp.writeFile(filePath, JSON.stringify(trigger, null, 2), 'utf-8');
+    return { success: true };
+  } catch (error) {
+    console.error(`Failed to save trigger ${trigger.id}:`, error);
+    return { success: false, error: error.message };
+  }
+});
+ipcMain.handle('delete-custom-trigger', async (event, triggerId: string) => {
+  const filePath = path.join(resolveUserDataPath('triggers'), `${triggerId}.json`);
+  try {
+    await fsp.unlink(filePath);
+    return { success: true };
+  } catch (error) {
+    if (error.code === 'ENOENT') return { success: true };
+    console.error(`Failed to delete trigger ${triggerId}:`, error);
+    return { success: false, error: error.message };
+  }
+});
+
+// --- Sequences ---
+ipcMain.handle('get-sequences', async () => {
+  const sequencesDir = resolveUserDataPath('sequences');
+  try {
+    return (await fsp.readdir(sequencesDir)).filter(file => file.endsWith('.json'));
+  } catch (error) {
+    return error.code === 'ENOENT' ? [] : Promise.reject(error);
+  }
+});
+ipcMain.handle('delete-sequence', async (event, sequenceFile: string) => {
+  const sequencesDir = resolveUserDataPath('sequences');
+  const filePath = path.join(sequencesDir, sequenceFile);
+  if (path.dirname(filePath) !== sequencesDir) {
+    return { success: false, error: 'Security violation: Invalid file path.' };
+  }
+  try {
+    await fsp.unlink(filePath);
+    return { success: true };
+  } catch (error) {
+    console.error(`Failed to delete sequence ${sequenceFile}:`, error);
+    return { success: false, error: error.message };
+  }
+});
+ipcMain.handle('save-sequence-to-file', async (event, fileName: string, sequenceData: string) => {
+  const sequencesDir = resolveUserDataPath('sequences');
+  const filePath = path.join(sequencesDir, fileName);
+  if (path.dirname(filePath) !== sequencesDir) {
+    return { success: false, error: 'Security violation: Invalid file path.' };
+  }
+  try {
+    await fsp.writeFile(filePath, sequenceData, 'utf-8');
+    return { success: true, filePath };
+  } catch (error) {
+    console.error(`Failed to save sequence to ${fileName}:`, error);
+    return { success: false, error: error.message };
+  }
+});
+
+// --- File Dialogs ---
+const handleFileDialog = async (
+  operation: 'save' | 'open',
+  options: Electron.SaveDialogOptions | Electron.OpenDialogOptions,
+  postAction?: (filePath: string) => Promise<any>
+) => {
+  if (mainWindow) mainWindow.setAlwaysOnTop(false);
+  try {
+    let filePath: string | undefined;
+    let canceled = false;
+
+    if (operation === 'save') {
+      const result = await dialog.showSaveDialog(options as Electron.SaveDialogOptions);
+      filePath = result.filePath;
+      canceled = result.canceled;
+    } else {
+      const result = await dialog.showOpenDialog(options as Electron.OpenDialogOptions);
+      if (result.filePaths && result.filePaths.length > 0) {
+        filePath = result.filePaths[0];
+      }
+      canceled = result.canceled;
+    }
+
+    if (canceled || !filePath) {
+      return { success: false, canceled: true };
+    }
+
+    if (postAction) {
+      return await postAction(filePath);
+    }
+    
+    return { success: true, filePath };
+  } catch (error) {
+    console.error(`File dialog operation failed:`, error);
+    return { success: false, error: error.message };
+  } finally {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.hide();
+      mainWindow.show();
+      mainWindow.setAlwaysOnTop(true, 'screen-saver');
+    }
   }
 };
 
-const createTray = (): void => {
-  const iconPath = resolveAssetsPath('icon.png');
-  tray = new Tray(iconPath);
-  const contextMenu = Menu.buildFromTemplate([
-    { label: 'Toggle Overlay', click: () => toggleOverlayWindow() },
-    { label: 'Quit', click: () => app.quit() },
-  ]);
-  tray.setToolTip('AI-GF MVP');
-  tray.setContextMenu(contextMenu);
-};
+ipcMain.handle('save-sequence', (event, sequenceData: string) => handleFileDialog(
+  'save',
+  { title: '시퀀스 저장', defaultPath: path.join(getUserDataPath(), 'sequences', `sequence-${Date.now()}.json`), filters: [{ name: 'JSON Files', extensions: ['json'] }] },
+  async (filePath) => {
+    await fsp.writeFile(filePath, sequenceData, 'utf-8');
+    return { success: true, filePath };
+  }
+));
+ipcMain.handle('load-sequence', () => handleFileDialog(
+  'open',
+  { title: '시퀀스 불러오기', defaultPath: path.join(getUserDataPath(), 'sequences'), properties: ['openFile'], filters: [{ name: 'JSON Files', extensions: ['json'] }] },
+  async (filePath) => {
+    const data = await fsp.readFile(filePath, 'utf-8');
+    return { success: true, data, filePath };
+  }
+));
+ipcMain.handle('save-vrma-pose', (event, vrmaData: ArrayBuffer) => handleFileDialog(
+  'save',
+  { title: 'Save VRMA Pose', defaultPath: path.join(getUserDataPath(), 'poses', `pose_${Date.now()}.vrma`), filters: [{ name: 'VRM Animation', extensions: ['vrma'] }] },
+  async (filePath) => {
+    await fsp.writeFile(filePath, Buffer.from(vrmaData));
+    return { success: true, message: `VRMA pose saved to ${filePath}` };
+  }
+));
+ipcMain.handle('open-vrm-file', () => handleFileDialog(
+  'open',
+  { title: 'Open VRM Model', defaultPath: path.join(getUserDataPath(), 'vrm'), properties: ['openFile'], filters: [{ name: 'VRM Models', extensions: ['vrm'] }] },
+  (filePath) => Promise.resolve(filePath)
+).then(result => (result && (result as any).success === false) ? null : result));
+ipcMain.handle('open-vrma-file', () => handleFileDialog(
+  'open',
+  { title: 'Open VRMA Pose', defaultPath: path.join(getUserDataPath(), 'poses'), properties: ['openFile'], filters: [{ name: 'VRM Animation', extensions: ['vrma'] }] },
+  (filePath) => Promise.resolve(filePath)
+).then(result => (result && (result as any).success === false) ? null : result));
+ipcMain.handle('open-persona-file', () => handleFileDialog(
+  'open',
+  { title: 'Open Persona File', defaultPath: path.join(getUserDataPath(), 'persona'), properties: ['openFile'], filters: [{ name: 'Text Files', extensions: ['txt'] }] },
+  (filePath) => fsp.readFile(filePath, 'utf8')
+).then(result => (result && (result as any).success === false) ? null : result));
+ipcMain.handle('save-persona-to-file', (event, persona: string) => handleFileDialog(
+  'save',
+  { title: 'Save Persona', defaultPath: path.join(getUserDataPath(), 'persona', 'persona.txt'), filters: [{ name: 'Text Files', extensions: ['txt'] }] },
+  async (filePath) => {
+    await fsp.writeFile(filePath, persona, 'utf8');
+    return { success: true, message: `Persona saved to ${filePath}` };
+  }
+));
+
+// --- File System Access ---
+ipcMain.handle('read-asset-file', async (event, filePath: string) => {
+  const fullPath = resolveAssetsPath(filePath);
+  if (!fullPath.startsWith(getAssetsPath())) throw new Error('Attempted to read file outside the assets directory.');
+  return fsp.readFile(fullPath).then(data => data.buffer).catch(err => ({ error: err.message }));
+});
+ipcMain.handle('read-absolute-file', async (event, filePath: string) => {
+  if (!path.isAbsolute(filePath)) throw new Error('Path must be absolute.');
+  return fsp.readFile(filePath).then(data => data.buffer).catch(err => ({ error: err.message }));
+});
+ipcMain.handle('readFile', async (event, filePath: string) => {
+  let fullPath = filePath;
+  if (!path.isAbsolute(filePath)) {
+    fullPath = resolveAssetsPath(filePath);
+    if (!fullPath.startsWith(getAssetsPath())) throw new Error('Attempted to access file outside the assets directory.');
+  }
+  return fsp.readFile(fullPath).then(data => data.buffer).catch(err => ({ error: err.message }));
+});
+
+// --- App Control ---
+ipcMain.on('quit-app', () => {
+  BrowserWindow.getAllWindows().forEach((win) => win.destroy());
+  app.quit();
+});
+ipcMain.on('toggle-mouse-ignore', () => {
+  if (mainWindow) {
+    isIgnoringMouseEvents = !isIgnoringMouseEvents;
+    mainWindow.setIgnoreMouseEvents(isIgnoringMouseEvents, { forward: isIgnoringMouseEvents });
+    if (!isIgnoringMouseEvents) mainWindow.focus();
+    // contextStore.set('system:isIgnoringMouseEvents', isIgnoringMouseEvents);
+    // eventBus.emit('system:mouse-ignore-toggle', isIgnoringMouseEvents);
+  }
+});
+
+// --- Modding ---
+ipcMain.handle('set-action-definitions', (event, actions: ActionDefinition[]) => {
+  console.log('[Main] Received action definitions from renderer.');
+  availableActionsCache = actions;
+  if (!modsLoaded && modLoader) {
+    console.log('[Main] Action definitions received, loading mods...');
+    modLoader.loadMods();
+    modsLoaded = true;
+  }
+  return true;
+});
+ipcMain.on('proxy-action', (event, actionName: string, args: any[]) => {
+  const targetWindow = overlayWindow?.isVisible() ? overlayWindow : mainWindow;
+  targetWindow?.webContents.send('execute-action', actionName, args);
+});
+ipcMain.on('context:set', (event, key: string, value: any) => {
+  // contextStore.set(key, value);
+});
+ipcMain.handle('context:get', (event, key: string) => {
+  // return contextStore.get(key);
+});
+ipcMain.handle('context:getAll', (event) => {
+  // return contextStore.getAll();
+});
+ipcMain.handle('get-mod-settings', async () => {
+  // return modSettingsManager.getSettings();
+});
+ipcMain.handle('set-mod-enabled', async (event, modName: string, isEnabled: boolean) => {
+  // await modSettingsManager.setModEnabled(modName, isEnabled);
+  return { success: true };
+});
+ipcMain.handle('get-all-mods', async () => {
+  const modsDir = resolveUserDataPath('mods');
+  try {
+    await fs.promises.mkdir(modsDir, { recursive: true });
+    const modFolders = await fs.promises.readdir(modsDir, { withFileTypes: true });
+    return Promise.all(modFolders
+      .filter(dirent => dirent.isDirectory())
+      .map(async (dirent) => {
+        const manifestPath = path.join(modsDir, dirent.name, 'mod.json');
+        try {
+          const manifest = JSON.parse(await fsp.readFile(manifestPath, 'utf-8'));
+          return { name: manifest.name, version: manifest.version || 'N/A', path: path.join(modsDir, dirent.name) };
+        } catch {
+          return null;
+        }
+      })
+    ).then(mods => mods.filter(Boolean));
+  } catch (error) {
+    console.error('[IPC] Failed to get all mods:', error);
+    return [];
+  }
+});
+
+//==============================================================================
+// APPLICATION LIFECYCLE
+//==============================================================================
 
 const createWindow = (): void => {
-  const primaryDisplay = screen.getPrimaryDisplay();
-  const { width, height } = primaryDisplay.workAreaSize;
-
-  // Create the browser window.
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
   mainWindow = new BrowserWindow({
-    height,
-    width,
-    x: 0,
-    y: 0,
+    height, width, x: 0, y: 0,
     alwaysOnTop: true,
     frame: false,
     titleBarStyle: 'hidden',
     transparent: true,
     resizable: false,
-    fullscreen: true, // 이 옵션을 추가하여 전체 화면으로 시작합니다.
-
+    fullscreen: true,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       webSecurity: true,
@@ -211,262 +397,89 @@ const createWindow = (): void => {
       webgl: true,
     },
   });
-
   mainWindow.setAlwaysOnTop(true, 'screen-saver');
-  mainWindow.moveTop();
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
-
-  mainWindow.webContents.on('did-finish-load', () => {
-    mainWindow.focus();
-  });
-
-  if (!app.isPackaged) {
+  mainWindow.on('closed', () => mainWindow = null);
+  mainWindow.webContents.on('did-finish-load', () => mainWindow.focus());
+  if (!app.isPackaged || process.argv.includes('--dev-tools')) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   }
-
-  mainWindow.on('closed', () => {
-    mainWindow = null;
+  mainWindow.on('blur', () => {
+    if (mainWindow && !mainWindow.isDestroyed() && isIgnoringMouseEvents) {
+      mainWindow.hide();
+      mainWindow.show();
+      mainWindow.setAlwaysOnTop(true, 'screen-saver');
+    }
   });
 };
 
-app.on('ready', async () => {
-  // CSP 설정
-  const policy = [
-    "default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data: file:",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: file:",
-    "connect-src 'self' blob: data: https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com http://localhost:8000 file:"
-  ].join("; ");
+const createOverlayWindow = (): void => {
+  const { width, height } = screen.getPrimaryDisplay().size;
+  overlayWindow = new BrowserWindow({
+    height, width, x: 0, y: 0,
+    skipTaskbar: true,
+    frame: false,
+    titleBarStyle: 'hidden',
+    transparent: true,
+    alwaysOnTop: true,
+    show: false,
+    webPreferences: {
+      preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
+      webSecurity: true,
+      nodeIntegration: true,
+      contextIsolation: false,
+      webgl: true,
+    },
+  });
+  overlayWindow.loadURL(OVERLAY_WINDOW_WEBPACK_ENTRY);
+  overlayWindow.on('closed', () => overlayWindow = null);
+};
 
+const toggleOverlayWindow = (): void => {
+  if (!overlayWindow) return;
+  if (overlayWindow.isVisible()) {
+    overlayWindow.hide();
+    mainWindow?.show();
+  } else {
+    overlayWindow.show();
+    mainWindow?.hide();
+  }
+};
+
+const createTray = (): void => {
+  const iconPath = resolveAssetsPath('icon.png');
+  tray = new Tray(iconPath);
+  const contextMenu = Menu.buildFromTemplate([
+    { label: 'Toggle Overlay', click: toggleOverlayWindow },
+    { label: 'Quit', click: () => app.quit() },
+  ]);
+  tray.setToolTip('AI-GF MVP');
+  tray.setContextMenu(contextMenu);
+};
+
+app.on('ready', async () => {
+  // CSP
+  const policy = "default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data: file:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: file:; connect-src 'self' blob: data: https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com http://localhost:8000 file:";
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    callback({
-      responseHeaders: {
-        ...details.responseHeaders,
-        "Content-Security-Policy": [policy],
-      },
-    });
+    callback({ responseHeaders: { ...details.responseHeaders, "Content-Security-Policy": [policy] } });
   });
 
+  // Create windows and tray
   createWindow();
+  createOverlayWindow();
+  createTray();
 
-  // Ensure userdata directories exist on startup
+  // Set initial opacity
+  mainWindow.setOpacity(store.get('windowOpacity', 1.0));
+
+  // Ensure userdata directories exist
   try {
-    const userDataPath = getUserDataPath();
     const requiredDirs = ['vrm', 'poses', 'mods', 'animations', 'persona', 'triggers', 'sequences'];
-    for (const dir of requiredDirs) {
-      fs.mkdirSync(path.join(userDataPath, dir), { recursive: true });
-    }
+    await Promise.all(requiredDirs.map(dir => fsp.mkdir(path.join(getUserDataPath(), dir), { recursive: true })));
     console.log('User data directories verified/created successfully.');
   } catch (error) {
     console.error('Failed to create user data directories:', error);
   }
-  
-  const initialOpacity = store.get('windowOpacity', 1.0);
-  mainWindow.setOpacity(initialOpacity);
-
-  createOverlayWindow();
-  createTray();
-
-  // --- IPC Handlers for Settings ---
-  ipcMain.on('set-window-opacity', (event, opacity: number) => {
-    if (mainWindow) {
-      mainWindow.setOpacity(opacity);
-      store.set('windowOpacity', opacity);
-    }
-  });
-
-  ipcMain.handle('get-window-opacity', () => {
-    return store.get('windowOpacity', 1.0);
-  });
-
-  ipcMain.on('set-persona', (event, persona: string) => {
-    store.set('persona', persona);
-  });
-
-  ipcMain.handle('get-persona', () => {
-    return store.get('persona');
-  });
-
-  ipcMain.handle('get-llm-settings', () => {
-    const storedSettings = store.get('llmSettings');
-    return { ...DEFAULT_LLM_SETTINGS, ...storedSettings };
-  });
-
-  ipcMain.on('set-llm-settings', (event, settings: LlmSettings) => {
-    store.set('llmSettings', settings);
-  });
-
-  // --- Custom Triggers (File-based) ---
-  ipcMain.handle('get-custom-triggers', async () => {
-    const triggersDir = resolveUserDataPath('triggers');
-    try {
-      const files = await fsp.readdir(triggersDir);
-      const triggerPromises = files
-        .filter(file => file.endsWith('.json'))
-        .map(async file => {
-          try {
-            const filePath = path.join(triggersDir, file);
-            const content = await fsp.readFile(filePath, 'utf-8');
-            return JSON.parse(content);
-          } catch (err) {
-            console.error(`Failed to read or parse trigger file: ${file}`, err);
-            return null;
-          }
-        });
-      const triggers = (await Promise.all(triggerPromises)).filter(Boolean);
-      return triggers;
-    } catch (error) {
-      console.error('Failed to get custom triggers:', error);
-      // If the directory doesn't exist, return an empty array
-      if (error.code === 'ENOENT') {
-        return [];
-      }
-      throw error;
-    }
-  });
-
-  ipcMain.handle('save-custom-trigger', async (event, trigger: CustomTrigger) => {
-    const triggersDir = resolveUserDataPath('triggers');
-    const filePath = path.join(triggersDir, `${trigger.id}.json`);
-    try {
-      await fsp.writeFile(filePath, JSON.stringify(trigger, null, 2), 'utf-8');
-      return { success: true };
-    } catch (error) {
-      console.error(`Failed to save trigger ${trigger.id}:`, error);
-      return { success: false, error: error.message };
-    }
-  });
-
-  ipcMain.handle('delete-custom-trigger', async (event, triggerId: string) => {
-    const triggersDir = resolveUserDataPath('triggers');
-    const filePath = path.join(triggersDir, `${triggerId}.json`);
-    try {
-      await fsp.unlink(filePath);
-      return { success: true };
-    } catch (error) {
-      console.error(`Failed to delete trigger ${triggerId}:`, error);
-      // If the file doesn't exist, it's not a critical error
-      if (error.code === 'ENOENT') {
-        return { success: true, message: 'File not found, considered deleted.' };
-      }
-      return { success: false, error: error.message };
-    }
-  });
-
-  // --- Sequences ---
-  ipcMain.handle('get-sequences', async () => {
-    const sequencesDir = resolveUserDataPath('sequences');
-    try {
-      const files = await fsp.readdir(sequencesDir);
-      // .json 파일만 필터링하고, 전체 경로 대신 파일 이름만 반환합니다.
-      return files.filter(file => file.endsWith('.json'));
-    } catch (error) {
-      console.error('Failed to get sequences:', error);
-      if (error.code === 'ENOENT') {
-        return []; // 디렉토리가 없으면 빈 배열 반환
-      }
-      throw error;
-    }
-  });
-
-  ipcMain.handle('delete-sequence', async (event, sequenceFile: string) => {
-    const sequencesDir = resolveUserDataPath('sequences');
-    const filePath = path.join(sequencesDir, sequenceFile);
-    
-    // Security check
-    if (path.dirname(filePath) !== sequencesDir) {
-      return { success: false, error: 'Security violation: Invalid file path.' };
-    }
-
-    try {
-      await fsp.unlink(filePath);
-      return { success: true };
-    } catch (error) {
-      console.error(`Failed to delete sequence ${sequenceFile}:`, error);
-      return { success: false, error: error.message };
-    }
-  });
-
-  ipcMain.handle('save-sequence', async (event, sequenceData: string) => {
-    if (mainWindow) mainWindow.setAlwaysOnTop(false);
-    try {
-      const { canceled, filePath } = await dialog.showSaveDialog({
-        title: '시퀀스 저장',
-        defaultPath: path.join(getUserDataPath(), 'sequences', `sequence-${Date.now()}.json`),
-        filters: [
-          { name: 'JSON Files', extensions: ['json'] },
-          { name: 'All Files', extensions: ['*'] }
-        ]
-      });
-
-      if (canceled || !filePath) {
-        return { success: false, canceled: true };
-      }
-
-      await fsp.writeFile(filePath, sequenceData, 'utf-8');
-      return { success: true, filePath };
-    } catch (error) {
-      console.error('Failed to save sequence:', error);
-      return { success: false, error: error.message };
-    } finally {
-       if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.hide();
-        mainWindow.show();
-        mainWindow.setAlwaysOnTop(true, 'screen-saver');
-      }
-    }
-  });
-
-  ipcMain.handle('save-sequence-to-file', async (event, fileName: string, sequenceData: string) => {
-    const sequencesDir = resolveUserDataPath('sequences');
-    const filePath = path.join(sequencesDir, fileName);
-
-    // Security check to prevent writing outside the sequences directory
-    if (path.dirname(filePath) !== sequencesDir) {
-      return { success: false, error: 'Security violation: Invalid file path.' };
-    }
-
-    try {
-      await fsp.writeFile(filePath, sequenceData, 'utf-8');
-      return { success: true, filePath };
-    } catch (error) {
-      console.error(`Failed to save sequence to ${fileName}:`, error);
-      return { success: false, error: error.message };
-    }
-  });
-
-  ipcMain.handle('load-sequence', async () => {
-    if (mainWindow) mainWindow.setAlwaysOnTop(false);
-    try {
-      const { canceled, filePaths } = await dialog.showOpenDialog({
-        title: '시퀀스 불러오기',
-        defaultPath: path.join(getUserDataPath(), 'sequences'),
-        filters: [
-          { name: 'JSON Files', extensions: ['json'] },
-          { name: 'All Files', extensions: ['*'] },
-        ],
-        properties: ['openFile'],
-      });
-
-      if (canceled || filePaths.length === 0) {
-        return { success: false, canceled: true };
-      }
-
-      const filePath = filePaths[0];
-      const data = await fsp.readFile(filePath, 'utf-8');
-      return { success: true, data, filePath };
-    } catch (error) {
-      console.error('Failed to load sequence:', error);
-      return { success: false, error: error.message };
-    } finally {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.hide();
-        mainWindow.show();
-        mainWindow.setAlwaysOnTop(true, 'screen-saver');
-      }
-    }
-  });
 
   // Initialize core components
   const eventBus = createEventBus<AppEvents>();
@@ -475,94 +488,7 @@ app.on('ready', async () => {
   const modSettingsManager = new ModSettingsManager(app.getPath('userData'));
   await modSettingsManager.loadSettings();
 
-  eventBus.on('system:mouse-ignore-toggle', (isIgnoring) => {
-    if (mainWindow) {
-      mainWindow.webContents.send('set-ui-interactive-mode', !isIgnoring);
-    }
-  });
-
-  const toggleMouseIgnore = () => {
-    if (mainWindow) {
-      isIgnoringMouseEvents = !isIgnoringMouseEvents;
-      mainWindow.setIgnoreMouseEvents(isIgnoringMouseEvents, { forward: isIgnoringMouseEvents });
-      if (!isIgnoringMouseEvents) {
-        mainWindow.focus();
-      }
-      contextStore.set('system:isIgnoringMouseEvents', isIgnoringMouseEvents);
-      eventBus.emit('system:mouse-ignore-toggle', isIgnoringMouseEvents);
-    }
-  };
-
-  let currentShortcut = store.get('mouseIgnoreShortcut');
-
-  const registerMouseIgnoreShortcut = () => {
-    if (currentShortcut) {
-      try {
-        globalShortcut.register(currentShortcut, toggleMouseIgnore);
-        console.log(`Registered shortcut: ${currentShortcut}`);
-      } catch (error) {
-        console.error(`Failed to register shortcut "${currentShortcut}":`, error);
-      }
-    }
-  };
-
-  const unregisterMouseIgnoreShortcut = () => {
-    if (currentShortcut) {
-      globalShortcut.unregister(currentShortcut);
-      console.log(`Unregistered shortcut: ${currentShortcut}`);
-    }
-  };
-
-  registerMouseIgnoreShortcut();
-
-  ipcMain.handle('get-mouse-ignore-shortcut', () => {
-    return store.get('mouseIgnoreShortcut');
-  });
-
-  ipcMain.on('set-mouse-ignore-shortcut', (event, shortcut: string) => {
-    unregisterMouseIgnoreShortcut();
-    store.set('mouseIgnoreShortcut', shortcut);
-    currentShortcut = shortcut;
-    registerMouseIgnoreShortcut();
-  });
-
-  globalShortcut.register('CommandOrControl+Shift+T', () => {
-    toggleOverlayWindow();
-  });
-
-  ipcMain.on('toggle-mouse-ignore', toggleMouseIgnore);
-
-  let modsLoaded = false; // 모드가 로드되었는지 확인하는 플래그
-
-  // 렌더러로부터 액션 명세를 받아 캐시에 저장하고 모드를 로드
-  ipcMain.handle('set-action-definitions', (event, actions: ActionDefinition[]) => {
-    console.log('[Main] Received action definitions from renderer.');
-    availableActionsCache = actions;
-    
-    if (!modsLoaded) {
-      console.log('[Main] Action definitions received, loading mods...');
-      modLoader.loadMods();
-      modsLoaded = true;
-    }
-    
-    return true;
-  });
-
-  // ModLoader로부터의 액션 요청을 렌더러로 전달
-  ipcMain.on('proxy-action', (event, actionName: string, args: any[]) => {
-    const targetWindow = overlayWindow?.isVisible() ? overlayWindow : mainWindow;
-    targetWindow?.webContents.send('execute-action', actionName, args);
-  });
-
-  mainWindow.on('blur', () => {
-    if (mainWindow && !mainWindow.isDestroyed() && isIgnoringMouseEvents) {
-      mainWindow.hide();
-      mainWindow.show();
-      mainWindow.setAlwaysOnTop(true, 'screen-saver');
-    }
-  });
-
-  const modLoader = new ModLoader(
+  modLoader = new ModLoader(
     app.getPath('userData'),
     app.getAppPath(),
     app.isPackaged,
@@ -575,267 +501,45 @@ app.on('ready', async () => {
       targetWindow?.webContents.send(channel, ...args);
     },
     ipcMain,
-    () => availableActionsCache // Pass a function to get the cache
+    () => availableActionsCache
   );
-  // 앱 시작 시 바로 로드하지 않고, 액션 정의를 받은 후 로드하도록 변경
-  // modLoader.loadMods();
 
-  // ... (rest of the IPC handlers remain the same)
+  // Shortcuts
+  const toggleMouseIgnore = () => {
+    if (mainWindow) {
+      isIgnoringMouseEvents = !isIgnoringMouseEvents;
+      mainWindow.setIgnoreMouseEvents(isIgnoringMouseEvents, { forward: isIgnoringMouseEvents });
+      if (!isIgnoringMouseEvents) mainWindow.focus();
+      contextStore.set('system:isIgnoringMouseEvents', isIgnoringMouseEvents);
+      eventBus.emit('system:mouse-ignore-toggle', isIgnoringMouseEvents);
+    }
+  };
 
-  ipcMain.handle('save-vrma-pose', async (event, vrmaData: ArrayBuffer) => {
-    if (mainWindow) mainWindow.setAlwaysOnTop(false);
-    try {
-      const { canceled, filePath } = await dialog.showSaveDialog({
-        title: 'Save VRMA Pose',
-        defaultPath: path.join(getUserDataPath(), 'poses', `pose_${Date.now()}.vrma`),
-        filters: [
-          { name: 'VRM Animation', extensions: ['vrma'] },
-          { name: 'All Files', extensions: ['*'] }
-        ]
-      });
-
-      if (canceled || !filePath) {
-        return { success: false, message: 'Save operation canceled.' };
-      }
-
-      const buffer = Buffer.from(vrmaData);
-      await fs.promises.writeFile(filePath, buffer);
-      return { success: true, message: `VRMA pose saved to ${filePath}` };
-    } catch (error) {
-      console.error('Failed to save VRMA pose:', error);
-      const message = error instanceof Error ? error.message : String(error);
-      return { success: false, message: `Failed to save VRMA pose: ${message}` };
-    } finally {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.hide();
-        mainWindow.show();
-        mainWindow.setAlwaysOnTop(true, 'screen-saver');
+  let currentShortcut = store.get('mouseIgnoreShortcut');
+  const registerMouseIgnoreShortcut = () => {
+    if (currentShortcut) {
+      try {
+        globalShortcut.register(currentShortcut, toggleMouseIgnore);
+      } catch (error) {
+        console.error(`Failed to register shortcut "${currentShortcut}":`, error);
       }
     }
+  };
+  const unregisterMouseIgnoreShortcut = () => {
+    if (currentShortcut) globalShortcut.unregister(currentShortcut);
+  };
+
+  registerMouseIgnoreShortcut();
+
+  ipcMain.handle('get-mouse-ignore-shortcut', () => store.get('mouseIgnoreShortcut'));
+  ipcMain.on('set-mouse-ignore-shortcut', (event, shortcut: string) => {
+    unregisterMouseIgnoreShortcut();
+    store.set('mouseIgnoreShortcut', shortcut);
+    currentShortcut = shortcut;
+    registerMouseIgnoreShortcut();
   });
 
-  ipcMain.handle('open-vrm-file', async () => {
-    if (mainWindow) mainWindow.setAlwaysOnTop(false);
-    try {
-      const { canceled, filePaths } = await dialog.showOpenDialog({
-        title: 'Open VRM Model',
-        defaultPath: path.join(getUserDataPath(), 'vrm'),
-        filters: [
-          { name: 'VRM Models', extensions: ['vrm'] },
-          { name: 'All Files', extensions: ['*'] },
-        ],
-        properties: ['openFile'],
-      });
-
-      if (canceled || filePaths.length === 0) {
-        return null;
-      }
-
-      return filePaths[0];
-    } finally {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.hide();
-        mainWindow.show();
-        mainWindow.setAlwaysOnTop(true, 'screen-saver');
-      }
-    }
-  });
-
-  ipcMain.handle('open-vrma-file', async () => {
-    if (mainWindow) mainWindow.setAlwaysOnTop(false);
-    try {
-      const { canceled, filePaths } = await dialog.showOpenDialog({
-        title: 'Open VRMA Pose',
-        defaultPath: path.join(getUserDataPath(), 'poses'),
-        filters: [
-          { name: 'VRM Animation', extensions: ['vrma'] },
-          { name: 'All Files', extensions: ['*'] },
-        ],
-        properties: ['openFile'],
-      });
-
-      if (canceled || filePaths.length === 0) {
-        return null;
-      }
-
-      return filePaths[0];
-    } finally {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.hide();
-        mainWindow.show();
-        mainWindow.setAlwaysOnTop(true, 'screen-saver');
-      }
-    }
-  });
-
-  ipcMain.handle('open-persona-file', async () => {
-    if (mainWindow) mainWindow.setAlwaysOnTop(false);
-    try {
-      const { canceled, filePaths } = await dialog.showOpenDialog({
-        title: 'Open Persona File',
-        defaultPath: path.join(getUserDataPath(), 'persona'),
-        properties: ['openFile'],
-        filters: [
-          { name: 'Text Files', extensions: ['txt'] },
-          { name: 'All Files', extensions: ['*'] }
-        ]
-      });
-
-      if (canceled || filePaths.length === 0) {
-        return null;
-      }
-
-      const personaContent = await fs.promises.readFile(filePaths[0], 'utf8');
-      return personaContent;
-    } catch (error) {
-      console.error('Failed to read persona file:', error);
-      return null;
-    } finally {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.hide();
-        mainWindow.show();
-        mainWindow.setAlwaysOnTop(true, 'screen-saver');
-      }
-    }
-  });
-
-  ipcMain.handle('read-asset-file', async (event, filePath: string) => {
-    try {
-      const fullPath = resolveAssetsPath(filePath);
-      if (!fullPath.startsWith(getAssetsPath())) {
-        throw new Error('Attempted to read file outside the assets directory.');
-      }
-      const data = await fs.promises.readFile(fullPath);
-      return data.buffer;
-    } catch (error) {
-      console.error(`Failed to read asset file ${filePath}:`, error);
-      return { error: error.message };
-    }
-  });
-
-  ipcMain.handle('read-absolute-file', async (event, filePath: string) => {
-    try {
-      if (!path.isAbsolute(filePath)) {
-        throw new Error('Path must be absolute.');
-      }
-      const data = await fs.promises.readFile(filePath);
-      return data.buffer;
-    } catch (error) {
-      console.error(`Failed to read absolute file ${filePath}:`, error);
-      return { error: error.message };
-    }
-  });
-
-  ipcMain.handle('readFile', async (event, filePath: string) => {
-    try {
-      let fullPath = filePath;
-      if (!path.isAbsolute(filePath)) {
-        // If not absolute, assume it's relative to the assets directory for backward compatibility.
-        fullPath = resolveAssetsPath(filePath);
-        // Security check
-        if (!fullPath.startsWith(getAssetsPath())) {
-          throw new Error('Attempted to access file outside the assets directory.');
-        }
-      }
-      const data = await fs.promises.readFile(fullPath);
-      return data.buffer;
-    } catch (error) {
-      console.error(`Failed to read file ${filePath}:`, error);
-      return { error: error.message };
-    }
-  });
-
-  ipcMain.handle('save-persona-to-file', async (event, persona: string) => {
-    if (mainWindow) mainWindow.setAlwaysOnTop(false);
-    try {
-      const { canceled, filePath } = await dialog.showSaveDialog({
-        title: 'Save Persona',
-        defaultPath: path.join(getUserDataPath(), 'persona', 'persona.txt'),
-        filters: [
-          { name: 'Text Files', extensions: ['txt'] },
-          { name: 'All Files', extensions: ['*'] }
-        ]
-      });
-
-      if (canceled || !filePath) {
-        return { success: false, message: 'Save operation canceled.' };
-      }
-
-      await fs.promises.writeFile(filePath, persona, 'utf8');
-      return { success: true, message: `Persona saved to ${filePath}` };
-    } catch (error) {
-      console.error('Failed to save persona:', error);
-      const message = error instanceof Error ? error.message : String(error);
-      return { success: false, message: `Failed to save persona: ${message}` };
-    } finally {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.hide();
-        mainWindow.show();
-        mainWindow.setAlwaysOnTop(true, 'screen-saver');
-      }
-    }
-  });
-
-  ipcMain.on('quit-app', () => {
-    app.quit();
-  });
-
-  ipcMain.on('context:set', (event, key: string, value: any) => {
-    contextStore.set(key, value);
-  });
-
-  ipcMain.handle('context:get', (event, key: string) => {
-    return contextStore.get(key);
-  });
-
-  ipcMain.handle('context:getAll', (event) => {
-    return contextStore.getAll();
-  });
-
-  ipcMain.handle('get-mod-settings', () => {
-    return modSettingsManager.getSettings();
-  });
-
-  ipcMain.handle('set-mod-enabled', async (event, modName: string, isEnabled: boolean) => {
-    await modSettingsManager.setModEnabled(modName, isEnabled);
-    return { success: true };
-  });
-
-  ipcMain.handle('get-all-mods', async () => {
-    const modsDir = resolveUserDataPath('mods');
-    
-    try {
-      // Ensure the mods directory exists
-      await fs.promises.mkdir(modsDir, { recursive: true });
-
-      const modFolders = await fs.promises.readdir(modsDir, { withFileTypes: true });
-      const modDetails = [];
-
-      for (const dirent of modFolders) {
-        if (dirent.isDirectory()) {
-          const modPath = path.join(modsDir, dirent.name);
-          const manifestPath = path.join(modPath, 'mod.json');
-          try {
-            const manifestContent = await fs.promises.readFile(manifestPath, 'utf-8');
-            const manifest = JSON.parse(manifestContent);
-            if (manifest.name) {
-              modDetails.push({
-                name: manifest.name,
-                version: manifest.version || 'N/A',
-                path: modPath,
-              });
-            }
-          } catch (e) {
-            // ignore folders without valid mod.json
-          }
-        }
-      }
-      return modDetails;
-    } catch (error) {
-      console.error('[IPC] Failed to get all mods:', error);
-      return [];
-    }
-  });
+  globalShortcut.register('CommandOrControl+Shift+T', toggleOverlayWindow);
 });
 
 app.on('will-quit', () => {
