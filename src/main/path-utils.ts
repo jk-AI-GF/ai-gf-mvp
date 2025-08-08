@@ -6,12 +6,12 @@ const isDev = !app.isPackaged;
 /**
  * Get the absolute path to the 'assets' directory.
  * In development, it points to 'assets' in the project root.
- * In production, it points to 'assets' in the packaged app's resources directory.
+ * In production, assets are packaged under `.webpack/main/assets` inside the ASAR.
  */
 export function getAssetsPath(): string {
   return isDev
     ? path.join(app.getAppPath(), 'assets')
-    : path.join(process.resourcesPath, 'assets');
+    : path.join(process.resourcesPath, 'app.asar', '.webpack', 'main', 'assets');
 }
 
 /**

@@ -51,8 +51,7 @@ const MeshControlPanel: React.FC<MeshControlPanelProps> = ({ onClose, initialPos
     setCurrentVrm(vrm);
     setMeshes(listVrmMeshes(vrm));
 
-    const handleVrmLoad = (e: any) => {
-      const newVrm = e.detail.vrm;
+    const handleVrmLoad = ({ vrm: newVrm }: { vrm: VRM; expressionNames: string[] }) => {
       setCurrentVrm(newVrm);
       setMeshes(listVrmMeshes(newVrm));
     };
