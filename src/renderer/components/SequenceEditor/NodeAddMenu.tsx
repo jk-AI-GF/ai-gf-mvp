@@ -12,8 +12,8 @@ interface NodeAddMenuProps {
 const menuStyle: React.CSSProperties = {
   position: 'absolute',
   background: '#2d2d2d',
-  border: '1px solid #555',
-  borderRadius: '8px',
+  // border: '1px solid #555', // 테두리 제거
+  // borderRadius: '8px', // 둥근 모서리 제거
   boxShadow: '0 5px 15px rgba(0,0,0,0.3)',
   zIndex: 100,
   display: 'flex',
@@ -23,26 +23,40 @@ const menuStyle: React.CSSProperties = {
 };
 
 const searchInputStyle: React.CSSProperties = {
-  padding: '10px',
-  margin: '8px',
+  padding: '8px', // 패딩 축소
+  margin: '5px', // 마진 축소
   background: '#222',
   border: '1px solid #444',
   borderRadius: '4px',
   color: '#eee',
   outline: 'none',
+  fontSize: '12px', // 폰트 크기 명시
 };
 
 const listStyle: React.CSSProperties = {
   overflowY: 'auto',
   listStyle: 'none',
-  padding: '0 0 8px 0',
+  padding: '0', // 패딩 제거
   margin: 0,
 };
 
 const itemStyle: React.CSSProperties = {
-  padding: '10px 15px',
+  padding: '5px 12px', // 패딩 재조정
   color: '#ccc',
   cursor: 'pointer',
+  borderBottom: '1px solid #404040', // 구분선 색상 조정
+};
+
+const itemNameStyle: React.CSSProperties = {
+  fontWeight: 'bold',
+  color: '#eee',
+  fontSize: '12px',
+};
+
+const itemDescStyle: React.CSSProperties = {
+  color: '#999',
+  fontSize: '10px',
+  marginTop: '2px',
 };
 
 const NodeAddMenu: React.FC<NodeAddMenuProps> = ({ x, y, actions, onSelect, onClose }) => {
@@ -51,7 +65,8 @@ const NodeAddMenu: React.FC<NodeAddMenuProps> = ({ x, y, actions, onSelect, onCl
   const filteredActions = useMemo(() => {
     if (!searchTerm) return actions;
     return actions.filter(action =>
-      (action.description || action.name).toLowerCase().includes(searchTerm.toLowerCase())
+      action.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (action.description || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [actions, searchTerm]);
 
@@ -77,10 +92,11 @@ const NodeAddMenu: React.FC<NodeAddMenuProps> = ({ x, y, actions, onSelect, onCl
               key={action.name}
               style={itemStyle}
               onClick={() => handleSelect(action.name)}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#4a4a4a')}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#3a3a3a')}
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
             >
-              {action.description || action.name}
+              <div style={itemNameStyle}>{action.name}</div>
+              <div style={itemDescStyle}>{action.description}</div>
             </li>
           ))
         ) : (
