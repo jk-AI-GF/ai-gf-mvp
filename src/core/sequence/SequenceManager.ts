@@ -14,6 +14,7 @@ import { SequenceEngine } from './SequenceEngine';
 import { DelayNodeModel } from './DelayNodeModel';
 import { BranchNodeModel } from './BranchNodeModel';
 import { ClockNodeModel } from './ClockNodeModel';
+import { NumToStrNodeModel } from './NumToStrNodeModel';
 
 // 시퀀스 데이터의 구조를 정의합니다.
 interface SequenceData {
@@ -228,6 +229,10 @@ export class SequenceManager {
 
         case 'clockNode':
           model = new ClockNodeModel(sNode.id, data.interval);
+          break;
+
+        case 'numToStrNode':
+          model = new NumToStrNodeModel(sNode.id);
           break;
 
         default:

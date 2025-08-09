@@ -188,6 +188,16 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events }) => {
             <div style={itemNameStyle}>Random Number</div>
             <div style={itemDescStyle}>무작위 숫자를 생성합니다.</div>
           </div>
+          <div
+            onDragStart={(event) => onDragStart(event, 'numToStrNode', 'Int to String')}
+            draggable
+            style={getItemStyle('data')}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.data, 0.3)}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.data, 0.15)}
+          >
+            <div style={itemNameStyle}>Int to String</div>
+            <div style={itemDescStyle}>정수를 문자열로 변환합니다.</div>
+          </div>
         </>
       )}
 

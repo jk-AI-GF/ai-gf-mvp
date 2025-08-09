@@ -37,6 +37,7 @@ const nodeTypes = {
   operatorNode: OperatorNode,
   randomNode: RandomNode,
   clockNode: ClockNode,
+  numToStrNode: NumToStrNode,
 };
 
 // Define default options for all edges to make them interactive
@@ -59,8 +60,10 @@ import { BranchNodeModel } from '../../../core/sequence/BranchNodeModel';
 import { OperatorNodeModel } from '../../../core/sequence/OperatorNodeModel';
 import { RandomNodeModel } from '../../../core/sequence/RandomNodeModel';
 import { ClockNodeModel } from '../../../core/sequence/ClockNodeModel';
+import { NumToStrNodeModel } from '../../../core/sequence/NumToStrNodeModel';
 
 import ClockNode from './ClockNode';
+import NumToStrNode from './NumToStrNode';
 
 import { BaseNode, IPort } from '../../../core/sequence/BaseNode';
 import { EVENT_DEFINITIONS, EventDefinition } from '../../../core/event-definitions';
@@ -321,6 +324,13 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
           type: 'clockNode',
           position,
           data: new ClockNodeModel(newNodeId),
+        };
+      } else if (droppedData.type === 'numToStrNode') {
+        newNode = {
+          id: newNodeId,
+          type: 'numToStrNode',
+          position,
+          data: new NumToStrNodeModel(newNodeId),
         };
       } else {
         return;
