@@ -24,6 +24,13 @@ interface StoreSchema {
   characterState: Partial<ICharacterState>;
 }
 
+const DEFAULT_CHARACTER_STATE: ICharacterState = {
+  curiosity: 0.5,
+  happiness: 0.5,
+  energy: 0.8,
+  lastInteractionTimestamp: Date.now(),
+};
+
 // Store 인스턴스 생성
 const store = new Store<Omit<StoreSchema, 'customTriggers'>>({
   defaults: {
@@ -32,13 +39,7 @@ const store = new Store<Omit<StoreSchema, 'customTriggers'>>({
     llmSettings: DEFAULT_LLM_SETTINGS,
     mouseIgnoreShortcut: 'CommandOrControl+Shift+O',
     activeSequences: [],
-    characterState: {
-      curiosity: 0.5,
-      happiness: 0.5,
-      energy: 0.8,
-      // On first ever launch.
-      lastInteractionTimestamp: Date.now(),
-    },
+    characterState: DEFAULT_CHARACTER_STATE,
   }
 });
 
@@ -494,10 +495,21 @@ app.on('ready', async () => {
 
   // Send the loaded character state to the renderer once it's ready
   const sendInitialState = () => {
-    const savedState = store.get('characterState', {});
-    lastSavedState = savedState;
-    mainWindow.webContents.send('character-state:load', savedState);
-    console.log('[Main] Initial character state sent to renderer.');
+    // Get the saved state, which might be partial or from an old version.
+    const savedState = store.get('characterState');
+
+    // Merge the saved state with the defaults. Properties in `savedState` will overwrite defaults.
+    // This ensures the object sent to the renderer is always complete.
+    const mergedState = { ...DEFAULT_CHARACTER_STATE, ...savedState };
+
+    lastSavedState = mergedState;
+    
+    // Write the cleaned-up state back to the store to fix the file for the next startup.
+    store.set('characterState', mergedState);
+
+    // Send the complete, merged state to the renderer.
+    mainWindow.webContents.send('character-state:load', mergedState);
+    console.log('[Main] Initial character state (merged and repaired) sent to renderer.');
   };
 
   if (mainWindow.webContents.isLoading()) {
