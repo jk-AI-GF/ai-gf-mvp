@@ -423,13 +423,13 @@ export class VRMManager {
         }
    }
 
-    public async loadAndApplyPose(fileName: string) {
+    public async loadAndApplyPose(fileName: string, blendTime?: number) {
         const absolutePath = await this._resolveResourcePath('pose', fileName);
         if (!absolutePath) return;
 
         const clip = await this.loadAndParseFile(absolutePath);
         if (clip?.type === 'pose') {
-            this.applyPose(clip.data);
+            this.applyPose(clip.data, blendTime);
         } else if (clip?.type === 'animation') {
             console.warn(`Attempted to apply an animation file as a pose: ${fileName}`);
         }
@@ -450,15 +450,22 @@ export class VRMManager {
         }
     }
 
-    public applyPose(poseClip: THREE.AnimationClip): void {
+    public applyPose(poseClip: THREE.AnimationClip, blendTime = 0.0): void {
         if (!this.currentVrm || !this.mixer) return;
-        this.mixer.stopAllAction();
-        this.currentAction = null;
+
         const newAction = this.mixer.clipAction(poseClip);
         newAction.setLoop(THREE.LoopOnce, 0);
         newAction.clampWhenFinished = true;
-        newAction.play();
-        this.currentVrm.scene.updateMatrixWorld(true);
+
+        if (this.currentAction) {
+            this.currentAction.crossFadeTo(newAction, blendTime, true);
+            newAction.play(); // The new action must be started
+        } else {
+            this.mixer.stopAllAction();
+            newAction.play();
+        }
+        
+        this.currentAction = newAction;
         this.eventBus.emit('vrm:poseApplied', { poseName: poseClip.name });
     }
 

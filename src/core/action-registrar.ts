@@ -155,10 +155,13 @@ export function registerCoreActions(
     {
       name: 'setPose',
       description: '캐릭터의 포즈를 설정합니다.',
-      params: [{ name: 'poseName', type: 'string', description: '포즈 파일 이름', dynamicOptions: 'poses' }],
+      params: [
+        { name: 'poseName', type: 'string', description: '포즈 파일 이름', dynamicOptions: 'poses' },
+        { name: 'blendTime', type: 'number', defaultValue: 0.0, description: '블렌딩 시간(초)' }
+      ],
     },
-    (poseName: string) => {
-      vrmManager.loadAndApplyPose(poseName);
+    (poseName: string, blendTime?: number) => {
+      vrmManager.loadAndApplyPose(poseName, blendTime);
     }
   );
 
