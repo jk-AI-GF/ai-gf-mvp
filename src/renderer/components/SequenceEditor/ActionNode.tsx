@@ -5,44 +5,66 @@ import { IPort } from '../../../core/sequence/BaseNode';
 import { getPortColor } from './node-style-utils';
 
 // 동적 옵션을 위한 드롭다운 컴포넌트
-const DynamicSelectInput = ({ value, onParamChange }: { value: any, onParamChange: (val: any) => void }) => {
+const DynamicSelectInput = ({ param, value, onParamChange }: { param: IPort, value: any, onParamChange: (val: any) => void }) => {
   const [options, setOptions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchAnimations = async () => {
+    const fetchOptions = async () => {
+      setIsLoading(true);
+      setError(null);
       try {
-        const [userResult, assetsResult] = await Promise.all([
-          window.electronAPI.listDirectory('animations', 'userData'),
-          window.electronAPI.listDirectory('Animation', 'assets')
-        ]);
+        let fetchedOptions: string[] = [];
+        if (param.dynamicOptions === 'animations') {
+          const [userResult, assetsResult] = await Promise.all([
+            window.electronAPI.listDirectory('animations', 'userData'),
+            window.electronAPI.listDirectory('Animation', 'assets')
+          ]);
 
-        if (userResult.error || assetsResult.error) {
-          throw new Error(userResult.error || assetsResult.error);
+          if (userResult.error || assetsResult.error) {
+            throw new Error(userResult.error || assetsResult.error);
+          }
+
+          const combinedFiles = new Set([...(userResult.files || []), ...(assetsResult.files || [])]);
+          fetchedOptions = Array.from(combinedFiles).filter((file: string) => 
+            file.toLowerCase().endsWith('.vrma') || file.toLowerCase().endsWith('.fbx')
+          );
+        } else if (param.dynamicOptions === 'sequences') {
+            const sequenceFiles = await window.electronAPI.getSequences();
+            if (sequenceFiles) {
+                fetchedOptions = sequenceFiles;
+            }
+        } else if (param.dynamicOptions === 'poses') {
+            const poseFiles = await window.electronAPI.getPoses();
+            if (poseFiles) {
+                fetchedOptions = poseFiles;
+            }
         }
-
-        const combinedFiles = new Set([...(userResult.files || []), ...(assetsResult.files || [])]);
-        const animFiles = Array.from(combinedFiles).filter((file: string) => 
-          file.toLowerCase().endsWith('.vrma') || file.toLowerCase().endsWith('.fbx')
-        );
-        setOptions(animFiles);
+        setOptions(fetchedOptions);
       } catch (err) {
-        console.error('Failed to fetch animation files for dropdown:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch options';
+        console.error(`Failed to fetch options for ${param.dynamicOptions}:`, errorMessage);
+        setError(errorMessage);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchAnimations();
-  }, []);
+    fetchOptions();
+  }, [param.dynamicOptions]);
 
   if (isLoading) {
     return <select style={inputStyle} disabled><option>로딩 중...</option></select>;
   }
+  
+  if (error) {
+      return <select style={{...inputStyle, color: 'red'}} disabled><option>오류 발생</option></select>;
+  }
 
   return (
     <select value={value} onChange={e => onParamChange(e.target.value)} style={inputStyle}>
-      <option value="">-- 애니메이션 선택 --</option>
+      <option value="">-- 선택 --</option>
       {options.map(file => <option key={file} value={file}>{file}</option>)}
     </select>
   );
@@ -52,8 +74,8 @@ const DynamicSelectInput = ({ value, onParamChange }: { value: any, onParamChang
 // 노드 내부의 입력 필드 컴포넌트
 const EmbeddedInput = ({ param, value, onParamChange }: { param: IPort, value: any, onParamChange: (val: any) => void }) => {
   // 동적 옵션 힌트 확인
-  if (param.dynamicOptions === 'animations') {
-    return <DynamicSelectInput value={value} onParamChange={onParamChange} />;
+  if (param.dynamicOptions === 'animations' || param.dynamicOptions === 'sequences' || param.dynamicOptions === 'poses') {
+    return <DynamicSelectInput param={param} value={value} onParamChange={onParamChange} />;
   }
 
   switch (param.type) {

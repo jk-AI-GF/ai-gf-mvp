@@ -81,12 +81,13 @@ export class ActionNodeModel extends BaseNode {
         connectedInputs: Record<string, any>
     ): Promise<{ nextExec?: string; outputs: Record<string, any> }> {
         const actionName = this.actionDefinition.name;
-        const action = (context.actions as any)[actionName];
+        const actionInfo = context.actionRegistry.get(actionName);
 
-        if (typeof action !== 'function') {
-            console.error(`Action "${actionName}" not found in PluginContext.`);
+        if (!actionInfo || typeof actionInfo.implementation !== 'function') {
+            console.error(`Action "${actionName}" not found in ActionRegistry or is not a function.`);
             return { outputs: {} };
         }
+        const action = actionInfo.implementation;
 
         // 최종 파라미터 계산: 연결된 입력값이 있으면 그것을 사용하고, 없으면 내장된 값을 사용
         const finalParams = { ...this.paramValues, ...connectedInputs };

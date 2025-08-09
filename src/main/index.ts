@@ -166,6 +166,23 @@ ipcMain.handle('get-sequences', async () => {
     return error.code === 'ENOENT' ? [] : Promise.reject(error);
   }
 });
+ipcMain.handle('get-poses', async () => {
+  try {
+    const userPosesDir = resolveUserDataPath('poses');
+    const assetPosesDir = resolveAssetsPath('Pose');
+
+    const userPosesPromise = fsp.readdir(userPosesDir).catch((): string[] => []); // 디렉터리가 없으면 빈 배열 반환
+    const assetPosesPromise = fsp.readdir(assetPosesDir).catch((): string[] => []); // 디렉터리가 없으면 빈 배열 반환
+
+    const [userFiles, assetFiles] = await Promise.all([userPosesPromise, assetPosesPromise]);
+
+    const combinedFiles = new Set([...userFiles, ...assetFiles]);
+    return Array.from(combinedFiles).filter(file => file.toLowerCase().endsWith('.vrma'));
+  } catch (error) {
+    console.error('Failed to get poses:', error);
+    return []; // 오류 발생 시 빈 배열 반환
+  }
+});
 ipcMain.handle('delete-sequence', async (event, sequenceFile: string) => {
   const sequencesDir = resolveUserDataPath('sequences');
   const filePath = path.join(sequencesDir, sequenceFile);
@@ -510,8 +527,13 @@ app.on('ready', async () => {
       isIgnoringMouseEvents = !isIgnoringMouseEvents;
       mainWindow.setIgnoreMouseEvents(isIgnoringMouseEvents, { forward: isIgnoringMouseEvents });
       if (!isIgnoringMouseEvents) mainWindow.focus();
-      contextStore.set('system:isIgnoringMouseEvents', isIgnoringMouseEvents);
-      eventBus.emit('system:mouse-ignore-toggle', isIgnoringMouseEvents);
+      
+      // Send the state change to the renderer process
+      mainWindow.webContents.send('set-ui-interactive-mode', !isIgnoringMouseEvents);
+
+      // The following lines were likely part of a previous implementation and can be kept commented out or removed.
+      // contextStore.set('system:isIgnoringMouseEvents', isIgnoringMouseEvents);
+      // eventBus.emit('system:mouse-ignore-toggle', isIgnoringMouseEvents);
     }
   };
 

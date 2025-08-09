@@ -38,6 +38,11 @@ const nodeTypes = {
   randomNode: RandomNode,
 };
 
+// Define default options for all edges to make them interactive
+const defaultEdgeOptions = {
+  interactionWidth: 20, // Makes a 20px wide area around the edge clickable
+};
+
 interface SequenceEditorProps {
   isOpen: boolean;
   onClose: () => void;
@@ -99,11 +104,6 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
   const { screenToFlowPosition, getNodes, getEdges, fitView } = useReactFlow();
   const [actions, setActions] = useState<ActionDefinition[]>([]);
   const [events, setEvents] = useState<EventDefinition[]>([]);
-
-  // Define default options for all edges to make them interactive
-  const defaultEdgeOptions = {
-    interactionWidth: 20, // Makes a 20px wide area around the edge clickable
-  };
 
   const loadSequenceData = useCallback((sequenceJsonString: string) => {
     const serializedSequence = JSON.parse(sequenceJsonString);

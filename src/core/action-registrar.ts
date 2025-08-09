@@ -152,7 +152,7 @@ export function registerCoreActions(
     {
       name: 'setPose',
       description: '캐릭터의 포즈를 설정합니다.',
-      params: [{ name: 'poseName', type: 'string', description: '포즈 파일 이름' }],
+      params: [{ name: 'poseName', type: 'string', description: '포즈 파일 이름', dynamicOptions: 'poses' }],
     },
     (poseName: string) => {
       vrmManager.loadAndApplyPose(poseName);

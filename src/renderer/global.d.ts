@@ -83,6 +83,7 @@ declare global {
 
       // --- Sequence API ---
       getSequences: () => Promise<string[]>;
+      getPoses: () => Promise<string[]>;
       getActiveSequences: () => Promise<string[]>;
       setActiveSequences: (activeSequences: string[]) => void;
       deleteSequence: (sequenceFile: string) => Promise<{ success: boolean; error?: string }>;

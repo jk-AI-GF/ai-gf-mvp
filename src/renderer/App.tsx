@@ -86,6 +86,35 @@ const App: React.FC = () => {
     return () => unsubscribe();
   }, [sequenceManager]);
 
+  // Register custom actions
+  useEffect(() => {
+    if (actionRegistry && sequenceManager) {
+      const actionDef = {
+        name: 'executeSequence',
+        description: '다른 시퀀스를 실행합니다.',
+        params: [
+          {
+            name: 'sequenceId',
+            type: 'string', // UI에서 enum처럼 처리될 것
+            description: '실행할 시퀀스의 파일 이름',
+            dynamicOptions: 'sequences', // UI 힌트
+          },
+        ],
+      };
+
+      const actionImpl = (sequenceId: string) => {
+        console.log(`[Action] Executing sequence: ${sequenceId}`);
+        sequenceManager.runSequenceById(sequenceId);
+      };
+
+      // 중복 등록 방지
+      if (!actionRegistry.get('executeSequence')) {
+        actionRegistry.register(actionDef as any, actionImpl);
+        console.log('[App] "executeSequence" action registered.');
+      }
+    }
+  }, [actionRegistry, sequenceManager]);
+
 
   const handleDeleteSequence = async (sequenceFile: string) => {
     if (!sequenceManager) return;

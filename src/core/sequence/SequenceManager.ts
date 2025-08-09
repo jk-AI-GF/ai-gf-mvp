@@ -100,6 +100,16 @@ export class SequenceManager {
   }
 
   /**
+   * ID를 기반으로 시퀀스를 프로그래매틱하게 실행합니다.
+   * @param fileName - 실행할 시퀀스의 파일 이름입니다.
+   */
+  public async runSequenceById(fileName: string): Promise<void> {
+    // manualStartSequence와 동일한 로직을 사용합니다.
+    // 이 메서드는 주로 액션 시스템에서 호출하기 위해 존재합니다.
+    return this.manualStartSequence(fileName);
+  }
+
+  /**
    * 시퀀스 파일을 삭제합니다.
    * @param fileName - 삭제할 시퀀스의 파일 이름입니다.
    */
