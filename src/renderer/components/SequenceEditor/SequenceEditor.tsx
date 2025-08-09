@@ -153,7 +153,7 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
       const portType = sourcePort?.type || 'default';
       
       // styles[variable] 형태로 클래스를 동적으로 가져옵니다.
-      const edgeClassName = (styles as { [key: string]: string })[EDGE_CLASS_MAP[portType] || EDGE_CLASS_MAP.default];
+      const edgeClassName = (styles as unknown as { [key: string]: string })[EDGE_CLASS_MAP[portType] || EDGE_CLASS_MAP.default];
 
       return {
         ...edge,
@@ -291,7 +291,7 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
     const sourcePort = sourceInstance.outputs.find(p => p.name === params.sourceHandle);
     const portType = sourcePort?.type || 'default';
     
-    const edgeClassName = (styles as { [key: string]: string })[EDGE_CLASS_MAP[portType] || EDGE_CLASS_MAP.default];
+    const edgeClassName = (styles as unknown as { [key: string]: string })[EDGE_CLASS_MAP[portType] || EDGE_CLASS_MAP.default];
 
     const newEdge = {
         ...params,
