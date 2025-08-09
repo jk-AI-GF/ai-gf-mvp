@@ -215,6 +215,38 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
     }
   }, [getNodes, getEdges, sequenceManager, sequenceToLoad, onClose]);
 
+  const handleSaveAs = useCallback(async () => {
+    if (!sequenceManager) {
+      console.error("SequenceManager is not initialized.");
+      return;
+    }
+    const currentNodes = getNodes();
+    const currentEdges = getEdges();
+
+    const flow = { nodes: currentNodes, edges: currentEdges };
+    
+    try {
+      // "다른 이름으로 저장"을 위해 항상 저장 대화상자를 엽니다.
+      const serializableData = sequenceManager.serializeSequence(flow);
+      const jsonString = JSON.stringify(serializableData, null, 2);
+      const result = await window.electronAPI.saveSequence(jsonString);
+
+      if (result.success) {
+        console.log('시퀀스가 성공적으로 저장되었습니다:', result.filePath);
+        eventBus.emit('sequences-updated');
+        onClose(); // 저장 후 에디터 닫기
+      } else if (result.error) {
+        console.error('시퀀스 저장 실패:', result.error);
+        alert(`저장 실패: ${result.error}`);
+      }
+      // 'canceled'의 경우 아무 작업도 수행하지 않습니다.
+
+    } catch (error) {
+      console.error('시퀀스 저장 중 예외 발생:', error);
+      alert(`저장 중 오류 발생: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }, [getNodes, getEdges, sequenceManager, onClose]);
+
   const handleLoad = useCallback(async () => {
     try {
       const result = await window.electronAPI.loadSequence();
@@ -368,10 +400,11 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
         style={{ flex: 1, height: '100%', position: 'relative' }} 
         ref={reactFlowWrapper}
       >
-        <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 10, display: 'flex', gap: '10px' }}>
-          <button onClick={handleRun} className="button-run" style={{background: '#4CAF50', color: 'white'}}>실행</button>
-          <button onClick={handleSave} className="button-primary">저장</button>
-          <button onClick={handleLoad} className="button-secondary">불러오기</button>
+        <div className={styles.buttonContainer}>
+          <button onClick={handleRun} className={`${styles.button} ${styles.buttonRun}`}>실행</button>
+          <button onClick={handleSave} className={`${styles.button} ${styles.buttonPrimary}`}>저장</button>
+          <button onClick={handleSaveAs} className={`${styles.button} ${styles.buttonPrimary}`}>다른 이름으로 저장</button>
+          <button onClick={handleLoad} className={`${styles.button} ${styles.buttonSecondary}`}>불러오기</button>
         </div>
         <ReactFlow
           style={{ width: '100%', height: '100%' }}

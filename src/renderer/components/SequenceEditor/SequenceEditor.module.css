@@ -37,3 +37,59 @@
 .reactFlowWrapper :global(.react-flow__edge-interaction) {
   pointer-events: stroke !important;
 }
+
+/* Button Styles */
+.buttonContainer {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 10;
+  display: flex;
+  gap: 10px; /* Reduced gap */
+}
+
+.button {
+  padding: 8px 16px; /* Reduced padding */
+  font-size: 14px; /* Reduced font size */
+  font-weight: 600;
+  border: none;
+  border-radius: 6px; /* Reduced radius */
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15); /* Softer shadow */
+  color: white;
+}
+
+.button:hover {
+  transform: translateY(-1px); /* Less movement */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.buttonRun {
+  background-color: #428745; /* Muted Green */
+}
+
+.buttonRun:hover {
+  background-color: #52a355;
+}
+
+.buttonPrimary {
+  background-color: #2a65a8; /* Muted Blue */
+}
+
+.buttonPrimary:hover {
+  background-color: #3a7bc8;
+}
+
+.buttonSecondary {
+  background-color: #5a6268; /* Darker Gray */
+}
+
+.buttonSecondary:hover {
+  background-color: #6c757d;
+}
