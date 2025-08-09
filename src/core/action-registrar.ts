@@ -7,6 +7,9 @@ import { playTTS } from '../renderer/audio-service';
 import { ActionDefinition } from '../plugin-api/actions';
 import { WebGLRenderer } from 'three';
 
+import { ICharacterState } from '../plugin-api/plugin-context';
+import { characterState } from './character-state';
+
 // action-registrar.ts
 // 이 파일은 모든 시스템 액션을 ActionRegistry에 등록하는 역할을 합니다.
 // 렌더러 프로세스에서만 사용됩니다.
@@ -296,4 +299,58 @@ export function registerCoreActions(
       console.log('[SEQUENCE DEBUG]', message);
     }
   );
+
+  registry.register(
+    {
+      name: 'getCharacterState',
+      description: '캐릭터의 현재 내부 상태 값을 가져옵니다.',
+      params: [
+        { 
+          name: 'key', 
+          type: 'enum', 
+          options: ['curiosity', 'happiness', 'energy', 'lastInteractionTimestamp'], 
+          description: '가져올 상태',
+        },
+      ],
+      returnType: 'number',
+    },
+    (key: 'curiosity' | 'happiness' | 'energy' | 'lastInteractionTimestamp') => {
+      return characterState[key];
+    }
+  );
+
+  registry.register(
+    {
+      name: 'setCharacterState',
+      description: '캐릭터의 내부 상태 값을 변경합니다.',
+      params: [
+        { name: 'key', type: 'enum', options: ['curiosity', 'happiness', 'energy'], description: '변경할 상태' },
+        { name: 'mode', type: 'enum', options: ['set', 'add', 'subtract'], defaultValue: 'set', description: '변경 방식' },
+        { name: 'value', type: 'number', description: '변경할 값' },
+      ],
+    },
+    (key: keyof ICharacterState, mode: 'set' | 'add' | 'subtract', value: number) => {
+      if (key === 'lastInteractionTimestamp') return; // 이 값은 직접 수정 불가
+
+      const currentValue = characterState[key];
+      if (typeof currentValue !== 'number') return;
+
+      let newValue: number;
+      switch (mode) {
+        case 'set':
+          newValue = value;
+          break;
+        case 'add':
+          newValue = currentValue + value;
+          break;
+        case 'subtract':
+          newValue = currentValue - value;
+          break;
+      }
+      
+      // ICharacterState의 setter가 자동으로 0-1 범위를 클램핑하고 이벤트를 발생시킴
+      (characterState as any)[key] = newValue;
+    }
+  );
 }
+

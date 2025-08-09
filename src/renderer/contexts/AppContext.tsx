@@ -92,6 +92,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       seqManager.initialize().then(() => {
         setSequenceManager(seqManager);
         console.log("SequenceManager initialized and sequences loaded.");
+
+        // Register sequence-related actions now that we have the manager
+        if (managers.actionRegistry && !managers.actionRegistry.get('executeSequence')) {
+          managers.actionRegistry.register(
+            {
+              name: 'executeSequence',
+              description: '다른 시퀀스를 실행합니다.',
+              params: [
+                {
+                  name: 'sequenceId',
+                  type: 'string',
+                  description: '실행할 시퀀스의 파일 이름',
+                  dynamicOptions: 'sequences',
+                },
+              ],
+            },
+            (sequenceId: string) => {
+              console.log(`[Action] Executing sequence: ${sequenceId}`);
+              seqManager.runSequenceById(sequenceId);
+            }
+          );
+          console.log('[AppContext] "executeSequence" action registered.');
+        }
       }).catch(err => {
         console.error("Failed to initialize SequenceManager:", err);
       });

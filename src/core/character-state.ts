@@ -18,14 +18,24 @@ class CharacterState implements ICharacterState {
         this.eventBus?.emit('character-state:changed', this.toJSON());
     }
 
+    private setProperty(property: keyof Omit<ICharacterState, 'lastInteractionTimestamp' | 'toJSON' | 'hydrate' | 'initialize'>, value: number) {
+        const privateKey = `_${property}` as keyof this;
+        if (typeof this[privateKey] !== 'number' || this[privateKey] === value) return;
+        
+        const oldValue = this[privateKey] as number;
+        (this as any)[privateKey] = Math.max(0, Math.min(1, value));
+        const newValue = this[privateKey] as number;
+
+        this.eventBus?.emit('character-state:propertyChanged', { property, newValue, oldValue });
+        this.emitChangeEvent();
+    }
+
     get curiosity(): number {
         return this._curiosity;
     }
 
     set curiosity(value: number) {
-        if (this._curiosity === value) return;
-        this._curiosity = Math.max(0, Math.min(1, value));
-        this.emitChangeEvent();
+        this.setProperty('curiosity', value);
     }
 
     get happiness(): number {
@@ -33,9 +43,7 @@ class CharacterState implements ICharacterState {
     }
 
     set happiness(value: number) {
-        if (this._happiness === value) return;
-        this._happiness = Math.max(0, Math.min(1, value));
-        this.emitChangeEvent();
+        this.setProperty('happiness', value);
     }
 
     get energy(): number {
@@ -43,9 +51,7 @@ class CharacterState implements ICharacterState {
     }
 
     set energy(value: number) {
-        if (this._energy === value) return;
-        this._energy = Math.max(0, Math.min(1, value));
-        this.emitChangeEvent();
+        this.setProperty('energy', value);
     }
 
     get lastInteractionTimestamp(): number {
@@ -54,7 +60,9 @@ class CharacterState implements ICharacterState {
 
     set lastInteractionTimestamp(value: number) {
         if (this._lastInteractionTimestamp === value) return;
+        const oldValue = this._lastInteractionTimestamp;
         this._lastInteractionTimestamp = value;
+        this.eventBus?.emit('character-state:propertyChanged', { property: 'lastInteractionTimestamp', newValue: value, oldValue });
         this.emitChangeEvent();
     }
 
