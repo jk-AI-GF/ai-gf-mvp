@@ -1,0 +1,26 @@
+.container {
+  padding: 10px;
+  min-width: 250px;
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+}
+
+.stateItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background-color: #333;
+  border-radius: 4px;
+  border: 1px solid #444;
+}
+
+.stateKey {
+  font-weight: bold;
+  color: #ccc;
+}
+
+.stateValue {
+  font-family: 'Courier New', Courier, monospace;
+  color: #4dff4d; /* A nice green color for the value */
+}

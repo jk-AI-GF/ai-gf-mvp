@@ -17,6 +17,7 @@ import { MToonMaterialOutlineWidthMode } from '@pixiv/three-vrm';
 import { GrabVrmPlugin } from '../../../plugins/grab-vrm-plugin';
 import { TimeSyncTestPlugin } from '../../../plugins/time-sync-test-plugin';
 import { LlmResponseHandlerPlugin } from '../../../plugins/LlmResponseHandlerPlugin';
+import { InteractionTrackerPlugin } from '../../../plugins/interaction-tracker-plugin';
 import { CustomTriggerManager } from '../../../core/custom-trigger-manager';
 import { SystemControls } from '../../../plugin-api/system-controls';
 import { registerCoreActions } from '../../../core/action-registrar';
@@ -98,6 +99,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     pluginManager.register(new GrabVrmPlugin());
     pluginManager.register(new TimeSyncTestPlugin());
     pluginManager.register(new LlmResponseHandlerPlugin());
+    pluginManager.register(new InteractionTrackerPlugin());
 
     const customTriggerManager = new CustomTriggerManager(pluginContext);
     customTriggerManager.loadAndRegisterAll();

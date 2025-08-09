@@ -13,6 +13,9 @@ import { ActionRegistry } from '../core/action-registry';
  */
 export interface ICharacterState {
   curiosity: number;
+  happiness: number;
+  energy: number;
+  lastInteractionTimestamp: number;
 }
 
 // 플러그인과 모드가 앱과 상호작용할 수 있는 모든 API를 정의하는 컨텍스트 객체입니다.

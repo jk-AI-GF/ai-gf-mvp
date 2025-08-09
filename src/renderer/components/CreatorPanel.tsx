@@ -10,6 +10,7 @@ interface CreatorPanelProps {
   onDeleteTrigger: (triggerId: string) => void;
   onToggleTrigger: (triggerId: string, enabled: boolean) => void;
   onOpenContextViewer: () => void;
+  onOpenCharacterStateViewer: () => void;
   onOpenSequenceEditor: (sequenceFile: string | null) => void;
   onEditSequence: (sequenceFile: string) => void;
   onDeleteSequence: (sequenceFile: string) => void;
@@ -29,6 +30,7 @@ const CreatorPanel: React.FC<CreatorPanelProps> = ({
   onDeleteTrigger,
   onToggleTrigger,
   onOpenContextViewer,
+  onOpenCharacterStateViewer,
   onOpenSequenceEditor,
   onEditSequence,
   onDeleteSequence,
@@ -100,6 +102,9 @@ const CreatorPanel: React.FC<CreatorPanelProps> = ({
            <h3 className={styles.sectionTitle}>디버그 도구</h3>
            <button className={styles.debugButton} onClick={onOpenContextViewer}>
             컨텍스트 스토어 뷰어
+          </button>
+          <button className={styles.debugButton} onClick={onOpenCharacterStateViewer} style={{marginTop: '10px'}}>
+            CharacterState 뷰어
           </button>
         </div>
       </div>

@@ -15,6 +15,7 @@ import LightPanel from './components/LightPanel';
 import TriggerEditorPanel from './components/TriggerEditorPanel';
 import CreatorPanel from './components/CreatorPanel';
 import ContextStoreDebugPanel from './components/ContextStoreDebugPanel';
+import CharacterStateViewer from './components/CharacterStateViewer';
 import SequenceEditor from './components/SequenceEditor/SequenceEditor';
 import Chat from './components/Chat';
 import FloatingMessageManager from './components/FloatingMessageManager';
@@ -50,6 +51,7 @@ const App: React.FC = () => {
   const [isCreatorPanelOpen, setCreatorPanelOpen] = useState(false);
   const [isTriggerEditorPanelOpen, setTriggerEditorPanelOpen] = useState(false);
   const [isContextDebugPanelOpen, setContextDebugPanelOpen] = useState(false);
+  const [isCharacterStateViewerOpen, setCharacterStateViewerOpen] = useState(false);
   const [isSequenceEditorOpen, setSequenceEditorOpen] = useState(false);
   const [sequenceToEdit, setSequenceToEdit] = useState<string | null>(null);
   
@@ -231,7 +233,7 @@ const App: React.FC = () => {
       [setSettingsModalOpen, setJointPanelOpen, setExpressionPanelOpen, setPluginsPanelOpen, 
        setMeshPanelOpen, setModManagementPanelOpen, setPosePanelOpen, setAnimationPanelOpen, 
        setMaterialPanelOpen, setLightPanelOpen, setCreatorPanelOpen, setTriggerEditorPanelOpen,
-       setContextDebugPanelOpen, setSequenceEditorOpen]
+       setContextDebugPanelOpen, setSequenceEditorOpen, setCharacterStateViewerOpen]
       .forEach(setter => setter(false));
     }
     return () => clearTimeout(timer);
@@ -326,6 +328,7 @@ const App: React.FC = () => {
     animation: { x: window.innerWidth - 370, y: 70 }, material: { x: 20, y: 400 },
     light: { x: 350, y: 400 }, triggerEditor: { x: window.innerWidth - 370, y: 400 },
     creator: { x: 20, y: 70 }, contextDebug: { x: window.innerWidth - 400, y: 70 },
+    characterState: { x: window.innerWidth - 400, y: 400 },
     animationEditor: { x: window.innerWidth / 2 - 200, y: window.innerHeight / 2 - 200 },
   });
 
@@ -393,6 +396,7 @@ const App: React.FC = () => {
         onDeleteTrigger={handleDeleteTrigger}
         onToggleTrigger={handleToggleTrigger}
         onOpenContextViewer={() => setContextDebugPanelOpen(p => !p)}
+        onOpenCharacterStateViewer={() => setCharacterStateViewerOpen(p => !p)}
         onOpenSequenceEditor={handleEditSequence}
         onEditSequence={handleEditSequence}
         onDeleteSequence={handleDeleteSequence}
@@ -419,6 +423,12 @@ const App: React.FC = () => {
         onClose={() => setContextDebugPanelOpen(false)}
         initialPos={panelPositions.contextDebug}
         onDragEnd={(pos) => handlePanelDrag('contextDebug', pos)}
+      />}
+
+      {isCharacterStateViewerOpen && <CharacterStateViewer
+        onClose={() => setCharacterStateViewerOpen(false)}
+        initialPos={panelPositions.characterState}
+        onDragEnd={(pos) => handlePanelDrag('characterState', pos)}
       />}
       
       <FloatingMessageManager />
