@@ -423,13 +423,13 @@ export class VRMManager {
         }
    }
 
-    public async loadAndApplyPose(fileName: string, blendTime?: number) {
+    public async loadAndApplyPose(fileName: string, blendTime?: number): Promise<void> {
         const absolutePath = await this._resolveResourcePath('pose', fileName);
         if (!absolutePath) return;
 
         const clip = await this.loadAndParseFile(absolutePath);
         if (clip?.type === 'pose') {
-            this.applyPose(clip.data, blendTime);
+            return this.applyPose(clip.data, blendTime);
         } else if (clip?.type === 'animation') {
             console.warn(`Attempted to apply an animation file as a pose: ${fileName}`);
         }
@@ -450,23 +450,33 @@ export class VRMManager {
         }
     }
 
-    public applyPose(poseClip: THREE.AnimationClip, blendTime = 0.0): void {
-        if (!this.currentVrm || !this.mixer) return;
+    public applyPose(poseClip: THREE.AnimationClip, blendTime = 0.0): Promise<void> {
+        return new Promise((resolve) => {
+            if (!this.currentVrm || !this.mixer) {
+                resolve();
+                return;
+            }
 
-        const newAction = this.mixer.clipAction(poseClip);
-        newAction.setLoop(THREE.LoopOnce, 0);
-        newAction.clampWhenFinished = true;
+            const newAction = this.mixer.clipAction(poseClip);
+            newAction.setLoop(THREE.LoopOnce, 0);
+            newAction.clampWhenFinished = true;
 
-        if (this.currentAction) {
-            this.currentAction.crossFadeTo(newAction, blendTime, true);
-            newAction.play(); // The new action must be started
-        } else {
-            this.mixer.stopAllAction();
-            newAction.play();
-        }
-        
-        this.currentAction = newAction;
-        this.eventBus.emit('vrm:poseApplied', { poseName: poseClip.name });
+            if (this.currentAction) {
+                this.currentAction.crossFadeTo(newAction, blendTime, true);
+                newAction.play();
+            } else {
+                this.mixer.stopAllAction();
+                newAction.play();
+            }
+            
+            this.currentAction = newAction;
+            this.eventBus.emit('vrm:poseApplied', { poseName: poseClip.name });
+
+            // Resolve the promise after the blend time has passed
+            setTimeout(() => {
+                resolve();
+            }, blendTime * 1000);
+        });
     }
 
     public playAnimation(clip: THREE.AnimationClip, loop = false, crossFadeDuration = 0.5): void {

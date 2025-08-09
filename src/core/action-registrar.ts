@@ -160,8 +160,8 @@ export function registerCoreActions(
         { name: 'blendTime', type: 'number', defaultValue: 0.0, description: '블렌딩 시간(초)' }
       ],
     },
-    (poseName: string, blendTime?: number) => {
-      vrmManager.loadAndApplyPose(poseName, blendTime);
+    async (poseName: string, blendTime?: number) => {
+      await vrmManager.loadAndApplyPose(poseName, blendTime);
     }
   );
 
