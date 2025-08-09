@@ -12,6 +12,7 @@ import { LlmSettings, DEFAULT_LLM_SETTINGS } from '../core/llm-settings';
 import { getAssetsPath, getUserDataPath, resolveAssetsPath, resolveUserDataPath } from './path-utils';
 import { CustomTrigger } from '../core/custom-trigger-manager';
 import { ActionDefinition } from '../plugin-api/actions';
+import { ICharacterState } from '../plugin-api/plugin-context';
 
 // Define the schema for electron-store
 interface StoreSchema {
@@ -20,6 +21,7 @@ interface StoreSchema {
   llmSettings: LlmSettings;
   mouseIgnoreShortcut: string;
   activeSequences: string[];
+  characterState: Partial<ICharacterState>;
 }
 
 // Store 인스턴스 생성
@@ -30,6 +32,13 @@ const store = new Store<Omit<StoreSchema, 'customTriggers'>>({
     llmSettings: DEFAULT_LLM_SETTINGS,
     mouseIgnoreShortcut: 'CommandOrControl+Shift+O',
     activeSequences: [],
+    characterState: {
+      curiosity: 0.5,
+      happiness: 0.5,
+      energy: 0.8,
+      // On first ever launch.
+      lastInteractionTimestamp: Date.now(),
+    },
   }
 });
 
@@ -41,6 +50,7 @@ let isIgnoringMouseEvents = false;
 let availableActionsCache: ActionDefinition[] = [];
 let modLoader: ModLoader;
 let modsLoaded = false;
+let lastSavedState: Partial<ICharacterState> | null = null;
 
 // --- Early Error Handling ---
 process.on('uncaughtException', (error) => {
@@ -61,9 +71,13 @@ if (require('electron-squirrel-startup')) {
 
 //==============================================================================
 // IPC HANDLER REGISTRATION
-// All handlers are registered here, before the app is ready.
-// This ensures that the renderer process can call them immediately.
 //==============================================================================
+
+// --- Character State Persistence ---
+ipcMain.on('character-state:changed', (event, newState: ICharacterState) => {
+  lastSavedState = newState;
+  store.set('characterState', newState);
+});
 
 // --- Active Sequences Store ---
 ipcMain.handle('get-active-sequences', () => {
@@ -171,8 +185,8 @@ ipcMain.handle('get-poses', async () => {
     const userPosesDir = resolveUserDataPath('poses');
     const assetPosesDir = resolveAssetsPath('Pose');
 
-    const userPosesPromise = fsp.readdir(userPosesDir).catch((): string[] => []); // 디렉터리가 없으면 빈 배열 반환
-    const assetPosesPromise = fsp.readdir(assetPosesDir).catch((): string[] => []); // 디렉터리가 없으면 빈 배열 반환
+    const userPosesPromise = fsp.readdir(userPosesDir).catch((): string[] => []);
+    const assetPosesPromise = fsp.readdir(assetPosesDir).catch((): string[] => []);
 
     const [userFiles, assetFiles] = await Promise.all([userPosesPromise, assetPosesPromise]);
 
@@ -180,7 +194,7 @@ ipcMain.handle('get-poses', async () => {
     return Array.from(combinedFiles).filter(file => file.toLowerCase().endsWith('.vrma'));
   } catch (error) {
     console.error('Failed to get poses:', error);
-    return []; // 오류 발생 시 빈 배열 반환
+    return [];
   }
 });
 ipcMain.handle('delete-sequence', async (event, sequenceFile: string) => {
@@ -333,8 +347,6 @@ ipcMain.on('toggle-mouse-ignore', () => {
     isIgnoringMouseEvents = !isIgnoringMouseEvents;
     mainWindow.setIgnoreMouseEvents(isIgnoringMouseEvents, { forward: isIgnoringMouseEvents });
     if (!isIgnoringMouseEvents) mainWindow.focus();
-    // contextStore.set('system:isIgnoringMouseEvents', isIgnoringMouseEvents);
-    // eventBus.emit('system:mouse-ignore-toggle', isIgnoringMouseEvents);
   }
 });
 
@@ -353,20 +365,11 @@ ipcMain.on('proxy-action', (event, actionName: string, args: any[]) => {
   const targetWindow = overlayWindow?.isVisible() ? overlayWindow : mainWindow;
   targetWindow?.webContents.send('execute-action', actionName, args);
 });
-ipcMain.on('context:set', (event, key: string, value: any) => {
-  // contextStore.set(key, value);
-});
-ipcMain.handle('context:get', (event, key: string) => {
-  // return contextStore.get(key);
-});
-ipcMain.handle('context:getAll', (event) => {
-  // return contextStore.getAll();
-});
-ipcMain.handle('get-mod-settings', async () => {
-  // return modSettingsManager.getSettings();
-});
+ipcMain.on('context:set', (event, key: string, value: any) => {});
+ipcMain.handle('context:get', (event, key: string) => {});
+ipcMain.handle('context:getAll', (event) => {});
+ipcMain.handle('get-mod-settings', async () => {});
 ipcMain.handle('set-mod-enabled', async (event, modName: string, isEnabled: boolean) => {
-  // await modSettingsManager.setModEnabled(modName, isEnabled);
   return { success: true };
 });
 ipcMain.handle('get-all-mods', async () => {
@@ -489,6 +492,20 @@ app.on('ready', async () => {
   // Set initial opacity
   mainWindow.setOpacity(store.get('windowOpacity', 1.0));
 
+  // Send the loaded character state to the renderer once it's ready
+  const sendInitialState = () => {
+    const savedState = store.get('characterState', {});
+    lastSavedState = savedState;
+    mainWindow.webContents.send('character-state:load', savedState);
+    console.log('[Main] Initial character state sent to renderer.');
+  };
+
+  if (mainWindow.webContents.isLoading()) {
+    mainWindow.webContents.once('did-finish-load', sendInitialState);
+  } else {
+    sendInitialState();
+  }
+
   // Ensure userdata directories exist
   try {
     const requiredDirs = ['vrm', 'poses', 'mods', 'animations', 'persona', 'triggers', 'sequences'];
@@ -528,12 +545,7 @@ app.on('ready', async () => {
       mainWindow.setIgnoreMouseEvents(isIgnoringMouseEvents, { forward: isIgnoringMouseEvents });
       if (!isIgnoringMouseEvents) mainWindow.focus();
       
-      // Send the state change to the renderer process
       mainWindow.webContents.send('set-ui-interactive-mode', !isIgnoringMouseEvents);
-
-      // The following lines were likely part of a previous implementation and can be kept commented out or removed.
-      // contextStore.set('system:isIgnoringMouseEvents', isIgnoringMouseEvents);
-      // eventBus.emit('system:mouse-ignore-toggle', isIgnoringMouseEvents);
     }
   };
 
@@ -565,6 +577,10 @@ app.on('ready', async () => {
 });
 
 app.on('will-quit', () => {
+  if (lastSavedState) {
+    store.set('characterState', lastSavedState);
+    console.log('[Main] Final character state saved on quit.');
+  }
   globalShortcut.unregisterAll();
 });
 

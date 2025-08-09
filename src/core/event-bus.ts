@@ -1,4 +1,5 @@
 import { VRM } from '@pixiv/three-vrm';
+import { ICharacterState } from '../plugin-api/plugin-context';
 
 // src/core/event-bus.ts
 export type AppEvents = {
@@ -42,6 +43,9 @@ export type AppEvents = {
   /** 캐릭터 상호작용 */
   'character_part_clicked': { partName: string };
   'character_part_right_clicked': { partName: string };
+
+  /** 캐릭터 상태 */
+  'character-state:changed': ICharacterState;
 
   /** 공통 에러 */
   'error': { scope: string; error: Error };

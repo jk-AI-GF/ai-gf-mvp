@@ -61,6 +61,10 @@ declare global {
       send: (channel: string, ...args: any[]) => void;
       invoke: (channel: string, ...args: any[]) => Promise<any>;
       
+      // --- Character State ---
+      onLoadCharacterState: (listener: (state: any) => void) => () => void;
+      sendCharacterStateChanged: (newState: any) => void;
+
       // --- Settings ---
       setWindowOpacity: (opacity: number) => void;
       getWindowOpacity: () => Promise<number>;

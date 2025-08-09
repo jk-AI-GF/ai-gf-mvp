@@ -46,6 +46,16 @@ import { CustomTrigger } from '../core/custom-trigger-manager';
     return ipcRenderer.invoke(channel, ...args);
   },
 
+  // --- Character State ---
+  onLoadCharacterState: (listener: (state: any) => void) => {
+    const subscription = (event: any, state: any) => listener(state);
+    ipcRenderer.on('character-state:load', subscription);
+    return () => ipcRenderer.removeListener('character-state:load', subscription);
+  },
+  sendCharacterStateChanged: (newState: any) => {
+    ipcRenderer.send('character-state:changed', newState);
+  },
+
   // --- Settings ---
   setWindowOpacity: (opacity: number) => ipcRenderer.send('set-window-opacity', opacity),
   getWindowOpacity: () => ipcRenderer.invoke('get-window-opacity'),

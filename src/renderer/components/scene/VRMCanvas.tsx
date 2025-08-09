@@ -21,15 +21,16 @@ import { InteractionTrackerPlugin } from '../../../plugins/interaction-tracker-p
 import { CustomTriggerManager } from '../../../core/custom-trigger-manager';
 import { SystemControls } from '../../../plugin-api/system-controls';
 import { registerCoreActions } from '../../../core/action-registrar';
-import { ActionRegistry } from '../../../core/action-registry'; // 추가
+import { ActionRegistry } from '../../../core/action-registry';
+import { characterState } from '../../../core/character-state';
 
 interface VRMCanvasProps {
   onLoad: (managers: { 
     vrmManager: VRMManager; 
     pluginManager: PluginManager; 
     customTriggerManager: CustomTriggerManager;
-    actionRegistry: ActionRegistry; // 추가
-    renderer: THREE.WebGLRenderer; // 추가
+    actionRegistry: ActionRegistry;
+    renderer: THREE.WebGLRenderer;
   }) => void;
 }
 
@@ -40,6 +41,19 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     plane: THREE.Mesh;
   }) => {
     const { scene, renderer, plane } = instances;
+
+    // --- Initialize Character State & Persistence ---
+    characterState.initialize(eventBus);
+
+    const unsubLoad = window.electronAPI.onLoadCharacterState((savedState: any) => {
+      console.log('[Renderer] Received initial character state from main:', savedState);
+      characterState.hydrate(savedState);
+      unsubLoad(); 
+    });
+
+    eventBus.on('character-state:changed', (newState) => {
+      window.electronAPI.sendCharacterStateChanged(newState);
+    });
 
     // --- Camera and Controls Setup ---
     let cameraMode: 'orbit' | 'fixed' = 'fixed';
