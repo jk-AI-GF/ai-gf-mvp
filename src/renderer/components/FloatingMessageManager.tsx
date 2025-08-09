@@ -24,8 +24,16 @@ const FloatingMessageManager: React.FC = () => {
         if (visible) {
           const offsetX = 230; // 오른쪽으로 이동
           const offsetY = 70; // 아래로 이동
+          
+          const containerWidth = containerRef.current.offsetWidth;
+          const containerHeight = containerRef.current.offsetHeight;
+          const margin = 60; // 화면 가장자리로부터의 여백
+
+          const newLeft = Math.max(margin, Math.min(left + offsetX, window.innerWidth - containerWidth - margin));
+          const newTop = Math.max(margin, Math.min(top + offsetY, window.innerHeight - containerHeight - margin));
+
           containerRef.current.style.visibility = 'visible';
-          containerRef.current.style.transform = `translate(${left + offsetX}px, ${top + offsetY}px)`;
+          containerRef.current.style.transform = `translate(${newLeft}px, ${newTop}px)`;
         }
       }
     };
