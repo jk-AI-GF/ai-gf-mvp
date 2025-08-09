@@ -70,6 +70,13 @@ export class SequenceEngine {
       newListeners.push(unsubscribe);
     });
 
+    // Call onActivate for all nodes that have it
+    nodes.forEach(node => {
+      if (node.data.onActivate) {
+        node.data.onActivate(this);
+      }
+    });
+
     this.activeSequences.set(sequenceId, { nodes, edges, listeners: newListeners });
   }
 
@@ -78,6 +85,14 @@ export class SequenceEngine {
     if (sequence) {
       console.log(`[SequenceEngine] Deactivating sequence '${sequenceId}'.`);
       sequence.listeners.forEach(unsubscribe => unsubscribe());
+
+      // Call onDeactivate for all nodes that have it
+      sequence.nodes.forEach(node => {
+        if (node.data.onDeactivate) {
+          node.data.onDeactivate();
+        }
+      });
+
       this.activeSequences.delete(sequenceId);
     }
   }
@@ -92,6 +107,19 @@ export class SequenceEngine {
     }
 
     await Promise.all(startNodes.map(startNode => this.executeFrom(startNode, {}, nodes, edges)));
+  }
+
+  public triggerExecutionFromNode(nodeId: string): void {
+    // Find the active sequence that contains this node
+    for (const [sequenceId, sequence] of this.activeSequences.entries()) {
+      const node = sequence.nodes.find(n => n.id === nodeId);
+      if (node) {
+        console.log(`[SequenceEngine] Triggering execution from node ${nodeId} in sequence ${sequenceId}`);
+        this.executeFrom(node, {}, sequence.nodes, sequence.edges);
+        return;
+      }
+    }
+    console.warn(`[SequenceEngine] Could not trigger execution. Node ${nodeId} not found in any active sequence.`);
   }
 
   private async executeFrom(startNode: Node<BaseNode>, initialOutputs: Record<string, any>, sequenceNodes: Node<BaseNode>[], sequenceEdges: Edge[]): Promise<void> {

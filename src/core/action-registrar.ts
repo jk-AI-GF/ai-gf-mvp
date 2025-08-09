@@ -68,7 +68,7 @@ export function registerCoreActions(
         { name: 'duration', type: 'number', defaultValue: 5, description: '표시 시간(초)' },
       ],
     },
-    ({ message, duration }: { message: string; duration?: number }) => {
+    (message: string, duration?: number) => {
       eventBus.emit('ui:showFloatingMessage', { text: message, duration });
     }
   );

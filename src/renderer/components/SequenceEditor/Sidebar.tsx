@@ -148,6 +148,16 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events }) => {
             <div style={itemNameStyle}>Branch (If)</div>
             <div style={itemDescStyle}>조건에 따라 실행 흐름을 분기합니다.</div>
           </div>
+          <div
+            onDragStart={(event) => onDragStart(event, 'clockNode', 'Clock')}
+            draggable
+            style={getItemStyle('control')}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.control, 0.3)}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.control, 0.15)}
+          >
+            <div style={itemNameStyle}>Clock</div>
+            <div style={itemDescStyle}>일정 간격으로 실행 신호를 보냅니다.</div>
+          </div>
         </>
       )}
       

@@ -13,6 +13,7 @@ import { RandomNodeModel } from './RandomNodeModel';
 import { SequenceEngine } from './SequenceEngine';
 import { DelayNodeModel } from './DelayNodeModel';
 import { BranchNodeModel } from './BranchNodeModel';
+import { ClockNodeModel } from './ClockNodeModel';
 
 // 시퀀스 데이터의 구조를 정의합니다.
 interface SequenceData {
@@ -219,6 +220,14 @@ export class SequenceManager {
 
         case 'randomNode':
           model = new RandomNodeModel(sNode.id, data.min, data.max);
+          break;
+
+        case 'branchNode':
+          model = new BranchNodeModel(sNode.id);
+          break;
+
+        case 'clockNode':
+          model = new ClockNodeModel(sNode.id, data.interval);
           break;
 
         default:

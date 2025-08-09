@@ -7,7 +7,7 @@ import { PluginContext } from '../plugin-api/plugin-context';
  */
 export class TimeSyncTestPlugin implements IPlugin {
   public readonly name = 'TimeSyncTest';
-  public enabled = true; // This plugin is for testing, so enable by default.
+  public enabled = false; // This plugin is for testing, so enable by default.
   runInEditMode = true;
 
   private context: PluginContext | null = null;
