@@ -17,7 +17,7 @@ const selectStyle: React.CSSProperties = {
 };
 
 const OPERATORS_BY_CATEGORY: Record<OperatorCategory, Operator[]> = {
-    math: ['+', '-', '*', '/'],
+    math: ['+', '-', '*', '/', '%'],
     comparison: ['==', '!=', '>', '>=', '<', '<='],
     logic: ['AND', 'OR', 'NOT'],
 };

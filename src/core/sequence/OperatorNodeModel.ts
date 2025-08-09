@@ -3,7 +3,7 @@ import { PluginContext } from "../../plugin-api/plugin-context";
 
 export type OperatorCategory = 'math' | 'comparison' | 'logic';
 
-export type MathOperator = '+' | '-' | '*' | '/';
+export type MathOperator = '+' | '-' | '*' | '/' | '%';
 export type ComparisonOperator = '==' | '!=' | '>' | '>=' | '<' | '<=';
 export type LogicOperator = 'AND' | 'OR' | 'NOT';
 
@@ -29,6 +29,7 @@ const OPERATOR_CONFIG: Record<Operator, OperatorConfig> = {
     '-': { inputs: [{ name: 'a', type: 'number' }, { name: 'b', type: 'number' }], output: { name: 'result', type: 'number' } },
     '*': { inputs: [{ name: 'a', type: 'number' }, { name: 'b', type: 'number' }], output: { name: 'result', type: 'number' } },
     '/': { inputs: [{ name: 'a', type: 'number' }, { name: 'b', type: 'number' }], output: { name: 'result', type: 'number' } },
+    '%': { inputs: [{ name: 'a', type: 'number' }, { name: 'b', type: 'number' }], output: { name: 'result', type: 'number' } },
     // Comparison
     '==': { inputs: [{ name: 'a', type: 'any' }, { name: 'b', type: 'any' }], output: { name: 'result', type: 'boolean' } },
     '!=': { inputs: [{ name: 'a', type: 'any' }, { name: 'b', type: 'any' }], output: { name: 'result', type: 'boolean' } },
@@ -75,6 +76,7 @@ export class OperatorNodeModel extends BaseNode {
             case '-': result = a - b; break;
             case '*': result = a * b; break;
             case '/': result = a / b; break;
+            case '%': result = a % b; break;
             // Comparison
             case '==': result = a == b; break;
             case '!=': result = a != b; break;

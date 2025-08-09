@@ -169,7 +169,7 @@ export function registerCoreActions(
       params: [
         {
           name: 'target',
-          type: 'enum',
+          type: 'string',
           options: ['camera', 'mouse', 'null'],
           description: '바라볼 대상',
         },
