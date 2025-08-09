@@ -6,6 +6,13 @@ interface CssExports {
   'buttonPrimary': string;
   'buttonRun': string;
   'buttonSecondary': string;
+  'edgeAny': string;
+  'edgeBoolean': string;
+  'edgeDefault': string;
+  'edgeEnum': string;
+  'edgeExecution': string;
+  'edgeNumber': string;
+  'edgeString': string;
   'reactFlowWrapper': string;
 }
 export const cssExports: CssExports;

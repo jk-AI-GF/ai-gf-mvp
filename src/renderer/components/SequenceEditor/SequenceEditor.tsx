@@ -106,6 +106,17 @@ interface SerializedSequence {
 
 import styles from './SequenceEditor.module.css';
 
+// 포트 타입을 CSS 모듈 클래스 이름으로 매핑합니다.
+const EDGE_CLASS_MAP: { [key: string]: string } = {
+  execution: 'edgeExecution',
+  string: 'edgeString',
+  number: 'edgeNumber',
+  boolean: 'edgeBoolean',
+  enum: 'edgeEnum',
+  any: 'edgeAny',
+  default: 'edgeDefault',
+};
+
 const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClose: () => void }> = ({ sequenceToLoad, onClose }) => {
   const { actionRegistry, sequenceManager } = useAppContext();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -122,8 +133,6 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
       return;
     }
 
-    // --- BUG FIX: START ---
-    // 불러온 노드들의 ID를 분석하여 가장 큰 숫자 ID를 찾습니다.
     let maxId = -1;
     serializedSequence.nodes.forEach((node: SerializedNode) => {
       if (node.id.startsWith('dndnode_')) {
@@ -133,15 +142,27 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
         }
       }
     });
-    // 전역 ID 카운터를 불러온 노드 중 가장 큰 ID + 1로 설정하여 충돌을 방지합니다.
     id = maxId + 1;
-    // --- BUG FIX: END ---
 
-    // SequenceManager를 사용하여 역직렬화 로직을 중앙에서 처리합니다.
-    const { nodes: newNodes, edges: newEdges } = sequenceManager.deserializeSequence(serializedSequence);
+    const { nodes: newNodes, edges: rawEdges } = sequenceManager.deserializeSequence(serializedSequence);
+
+    const styledEdges = rawEdges.map(edge => {
+      const sourceNode = newNodes.find(node => node.id === edge.source);
+      const sourceInstance = sourceNode?.data as BaseNode;
+      const sourcePort = sourceInstance?.outputs.find(p => p.name === edge.sourceHandle);
+      const portType = sourcePort?.type || 'default';
+      
+      // styles[variable] 형태로 클래스를 동적으로 가져옵니다.
+      const edgeClassName = (styles as { [key: string]: string })[EDGE_CLASS_MAP[portType] || EDGE_CLASS_MAP.default];
+
+      return {
+        ...edge,
+        className: edgeClassName,
+      };
+    });
 
     setNodes(newNodes);
-    setEdges(newEdges);
+    setEdges(styledEdges);
 
     setTimeout(() => {
       fitView();
@@ -190,10 +211,8 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
 
     try {
       if (sequenceToLoad) {
-        // Editing an existing sequence, overwrite it
         result = await sequenceManager.saveSequenceToFile(sequenceToLoad, flow);
       } else {
-        // Creating a new sequence, open save dialog
         const serializableData = sequenceManager.serializeSequence(flow);
         const jsonString = JSON.stringify(serializableData, null, 2);
         result = await window.electronAPI.saveSequence(jsonString);
@@ -202,13 +221,11 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
       if (result.success) {
         console.log('시퀀스가 성공적으로 저장되었습니다:', result.filePath);
         eventBus.emit('sequences-updated');
-        onClose(); // 저장 후 에디터 닫기
+        onClose();
       } else if (result.error) {
         console.error('시퀀스 저장 실패:', result.error);
         alert(`저장 실패: ${result.error}`);
       }
-      // 'canceled' case is handled by doing nothing.
-
     } catch (error) {
       console.error('시퀀스 저장 중 예외 발생:', error);
       alert(`저장 중 오류 발생: ${error instanceof Error ? error.message : String(error)}`);
@@ -222,11 +239,9 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
     }
     const currentNodes = getNodes();
     const currentEdges = getEdges();
-
     const flow = { nodes: currentNodes, edges: currentEdges };
     
     try {
-      // "다른 이름으로 저장"을 위해 항상 저장 대화상자를 엽니다.
       const serializableData = sequenceManager.serializeSequence(flow);
       const jsonString = JSON.stringify(serializableData, null, 2);
       const result = await window.electronAPI.saveSequence(jsonString);
@@ -234,13 +249,11 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
       if (result.success) {
         console.log('시퀀스가 성공적으로 저장되었습니다:', result.filePath);
         eventBus.emit('sequences-updated');
-        onClose(); // 저장 후 에디터 닫기
+        onClose();
       } else if (result.error) {
         console.error('시퀀스 저장 실패:', result.error);
         alert(`저장 실패: ${result.error}`);
       }
-      // 'canceled'의 경우 아무 작업도 수행하지 않습니다.
-
     } catch (error) {
       console.error('시퀀스 저장 중 예외 발생:', error);
       alert(`저장 중 오류 발생: ${error instanceof Error ? error.message : String(error)}`);
@@ -269,7 +282,24 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
     sequenceManager.runManualFromState(getNodes(), getEdges());
   }, [sequenceManager, getNodes, getEdges]);
   
-  const onConnect = useCallback((params: Connection) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
+  const onConnect = useCallback((params: Connection) => {
+    const currentNodes = getNodes();
+    const sourceNode = currentNodes.find(node => node.id === params.source);
+    if (!sourceNode) return;
+
+    const sourceInstance = sourceNode.data as BaseNode;
+    const sourcePort = sourceInstance.outputs.find(p => p.name === params.sourceHandle);
+    const portType = sourcePort?.type || 'default';
+    
+    const edgeClassName = (styles as { [key: string]: string })[EDGE_CLASS_MAP[portType] || EDGE_CLASS_MAP.default];
+
+    const newEdge = {
+        ...params,
+        className: edgeClassName,
+    };
+
+    setEdges((eds) => addEdge(newEdge, eds));
+  }, [setEdges, getNodes]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();

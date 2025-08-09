@@ -45,23 +45,23 @@
   right: 15px;
   z-index: 10;
   display: flex;
-  gap: 10px; /* Reduced gap */
+  gap: 10px;
 }
 
 .button {
-  padding: 8px 16px; /* Reduced padding */
-  font-size: 14px; /* Reduced font size */
+  padding: 8px 16px;
+  font-size: 14px;
   font-weight: 600;
   border: none;
-  border-radius: 6px; /* Reduced radius */
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15); /* Softer shadow */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
   color: white;
 }
 
 .button:hover {
-  transform: translateY(-1px); /* Less movement */
+  transform: translateY(-1px);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
@@ -71,7 +71,7 @@
 }
 
 .buttonRun {
-  background-color: #428745; /* Muted Green */
+  background-color: #428745;
 }
 
 .buttonRun:hover {
@@ -79,7 +79,7 @@
 }
 
 .buttonPrimary {
-  background-color: #2a65a8; /* Muted Blue */
+  background-color: #2a65a8;
 }
 
 .buttonPrimary:hover {
@@ -87,9 +87,40 @@
 }
 
 .buttonSecondary {
-  background-color: #5a6268; /* Darker Gray */
+  background-color: #5a6268;
 }
 
 .buttonSecondary:hover {
   background-color: #6c757d;
+}
+
+/* Edge Type Styles */
+/* We apply a class to the edge, then target the path inside it. */
+.edgeExecution :global(.react-flow__edge-path) {
+  stroke: #ffffff !important;
+  stroke-width: 2.5;
+}
+.edgeString :global(.react-flow__edge-path) {
+  stroke: #77dd77 !important; /* Pastel Green */
+  stroke-width: 2.5;
+}
+.edgeNumber :global(.react-flow__edge-path) {
+  stroke: #b19cd9 !important; /* Pastel Purple */
+  stroke-width: 2.5;
+}
+.edgeBoolean :global(.react-flow__edge-path) {
+  stroke: #ff6961 !important; /* Pastel Red */
+  stroke-width: 2.5;
+}
+.edgeEnum :global(.react-flow__edge-path) {
+  stroke: #77dddd !important; /* Pastel Cyan */
+  stroke-width: 2.5;
+}
+.edgeAny :global(.react-flow__edge-path) {
+  stroke: #cccccc !important;
+  stroke-width: 2.5;
+}
+.edgeDefault :global(.react-flow__edge-path) {
+  stroke: #dddddd !important;
+  stroke-width: 2.5;
 }
