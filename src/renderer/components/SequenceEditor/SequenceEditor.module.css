@@ -1,0 +1,39 @@
+/* SequenceEditor.module.css */
+
+/*
+  This wrapper class scopes our overrides. We use :global() to target React Flow's
+  internal classes. We use !important to win the specificity war against the
+  global '#root *' rule in index.css.
+*/
+
+/*
+  Disable pointer events on the container elements. This allows clicks to
+  "fall through" these layers to the background pane.
+*/
+.reactFlowWrapper :global(.react-flow__viewport),
+.reactFlowWrapper :global(.react-flow__nodes),
+.reactFlowWrapper :global(.react-flow__edges),
+.reactFlowWrapper :global(.react-flow__edgelabel-renderer) {
+  pointer-events: none !important;
+}
+
+/*
+  Re-enable pointer events on the actual interactive elements so they can be
+  dragged, selected, and clicked.
+*/
+.reactFlowWrapper :global(.react-flow__node),
+.reactFlowWrapper :global(.react-flow__edge) {
+  pointer-events: all !important;
+}
+
+/*
+  Make the visible edge path ignore clicks, so the wider, invisible
+  interaction path underneath it can be clicked easily.
+  We explicitly set the interaction path to receive 'stroke' events.
+*/
+.reactFlowWrapper :global(.react-flow__edge-path) {
+  pointer-events: none !important;
+}
+.reactFlowWrapper :global(.react-flow__edge-interaction) {
+  pointer-events: stroke !important;
+}
