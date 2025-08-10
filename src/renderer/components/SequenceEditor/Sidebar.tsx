@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ActionDefinition } from '../../../plugin-api/actions';
 import { EventDefinition } from '../../../core/event-definitions';
+import { Node } from 'reactflow';
 
 interface SidebarProps {
   actions: ActionDefinition[];
   events: EventDefinition[];
+  nodes: Node[];
 }
 
 const onDragStart = (event: React.DragEvent, nodeType: string, name: string, additionalData: Record<string, any> = {}) => {
@@ -17,11 +19,11 @@ const onDragStart = (event: React.DragEvent, nodeType: string, name: string, add
   event.dataTransfer.effectAllowed = 'move';
 };
 
-// --- NEW STYLES ---
+// --- STYLES ---
 const itemNameStyle: React.CSSProperties = {
   fontWeight: 'bold',
   color: '#eee',
-  fontSize: '13px', // 이름 폰트 크기 증가
+  fontSize: '13px',
 };
 
 const itemDescStyle: React.CSSProperties = {
@@ -30,17 +32,16 @@ const itemDescStyle: React.CSSProperties = {
   marginTop: '2px',
 };
 
-// 카테고리별 색상
 const categoryColors: Record<string, string> = {
+  start: '#10A37F',
   events: '#DA70D6',
+  manual: '#FFC107',
   control: '#FF9800',
   data: '#2196F3',
   operators: '#9C27B0',
   actions: '#4CAF50',
-  manual: '#4CAF50',
 };
 
-// 옅은 배경색을 만들기 위한 헬퍼 함수
 const toRgba = (hex: string, alpha: number) => {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
@@ -48,14 +49,33 @@ const toRgba = (hex: string, alpha: number) => {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
-
-const Sidebar: React.FC<SidebarProps> = ({ actions, events }) => {
+const Sidebar: React.FC<SidebarProps> = ({ actions, events, nodes }) => {
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
-    events: false,
+    start: false,
     control: false,
     data: false,
+    operators: false,
     actions: false,
   });
+
+  const { sequenceType, hasInputNode, hasClockNode } = useMemo(() => {
+    const hasEvent = nodes.some(n => n.type === 'eventNode' || n.type === 'manualStartNode');
+    const hasInput = nodes.some(n => n.type === 'subroutineInputNode');
+    const hasClock = nodes.some(n => n.type === 'clockNode');
+
+    let type: 'sequence' | 'subroutine' | null = null;
+    if (hasEvent) {
+      type = 'sequence';
+    } else if (hasInput) {
+      type = 'subroutine';
+    }
+
+    return {
+      sequenceType: type,
+      hasInputNode: hasInput,
+      hasClockNode: hasClock,
+    };
+  }, [nodes]);
 
   const toggleSection = (section: string) => {
     setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -71,16 +91,46 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events }) => {
     fontSize: '14px',
   };
 
-  // 각 항목에 대한 기본 스타일을 생성하는 함수
-  const getItemStyle = (category: string): React.CSSProperties => ({
+  const getItemStyle = (category: string, disabled: boolean = false): React.CSSProperties => ({
     padding: '6px 10px',
     margin: '0 5px 6px 5px',
-    cursor: 'grab',
-    backgroundColor: toRgba(categoryColors[category] || '#555555', 0.15), // 옅은 배경색 항상 표시
+    cursor: disabled ? 'not-allowed' : 'grab',
+    backgroundColor: toRgba(categoryColors[category] || '#555555', 0.15),
     borderLeft: `3px solid ${toRgba(categoryColors[category] || '#555555', 0.6)}`,
     borderRadius: '4px',
-    transition: 'background-color 0.2s',
+    transition: 'background-color 0.2s, opacity 0.2s',
+    opacity: disabled ? 0.5 : 1,
   });
+
+  const renderDraggableItem = (
+    nodeType: string,
+    name: string,
+    description: string,
+    category: string,
+    disabled: boolean,
+    additionalData: Record<string, any> = {}
+  ) => {
+    const handleDragStart = (event: React.DragEvent) => {
+      if (!disabled) {
+        onDragStart(event, nodeType, name, additionalData);
+      }
+    };
+
+    const effectiveStyle = getItemStyle(category, disabled);
+
+    return (
+      <div
+        onDragStart={handleDragStart}
+        draggable={!disabled}
+        style={effectiveStyle}
+        onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.backgroundColor = toRgba(categoryColors[category], 0.3); }}
+        onMouseLeave={(e) => { if (!disabled) e.currentTarget.style.backgroundColor = toRgba(categoryColors[category], 0.15); }}
+      >
+        <div style={itemNameStyle}>{name}</div>
+        <div style={itemDescStyle}>{description}</div>
+      </div>
+    );
+  };
 
   return (
     <aside style={{
@@ -90,33 +140,32 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events }) => {
       background: '#2a2a2a',
       overflowY: 'auto',
     }}>
-      <h3 style={headerStyle} onClick={() => toggleSection('events')}>
-        Event Nodes {collapsedSections.events ? '▼' : '▲'}
+      <h3 style={headerStyle} onClick={() => toggleSection('start')}>
+        Start Nodes {collapsedSections.start ? '▼' : '▲'}
       </h3>
-      {!collapsedSections.events && (
+      {!collapsedSections.start && (
         <>
-          <div
-            onDragStart={(event) => onDragStart(event, 'manualStartNode', 'Manual Start')}
-            draggable
-            style={getItemStyle('manual')}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.manual, 0.3)}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.manual, 0.15)}
-          >
-            <div style={itemNameStyle}>Manual Start</div>
-            <div style={itemDescStyle}>수동으로 시퀀스를 시작합니다.</div>
-          </div>
-          {events.map((eventDef) => (
-            <div
-              key={eventDef.name}
-              onDragStart={(event) => onDragStart(event, 'eventNode', eventDef.name)}
-              draggable
-              style={getItemStyle('events')}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.events, 0.3)}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.events, 0.15)}
-            >
-              <div style={itemNameStyle}>{eventDef.name}</div>
-              <div style={itemDescStyle}>{eventDef.description}</div>
-            </div>
+          {renderDraggableItem(
+            'subroutineInputNode',
+            'Subroutine Input',
+            '서브루틴의 입력을 정의합니다.',
+            'start',
+            sequenceType === 'sequence' || hasInputNode || hasClockNode
+          )}
+          {renderDraggableItem(
+            'manualStartNode',
+            'Manual Start',
+            '수동으로 시퀀스를 시작합니다.',
+            'manual',
+            sequenceType === 'subroutine'
+          )}
+          {events.map((eventDef) => renderDraggableItem(
+            'eventNode',
+            eventDef.name,
+            eventDef.description,
+            'events',
+            sequenceType === 'subroutine',
+            { key: eventDef.name }
           ))}
         </>
       )}
@@ -128,36 +177,15 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events }) => {
       </h3>
       {!collapsedSections.control && (
         <>
-          <div
-            onDragStart={(event) => onDragStart(event, 'delayNode', 'Delay')}
-            draggable
-            style={getItemStyle('control')}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.control, 0.3)}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.control, 0.15)}
-          >
-            <div style={itemNameStyle}>Delay</div>
-            <div style={itemDescStyle}>실행을 잠시 멈춥니다.</div>
-          </div>
-          <div
-            onDragStart={(event) => onDragStart(event, 'branchNode', 'Branch')}
-            draggable
-            style={getItemStyle('control')}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.control, 0.3)}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.control, 0.15)}
-          >
-            <div style={itemNameStyle}>Branch (If)</div>
-            <div style={itemDescStyle}>조건에 따라 실행 흐름을 분기합니다.</div>
-          </div>
-          <div
-            onDragStart={(event) => onDragStart(event, 'clockNode', 'Clock')}
-            draggable
-            style={getItemStyle('control')}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.control, 0.3)}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.control, 0.15)}
-          >
-            <div style={itemNameStyle}>Clock</div>
-            <div style={itemDescStyle}>일정 간격으로 실행 신호를 보냅니다.</div>
-          </div>
+          {renderDraggableItem('delayNode', 'Delay', '실행을 잠시 멈춥니다.', 'control', false)}
+          {renderDraggableItem('branchNode', 'Branch (If)', '조건에 따라 실행 흐름을 분기합니다.', 'control', false)}
+          {renderDraggableItem(
+            'clockNode',
+            'Clock',
+            '일정 간격으로 실행 신호를 보냅니다.',
+            'control',
+            hasInputNode // subroutineInputNode가 있으면 Clock 비활성화
+          )}
         </>
       )}
       
@@ -168,36 +196,9 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events }) => {
       </h3>
       {!collapsedSections.data && (
         <>
-          <div
-            onDragStart={(event) => onDragStart(event, 'literalNode', 'Literal')}
-            draggable
-            style={getItemStyle('data')}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.data, 0.3)}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.data, 0.15)}
-          >
-            <div style={itemNameStyle}>Literal</div>
-            <div style={itemDescStyle}>문자열, 숫자 등 고정 값을 만듭니다.</div>
-          </div>
-          <div
-            onDragStart={(event) => onDragStart(event, 'randomNode', 'Random Number')}
-            draggable
-            style={getItemStyle('data')}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.data, 0.3)}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.data, 0.15)}
-          >
-            <div style={itemNameStyle}>Random Number</div>
-            <div style={itemDescStyle}>무작위 숫자를 생성합니다.</div>
-          </div>
-          <div
-            onDragStart={(event) => onDragStart(event, 'numToStrNode', 'Int to String')}
-            draggable
-            style={getItemStyle('data')}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.data, 0.3)}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.data, 0.15)}
-          >
-            <div style={itemNameStyle}>Int to String</div>
-            <div style={itemDescStyle}>정수를 문자열로 변환합니다.</div>
-          </div>
+          {renderDraggableItem('literalNode', 'Literal', '문자열, 숫자 등 고정 값을 만듭니다.', 'data', false)}
+          {renderDraggableItem('randomNode', 'Random Number', '무작위 숫자를 생성합니다.', 'data', false)}
+          {renderDraggableItem('numToStrNode', 'Int to String', '정수를 문자열로 변환합니다.', 'data', false)}
         </>
       )}
 
@@ -208,36 +209,9 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events }) => {
       </h3>
       {!collapsedSections.operators && (
         <>
-          <div
-            onDragStart={(event) => onDragStart(event, 'operatorNode', 'Math Operation', { category: 'math', operator: '+' })}
-            draggable
-            style={getItemStyle('operators')}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.operators, 0.3)}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.operators, 0.15)}
-          >
-            <div style={itemNameStyle}>Math Operation</div>
-            <div style={itemDescStyle}>산술 연산을 수행합니다.</div>
-          </div>
-          <div
-            onDragStart={(event) => onDragStart(event, 'operatorNode', 'Comparison', { category: 'comparison', operator: '==' })}
-            draggable
-            style={getItemStyle('operators')}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.operators, 0.3)}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.operators, 0.15)}
-          >
-            <div style={itemNameStyle}>Comparison</div>
-            <div style={itemDescStyle}>두 값을 비교합니다.</div>
-          </div>
-          <div
-            onDragStart={(event) => onDragStart(event, 'operatorNode', 'Logic Operation', { category: 'logic', operator: 'AND' })}
-            draggable
-            style={getItemStyle('operators')}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.operators, 0.3)}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.operators, 0.15)}
-          >
-            <div style={itemNameStyle}>Logic Operation</div>
-            <div style={itemDescStyle}>논리 연산을 수행합니다.</div>
-          </div>
+          {renderDraggableItem('operatorNode', 'Math Operation', '산술 연산을 수행합니다.', 'operators', false, { category: 'math', operator: '+' })}
+          {renderDraggableItem('operatorNode', 'Comparison', '두 값을 비교합니다.', 'operators', false, { category: 'comparison', operator: '==' })}
+          {renderDraggableItem('operatorNode', 'Logic Operation', '논리 연산을 수행합니다.', 'operators', false, { category: 'logic', operator: 'AND' })}
         </>
       )}
 
@@ -246,18 +220,13 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events }) => {
       <h3 style={headerStyle} onClick={() => toggleSection('actions')}>
         Action Nodes {collapsedSections.actions ? '▼' : '▲'}
       </h3>
-      {!collapsedSections.actions && actions.map((action) => (
-        <div
-          key={action.name}
-          onDragStart={(event) => onDragStart(event, 'actionNode', action.name)}
-          draggable
-          style={getItemStyle('actions')}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.actions, 0.3)}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = toRgba(categoryColors.actions, 0.15)}
-        >
-          <div style={itemNameStyle}>{action.name}</div>
-          <div style={itemDescStyle}>{action.description}</div>
-        </div>
+      {!collapsedSections.actions && actions.map((action) => renderDraggableItem(
+        'actionNode',
+        action.name,
+        action.description,
+        'actions',
+        false,
+        { key: action.name }
       ))}
     </aside>
   );

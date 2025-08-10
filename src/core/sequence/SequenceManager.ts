@@ -15,6 +15,7 @@ import { DelayNodeModel } from './DelayNodeModel';
 import { BranchNodeModel } from './BranchNodeModel';
 import { ClockNodeModel } from './ClockNodeModel';
 import { NumToStrNodeModel } from './NumToStrNodeModel';
+import { InputNodeModel } from './InputNodeModel';
 
 // 시퀀스 데이터의 구조를 정의합니다.
 interface SequenceData {
@@ -235,6 +236,10 @@ export class SequenceManager {
           model = new NumToStrNodeModel(sNode.id);
           break;
 
+        case 'subroutineInputNode':
+          model = new InputNodeModel(sNode.id, data.parameters);
+          break;
+
         default:
           console.error(`Unknown node type "${sNode.type}" for node ${sNode.id}.`);
           return null;
@@ -253,14 +258,21 @@ export class SequenceManager {
    */
   public serializeSequence(flow: any): any {
     const serializedNodes = flow.nodes.map((node: Node<BaseNode>) => {
-      // data 객체(모델)의 serialize 메서드를 호출하여 직렬화된 데이터를 가져옵니다.
       const serializedData = node.data.serialize();
-      // 원래 노드에서 data를 제외한 나머지 속성을 복사하고, 직렬화된 데이터를 추가합니다.
       const { data, ...rest } = node;
       return { ...rest, data: serializedData };
     });
 
-    return { nodes: serializedNodes, edges: flow.edges };
+    // Determine the sequence type
+    const isSubroutine = flow.nodes.some((node: Node) => node.type === 'subroutineInputNode');
+    const sequenceType = isSubroutine ? 'subroutine' : 'sequence';
+
+    return {
+      type: sequenceType,
+      description: "", // Placeholder for now
+      nodes: serializedNodes,
+      edges: flow.edges,
+    };
   }
 
   /**

@@ -25,6 +25,7 @@ import DelayNode from './DelayNode'; // Import the new delay node
 import BranchNode from './BranchNode'; // Import the new branch node
 import OperatorNode from './OperatorNode';
 import RandomNode from './RandomNode';
+import InputNode from './InputNode';
 
 // Define node types for React Flow
 const nodeTypes = {
@@ -38,6 +39,7 @@ const nodeTypes = {
   randomNode: RandomNode,
   clockNode: ClockNode,
   numToStrNode: NumToStrNode,
+  subroutineInputNode: InputNode,
 };
 
 // Define default options for all edges to make them interactive
@@ -61,6 +63,7 @@ import { OperatorNodeModel } from '../../../core/sequence/OperatorNodeModel';
 import { RandomNodeModel } from '../../../core/sequence/RandomNodeModel';
 import { ClockNodeModel } from '../../../core/sequence/ClockNodeModel';
 import { NumToStrNodeModel } from '../../../core/sequence/NumToStrNodeModel';
+import { InputNodeModel } from '../../../core/sequence/InputNodeModel';
 
 import ClockNode from './ClockNode';
 import NumToStrNode from './NumToStrNode';
@@ -394,6 +397,13 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
           position,
           data: new NumToStrNodeModel(newNodeId),
         };
+      } else if (droppedData.type === 'subroutineInputNode') {
+        newNode = {
+          id: newNodeId,
+          type: 'subroutineInputNode',
+          position,
+          data: new InputNodeModel(newNodeId),
+        };
       } else {
         return;
       }
@@ -424,7 +434,7 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
 
   return (
     <div style={{ display: 'flex', height: '100%' }}>
-      <Sidebar actions={actions} events={events} />
+      <Sidebar actions={actions} events={events} nodes={nodes} />
       <div 
         className={styles.reactFlowWrapper}
         style={{ flex: 1, height: '100%', position: 'relative' }} 
