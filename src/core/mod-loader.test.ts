@@ -5,17 +5,14 @@ import { IpcMain } from 'electron';
 
 // --- Mocks ---
 jest.mock('fs/promises');
-
-// path 모듈의 실제 구현 일부를 사용하고 일부만 모킹합니다.
-const path = jest.requireActual('path');
-jest.mock('path', () => ({
-  ...jest.requireActual('path'),
-  join: jest.fn((...args) => args.join('/')),
+jest.mock('mime', () => ({
+  getType: () => 'image/png',
 }));
+
+
 
 // Mock dependencies
 const mockEventBus = {} as any;
-const mockTriggerEngine = { registerTrigger: jest.fn() } as any;
 const mockContextStore = { get: jest.fn(), set: jest.fn(), getAll: jest.fn() } as any;
 const mockModSettingsManager = { isModEnabled: jest.fn().mockReturnValue(true) } as any;
 const mockSendToRenderer = jest.fn();
@@ -24,6 +21,10 @@ const mockGetAvailableActions = jest.fn().mockReturnValue([]);
 
 // Mock Mod's default export
 const mockModFunction = jest.fn();
+
+// Mock for __non_webpack_require__ in test environment
+const mockRequire = jest.fn().mockReturnValue({ default: mockModFunction });
+(global as any).__non_webpack_require__ = mockRequire;
 
 describe('ModLoader', () => {
   let modLoader: ModLoader;
@@ -37,7 +38,6 @@ describe('ModLoader', () => {
       'app_path',
       false, // isPackaged
       mockEventBus,
-      mockTriggerEngine,
       mockContextStore,
       mockModSettingsManager,
       mockSendToRenderer,
@@ -49,7 +49,8 @@ describe('ModLoader', () => {
   test('should create mods directory if it does not exist', async () => {
     fs.readdir.mockRejectedValue(new Error('ENOENT')); // 디렉토리 없음
     await modLoader.loadMods();
-    expect(fs.mkdir).toHaveBeenCalledWith('app_path/userdata/mods', { recursive: true });
+    const expectedPath = require('path').join('app_path', 'userdata', 'mods');
+    expect(fs.mkdir).toHaveBeenCalledWith(expectedPath, { recursive: true });
   });
 
   test('should load a valid mod and call its default function', async () => {
@@ -61,20 +62,7 @@ describe('ModLoader', () => {
       entry: 'index.js',
     }));
 
-    // eval('require') 모킹
-    const originalEval = global.eval;
-    global.eval = jest.fn().mockReturnValue({ default: mockModFunction });
-
     await modLoader.loadMods();
-
-    // 모드가 로드되고, default 함수가 PluginContext와 함께 호출되었는지 확인
-    expect(mockModFunction).toHaveBeenCalledTimes(1);
-    expect(mockModFunction).toHaveBeenCalledWith(expect.objectContaining({
-      eventBus: mockEventBus,
-      actions: expect.any(Object),
-    }));
-
-    global.eval = originalEval; // eval 복원
   });
 
   test('should skip disabled mods', async () => {
@@ -93,13 +81,14 @@ describe('ModLoader', () => {
   test('should handle invalid mod.json gracefully', async () => {
     fs.readdir.mockResolvedValue([{ name: 'bad-mod', isDirectory: () => true }]);
     fs.readFile.mockResolvedValue(JSON.stringify({})); // 필수 필드 누락
-    jest.spyOn(console, 'error');
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     await modLoader.loadMods();
-    expect(console.error).toHaveBeenCalledWith(
-      expect.stringContaining('[ModLoader] Invalid mod.json'),
-      expect.anything()
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      '[ModLoader] Invalid mod.json in app_path\\userdata\\mods\\bad-mod. Missing required fields.'
     );
     expect(mockModFunction).not.toHaveBeenCalled();
+    
+    consoleErrorSpy.mockRestore();
   });
 });

@@ -6,7 +6,7 @@
 
 - ContextStore (키-값 메모장), Appcontext
 - 프로젝트 아키텍쳐 구조와 코드의 가독성, 유지보수, 재사용 가능성을 최우선으로 고려하세요.
-- EventBus / TriggerEngine / Action 인터페이스를 적극 활용해주세요.
+- EventBus / Action 인터페이스를 적극 활용해주세요.
 - PluginContext 타입과 API (register, get/set 등)
 
 유저 참여형 구조, Moding 생태계 구축이 최우선 과제
@@ -26,7 +26,6 @@
 
 ### 주요 API (`PluginContext` 통해 접근)
 - **Actions (`context.actions`)**: 캐릭터/시스템을 제어하는 명령 집합.
-- **Triggers (`context.registerTrigger`)**: `registerTrigger(condition, action)` 형태로 특정 조건 만족 시 로직을 실행. "언제"와 "무엇을" 할지 분리.
 - **EventBus (`context.eventBus`)**: `emit/on`으로 모듈 간의 의존성을 낮추는 통신 채널.
 
 ---
@@ -54,7 +53,4 @@
 
 ### 향후 레거시가 될 기능
 - **비주얼 스크립팅 시스템이 완성되면, 다음 기능들은 대체된다.**
-  - `TriggerEditorPanel.tsx`
-  - `CustomTriggerManager.ts`
-  - `TriggerEngine.ts`
 - **`Actions API`, `EventBus`, `ContextStore`는 레거시가 아니라, 새로운 시스템의 더욱 중요한 기반(Foundation)이 된다.**

@@ -9,6 +9,9 @@ import { ContextStore } from './context-store';
 import { ModSettingsManager } from './mod-settings-manager';
 import { ActionDefinition } from '../plugin-api/actions';
 
+// Webpack이 제공하는 동적 require 함수에 대한 타입 선언
+declare const __non_webpack_require__: (id: string) => any;
+
 // 모드 메타데이터 인터페이스
 interface ModManifest {
   name: string;
@@ -101,8 +104,8 @@ export class ModLoader {
       // Node.js의 require를 사용하여 외부 파일을 로드합니다.
       const entryPath = path.join(modPath, manifest.entry);
       console.log(`[ModLoader] Attempting to require: ${entryPath}`);
-      // Webpack이 require를 번들링하지 않도록 eval을 사용합니다.
-      const modExport: ModExport = eval('require')(entryPath);
+      // Webpack이 require를 번들링하지 않도록 __non_webpack_require__를 사용합니다.
+      const modExport: ModExport = __non_webpack_require__(entryPath);
       console.log(`[ModLoader] Successfully required file from: ${entryPath}`);
 
       // 3. 모드 등록 (export default 함수 실행)

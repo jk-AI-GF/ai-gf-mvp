@@ -30,7 +30,7 @@ const DEFAULT_CHARACTER_STATE: ICharacterState = {
 };
 
 // Store 인스턴스 생성
-const store = new Store<Omit<StoreSchema, 'customTriggers'>>({
+const store = new Store<StoreSchema>({
   defaults: {
     windowOpacity: 1.0,
     persona: '당신은 친절하고 상냥한 AI 여자친구입니다. 항상 사용자에게 긍정적이고 다정한 태도로 대화에 임해주세요.',
@@ -528,7 +528,7 @@ app.on('ready', async () => {
 
   // Ensure userdata directories exist
   try {
-    const requiredDirs = ['vrm', 'poses', 'mods', 'animations', 'persona', 'sequences'];
+        const requiredDirs = ['vrm', 'poses', 'mods', 'animations', 'persona', 'sequences'];
     await Promise.all(requiredDirs.map(dir => fsp.mkdir(path.join(getUserDataPath(), dir), { recursive: true })));
     console.log('User data directories verified/created successfully.');
   } catch (error) {

@@ -63,11 +63,3 @@
 
 *(전체 이벤트 목록 및 페이로드 상세 구조는 `src/core/event-definitions.ts` 참고)*
 
----
-
-## 5. 레거시 API (Legacy)
-
-> **경고**: 아래 API들은 새로운 **시퀀스 시스템**으로 대체될 예정이므로, 신규 기능 개발에 사용하는 것을 권장하지 않습니다.
-
--   **Trigger API (`context.registerTrigger`)**: `condition`과 `action` 함수를 등록하여 특정 조건 만족 시 로직을 실행하는 시스템입니다. 시퀀스의 `EventNode`와 `Branch` 노드로 대체됩니다.
--   **CustomTriggerManager**: 사용자가 직접 만든 트리거를 관리합니다. 시퀀스 파일 저장/로드 시스템으로 대체됩니다.

@@ -78,7 +78,6 @@
     -   `actions`: 캐릭터 행동, UI, 환경 등을 제어하는 명령 (자세한 내용은 `API_Reference.md` 참고)
     -   `system`: TTS, 볼륨 등 시스템 설정을 제어하는 명령
     -   `eventBus`: 다른 플러그인이나 UI와 소통하는 메시지 버스
-    -   `registerTrigger`: 특정 조건에서 코드를 실행시키는 트리거 등록
     -   `characterState`: 캐릭터의 감정, 마지막 대화 시간 등 공유 상태 정보
 
 이 구조를 통해 모든 플러그인은 격리된 상태에서, 표준화된 `PluginContext` API만을 사용하여 안전하게 시스템의 강력한 기능들을 활용할 수 있습니다.
@@ -246,69 +245,11 @@ export function registerCoreActions(
 
 -   **`PluginContext`에 자동 추가**: `context-factory.ts`가 `ActionRegistry`를 읽어 `pluginContext.actions.setOpacity` 함수를 동적으로 생성합니다.
 -   **IPC 프록시 자동 생성**: `mod-loader.ts`가 렌더러로부터 액션 명세를 받아 메인 프로세스 모드(Mod)가 `setOpacity`를 호출할 수 있도록 IPC 프록시를 자동으로 만듭니다.
--   **UI에 자동 반영**: `TriggerEditorPanel`과 같은 UI 컴포넌트가 `getAvailableActions` API를 호출하면, 방금 등록한 `setOpacity` 액션의 정보(`description`, `params` 등)가 동적으로 포함되어 사용자에게 보여집니다.
+-   **UI에 자동 반영**: 시퀀스 에디터와 같은 UI 컴포넌트가 `getAvailableActions` API를 호출하면, 방금 등록한 `setOpacity` 액션의 정보(`description`, `params` 등)가 동적으로 포함되어 사용자에게 보여집니다.
 
 이 새로운 아키텍처는 개발 생산성을 극대화하고, 실수를 줄이며, 프로젝트의 확장성을 크게 향상시킵니다.
 
-## 5. 고급: Trigger 시스템 활용하기
-
-Trigger 시스템은 **"어떤 조건이 충족되었을 때, 특정 행동을 실행"**하는 로직을 만들 때 사용되는 강력한 아키텍처입니다. 이는 프로젝트의 핵심 목표인 **모딩(Modding) 생태계**를 구축하는 데 매우 중요한 역할을 합니다.
-
-### 왜 Trigger를 사용하는가?
-
-단순히 매 프레임마다 실행되는 `update` 로직과 달리, Trigger는 **'조건'과 '행동'을 분리**합니다. 이를 통해 모더(Modder)들은 복잡한 상태 관리 없이, 선언적으로 "이런 상황이 되면, 이걸 해줘"라고 시스템에 등록할 수 있습니다.
-
--   **관심사 분리**: "언제" 행동할 것인지(조건)와 "무엇을" 할 것인지(행동)의 로직이 분리되어 코드가 명확해집니다.
--   **재사용성 및 확장성**: 한번 만들어진 Trigger 조건은 여러 다른 플러그인에서 재사용될 수 있습니다. 예를 들어 '사용자가 1분간 입력이 없는 조건'을 감지하는 Trigger가 있다면, 한 플러그인은 이를 이용해 캐릭터가 하품하게 만들고, 다른 플러그인은 "지루하신가요?"라고 말을 걸게 만들 수 있습니다.
--   **성능**: 모든 조건 검사를 중앙의 `TriggerEngine`에서 관리하므로, 향후 전체적인 성능 최적화에 유리합니다.
-
-### Trigger의 구조
-
-Trigger는 두 가지 핵심 요소로 구성된 객체입니다.
-
-1.  `condition`: `() => boolean` 형태의 함수. `true`를 반환하면 Trigger가 발동됩니다.
-2.  `action`: `() => void` 형태의 함수. `condition`이 `true`가 되었을 때 실행될 로직입니다.
-
-### 사용 방법
-
-플러그인의 `setup` 메서드에서 `pluginContext.registerTrigger`를 호출하여 등록합니다.
-
-```typescript
-// 예시: ProactiveDialoguePlugin의 일부
-
-import { Plugin, PluginContext } from '../plugin-api/plugin-context';
-
-export class ProactiveDialoguePlugin implements Plugin {
-  // ... (생략)
-
-  setup(context: PluginContext): void {
-    this.context = context;
-    const thirtySeconds = 30 * 1000;
-
-    // Trigger 등록
-    context.registerTrigger({
-      // Condition: 마지막 대화 후 30초가 지났는가?
-      condition: () => {
-        const lastSpoken = this.context.characterState.lastSpokenTimestamp;
-        const now = Date.now();
-        return now - lastSpoken > thirtySeconds;
-      },
-      // Action: 자발적인 대화를 시작한다.
-      action: () => {
-        this.context.actions.playTTS("무슨 생각 하세요?");
-        // Action이 실행되면, 다시 조건을 만족하지 않도록 상태를 업데이트해야 함
-        this.context.characterState.lastSpokenTimestamp = Date.now();
-      }
-    });
-  }
-
-  // ... (생략)
-}
-```
-
-이처럼 Trigger 시스템은 복잡한 상호작용을 모듈화하고 재사용 가능하게 만드는 핵심적인 도구입니다. 새로운 기능을 만들 때, "매 프레임마다 실행되어야 하는가?" 아니면 "특정 조건에서 한 번 실행되어야 하는가?"를 고민하고, 후자라면 Trigger 시스템을 적극적으로 활용하는 것을 권장합니다.
-
-## 6. 고급: 씬(Scene) 객체의 전역 관리
+## 5. 고급: 씬(Scene) 객체의 전역 관리
 
 때로는 `Scene.tsx`에서 생성된 특정 3D 객체(예: 조명)를 다른 UI 컴포넌트(예: `LightPanel`)에서 직접 제어하고 싶을 수 있습니다. 이 프로젝트는 `AppContext`를 통해 이러한 종류의 전역 상태 관리를 지원합니다.
 
@@ -410,7 +351,7 @@ const LightPanel: React.FC<LightPanelProps> = ({ onClose }) => {
 
 이 패턴을 사용하면, 3D 객체의 생성과 제어 로직을 명확하게 분리하여 프로젝트의 유지보수성과 확장성을 크게 향상시킬 수 있습니다.
 
-## 7. 데이터 영속성 및 설정 관리 (electron-store)
+## 6. 데이터 영속성 및 설정 관리 (electron-store)
 
 애플리케이션을 재시작해도 유지되어야 하는 모든 데이터(예: API 키, 창 투명도 등)는 `electron-store`를 사용하여 관리합니다.
 
@@ -431,7 +372,7 @@ const LightPanel: React.FC<LightPanelProps> = ({ onClose }) => {
 
 이러한 중앙 집중식 구조를 반드시 따라야 합니다. 자세한 구현 예시는 `docs/Electron-Store_Usage.md` 문서를 참고하세요.
 
-## 8. 자동화된 테스트 (Automated Testing)
+## 7. 자동화된 테스트 (Automated Testing)
 
 프로젝트의 안정성과 유지보수성을 높이기 위해, 우리는 `Jest`와 `React Testing Library`를 사용한 자동화된 테스트를 도입했습니다. 새로운 기능을 추가하거나 기존 코드를 리팩토링할 때는 반드시 관련 테스트 코드를 작성하거나 수정하는 것을 원칙으로 합니다.
 
@@ -499,40 +440,3 @@ describe('ActionRegistry', () => {
   });
 });
 ```
-
-## 9. 고급: 사용자 정의 트리거 시스템 (Custom Triggers)
-
-사용자 정의 트리거 시스템은 코딩 없이 UI를 통해 **"언제(When), 어떤 조건에서(If), 무엇을 할지(Then)"**를 직접 설정하여 캐릭터의 상호작용을 무한히 확장할 수 있게 해주는 강력한 기능입니다. 이 모든 로직은 `CustomTriggerPanel`을 통해 관리됩니다.
-
-### 사용자 정의 트리거의 구조
-
-사용자는 UI를 통해 다음과 같은 필드를 설정하여 하나의 트리거를 완성합니다.
-
--   **이름 (Name)**: 트리거를 식별하기 위한 이름입니다. (예: "인사하면 반갑게 맞아주기")
--   **실행 시점 (When)**: 트리거의 조건을 검사할 시점을 선택합니다.
-    -   **`상태 변경 시 (주기적 확인)`**: `ContextStore`의 특정 값이 변경되었는지 계속 확인합니다. (현재 아키텍처 제약으로 미지원)
-    -   **`특정 이벤트 발생 시`**: `chat:newMessage`와 같은 특정 이벤트가 발생했을 때만 조건을 검사합니다. **성능에 유리하며 현재 권장되는 방식입니다.**
--   **조건 (If)**: 액션을 실행하기 위해 만족해야 할 조건입니다. (조건을 설정하지 않으면 이벤트 발생 시 항상 액션이 실행됩니다.)
-    -   **`컨텍스트 키`**: `ContextStore`에서 값을 가져올 키입니다. 이벤트 기반 트리거의 경우, 이벤트와 함께 전달되는 데이터 객체의 키를 사용할 수도 있습니다. (예: `chat:newMessage` 이벤트의 `text` 필드)
-    -   **`연산자`**: `==`, `!=`, `>`, `<`, `exists` (값이 존재함), `not exists` (값이 존재하지 않음) 등 비교 연산자입니다.
-    -   **`비교 값`**: 컨텍스트 키에서 가져온 값을 비교할 대상 값입니다.
--   **액션 (Then)**: 조건이 충족되었을 때 실행될 행동입니다.
-    -   **`액션 선택`**: `playAnimation`, `playTTS` 등 `Actions API`에 등록된 모든 행동을 선택할 수 있습니다.
-    -   **`파라미터`**: 선택한 행동에 필요한 인자들을 입력합니다. (예: `playTTS` 액션의 경우 재생할 내용)
-
-### 사용 예시: "사랑해" 라고 말하면 하트 날리기
-
-1.  `CustomTriggerPanel`에서 **"새 트리거 추가"** 버튼을 클릭합니다.
-2.  **이름**: "사랑 고백에 답하기" 라고 입력합니다.
-3.  **실행 시점**: **`특정 이벤트 발생 시`** 를 선택합니다.
-4.  **이벤트 선택**: **`chat:newMessage`** 를 선택합니다.
-5.  **조건 (If)**:
-    -   **컨텍스트 키**: `text` (이벤트 데이터에 포함된 채팅 메시지)
-    -   **연산자**: `==`
-    -   **비교 값**: `사랑해`
-6.  **액션 (Then)**:
-    -   **액션 선택**: `playTTS`
-    -   **파라미터**: `"저도 사랑해요."` 라고 입력합니다.
-7.  **"저장"** 버튼을 클릭합니다.
-
-이제 사용자가 채팅으로 "사랑해"를 입력하면, `chat:newMessage` 이벤트가 발생하고, 등록된 트리거가 이벤트 데이터의 `text` 필드가 "사랑해"와 일치하는지 검사합니다. 조건이 참이므로 `playTTS` 액션이 실행되어 캐릭터가 "저도 사랑해요."라고 말하게 됩니다.

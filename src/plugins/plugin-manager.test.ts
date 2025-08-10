@@ -29,13 +29,12 @@ describe('PluginManager', () => {
     // plugin-api/plugin-context.ts의 실제 정의와 일치하도록 모킹
     mockContext = {
       eventBus: eventBus,
-      registerTrigger: jest.fn(),
       actions: {} as any,
       system: {} as any,
       get: jest.fn(),
       set: jest.fn(),
       getAll: jest.fn(),
-      characterState: { curiosity: 0 },
+      characterState: { curiosity: 0, happiness: 0, energy: 0, lastInteractionTimestamp: 0 },
       vrmManager: undefined,
     };
     pluginManager = new PluginManager(mockContext);
