@@ -109,6 +109,18 @@ export class SequenceEngine {
     await Promise.all(startNodes.map(startNode => this.executeFrom(startNode, {}, nodes, edges)));
   }
 
+  public async runSubroutine(nodes: Node<BaseNode>[], edges: Edge[], args: Record<string, any>): Promise<void> {
+    console.log('[SequenceEngine] Running subroutine...');
+    const inputNode = nodes.find(n => n.data.constructor.name === 'InputNodeModel');
+
+    if (!inputNode) {
+      console.error('[SequenceEngine] No InputNode found for subroutine run.');
+      return;
+    }
+
+    await this.executeFrom(inputNode, args, nodes, edges);
+  }
+
   public triggerExecutionFromNode(nodeId: string): void {
     // Find the active sequence that contains this node
     for (const [sequenceId, sequence] of this.activeSequences.entries()) {
@@ -206,7 +218,13 @@ export class SequenceEngine {
       const currentNode = executionQueue.shift()!;
       
       // 1. 현재 노드의 입력 계산 (데이터 종속성 해결)
-      const finalInputs = await calculateNodeInputs(currentNode);
+      let finalInputs = await calculateNodeInputs(currentNode);
+
+      // 시작 노드인 경우, 초기 출력을 입력으로 병합합니다.
+      // 이것이 서브루틴 인수를 주입하는 핵심 메커니즘입니다.
+      if (currentNode.id === startNode.id) {
+        finalInputs = { ...finalInputs, ...initialOutputs };
+      }
 
       // 2. 노드 실행
       console.log(`[SequenceEngine] Executing node: ${currentNode.id} (${currentNode.data.name}) with inputs:`, finalInputs);

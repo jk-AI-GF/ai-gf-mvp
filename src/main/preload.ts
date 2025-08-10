@@ -77,7 +77,8 @@ import { CustomTrigger } from '../core/custom-trigger-manager';
   deleteCustomTrigger: (triggerId: string) => ipcRenderer.invoke('delete-custom-trigger', triggerId),
 
   // --- Sequence API ---
-  getSequences: (): Promise<string[]> => ipcRenderer.invoke('get-sequences'),
+  getSequenceFiles: (): Promise<string[]> => ipcRenderer.invoke('get-sequence-files'),
+  getSubroutineFiles: (): Promise<string[]> => ipcRenderer.invoke('get-subroutine-files'),
   getPoses: (): Promise<string[]> => ipcRenderer.invoke('get-poses'),
   saveSequence: (sequenceData: string) => ipcRenderer.invoke('save-sequence', sequenceData),
   saveSequenceToFile: (fileName: string, sequenceData: string) => ipcRenderer.invoke('save-sequence-to-file', fileName, sequenceData),

@@ -26,6 +26,7 @@ import BranchNode from './BranchNode'; // Import the new branch node
 import OperatorNode from './OperatorNode';
 import RandomNode from './RandomNode';
 import InputNode from './InputNode';
+import CallSubroutineNode from './CallSubroutineNode'; // Import the new node
 
 // Define node types for React Flow
 const nodeTypes = {
@@ -40,6 +41,7 @@ const nodeTypes = {
   clockNode: ClockNode,
   numToStrNode: NumToStrNode,
   subroutineInputNode: InputNode,
+  callSubroutineNode: CallSubroutineNode, // Register the new node
 };
 
 // Define default options for all edges to make them interactive
@@ -64,6 +66,7 @@ import { RandomNodeModel } from '../../../core/sequence/RandomNodeModel';
 import { ClockNodeModel } from '../../../core/sequence/ClockNodeModel';
 import { NumToStrNodeModel } from '../../../core/sequence/NumToStrNodeModel';
 import { InputNodeModel } from '../../../core/sequence/InputNodeModel';
+import { CallSubroutineNodeModel } from '../../../core/sequence/CallSubroutineNodeModel';
 
 import ClockNode from './ClockNode';
 import NumToStrNode from './NumToStrNode';
@@ -132,7 +135,11 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
 
   const isSubroutine = nodes.some(node => node.type === 'subroutineInputNode');
 
-  const loadSequenceData = useCallback((sequenceJsonString: string) => {
+  const loadSequenceData = useCallback(async (sequenceJsonString: string) => {
+    if (!sequenceManager) {
+      console.error("SequenceManager is not available for loading data.");
+      return;
+    }
     const serializedSequence = JSON.parse(sequenceJsonString);
     if (!serializedSequence || !serializedSequence.nodes || !serializedSequence.edges) {
       console.error('잘못된 시퀀스 파일 형식입니다.');
@@ -150,12 +157,12 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
     });
     id = maxId + 1;
 
-    const { nodes: newNodes, edges: rawEdges } = sequenceManager.deserializeSequence(serializedSequence);
+    const { nodes: newNodes, edges: rawEdges } = await sequenceManager.deserializeSequence(serializedSequence);
 
     // Set the description from the loaded file
     setDescription(serializedSequence.description || '');
 
-    const styledEdges = rawEdges.map(edge => {
+    const styledEdges = rawEdges.map((edge: SerializedEdge) => {
       const sourceNode = newNodes.find(node => node.id === edge.source);
       const sourceInstance = sourceNode?.data as BaseNode;
       const sourcePort = sourceInstance?.outputs.find(p => p.name === edge.sourceHandle);
@@ -409,6 +416,13 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
           type: 'subroutineInputNode',
           position,
           data: new InputNodeModel(newNodeId),
+        };
+      } else if (droppedData.type === 'callSubroutineNode') {
+        newNode = {
+          id: newNodeId,
+          type: 'callSubroutineNode',
+          position,
+          data: new CallSubroutineNodeModel(newNodeId),
         };
       } else {
         return;

@@ -6,6 +6,7 @@ import { Actions } from './actions';
 import { SystemControls } from './system-controls';
 import { characterState } from '../core/character-state';
 import { ActionRegistry } from '../core/action-registry';
+import { SequenceManager } from '../core/sequence/SequenceManager';
 
 /**
  * 캐릭터 상태에 대한 인터페이스입니다.
@@ -75,6 +76,12 @@ export interface PluginContext {
    * (렌더러 프로세스에서만 사용 가능)
    */
   actionRegistry?: ActionRegistry;
+
+  /**
+   * 시퀀스 및 서브루틴의 실행을 관리합니다.
+   * (렌더러 프로세스에서만 사용 가능)
+   */
+  sequenceManager?: SequenceManager;
 
   // 향후 추가될 API 예시:
   // getCurrentPersona(): Persona;

@@ -173,14 +173,37 @@ ipcMain.handle('delete-custom-trigger', async (event, triggerId: string) => {
 });
 
 // --- Sequences ---
-ipcMain.handle('get-sequences', async () => {
+const getSequencesByType = async (type: 'sequence' | 'subroutine') => {
   const sequencesDir = resolveUserDataPath('sequences');
   try {
-    return (await fsp.readdir(sequencesDir)).filter(file => file.endsWith('.json'));
+    const files = await fsp.readdir(sequencesDir);
+    const jsonFiles = files.filter(file => file.endsWith('.json'));
+
+    const filteredFiles = [];
+    for (const file of jsonFiles) {
+      try {
+        const content = await fsp.readFile(path.join(sequencesDir, file), 'utf-8');
+        const data = JSON.parse(content);
+        if (data.type === type) {
+          filteredFiles.push(file);
+        }
+      } catch (e) {
+        // JSON 파싱 오류 등은 무시하고 계속 진행
+        console.warn(`Could not parse or check type for ${file}, skipping. Error: ${e.message}`);
+      }
+    }
+    return filteredFiles;
   } catch (error) {
-    return error.code === 'ENOENT' ? [] : Promise.reject(error);
+    if (error.code === 'ENOENT') {
+      return [];
+    }
+    throw error;
   }
-});
+};
+
+ipcMain.handle('get-sequence-files', () => getSequencesByType('sequence'));
+ipcMain.handle('get-subroutine-files', () => getSequencesByType('subroutine'));
+
 ipcMain.handle('get-poses', async () => {
   try {
     const userPosesDir = resolveUserDataPath('poses');

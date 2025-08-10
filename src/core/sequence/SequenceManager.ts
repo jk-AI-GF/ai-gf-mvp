@@ -16,6 +16,7 @@ import { BranchNodeModel } from './BranchNodeModel';
 import { ClockNodeModel } from './ClockNodeModel';
 import { NumToStrNodeModel } from './NumToStrNodeModel';
 import { InputNodeModel } from './InputNodeModel';
+import { CallSubroutineNodeModel } from './CallSubroutineNodeModel';
 
 // 시퀀스 데이터의 구조를 정의합니다.
 interface SequenceData {
@@ -52,7 +53,10 @@ export class SequenceManager {
    * userData/sequences 폴더에서 모든 시퀀스 파일 목록을 가져와 내부 상태를 초기화합니다.
    */
   public async initialize(): Promise<void> {
-    this.allSequenceFiles = await window.electronAPI.getSequences();
+    const sequenceFiles = await window.electronAPI.getSequenceFiles();
+    const subroutineFiles = await window.electronAPI.getSubroutineFiles();
+    this.allSequenceFiles = [...sequenceFiles, ...subroutineFiles];
+    
     const activeFiles = await window.electronAPI.getActiveSequences();
     this.activeSequenceFiles = new Set(activeFiles);
 
@@ -110,6 +114,34 @@ export class SequenceManager {
     // manualStartSequence와 동일한 로직을 사용합니다.
     // 이 메서드는 주로 액션 시스템에서 호출하기 위해 존재합니다.
     return this.manualStartSequence(fileName);
+  }
+
+  /**
+   * 지정된 ID와 인수를 사용하여 서브루틴을 실행합니다.
+   * @param fileName - 실행할 서브루틴의 파일 이름입니다.
+   * @param args - 서브루틴의 입력 노드에 전달할 인수(파라미터)입니다.
+   */
+  public async runSubroutine(fileName: string, args: Record<string, any>): Promise<void> {
+    try {
+      const sequenceData = await this.loadAndDeserializeSequence(fileName);
+      if (!sequenceData) {
+        console.error(`[SequenceManager] Subroutine file not found or failed to load: ${fileName}`);
+        return;
+      }
+
+      // 시퀀스 유형을 확인하여 서브루틴이 맞는지 확인합니다.
+      const isSubroutine = sequenceData.nodes.some(n => n.data.constructor.name === 'InputNodeModel');
+      if (!isSubroutine) {
+        console.error(`[SequenceManager] Attempted to run a non-subroutine sequence as a subroutine: ${fileName}`);
+        return;
+      }
+      
+      console.log(`[SequenceManager] Running subroutine: ${fileName} with args:`, args);
+      await this.sequenceEngine.runSubroutine(sequenceData.nodes, sequenceData.edges, args);
+
+    } catch (error) {
+      console.error(`[SequenceManager] Failed to run subroutine ${fileName}:`, error);
+    }
   }
 
   /**
@@ -176,11 +208,11 @@ export class SequenceManager {
    * @param sequenceData - 파싱된 시퀀스 JSON 데이터입니다.
    * @returns 역직렬화된 노드와 엣지를 포함하는 객체입니다.
    */
-  public deserializeSequence(sequenceData: any): SequenceData {
-    const deserializedNodes: Node<BaseNode>[] = sequenceData.nodes.map((sNode: any): Node<BaseNode> | null => {
+  public async deserializeSequence(sequenceData: any): Promise<SequenceData> {
+    const nodePromises = sequenceData.nodes.map(async (sNode: any): Promise<Node<BaseNode> | null> => {
       const data = sNode.data;
       let model: BaseNode;
-
+  
       switch (sNode.type) {
         case 'actionNode':
           const actionDef = this.actionRegistry.getActionDefinition(data.actionName);
@@ -198,7 +230,7 @@ export class SequenceManager {
         case 'manualStartNode':
           model = new ManualStartNodeModel(sNode.id);
           break;
-
+  
         case 'eventNode':
           const eventDef = EVENT_DEFINITIONS.find(e => e.name === data.eventName);
           if (!eventDef) {
@@ -207,47 +239,70 @@ export class SequenceManager {
           }
           model = new EventNodeModel(sNode.id, eventDef);
           break;
-
+  
         case 'literalNode':
           model = new LiteralNodeModel(sNode.id, data.dataType, data.value);
           break;
-
+  
         case 'delayNode':
           model = new DelayNodeModel(sNode.id, data.delay);
           break;
-
+  
         case 'operatorNode':
           model = new OperatorNodeModel(sNode.id, data.category, data.operator);
           break;
-
+  
         case 'randomNode':
           model = new RandomNodeModel(sNode.id, data.min, data.max);
           break;
-
+  
         case 'branchNode':
           model = new BranchNodeModel(sNode.id);
           break;
-
+  
         case 'clockNode':
           model = new ClockNodeModel(sNode.id, data.interval);
           break;
-
+  
         case 'numToStrNode':
           model = new NumToStrNodeModel(sNode.id);
           break;
-
+  
         case 'subroutineInputNode':
           model = new InputNodeModel(sNode.id, data.parameters);
           break;
 
+        case 'callSubroutineNode':
+          const callNode = new CallSubroutineNodeModel(sNode.id, data.subroutineId);
+          if (data.subroutineId) {
+            try {
+              const targetSequence = await this.loadAndDeserializeSequence(data.subroutineId);
+              if (targetSequence) {
+                const inputNode = targetSequence.nodes.find(n => n.data instanceof InputNodeModel)?.data as InputNodeModel;
+                if (inputNode) {
+                  callNode.setSubroutine(data.subroutineId, inputNode.parameters);
+                } else {
+                  console.warn(`[SequenceManager] Subroutine "${data.subroutineId}" has no InputNode. Cannot determine parameters for node ${sNode.id}.`);
+                }
+              }
+            } catch (e) {
+              console.error(`[SequenceManager] Failed to load parameters for subroutine "${data.subroutineId}" in node ${sNode.id}.`, e);
+            }
+          }
+          model = callNode;
+          break;
+  
         default:
           console.error(`Unknown node type "${sNode.type}" for node ${sNode.id}.`);
           return null;
       }
-
+  
       return { ...sNode, data: model };
-    }).filter((n: Node<BaseNode> | null): n is Node<BaseNode> => n !== null);
-
+    });
+  
+    const deserializedNodes = (await Promise.all(nodePromises))
+      .filter((n: Node<BaseNode> | null): n is Node<BaseNode> => n !== null);
+  
     return { nodes: deserializedNodes, edges: sequenceData.edges };
   }
 
@@ -327,7 +382,7 @@ export class SequenceManager {
       }
       const sequenceData = JSON.parse(new TextDecoder().decode(sequenceJSON));
 
-      const result = this.deserializeSequence(sequenceData);
+      const result = await this.deserializeSequence(sequenceData);
       this.sequenceCache.set(fileName, result);
       return result;
 

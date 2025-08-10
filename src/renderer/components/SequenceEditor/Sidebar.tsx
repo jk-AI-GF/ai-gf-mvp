@@ -179,6 +179,7 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events, nodes }) => {
         <>
           {renderDraggableItem('delayNode', 'Delay', '실행을 잠시 멈춥니다.', 'control', false)}
           {renderDraggableItem('branchNode', 'Branch (If)', '조건에 따라 실행 흐름을 분기합니다.', 'control', false)}
+          {renderDraggableItem('callSubroutineNode', 'Call Subroutine', '다른 서브루틴을 호출합니다.', 'control', false)}
           {renderDraggableItem(
             'clockNode',
             'Clock',

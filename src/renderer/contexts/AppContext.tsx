@@ -89,6 +89,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const context = managers.pluginManager.context;
     if (context) {
       const seqManager = new SequenceManager(context);
+      context.sequenceManager = seqManager; // Inject manager into context
+      
       seqManager.initialize().then(() => {
         setSequenceManager(seqManager);
         console.log("SequenceManager initialized and sequences loaded.");
@@ -114,6 +116,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             }
           );
           console.log('[AppContext] "executeSequence" action registered.');
+        }
+
+        // Register runSubroutine action
+        if (managers.actionRegistry && !managers.actionRegistry.get('runSubroutine')) {
+          managers.actionRegistry.register(
+            {
+              name: 'runSubroutine',
+              description: '지정된 인수를 사용하여 서브루틴을 실행합니다.',
+              params: [
+                {
+                  name: 'subroutineId',
+                  type: 'string',
+                  description: '실행할 서브루틴의 파일 이름',
+                  dynamicOptions: 'subroutines', // This tells the UI to populate a dropdown with subroutine files
+                },
+                {
+                  name: 'args',
+                  type: 'any',
+                  description: '서브루틴에 전달할 인수(키-값 쌍)',
+                },
+              ],
+            },
+            (subroutineId: string, args: Record<string, any>) => {
+              console.log(`[Action] Running subroutine: ${subroutineId} with args:`, args);
+              seqManager.runSubroutine(subroutineId, args);
+            }
+          );
+          console.log('[AppContext] "runSubroutine" action registered.');
         }
       }).catch(err => {
         console.error("Failed to initialize SequenceManager:", err);

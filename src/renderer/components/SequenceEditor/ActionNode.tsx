@@ -31,10 +31,9 @@ const DynamicSelectInput = ({ param, value, onParamChange }: { param: IPort, val
             file.toLowerCase().endsWith('.vrma') || file.toLowerCase().endsWith('.fbx')
           );
         } else if (param.dynamicOptions === 'sequences') {
-            const sequenceFiles = await window.electronAPI.getSequences();
-            if (sequenceFiles) {
-                fetchedOptions = sequenceFiles;
-            }
+            fetchedOptions = await window.electronAPI.getSequenceFiles();
+        } else if (param.dynamicOptions === 'subroutines') {
+            fetchedOptions = await window.electronAPI.getSubroutineFiles();
         } else if (param.dynamicOptions === 'poses') {
             const poseFiles = await window.electronAPI.getPoses();
             if (poseFiles) {
