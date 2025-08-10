@@ -14,7 +14,7 @@
 
 1.  **API 인터페이스에 타입 정의 (`src/plugin-api/actions.ts`)**
     *   **목적**: 플러그인과 모드에서 타입스크립트 자동 완성을 제공하기 위함입니다.
-    *   **수행 작업**: `Actions` 인터페이스에 새로운 함수의 타입 시그니처를 추가합니다.
+    *   **수행 작업**: `CoreActions` 인터페이스에 새로운 함수의 타입 시그니처를 추가합니다.
 
 2.  **액션 구현체 등록 (`src/core/action-registrar.ts`)**
     *   **목적**: 액션의 메타데이터(이름, 설명, 파라미터)와 실제 로직을 시스템에 등록합니다. 이 파일은 모든 코어 액션이 등록되는 유일한 장소입니다.
@@ -46,9 +46,12 @@
 
 ---
 
-## 3. 시퀀스 (Sequence) 시스템
+## 3. 시퀀스 & 서브루틴 (Sequence & Subroutine) 시스템
 
-시퀀스는 사용자가 노드 기반의 비주얼 스크립팅을 통해 복잡한 상호작용을 만들 수 있게 하는 핵심 기능입니다.
+시퀀스와 서브루틴은 사용자가 노드 기반의 비주얼 스크립팅을 통해 복잡한 상호작용을 만들 수 있게 하는 핵심 기능입니다.
+
+*   **시퀀스(Sequence)**: **이벤트에 반응**하여 백그라운드에서 실행되는 리스너(Listener)입니다. (예: 채팅 메시지를 받으면 자동으로 실행)
+*   **서브루틴(Subroutine)**: **직접 호출**하여 사용하는 재사용 가능한 함수(Function)입니다. (예: 특정 상황에 호출하는 인사 루틴)
 
 ### 새로운 시퀀스 노드 추가 워크플로우
 
@@ -65,6 +68,24 @@
 3.  **노드 등록 (`src/renderer/components/SequenceEditor/SequenceEditor.tsx`)**
     *   **목적**: 시퀀스 에디터가 새로운 노드 모델과 UI 컴포넌트를 인식하도록 등록합니다.
     *   **수행 작업**: `SequenceEditor.tsx` 파일 상단의 `nodeTypes`와 `nodeModelMap` 객체에 새로 만든 노드 UI 컴포넌트와 모델 클래스를 각각 추가합니다.
+
+### 서브루틴 호출 기능 연동 워크플로우
+
+LLM이나 플러그인에서 사용자가 만든 서브루틴을 호출하는 기능은 다음과 같이 연동됩니다.
+
+1.  **서브루틴 생성 (사용자)**
+    *   사용자는 시퀀스 에디터에서 `입력(Input)` 노드를 시작점으로 사용하여 서브루틴을 만듭니다.
+    *   `입력` 노드에서 파라미터(이름, 타입)를 정의하고, 서브루틴의 기능과 파라미터에 대한 자연어 설명을 작성합니다. 이 정보는 `.json` 파일에 `type: 'subroutine'`, `description`, `parameters` 등으로 저장됩니다.
+
+2.  **서브루틴 호출 (플러그인/LLM)**
+    *   호출 주체는 `pluginContext.actions.runSubroutine(subroutineId, params)` 액션을 사용합니다.
+    *   `subroutineId`는 서브루틴의 파일 이름(예: `myGreeting.json`)입니다.
+    *   `params`는 `{ message: '안녕하세요', repeat: 3 }`와 같이 서브루틴의 파라미터 이름과 값을 담은 객체입니다.
+
+3.  **`SequenceManager`의 실행 처리**
+    *   `runSubroutine` 액션은 내부적으로 `SequenceManager.runSubroutine()`을 호출합니다.
+    *   `SequenceManager`는 해당 서브루틴 파일을 로드하고, `SequenceEngine`을 통해 실행합니다.
+    *   `SequenceEngine`은 `params`로 받은 값을 서브루틴의 `입력` 노드에 전달하여 실행을 시작합니다.
 
 ---
 
@@ -150,7 +171,7 @@
 
 *   **VRM 모델**: `VRMManager`가 로딩과 관리를 담당합니다.
 *   **애니메이션/포즈**: 관련 액션(`playAnimation`, `applyPose` 등) 내부에서 `getAssetPath` 또는 `getUserdataPath`를 통해 파일 경로를 조합하여 로드합니다. 현재는 중앙화된 관리자 없이 각 기능에서 직접 경로를 처리합니다.
-    *   **시퀀스**: `SequenceManager`가 `userdata/sequences` 디렉토리의 `*.json` 파일들을 관리합니다.
+    *   **시퀀스/서브루틴**: `SequenceManager`가 `userdata/sequences` 디렉토리의 `*.json` 파일들을 관리합니다.
 
 ---
 
@@ -166,8 +187,10 @@
 -   `event-bus.ts`: 시스템 전역에서 사용되는 이벤트의 타입과 `AppEvents`를 정의하는 중앙 통신 허브.
 -   `event-definitions.ts`: 시퀀스 에디터의 '이벤트 노드' 목록에 표시될 이벤트를 정의하는 메타데이터 파일.
 -   `mod-loader.ts`: `userdata/mods` 폴더에서 사용자 모드를 찾아 로드하고, 프록시 `PluginContext`를 생성.
--   `sequence/SequenceManager.ts`: 시퀀스의 파일 I/O, (비)활성화, 캐싱 등 모든 생명주기를 총괄하는 관리자.
--   `sequence/SequenceEngine.ts`: `SequenceManager`의 요청을 받아 시퀀스 노드 그래프의 실행을 담당하는 엔진.
+-   `sequence/SequenceManager.ts`: 시퀀스와 서브루틴의 파일 I/O, (비)활성화, 실행 등 모든 생명주기를 총괄하는 관리자.
+-   `sequence/SequenceEngine.ts`: `SequenceManager`의 요청을 받아 시퀀스/서브루틴 노드 그래프의 실행을 담당하는 엔진.
+-   `sequence/InputNodeModel.ts`: 서브루틴의 시작점이 되어 입력 파라미터를 정의하는 노드.
+-   `sequence/CallSubroutineNodeModel.ts`: 다른 시퀀스나 서브루틴 내에서 특정 서브루틴을 호출하는 노드.
 
 ### Plugin API (`src/plugin-api/`)
 -   `actions.ts`: 플러그인에서 사용할 수 있는 모든 액션의 타입스크립트 인터페이스를 정의.

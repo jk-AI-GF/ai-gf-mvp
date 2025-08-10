@@ -15,7 +15,7 @@ interface CreatorPanelProps {
   onEditSequence: (sequenceFile: string) => void;
   onDeleteSequence: (sequenceFile: string) => void;
   triggers: CustomTrigger[];
-  sequences: string[];
+  sequences: { name: string, type: 'sequence' | 'subroutine' }[];
   initialPos: { x: number, y: number };
   onDragEnd: (pos: { x: number, y: number }) => void;
   activeSequences: string[];
@@ -49,18 +49,20 @@ const CreatorPanel: React.FC<CreatorPanelProps> = ({
           <h3 className={styles.sectionTitle}>시퀀스</h3>
           <div className={styles.triggerList}>
             {sequences.length === 0 && <p className={styles.emptyMessage}>생성된 시퀀스가 없습니다.</p>}
-            {sequences.map(sequenceFile => (
-              <div key={sequenceFile} className={styles.triggerItem}>
-                <span className={styles.triggerName}>{sequenceFile.replace('.json', '')}</span>
+            {sequences.map(sequence => (
+              <div key={sequence.name} className={styles.triggerItem}>
+                <span className={styles.triggerName}>{sequence.name.replace('.json', '')}</span>
                 <div className={styles.controls}>
-                  <button className={`${styles.controlButton} ${styles.deleteButton}`} onClick={() => onDeleteSequence(sequenceFile)}>삭제</button>
-                  <button className={`${styles.controlButton} ${styles.editButton}`} onClick={() => onEditSequence(sequenceFile)}>편집</button>
-                  <button className={`${styles.controlButton} ${styles.runButton}`} onClick={() => onManualStartSequence(sequenceFile)}>실행</button>
+                  <button className={`${styles.controlButton} ${styles.deleteButton}`} onClick={() => onDeleteSequence(sequence.name)}>삭제</button>
+                  <button className={`${styles.controlButton} ${styles.editButton}`} onClick={() => onEditSequence(sequence.name)}>편집</button>
+                  {sequence.type !== 'subroutine' && (
+                    <button className={`${styles.controlButton} ${styles.runButton}`} onClick={() => onManualStartSequence(sequence.name)}>실행</button>
+                  )}
                   <label className={styles.switch}>
                     <input 
                       type="checkbox" 
-                      checked={activeSequences.includes(sequenceFile)}
-                      onChange={(e) => onToggleSequence(sequenceFile, e.target.checked)}
+                      checked={activeSequences.includes(sequence.name)}
+                      onChange={(e) => onToggleSequence(sequence.name, e.target.checked)}
                     />
                     <span className={styles.slider}></span>
                   </label>

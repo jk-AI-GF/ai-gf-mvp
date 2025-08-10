@@ -86,6 +86,7 @@ declare global {
       deleteCustomTrigger: (triggerId: string) => Promise<{ success: boolean; error?: string }>;
 
       // --- Sequence API ---
+      getAllSequenceFilesWithType: () => Promise<{ name: string, type: 'sequence' | 'subroutine' }[]>;
       getSequenceFiles: () => Promise<string[]>;
       getSubroutineFiles: () => Promise<string[]>;
       getPoses: () => Promise<string[]>;

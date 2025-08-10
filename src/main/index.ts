@@ -201,6 +201,35 @@ const getSequencesByType = async (type: 'sequence' | 'subroutine') => {
   }
 };
 
+ipcMain.handle('get-all-sequence-files-with-type', async () => {
+  const sequencesDir = resolveUserDataPath('sequences');
+  try {
+    const files = await fsp.readdir(sequencesDir);
+    const jsonFiles = files.filter(file => file.endsWith('.json'));
+
+    const filesWithType = [];
+    for (const file of jsonFiles) {
+      try {
+        const content = await fsp.readFile(path.join(sequencesDir, file), 'utf-8');
+        const data = JSON.parse(content);
+        filesWithType.push({
+          name: file,
+          type: data.type === 'subroutine' ? 'subroutine' : 'sequence',
+        });
+      } catch (e) {
+        console.warn(`Could not parse or check type for ${file}, assuming 'sequence'. Error: ${e.message}`);
+        filesWithType.push({ name: file, type: 'sequence' });
+      }
+    }
+    return filesWithType;
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      return [];
+    }
+    throw error;
+  }
+});
+
 ipcMain.handle('get-sequence-files', () => getSequencesByType('sequence'));
 ipcMain.handle('get-subroutine-files', () => getSequencesByType('subroutine'));
 

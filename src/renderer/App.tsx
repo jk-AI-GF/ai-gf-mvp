@@ -62,25 +62,31 @@ const App: React.FC = () => {
   const [notification, setNotification] = useState({ show: false, message: '' });
   
   // Sequence state is now driven by the manager
-  const [allSequences, setAllSequences] = useState<string[]>([]);
+  const [allSequences, setAllSequences] = useState<{ name: string, type: 'sequence' | 'subroutine' }[]>([]);
   const [activeSequences, setActiveSequences] = useState<string[]>([]);
   
   const isInitialMount = useRef(true);
 
   // Update local state when manager is available or changes
   useEffect(() => {
-    if (sequenceManager) {
-      setAllSequences(sequenceManager.getAllSequenceFiles());
-      setActiveSequences(sequenceManager.getActiveSequenceFiles());
-    }
+    const fetchSequences = async () => {
+      if (sequenceManager) {
+        const files = await window.electronAPI.getAllSequenceFilesWithType();
+        setAllSequences(files);
+        setActiveSequences(sequenceManager.getActiveSequenceFiles());
+      }
+    };
+    fetchSequences();
   }, [sequenceManager]);
 
   // Listen for external updates (e.g., after saving in editor)
   useEffect(() => {
     const handleSequencesUpdated = async () => {
       if (sequenceManager) {
-        await sequenceManager.initialize(); // Re-initialize to get the latest data
-        setAllSequences(sequenceManager.getAllSequenceFiles());
+        const files = await window.electronAPI.getAllSequenceFilesWithType();
+        setAllSequences(files);
+        // Re-initialize to update active sequences and listeners
+        await sequenceManager.initialize(); 
         setActiveSequences(sequenceManager.getActiveSequenceFiles());
       }
     };
@@ -91,12 +97,14 @@ const App: React.FC = () => {
 
   const handleDeleteSequence = async (sequenceFile: string) => {
     if (!sequenceManager) return;
-    const confirmed = window.confirm(`'${sequenceFile}' 시퀀스를 정말로 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`);
+    const confirmed = window.confirm(`'${sequenceFile}' 시퀀스를 정말로 삭제하시겠습니까?
+이 작업은 되돌릴 수 없습니다.`);
     if (!confirmed) return;
 
     try {
       await sequenceManager.deleteSequence(sequenceFile);
-      setAllSequences(sequenceManager.getAllSequenceFiles());
+      const files = await window.electronAPI.getAllSequenceFilesWithType();
+      setAllSequences(files);
       setActiveSequences(sequenceManager.getActiveSequenceFiles());
     } catch (error) {
       console.error(`Failed to delete sequence ${sequenceFile}:`, error);

@@ -12,7 +12,7 @@ interface PanelProps {
   height?: string; // Optional height prop
 }
 
-const Panel: React.FC<PanelProps> = ({ title, children, onClose, initialPos, onDragEnd, width, height }) => {
+const Panel: React.FC<PanelProps> = ({ title, children, onClose, initialPos, onDragEnd, width = '400px', height }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const handleRef = useRef<HTMLDivElement>(null);
   const { x, y } = useDraggable({ handleRef, initialPos, onDragEnd });

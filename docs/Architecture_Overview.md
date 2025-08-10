@@ -51,9 +51,18 @@
 
 ### `sequence/` - 시퀀스 시스템의 두뇌
 
--   **`SequenceManager.ts`**: 시퀀스의 전체 생명주기(파일 I/O, (역)직렬화, 상태 관리, 실행 요청 중계)를 총괄하는 중앙 관리자입니다.
--   **`SequenceEngine.ts`**: `SequenceManager`의 요청을 받아 실제 시퀀스 그래프의 실행(실행 흐름, 데이터 흐름)을 담당하는 엔진입니다.
+-   **`SequenceManager.ts`**: 시퀀스와 서브루틴의 전체 생명주기(파일 I/O, (역)직렬화, 상태 관리, 실행 요청 중계)를 총괄하는 중앙 관리자입니다.
+    -   **주요 책임**:
+        -   `userdata/sequences` 폴더의 파일 목록 관리.
+        -   시퀀스/서브루틴의 저장 및 로딩. 저장 시 `InputNode` 유무에 따라 `type`을 'sequence' 또는 'subroutine'으로 자동 지정.
+        -   활성화된 시퀀스의 이벤트 리스너 등록 및 해제.
+        -   `runSubroutine` 메소드를 통해 외부(예: 플러그인)의 요청에 따라 특정 서브루틴을 인자와 함께 실행.
+
+-   **`SequenceEngine.ts`**: `SequenceManager`의 요청을 받아 실제 시퀀스/서브루틴 그래프의 실행(실행 흐름, 데이터 흐름)을 담당하는 엔진입니다.
+
 -   **`BaseNode.ts` 및 하위 모델들**: 모든 시퀀스 노드의 공통 로직과 개별 로직을 정의하는 모델 클래스들입니다.
+    -   **`InputNodeModel.ts`**: 서브루틴의 시작점. 파라미터를 정의하고, 이 정의에 따라 자신의 출력 포트를 동적으로 변경합니다.
+    -   **`CallSubroutineNodeModel.ts`**: 다른 서브루틴을 호출하는 노드. 호출할 서브루틴을 선택하면, 해당 서브루틴의 파라미터에 맞춰 자신의 입력 포트를 동적으로 변경합니다.
 
 ### `action-registry.ts` & `action-registrar.ts` - 액션 관리
 
