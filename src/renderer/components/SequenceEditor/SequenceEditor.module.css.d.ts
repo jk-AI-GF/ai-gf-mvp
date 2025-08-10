@@ -15,7 +15,13 @@ interface CssExports {
   'edgeExecution': string;
   'edgeNumber': string;
   'edgeString': string;
+  'metaContainer': string;
+  'metaInput': string;
   'reactFlowWrapper': string;
+  'tag': string;
+  'tagInput': string;
+  'tagInputContainer': string;
+  'tagRemove': string;
 }
 export const cssExports: CssExports;
 export default cssExports;

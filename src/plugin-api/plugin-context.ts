@@ -75,6 +75,10 @@ export interface PluginContext {
    * (렌더러 프로세스에서만 사용 가능)
    */
   sequenceManager?: SequenceManager;
+  /**
+   * 캐릭터의 행동 전제 조건과 리소스 잠금을 관리합니다.
+   */
+  characterStateManager?: import('../core/character-state-manager').CharacterStateManager;
 
   // 향후 추가될 API 예시:
   // getCurrentPersona(): Persona;

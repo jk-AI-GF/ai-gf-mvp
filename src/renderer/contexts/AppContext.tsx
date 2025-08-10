@@ -7,6 +7,7 @@ import { ChatService } from '../chat-service';
 import { LlmSettings, DEFAULT_LLM_SETTINGS } from '../../core/llm-settings';
 import { ActionRegistry } from '../../core/action-registry'; // 추가
 import { SequenceManager } from '../../core/sequence/SequenceManager';
+import { CharacterStateManager } from '../../core/character-state-manager';
 
 interface AppContextType {
   vrmManager: VRMManager | null;
@@ -83,8 +84,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Now that pluginManager is initialized, we can get its context and create the SequenceManager
     const context = managers.pluginManager.context;
     if (context) {
+      // 전역 행동 상태 및 리소스 잠금을 관리할 매니저를 생성 및 주입
+      const charStateManager = new CharacterStateManager();
+      context.characterStateManager = charStateManager;
       const seqManager = new SequenceManager(context);
-      context.sequenceManager = seqManager; // Inject manager into context
+      context.sequenceManager = seqManager;
       
       seqManager.initialize().then(() => {
         setSequenceManager(seqManager);

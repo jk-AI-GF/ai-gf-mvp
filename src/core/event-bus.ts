@@ -2,6 +2,10 @@ import { VRM } from '@pixiv/three-vrm';
 import { ICharacterState } from '../plugin-api/plugin-context';
 
 // src/core/event-bus.ts
+export type LLMResponsePayload =
+  | { type: 'talk'; text: string; expression: string }
+  | { type: 'action'; subroutine: string; arguments: Record<string, any>; text: string; expression: string };
+
 export type AppEvents = {
   /** VRM 로드/해제 */
   'vrm:loaded': { vrm: VRM; expressionNames: string[] };
@@ -20,7 +24,7 @@ export type AppEvents = {
 
   /** 채팅 및 LLM */
   'chat:newMessage': { role: string, text: string };
-  'llm:responseReceived': { text: string, expression: string };
+  'llm:responseReceived': LLMResponsePayload;
   'ui:showFloatingMessage': { text: string; duration?: number };
   'ui:updateFloatingMessagePosition': { left: number; top: number; visible: boolean; };
 

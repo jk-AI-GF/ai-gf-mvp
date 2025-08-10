@@ -112,6 +112,44 @@ interface SerializedSequence {
 
 import styles from './SequenceEditor.module.css';
 
+// Simple tag‑style input for comma‑separated metadata (capabilities, locks)
+interface TagInputProps {
+  tags: string[];
+  onChange: (tags: string[]) => void;
+  placeholder?: string;
+}
+const TagInput: React.FC<TagInputProps> = ({ tags, onChange, placeholder }) => {
+  const [inputValue, setInputValue] = useState('');
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && inputValue.trim()) {
+      onChange([...tags, inputValue.trim()]);
+      setInputValue('');
+      e.preventDefault();
+    }
+  };
+  const removeTag = (idx: number) => {
+    const newTags = tags.filter((_, i) => i !== idx);
+    onChange(newTags);
+  };
+  return (
+    <div className={styles.tagInputContainer}>
+      {tags.map((tag, idx) => (
+        <span key={idx} className={styles.tag}>
+          {tag}
+          <button type="button" className={styles.tagRemove} onClick={() => removeTag(idx)}>×</button>
+        </span>
+      ))}
+      <input
+        className={styles.tagInput}
+        value={inputValue}
+        onChange={e => setInputValue(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder}
+      />
+    </div>
+  );
+};
+
 // 포트 타입을 CSS 모듈 클래스 이름으로 매핑합니다.
 const EDGE_CLASS_MAP: { [key: string]: string } = {
   execution: 'edgeExecution',
@@ -132,6 +170,8 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
   const [actions, setActions] = useState<ActionDefinition[]>([]);
   const [events, setEvents] = useState<EventDefinition[]>([]);
   const [description, setDescription] = useState('');
+  const [capabilities, setCapabilities] = useState<string[]>([]);
+  const [locks, setLocks] = useState<string[]>([]);
 
   const isSubroutine = nodes.some(node => node.type === 'subroutineInputNode');
 
@@ -159,8 +199,10 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
 
     const { nodes: newNodes, edges: rawEdges } = await sequenceManager.deserializeSequence(serializedSequence);
 
-    // Set the description from the loaded file
+    // Set the description and metadata from the loaded file
     setDescription(serializedSequence.description || '');
+    setCapabilities(serializedSequence.capabilities || []);
+    setLocks(serializedSequence.locks || []);
 
     const styledEdges = rawEdges.map((edge: SerializedEdge) => {
       const sourceNode = newNodes.find(node => node.id === edge.source);
@@ -185,7 +227,7 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
     }, 50);
 
     console.log('시퀀스를 성공적으로 불러왔습니다.');
-  }, [setNodes, setEdges, sequenceManager, fitView, setDescription]);
+  }, [setNodes, setEdges, sequenceManager, fitView, setDescription, setCapabilities, setLocks]);
 
   // Auto-load sequence if sequenceToLoad is provided
   useEffect(() => {
@@ -227,9 +269,9 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
 
     try {
       if (sequenceToLoad) {
-        result = await sequenceManager.saveSequenceToFile(sequenceToLoad, flow, description);
+        result = await sequenceManager.saveSequenceToFile(sequenceToLoad, flow, description, capabilities, locks);
       } else {
-        const serializableData = sequenceManager.serializeSequence(flow, description);
+        const serializableData = sequenceManager.serializeSequence(flow, description, capabilities, locks);
         const jsonString = JSON.stringify(serializableData, null, 2);
         result = await window.electronAPI.saveSequence(jsonString);
       }
@@ -246,7 +288,7 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
       console.error('시퀀스 저장 중 예외 발생:', error);
       alert(`저장 중 오류 발생: ${error instanceof Error ? error.message : String(error)}`);
     }
-  }, [getNodes, getEdges, sequenceManager, sequenceToLoad, onClose, description]);
+  }, [getNodes, getEdges, sequenceManager, sequenceToLoad, onClose, description, capabilities, locks]);
 
   const handleSaveAs = useCallback(async () => {
     if (!sequenceManager) {
@@ -258,7 +300,7 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
     const flow = { nodes: currentNodes, edges: currentEdges };
     
     try {
-      const serializableData = sequenceManager.serializeSequence(flow, description);
+      const serializableData = sequenceManager.serializeSequence(flow, description, capabilities, locks);
       const jsonString = JSON.stringify(serializableData, null, 2);
       const result = await window.electronAPI.saveSequence(jsonString);
 
@@ -274,7 +316,7 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
       console.error('시퀀스 저장 중 예외 발생:', error);
       alert(`저장 중 오류 발생: ${error instanceof Error ? error.message : String(error)}`);
     }
-  }, [getNodes, getEdges, sequenceManager, onClose, description]);
+  }, [getNodes, getEdges, sequenceManager, onClose, description, capabilities, locks]);
 
   const handleLoad = useCallback(async () => {
     try {
@@ -468,6 +510,18 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
               placeholder="서브루틴의 기능에 대한 자연어 설명을 입력하세요 (LLM이 사용). 예: 캐릭터가 특정 메시지를 말하며 표정을 짓습니다."
               className={styles.descriptionTextarea}
             />
+            <div className={styles.metaContainer}>
+              <TagInput
+                tags={capabilities}
+                onChange={setCapabilities}
+                placeholder="필요한 Capability를 입력하고 Enter"
+              />
+              <TagInput
+                tags={locks}
+                onChange={setLocks}
+                placeholder="점유할 Lock을 입력하고 Enter"
+              />
+            </div>
           </div>
         )}
         <div className={styles.buttonContainer}>

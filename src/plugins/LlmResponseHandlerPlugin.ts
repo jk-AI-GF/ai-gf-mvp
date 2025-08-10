@@ -31,11 +31,19 @@ export class LlmResponseHandlerPlugin implements IPlugin {
   private handleLlmResponse = (data: { text: string; expression: string }): void => {
     if (!this.context) return;
 
-    const { text, expression } = data;
-
-    // Use the actions API to make the character perform the actions
-    this.context.actions.setExpression(expression, 1.0, 0.5);
-    this.context.actions.playTTS(text);
+    if (!this.context) return;
+    const { type } = data as any;
+    if (type === 'action') {
+      const { subroutine, arguments: args, expression, text } = data as any;
+      // 서브루틴 실행
+      this.context.sequenceManager?.runSubroutine(subroutine, args);
+      this.context.actions.setExpression(expression, 1.0, 0.5);
+      this.context.actions.playTTS(text);
+    } else {
+      const { text, expression } = data as any;
+      this.context.actions.setExpression(expression, 1.0, 0.5);
+      this.context.actions.playTTS(text);
+    }
   };
 
   public update(delta: number): void {

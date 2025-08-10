@@ -11,6 +11,7 @@ import { ManualStartNodeModel } from './ManualStartNodeModel';
 import { OperatorNodeModel } from './OperatorNodeModel';
 import { RandomNodeModel } from './RandomNodeModel';
 import { SequenceEngine } from './SequenceEngine';
+import { SubroutineDefinition, SubroutineParameter } from './SubroutineDefinition';
 import { DelayNodeModel } from './DelayNodeModel';
 import { BranchNodeModel } from './BranchNodeModel';
 import { ClockNodeModel } from './ClockNodeModel';
@@ -39,6 +40,8 @@ export class SequenceManager {
   private activeSequenceFiles: Set<string> = new Set();
   // 메모리에 캐시된 시퀀스 데이터를 저장합니다.
   private sequenceCache: Map<string, SequenceData> = new Map();
+  // 캐시된 서브루틴 메타데이터 정의를 저장합니다.
+  private subroutineDefinitions: Map<string, SubroutineDefinition> = new Map();
 
   constructor(pluginContext: PluginContext) {
     if (!pluginContext || !pluginContext.actionRegistry) {
@@ -50,13 +53,57 @@ export class SequenceManager {
   }
 
   /**
+   * 특정 서브루틴의 메타데이터를 로드하여 반환합니다.
+   * @param name 서브루틴 식별자 (파일명)
+   * @returns SubroutineDefinition 또는 undefined
+   */
+  /**
+   * 파일로부터 로드된 서브루틴 메타데이터 정의를 반환합니다.
+   * @param name 서브루틴 파일 이름
+   */
+  public getSubroutineDefinition(name: string): SubroutineDefinition | undefined {
+    return this.subroutineDefinitions.get(name);
+  }
+
+  /**
+   * 주어진 서브루틴 목록 중 현재 캐릭터 상태로 실행 가능한 것만 필터링합니다.
+   */
+  public filterSubroutines(defs: SubroutineDefinition[]): SubroutineDefinition[] {
+    const csm = this.pluginContext.characterStateManager;
+    if (!csm) {
+      console.warn('[SequenceManager] characterStateManager not available; skipping filter.');
+      return defs;
+    }
+    return defs.filter(def => csm.hasCapabilities(def.capabilities));
+  }
+
+  /**
+   * 현재 실행 가능한 서브루틴 메타데이터 목록을 반환합니다.
+   */
+  /**
+   * 현재 로드된 서브루틴 정의 중 캐릭터 상태로 실행 가능한 것만 반환합니다.
+   */
+  public getAvailableSubroutines(): SubroutineDefinition[] {
+    return this.filterSubroutines(Array.from(this.subroutineDefinitions.values()));
+  }
+
+  /**
    * userData/sequences 폴더에서 모든 시퀀스 파일 목록을 가져와 내부 상태를 초기화합니다.
    */
   public async initialize(): Promise<void> {
-    const sequenceFiles = await window.electronAPI.getSequenceFiles();
-    const subroutineFiles = await window.electronAPI.getSubroutineFiles();
-    this.allSequenceFiles = [...sequenceFiles, ...subroutineFiles];
-    
+    // 모든 시퀀스 및 서브루틴 파일을 메타데이터(type)와 함께 가져옵니다.
+    const allFilesWithType = await window.electronAPI.getAllSequenceFilesWithType();
+    this.allSequenceFiles = allFilesWithType.map(f => f.name);
+
+    // 서브루틴 정의 파일을 선탑재하여 필터링에 사용합니다.
+    this.subroutineDefinitions.clear();
+    for (const { name, type } of allFilesWithType) {
+      if (type === 'subroutine') {
+        const def = await this.loadSubroutineDefinition(name);
+        if (def) this.subroutineDefinitions.set(name, def);
+      }
+    }
+
     const activeFiles = await window.electronAPI.getActiveSequences();
     this.activeSequenceFiles = new Set(activeFiles);
 
@@ -122,25 +169,37 @@ export class SequenceManager {
    * @param args - 서브루틴의 입력 노드에 전달할 인수(파라미터)입니다.
    */
   public async runSubroutine(fileName: string, args: Record<string, any>): Promise<void> {
+    const def = this.getSubroutineDefinition(fileName);
+    const csm = this.pluginContext.characterStateManager;
+    if (def && csm) {
+      if (!csm.hasCapabilities(def.capabilities)) {
+        console.warn(`[SequenceManager] Cannot run subroutine '${fileName}'; missing capabilities: ${def.capabilities}`);
+        return;
+      }
+      if (!csm.acquireLocks(def.locks)) {
+        console.warn(`[SequenceManager] Cannot acquire locks for subroutine '${fileName}': ${def.locks}`);
+        return;
+      }
+    }
     try {
       const sequenceData = await this.loadAndDeserializeSequence(fileName);
       if (!sequenceData) {
         console.error(`[SequenceManager] Subroutine file not found or failed to load: ${fileName}`);
         return;
       }
-
-      // 시퀀스 유형을 확인하여 서브루틴이 맞는지 확인합니다.
       const isSubroutine = sequenceData.nodes.some(n => n.data.constructor.name === 'InputNodeModel');
       if (!isSubroutine) {
         console.error(`[SequenceManager] Attempted to run a non-subroutine sequence as a subroutine: ${fileName}`);
         return;
       }
-      
       console.log(`[SequenceManager] Running subroutine: ${fileName} with args:`, args);
       await this.sequenceEngine.runSubroutine(sequenceData.nodes, sequenceData.edges, args);
-
     } catch (error) {
       console.error(`[SequenceManager] Failed to run subroutine ${fileName}:`, error);
+    } finally {
+      if (def && csm) {
+        csm.releaseLocks(def.locks);
+      }
     }
   }
 
@@ -311,7 +370,7 @@ export class SequenceManager {
    * @param flow - React Flow 인스턴스에서 toObject()로 얻은 객체입니다.
    * @returns 직렬화된 노드와 엣지를 포함하는 객체입니다.
    */
-  public serializeSequence(flow: any, description: string): any {
+  public serializeSequence(flow: any, description: string, capabilities: string[] = [], locks: string[] = []): any {
     const serializedNodes = flow.nodes.map((node: Node<BaseNode>) => {
       const serializedData = node.data.serialize();
       const { data, ...rest } = node;
@@ -322,12 +381,17 @@ export class SequenceManager {
     const isSubroutine = flow.nodes.some((node: Node) => node.type === 'subroutineInputNode');
     const sequenceType = isSubroutine ? 'subroutine' : 'sequence';
 
-    return {
+    const data: any = {
       type: sequenceType,
-      description: description,
+      description,
       nodes: serializedNodes,
       edges: flow.edges,
     };
+    if (sequenceType === 'subroutine') {
+      data.capabilities = capabilities;
+      data.locks = locks;
+    }
+    return data;
   }
 
   /**
@@ -336,9 +400,9 @@ export class SequenceManager {
    * @param flow - React Flow 인스턴스에서 toObject()로 얻은 객체입니다.
    * @returns 성공 여부와 파일 경로를 포함하는 객체입니다.
    */
-  public async saveSequenceToFile(fileName: string, flow: any, description: string): Promise<{ success: boolean; filePath?: string; error?: string }> {
+  public async saveSequenceToFile(fileName: string, flow: any, description: string, capabilities: string[] = [], locks: string[] = []): Promise<{ success: boolean; filePath?: string; error?: string }> {
     try {
-      const serializableData = this.serializeSequence(flow, description);
+      const serializableData = this.serializeSequence(flow, description, capabilities, locks);
       const jsonString = JSON.stringify(serializableData, null, 2);
       
       // 메인 프로세스에 파일 저장을 요청합니다.
@@ -389,6 +453,49 @@ export class SequenceManager {
     } catch (error) {
       console.error(`[SequenceManager] Failed to load and deserialize sequence ${fileName}:`, error);
       return null;
+    }
+  }
+
+  /**
+   * 서브루틴 정의 파일을 로드하여 메타데이터를 반환합니다.
+   * @param fileName 서브루틴 파일 이름
+   */
+  private async loadSubroutineDefinition(fileName: string): Promise<SubroutineDefinition | undefined> {
+    try {
+      const filePath = await window.electronAPI.resolvePath('userData', `sequences/${fileName}`);
+      const exists = await window.electronAPI.fileExists(filePath);
+      if (!exists) {
+        console.warn(`[SequenceManager] Subroutine file not found: ${fileName}`);
+        return undefined;
+      }
+      const fileBuffer = await window.electronAPI.readAbsoluteFile(filePath);
+      if (!(fileBuffer instanceof ArrayBuffer)) {
+        console.error(`[SequenceManager] Failed to read subroutine file buffer: ${fileName}`);
+        return undefined;
+      }
+      const json = JSON.parse(new TextDecoder().decode(fileBuffer));
+      if (json.type !== 'subroutine') {
+        return undefined;
+      }
+      const name = json.name || fileName.replace(/\.[^/.]+$/, '');
+      const description = json.description || '';
+      const parameters: SubroutineParameter[] = [];
+      const inputNode = (json.nodes || []).find((n: any) => n.type === 'subroutineInputNode');
+      if (inputNode?.data?.parameters) {
+        for (const param of inputNode.data.parameters) {
+          parameters.push({
+            name: param.name,
+            type: param.type,
+            description: param.description,
+          });
+        }
+      }
+      const capabilities: string[] = Array.isArray(json.capabilities) ? json.capabilities : [];
+      const locks: string[] = Array.isArray(json.locks) ? json.locks : [];
+      return { name, description, parameters, capabilities, locks };
+    } catch (error) {
+      console.error(`[SequenceManager] Error loading subroutine definition ${fileName}:`, error);
+      return undefined;
     }
   }
 }

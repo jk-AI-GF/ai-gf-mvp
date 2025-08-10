@@ -10,6 +10,24 @@ type HistoryMessage = {
   content: string;
 };
 
+/**
+ * 텍스트에서 <표정: name> 태그를 추출합니다.
+ */
+function extractExpression(text: string, vrmExpressionList: string[]): string {
+  const match = text.match(/<표정:\s*(.*?)\s*>/);
+  if (match && vrmExpressionList.includes(match[1])) {
+    return match[1];
+  }
+  return vrmExpressionList[0] || 'neutral';
+}
+
+/**
+ * 텍스트에서 <표정: ...> 태그를 제거합니다.
+ */
+function removeExpressionTag(text: string): string {
+  return text.replace(/<표정:\s*(.*?)\s*>/, '').trim();
+}
+
 export class ChatService {
   // 내부 대화 기록은 제네릭한 포맷으로 관리
   private chatHistory: HistoryMessage[] = [];
@@ -51,7 +69,17 @@ export class ChatService {
         ? Object.keys(this.vrmManager.currentVrm.expressionManager.expressionMap)
         : ['neutral', 'happy', 'sad'];
 
-      const systemPrompt = `${persona}\n모든 응답에 <표정: [표정_이름]> 형식의 표정 태그를 포함해 주세요. 표정_이름은 다음 목록 중 하나여야 합니다: ${vrmExpressionList.join(', ')}. 예시: <표정: happy> 안녕하세요!`;
+      // 기본 system prompt에 사용자 정의 Persona 및 표정 태그 형식을 포함
+      const basePrompt = `${persona}\n모든 응답에 <표정: [표정_이름]> 형식의 표정 태그를 포함해 주세요. 표정_이름은 다음 목록 중 하나여야 합니다: ${vrmExpressionList.join(', ')}. 예시: <표정: happy> 안녕하세요!`;
+      // 현재 실행 가능한 서브루틴 목록을 LLM에 제공하고, 응답은 반드시 JSON 형식으로 반환하도록 지시
+      const availableSubroutines = this.pluginManager.context?.sequenceManager?.getAvailableSubroutines() || [];
+      const subJson = JSON.stringify(availableSubroutines);
+      const systemPrompt = `${basePrompt}\n다음 JSON 배열은 현재 실행 가능한 Action(서브루틴) 목록입니다:\n${subJson}\n` +
+        'LLM 응답은 반드시 JSON 객체 하나만 포함해야 합니다. 형식은 다음과 같습니다.\n' +
+        '// type이 "talk"인 경우\n' +
+        '{"type":"talk","text":문자열,"expression":표정}\n' +
+        '// type이 "action"인 경우\n' +
+        '{"type":"action","subroutine":서브루틴이름,"arguments":{...},"text":대사,"expression":표정}';
 
       let requestUrl: string;
       let requestOptions: RequestInit;
@@ -96,30 +124,44 @@ export class ChatService {
       if (!text) {
         text = '응답이 없습니다.';
       }
-      
-      let expression = 'happy'; // Default expression
-      const expressionMatch = text.match(/<표정:\s*(.*?)\s*>/);
-      if (expressionMatch && expressionMatch[1]) {
-        const proposedExpression = expressionMatch[1];
-        if (vrmExpressionList.includes(proposedExpression)) {
-          expression = proposedExpression;
+      // JSON 파싱 및 분기 처리
+      let payload: any;
+      try {
+        payload = JSON.parse(text);
+      } catch (err) {
+        // Try to extract JSON object embedded in markdown or extra text
+        const match = text.match(/({[\s\S]*})/);
+        if (match) {
+          try {
+            payload = JSON.parse(match[1]);
+          } catch (err2) {
+            console.error('[ChatService] JSON 파싱 실패, 기본 대화로 처리합니다.', err2);
+          }
         }
-        else {
-          console.warn(`LLM proposed expression "${proposedExpression}" not found in VRM expression list. Using default.`);
+        if (!payload) {
+          console.error('[ChatService] JSON 파싱 실패, 기본 대화로 처리합니다.', err);
+          const fallbackExpr = extractExpression(text, vrmExpressionList);
+          const fallbackText = removeExpressionTag(text);
+          eventBus.emit('llm:responseReceived', { type: 'talk', text: fallbackText, expression: fallbackExpr });
+          eventBus.emit('chat:newMessage', { role: 'assistant', text: fallbackText });
+          this.chatHistory.push({ role: 'assistant', content: fallbackText });
+          return;
         }
-        text = text.replace(/<표정:\s*(.*?)\s*>/, '').trim();
       }
-
-      // The service's responsibility ends here. It emits an event with the processed
-      // data from the LLM. Other parts of the system (like a dedicated plugin)
-      // will listen for this event and decide how to make the character act.
-      eventBus.emit('llm:responseReceived', { text, expression });
-
-      // Keep the original events for UI updates
-      eventBus.emit('chat:newMessage', { role: 'assistant', text });
-      eventBus.emit('ui:showFloatingMessage', { text });
-
-      this.chatHistory.push({ role: 'assistant', content: text });
+      // 처리된 JSON payload를 기반으로 분기
+      if (payload.type === 'action') {
+        const { subroutine, arguments: args, text: speech, expression: expr } = payload;
+        // 서브루틴 실행
+        this.pluginManager.context?.sequenceManager?.runSubroutine(subroutine, args);
+        eventBus.emit('llm:responseReceived', { type: 'action', subroutine, arguments: args, text: speech, expression: expr });
+        eventBus.emit('chat:newMessage', { role: 'assistant', text: speech });
+        this.chatHistory.push({ role: 'assistant', content: speech });
+      } else {
+        const { text: speech, expression: expr } = payload;
+        eventBus.emit('llm:responseReceived', { type: 'talk', text: speech, expression: expr });
+        eventBus.emit('chat:newMessage', { role: 'assistant', text: speech });
+        this.chatHistory.push({ role: 'assistant', content: speech });
+      }
 
     }
     catch (err: any) {

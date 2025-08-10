@@ -132,6 +132,7 @@
   left: 10px;
   right: 10px;
   z-index: 10;
+  pointer-events: all !important; /* Re-enable pointer events for this container */
 }
 
 .descriptionTextarea {
@@ -145,4 +146,61 @@
   font-size: 12px;
   resize: vertical;
   box-sizing: border-box;
+}
+
+/* Meta data inputs for subroutine capabilities and locks */
+.metaContainer {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.metaInput {
+  flex: 1;
+  background-color: rgba(40, 40, 40, 0.8);
+  border: 1px solid #555;
+  border-radius: 4px;
+  color: #ddd;
+  padding: 4px 8px;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+/* TagInput styles */
+.tagInputContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  border: 1px solid #555;
+  padding: 4px;
+  background: rgba(40, 40, 40, 0.8);
+  border-radius: 4px;
+}
+.tag {
+  display: flex;
+  align-items: center;
+  padding: 2px 6px;
+  background: #3a3a3a;
+  border-radius: 3px;
+  font-size: 12px;
+  color: #ddd;
+}
+.tagRemove {
+  background: none;
+  border: none;
+  color: #aaa;
+  margin-left: 4px;
+  cursor: pointer;
+}
+.tagRemove:hover {
+  color: #fff;
+}
+.tagInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #ddd;
+  font-size: 12px;
+  outline: none;
+  min-width: 80px;
 }
