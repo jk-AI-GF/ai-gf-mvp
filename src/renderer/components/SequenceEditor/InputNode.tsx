@@ -1,5 +1,6 @@
-import React from 'react';
-import { Handle, Position, NodeProps } from 'reactflow';
+
+import React, { useCallback } from 'react';
+import { Handle, Position, NodeProps, useReactFlow, useStoreApi } from 'reactflow';
 import { InputNodeModel, SubroutineParameter } from '../../../core/sequence/InputNodeModel';
 import { getPortColor } from './node-style-utils';
 
@@ -8,12 +9,12 @@ const nodeStyle: React.CSSProperties = {
   color: '#ddd',
   borderRadius: '5px',
   border: '1px solid #555',
-  width: 250,
+  width: 280, // Increased width for editing UI
   fontSize: '12px',
 };
 
 const headerStyle: React.CSSProperties = {
-  background: '#10A37F', // Subroutine color
+  background: '#10A37F',
   padding: '8px',
   fontWeight: 'bold',
   textAlign: 'center',
@@ -21,71 +22,133 @@ const headerStyle: React.CSSProperties = {
   borderTopRightRadius: '4px',
 };
 
-const portContainerStyle: React.CSSProperties = {
+const contentStyle: React.CSSProperties = {
   padding: '10px',
+};
+
+const paramsListStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  alignItems: 'flex-end', // Align all ports to the right
-  gap: '10px',
+  gap: '8px',
+  marginBottom: '10px',
 };
 
-const portStyle: React.CSSProperties = {
-  position: 'relative',
-  height: '16px',
+const paramItemStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
+  gap: '5px',
 };
 
-const portLabelStyle: React.CSSProperties = {
-  marginRight: '15px',
+const inputStyle: React.CSSProperties = {
+  background: '#2a2a2a',
+  color: '#ddd',
+  border: '1px solid #555',
+  borderRadius: '3px',
+  padding: '2px 4px',
+  fontSize: '11px',
+  boxSizing: 'border-box',
 };
 
-const InputNode: React.FC<NodeProps<InputNodeModel>> = ({ data }) => {
+const buttonStyle: React.CSSProperties = {
+  background: '#555',
+  color: '#ddd',
+  border: 'none',
+  borderRadius: '3px',
+  cursor: 'pointer',
+  padding: '2px 6px',
+};
+
+const InputNode: React.FC<NodeProps<InputNodeModel>> = ({ id, data }) => {
+  const { setNodes } = useReactFlow();
+  const store = useStoreApi();
+
+  const updateNodeState = useCallback((model: InputNodeModel) => {
+    const { nodeInternals } = store.getState();
+    setNodes(
+      Array.from(nodeInternals.values()).map((node) => {
+        if (node.id === id) {
+          return { ...node, data: model };
+        }
+        return node;
+      })
+    );
+  }, [id, store, setNodes]);
+
+  const handleAddParam = useCallback(() => {
+    const newModel = data.clone() as InputNodeModel;
+    newModel.addParameter({
+      name: `param${data.parameters.length + 1}`,
+      type: 'string',
+      description: '',
+    });
+    updateNodeState(newModel);
+  }, [data, updateNodeState]);
+
+  const handleRemoveParam = useCallback((paramId: string) => {
+    const newModel = data.clone() as InputNodeModel;
+    newModel.removeParameter(paramId);
+    updateNodeState(newModel);
+  }, [data, updateNodeState]);
+
+  const handleParamChange = useCallback((paramId: string, newValues: Partial<Omit<SubroutineParameter, 'id'>>) => {
+    const newModel = data.clone() as InputNodeModel;
+    newModel.updateParameter(paramId, newValues);
+    updateNodeState(newModel);
+  }, [data, updateNodeState]);
+
+
   if (!data) return null;
 
   const execOutPort = data.outputs.find(p => p.type === 'execution');
-  const dataOutPorts = data.outputs.filter(p => p.type !== 'execution');
-
-  // Match parameters to their corresponding ports using the parameter's id
-  const getParamForPort = (portName: string): SubroutineParameter | undefined => {
-    return data.parameters.find(p => p.id === portName);
-  };
 
   return (
     <div style={nodeStyle}>
-      <div style={headerStyle}>
-        {data.name}
-      </div>
+      <div style={headerStyle}>{data.name}</div>
       
-      <div style={portContainerStyle}>
-        {/* Execution Output Port */}
+      <div style={contentStyle}>
+        <div style={{ marginBottom: '10px', fontWeight: 'bold' }}>Parameters:</div>
+        <div style={paramsListStyle}>
+          {data.parameters.map((param) => (
+            <div key={param.id} style={paramItemStyle}>
+              <input
+                type="text"
+                value={param.name}
+                onChange={(e) => handleParamChange(param.id, { name: e.target.value })}
+                style={{ ...inputStyle, flex: 1 }}
+                placeholder="Param Name"
+              />
+              <select
+                value={param.type}
+                onChange={(e) => handleParamChange(param.id, { type: e.target.value as SubroutineParameter['type'] })}
+                style={{ ...inputStyle, flex: 0.8 }}
+              >
+                <option value="string">String</option>
+                <option value="number">Number</option>
+                <option value="boolean">Boolean</option>
+              </select>
+              <button onClick={() => handleRemoveParam(param.id)} style={buttonStyle}>-</button>
+            </div>
+          ))}
+        </div>
+        <button onClick={handleAddParam} style={{ ...buttonStyle, width: '100%', padding: '4px' }}>+ Add Parameter</button>
+      </div>
+
+      <hr style={{ borderColor: '#444', margin: '0 10px' }} />
+
+      {/* Output Ports */}
+      <div style={{ padding: '10px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
         {execOutPort && (
-          <div style={portStyle}>
-            <span style={portLabelStyle}>Run</span>
-            <Handle
-              type="source"
-              position={Position.Right}
-              id={execOutPort.name}
-              style={{ top: 'auto', background: getPortColor(execOutPort.type) }}
-            />
+          <div style={{ position: 'relative', height: '16px', display: 'flex', alignItems: 'center' }}>
+            <span style={{ marginRight: '15px' }}>Run</span>
+            <Handle type="source" position={Position.Right} id={execOutPort.name} style={{ top: 'auto', background: getPortColor(execOutPort.type) }} />
           </div>
         )}
-
-        {/* Data Output Ports */}
-        {dataOutPorts.map((port) => {
-          const param = getParamForPort(port.name);
-          return (
-            <div key={port.name} style={portStyle}>
-              <span style={portLabelStyle}>{param ? `${param.name} (${param.type})` : port.name}</span>
-              <Handle
-                type="source"
-                position={Position.Right}
-                id={port.name}
-                style={{ top: 'auto', background: getPortColor(port.type) }}
-              />
-            </div>
-          );
-        })}
+        {data.parameters.map((param) => (
+          <div key={param.id} style={{ position: 'relative', height: '16px', display: 'flex', alignItems: 'center' }}>
+            <span style={{ marginRight: '15px' }}>{param.name}</span>
+            <Handle type="source" position={Position.Right} id={param.id} style={{ top: 'auto', background: getPortColor(param.type) }} />
+          </div>
+        ))}
       </div>
     </div>
   );
