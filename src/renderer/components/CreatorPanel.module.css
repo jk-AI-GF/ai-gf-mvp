@@ -1,8 +1,38 @@
+/* CreatorPanel.module.css - Dark Theme Revision */
+
+:root {
+  /* Re-tuned for a dark theme context */
+  --primary-color: #007bff;
+  --primary-hover-color: #0056b3;
+  --danger-color: #e53e3e; /* Brighter red for dark bg */
+  --danger-hover-color: #c53030;
+  --warning-color: #ecc94b; /* Brighter yellow */
+  --warning-hover-color: #d69e2e;
+  --success-color: #48bb78; /* Brighter green */
+  --success-hover-color: #38a169;
+  
+  /* Dark Theme Palette */
+  --bg-color: transparent; /* Inherits from Panel */
+  --bg-hover-color: rgba(255, 255, 255, 0.1);
+  --bg-secondary-color: #3a3a3a;
+  --bg-secondary-hover-color: #4a4a4a;
+  
+  --text-color: #e0e0e0;
+  --text-color-secondary: #a0a0a0;
+  
+  --border-color: #555;
+  --border-color-light: #777;
+
+  --border-radius: 4px;
+  --transition-speed: 0.2s;
+}
+
 .container {
   padding: 10px;
-  min-width: 320px; /* 패널의 최소 너비를 수동으로 지정 */
+  min-width: 320px;
   box-sizing: border-box;
-  color: #333;
+  color: var(--text-color);
+  background-color: var(--bg-color);
 }
 
 .section {
@@ -10,25 +40,30 @@
 }
 
 .sectionTitle {
-  margin: 0 0 10px 0;
   font-size: 16px;
-  border-bottom: 1px solid #eee;
+  font-weight: 600;
+  margin: 0 0 10px 0;
   padding-bottom: 5px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-color);
 }
 
 .itemList {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 8px;
-  background-color: #f9f9f9;
-  border-radius: 4px;
+  border-radius: var(--border-radius);
+  transition: background-color var(--transition-speed);
+}
+
+.item:hover {
+  background-color: var(--bg-hover-color);
 }
 
 .itemName {
@@ -37,12 +72,16 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-right: 8px;
+  font-size: 14px;
+  color: var(--text-color);
 }
 
 .typeIndicator {
   font-size: 0.8em;
-  color: #888;
+  color: var(--text-color-secondary);
   margin-left: 4px;
+  font-weight: 400;
 }
 
 .controls {
@@ -52,77 +91,96 @@
   flex-shrink: 0;
 }
 
-.addButton {
+.controlButton {
+  padding: 4px 8px;
+  border: 1px solid transparent; /* Border color will be set by specific class */
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background-color var(--transition-speed), color var(--transition-speed), border-color var(--transition-speed);
+}
+
+/* Default colored buttons with muted saturation */
+.deleteButton {
+  background-color: #5a2d2d;
+  border-color: #8b4d4d;
+  color: #f1c4c4;
+}
+.editButton {
+  background-color: #5a502a;
+  border-color: #8a804a;
+  color: #f8e9b4;
+}
+.runButton {
+  background-color: #2f533f;
+  border-color: #518a6a;
+  color: #b8e6ca;
+}
+
+/* Hover states with full saturation */
+.deleteButton:hover {
+  background-color: var(--danger-color);
+  border-color: var(--danger-color);
+  color: white;
+}
+
+.editButton:hover {
+  background-color: var(--warning-color);
+  border-color: var(--warning-color);
+  color: #1a202c; /* Dark text for yellow button */
+}
+
+.runButton:hover {
+  background-color: var(--success-color);
+  border-color: var(--success-color);
+  color: white;
+}
+
+.primaryButton {
   width: 100%;
   padding: 8px 12px;
   margin-top: 10px;
-  background-color: #007bff;
+  background-color: var(--primary-color);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--border-radius);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-speed);
+  font-size: 13px;
 }
 
-.addButton:hover {
-  background-color: #0056b3;
+.primaryButton:hover {
+  background-color: var(--primary-hover-color);
 }
 
-.debugButton {
+.secondaryButton {
   width: 100%;
   padding: 8px 12px;
-  background-color: #6c757d;
-  color: white;
-  border: none;
-  border-radius: 4px;
+  background-color: var(--bg-secondary-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color-light);
+  border-radius: var(--border-radius);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-speed), border-color var(--transition-speed);
+  font-size: 13px;
 }
 
-.debugButton:hover {
-  background-color: #5a6268;
-}
-
-.controlButton {
-  padding: 4px 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: background-color 0.2s;
-}
-
-.editButton {
-  background-color: #ffc107;
-  color: #333;
-}
-.editButton:hover {
-  background-color: #e0a800;
-}
-
-.deleteButton {
-  background-color: #dc3545;
-  color: white;
-}
-.deleteButton:hover {
-  background-color: #c82333;
-}
-
-.runButton {
-  background-color: #28a745;
-  color: white;
-}
-.runButton:hover {
-  background-color: #218838;
+.secondaryButton:hover {
+  background-color: var(--bg-secondary-hover-color);
+  border-color: var(--text-color);
 }
 
 .emptyMessage {
-  color: #888;
+  color: var(--text-color-secondary);
   text-align: center;
-  padding: 10px;
+  padding: 15px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: var(--border-radius);
+  font-size: 13px;
 }
 
-/* Toggle Switch CSS */
+/* Toggle Switch - Dark Theme */
 .switch {
   position: relative;
   display: inline-block;
@@ -143,9 +201,10 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #ccc;
-  transition: .4s;
+  background-color: var(--bg-secondary-color);
+  transition: var(--transition-speed);
   border-radius: 20px;
+  border: 1px solid var(--border-color-light);
 }
 
 .slider:before {
@@ -153,20 +212,25 @@
   content: "";
   height: 14px;
   width: 14px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: .4s;
+  left: 2px;
+  bottom: 2px;
+  background-color: var(--text-color);
+  transition: var(--transition-speed);
   border-radius: 50%;
 }
 
 input:checked + .slider {
-  background-color: #2196F3;
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
 }
 
 input:disabled + .slider {
-  background-color: #e9e9e9;
+  background-color: #444;
   cursor: not-allowed;
+  border-color: #555;
+}
+input:disabled + .slider:before {
+  background-color: #777;
 }
 
 input:checked + .slider:before {

@@ -37,43 +37,62 @@ const CreatorPanel: React.FC<CreatorPanelProps> = ({
         <div className={styles.section}>
           <h3 className={styles.sectionTitle}>시퀀스 & 서브루틴</h3>
           <div className={styles.itemList}>
-            {sequences.length === 0 && <p className={styles.emptyMessage}>생성된 시퀀스가 없습니다.</p>}
-            {sequences.map(sequence => (
-              <div key={sequence.name} className={styles.item}>
-                <span className={styles.itemName} title={sequence.type}>
-                  {sequence.name.replace('.json', '')}
-                  <span className={styles.typeIndicator}>{sequence.type === 'subroutine' ? ' (S)' : ''}</span>
-                </span>
-                <div className={styles.controls}>
-                  <button className={`${styles.controlButton} ${styles.deleteButton}`} onClick={() => onDeleteSequence(sequence.name)}>삭제</button>
-                  <button className={`${styles.controlButton} ${styles.editButton}`} onClick={() => onEditSequence(sequence.name)}>편집</button>
-                  {sequence.type !== 'subroutine' && (
-                    <button className={`${styles.controlButton} ${styles.runButton}`} onClick={() => onManualStartSequence(sequence.name)}>실행</button>
-                  )}
-                  <label className={styles.switch}>
-                    <input 
-                      type="checkbox" 
-                      checked={activeSequences.includes(sequence.name)}
-                      onChange={(e) => onToggleSequence(sequence.name, e.target.checked)}
-                      // Subroutines cannot be activated/deactivated via toggle
-                      disabled={sequence.type === 'subroutine'}
-                    />
-                    <span className={styles.slider}></span>
-                  </label>
+            {sequences.length === 0 ? (
+              <p className={styles.emptyMessage}>생성된 시퀀스가 없습니다.</p>
+            ) : (
+              sequences.map(sequence => (
+                <div key={sequence.name} className={styles.item}>
+                  <span className={styles.itemName} title={sequence.name}>
+                    {sequence.name.replace('.json', '')}
+                    <span className={styles.typeIndicator}>
+                      {sequence.type === 'subroutine' ? '(Sub)' : ''}
+                    </span>
+                  </span>
+                  <div className={styles.controls}>
+                    <button 
+                      className={`${styles.controlButton} ${styles.deleteButton}`} 
+                      onClick={() => onDeleteSequence(sequence.name)}
+                    >
+                      삭제
+                    </button>
+                    <button 
+                      className={`${styles.controlButton} ${styles.editButton}`} 
+                      onClick={() => onEditSequence(sequence.name)}
+                    >
+                      편집
+                    </button>
+                    {sequence.type !== 'subroutine' && (
+                      <button 
+                        className={`${styles.controlButton} ${styles.runButton}`} 
+                        onClick={() => onManualStartSequence(sequence.name)}
+                      >
+                        실행
+                      </button>
+                    )}
+                    <label className={styles.switch} title={sequence.type === 'subroutine' ? "서브루틴은 직접 활성화할 수 없습니다" : "활성화/비활성화"}>
+                      <input 
+                        type="checkbox" 
+                        checked={activeSequences.includes(sequence.name)}
+                        onChange={(e) => onToggleSequence(sequence.name, e.target.checked)}
+                        disabled={sequence.type === 'subroutine'}
+                      />
+                      <span className={styles.slider}></span>
+                    </label>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
-          <button className={styles.addButton} onClick={() => onOpenSequenceEditor(null)}>
+          <button className={styles.primaryButton} onClick={() => onOpenSequenceEditor(null)}>
             새 시퀀스/서브루틴 만들기
           </button>
         </div>
         <div className={styles.section}>
            <h3 className={styles.sectionTitle}>디버그 도구</h3>
-           <button className={styles.debugButton} onClick={onOpenContextViewer}>
+           <button className={styles.secondaryButton} onClick={onOpenContextViewer}>
             컨텍스트 스토어 뷰어
           </button>
-          <button className={styles.debugButton} onClick={onOpenCharacterStateViewer} style={{marginTop: '10px'}}>
+          <button className={styles.secondaryButton} onClick={onOpenCharacterStateViewer} style={{marginTop: '10px'}}>
             CharacterState 뷰어
           </button>
         </div>
