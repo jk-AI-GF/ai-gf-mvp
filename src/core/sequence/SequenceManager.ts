@@ -256,7 +256,7 @@ export class SequenceManager {
    * @param flow - React Flow 인스턴스에서 toObject()로 얻은 객체입니다.
    * @returns 직렬화된 노드와 엣지를 포함하는 객체입니다.
    */
-  public serializeSequence(flow: any): any {
+  public serializeSequence(flow: any, description: string): any {
     const serializedNodes = flow.nodes.map((node: Node<BaseNode>) => {
       const serializedData = node.data.serialize();
       const { data, ...rest } = node;
@@ -269,7 +269,7 @@ export class SequenceManager {
 
     return {
       type: sequenceType,
-      description: "", // Placeholder for now
+      description: description,
       nodes: serializedNodes,
       edges: flow.edges,
     };
@@ -281,9 +281,9 @@ export class SequenceManager {
    * @param flow - React Flow 인스턴스에서 toObject()로 얻은 객체입니다.
    * @returns 성공 여부와 파일 경로를 포함하는 객체입니다.
    */
-  public async saveSequenceToFile(fileName: string, flow: any): Promise<{ success: boolean; filePath?: string; error?: string }> {
+  public async saveSequenceToFile(fileName: string, flow: any, description: string): Promise<{ success: boolean; filePath?: string; error?: string }> {
     try {
-      const serializableData = this.serializeSequence(flow);
+      const serializableData = this.serializeSequence(flow, description);
       const jsonString = JSON.stringify(serializableData, null, 2);
       
       // 메인 프로세스에 파일 저장을 요청합니다.

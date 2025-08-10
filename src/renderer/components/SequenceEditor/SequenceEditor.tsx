@@ -128,6 +128,9 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
   const { screenToFlowPosition, getNodes, getEdges, fitView } = useReactFlow();
   const [actions, setActions] = useState<ActionDefinition[]>([]);
   const [events, setEvents] = useState<EventDefinition[]>([]);
+  const [description, setDescription] = useState('');
+
+  const isSubroutine = nodes.some(node => node.type === 'subroutineInputNode');
 
   const loadSequenceData = useCallback((sequenceJsonString: string) => {
     const serializedSequence = JSON.parse(sequenceJsonString);
@@ -148,6 +151,9 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
     id = maxId + 1;
 
     const { nodes: newNodes, edges: rawEdges } = sequenceManager.deserializeSequence(serializedSequence);
+
+    // Set the description from the loaded file
+    setDescription(serializedSequence.description || '');
 
     const styledEdges = rawEdges.map(edge => {
       const sourceNode = newNodes.find(node => node.id === edge.source);
@@ -172,7 +178,7 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
     }, 50);
 
     console.log('시퀀스를 성공적으로 불러왔습니다.');
-  }, [setNodes, setEdges, sequenceManager, fitView]);
+  }, [setNodes, setEdges, sequenceManager, fitView, setDescription]);
 
   // Auto-load sequence if sequenceToLoad is provided
   useEffect(() => {
@@ -214,9 +220,9 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
 
     try {
       if (sequenceToLoad) {
-        result = await sequenceManager.saveSequenceToFile(sequenceToLoad, flow);
+        result = await sequenceManager.saveSequenceToFile(sequenceToLoad, flow, description);
       } else {
-        const serializableData = sequenceManager.serializeSequence(flow);
+        const serializableData = sequenceManager.serializeSequence(flow, description);
         const jsonString = JSON.stringify(serializableData, null, 2);
         result = await window.electronAPI.saveSequence(jsonString);
       }
@@ -233,7 +239,7 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
       console.error('시퀀스 저장 중 예외 발생:', error);
       alert(`저장 중 오류 발생: ${error instanceof Error ? error.message : String(error)}`);
     }
-  }, [getNodes, getEdges, sequenceManager, sequenceToLoad, onClose]);
+  }, [getNodes, getEdges, sequenceManager, sequenceToLoad, onClose, description]);
 
   const handleSaveAs = useCallback(async () => {
     if (!sequenceManager) {
@@ -245,7 +251,7 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
     const flow = { nodes: currentNodes, edges: currentEdges };
     
     try {
-      const serializableData = sequenceManager.serializeSequence(flow);
+      const serializableData = sequenceManager.serializeSequence(flow, description);
       const jsonString = JSON.stringify(serializableData, null, 2);
       const result = await window.electronAPI.saveSequence(jsonString);
 
@@ -261,7 +267,7 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
       console.error('시퀀스 저장 중 예외 발생:', error);
       alert(`저장 중 오류 발생: ${error instanceof Error ? error.message : String(error)}`);
     }
-  }, [getNodes, getEdges, sequenceManager, onClose]);
+  }, [getNodes, getEdges, sequenceManager, onClose, description]);
 
   const handleLoad = useCallback(async () => {
     try {
@@ -440,6 +446,16 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
         style={{ flex: 1, height: '100%', position: 'relative' }} 
         ref={reactFlowWrapper}
       >
+        {isSubroutine && (
+          <div className={styles.descriptionContainer}>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="서브루틴의 기능에 대한 자연어 설명을 입력하세요 (LLM이 사용). 예: 캐릭터가 특정 메시지를 말하며 표정을 짓습니다."
+              className={styles.descriptionTextarea}
+            />
+          </div>
+        )}
         <div className={styles.buttonContainer}>
           <button onClick={handleRun} className={`${styles.button} ${styles.buttonRun}`}>실행</button>
           <button onClick={handleSave} className={`${styles.button} ${styles.buttonPrimary}`}>저장</button>

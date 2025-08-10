@@ -6,6 +6,8 @@ interface CssExports {
   'buttonPrimary': string;
   'buttonRun': string;
   'buttonSecondary': string;
+  'descriptionContainer': string;
+  'descriptionTextarea': string;
   'edgeAny': string;
   'edgeBoolean': string;
   'edgeDefault': string;
