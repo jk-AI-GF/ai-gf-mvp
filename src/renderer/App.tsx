@@ -12,7 +12,6 @@ import AnimationPanel from './components/AnimationPanel';
 import AnimationEditPanel from './components/AnimationEditor/AnimationEditPanel';
 import MaterialPanel from './components/MaterialPanel';
 import LightPanel from './components/LightPanel';
-import TriggerEditorPanel from './components/TriggerEditorPanel';
 import CreatorPanel from './components/CreatorPanel';
 import ContextStoreDebugPanel from './components/ContextStoreDebugPanel';
 import CharacterStateViewer from './components/CharacterStateViewer';
@@ -22,7 +21,6 @@ import FloatingMessageManager from './components/FloatingMessageManager';
 import UIModeNotification from './components/UIModeNotification';
 import eventBus from '../core/event-bus';
 import { useAppContext } from './contexts/AppContext';
-import { CustomTrigger } from '../core/custom-trigger-manager';
 
 interface Message {
   role: string;
@@ -49,14 +47,10 @@ const App: React.FC = () => {
   const [isMaterialPanelOpen, setMaterialPanelOpen] = useState(false);
   const [isLightPanelOpen, setLightPanelOpen] = useState(false);
   const [isCreatorPanelOpen, setCreatorPanelOpen] = useState(false);
-  const [isTriggerEditorPanelOpen, setTriggerEditorPanelOpen] = useState(false);
   const [isContextDebugPanelOpen, setContextDebugPanelOpen] = useState(false);
   const [isCharacterStateViewerOpen, setCharacterStateViewerOpen] = useState(false);
   const [isSequenceEditorOpen, setSequenceEditorOpen] = useState(false);
   const [sequenceToEdit, setSequenceToEdit] = useState<string | null>(null);
-  
-  const [customTriggers, setCustomTriggers] = useState<CustomTrigger[]>([]);
-  const [editingTrigger, setEditingTrigger] = useState<CustomTrigger | null>(null);
   
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [notification, setNotification] = useState({ show: false, message: '' });
@@ -173,14 +167,6 @@ const App: React.FC = () => {
   }, [actionRegistry]);
 
   useEffect(() => {
-    const loadTriggers = async () => {
-      const savedTriggers = await window.electronAPI.getCustomTriggers();
-      setCustomTriggers(savedTriggers || []);
-    };
-    loadTriggers();
-  }, []);
-
-  useEffect(() => {
     const handleNewMessage = (data: Message | any) => {
       let newMessage: Message;
       if (typeof data === 'object' && data !== null && typeof data.text === 'string') {
@@ -211,7 +197,7 @@ const App: React.FC = () => {
     if (!isUiInteractive) {
       [setSettingsModalOpen, setJointPanelOpen, setExpressionPanelOpen, setPluginsPanelOpen, 
        setMeshPanelOpen, setModManagementPanelOpen, setPosePanelOpen, setAnimationPanelOpen, 
-       setMaterialPanelOpen, setLightPanelOpen, setCreatorPanelOpen, setTriggerEditorPanelOpen,
+       setMaterialPanelOpen, setLightPanelOpen, setCreatorPanelOpen,
        setContextDebugPanelOpen, setSequenceEditorOpen, setCharacterStateViewerOpen]
       .forEach(setter => setter(false));
     }
@@ -225,66 +211,6 @@ const App: React.FC = () => {
     } else {
       console.error('Chat service is not initialized.');
       setChatMessages((prev) => [...prev, { role: 'system', text: '오류: 채팅 서비스가 초기화되지 않았습니다.' }]);
-    }
-  };
-
-  const handleOpenTriggerEditor = (trigger: CustomTrigger | null) => {
-    setEditingTrigger(trigger);
-    setTriggerEditorPanelOpen(true);
-  };
-
-  const handleSaveTrigger = async (trigger: CustomTrigger) => {
-    const isEditing = customTriggers.some(t => t.id === trigger.id);
-    const { success, error } = await window.electronAPI.saveCustomTrigger(trigger);
-
-    if (success) {
-      const updatedTriggers = isEditing 
-        ? customTriggers.map(t => t.id === trigger.id ? trigger : t)
-        : [...customTriggers, trigger];
-      setCustomTriggers(updatedTriggers);
-
-      if (pluginManager) {
-        if (isEditing) {
-          pluginManager.context.system.unregisterCustomTrigger(trigger.id);
-        }
-        if (trigger.enabled) {
-          pluginManager.context.system.registerCustomTrigger(trigger);
-        }
-      }
-    } else {
-      console.error('Failed to save trigger:', error);
-    }
-  };
-
-  const handleDeleteTrigger = async (triggerId: string) => {
-    const { success, error } = await window.electronAPI.deleteCustomTrigger(triggerId);
-
-    if (success) {
-      const updatedTriggers = customTriggers.filter(t => t.id !== triggerId);
-      setCustomTriggers(updatedTriggers);
-      pluginManager?.context.system.unregisterCustomTrigger(triggerId);
-    } else {
-      console.error('Failed to delete trigger:', error);
-    }
-  };
-
-  const handleToggleTrigger = async (triggerId: string, enabled: boolean) => {
-    const triggerToUpdate = customTriggers.find(t => t.id === triggerId);
-    if (!triggerToUpdate) return;
-
-    const updatedTrigger = { ...triggerToUpdate, enabled };
-    
-    const { success, error } = await window.electronAPI.saveCustomTrigger(updatedTrigger);
-
-    if (success) {
-      setCustomTriggers(customTriggers.map(t => t.id === triggerId ? updatedTrigger : t));
-      if (enabled) {
-        pluginManager?.context.system.registerCustomTrigger(updatedTrigger);
-      } else {
-        pluginManager?.context.system.unregisterCustomTrigger(triggerId);
-      }
-    } else {
-      console.error('Failed to toggle trigger:', error);
     }
   };
 
@@ -305,7 +231,7 @@ const App: React.FC = () => {
     plugins: { x: window.innerWidth - 740, y: 70 }, mesh: { x: window.innerWidth - 370, y: 70 },
     mod: { x: window.innerWidth - 370, y: 70 }, pose: { x: window.innerWidth - 370, y: 70 },
     animation: { x: window.innerWidth - 370, y: 70 }, material: { x: 20, y: 400 },
-    light: { x: 350, y: 400 }, triggerEditor: { x: window.innerWidth - 370, y: 400 },
+    light: { x: 350, y: 400 },
     creator: { x: 20, y: 70 }, contextDebug: { x: window.innerWidth - 400, y: 70 },
     characterState: { x: window.innerWidth - 400, y: 400 },
     animationEditor: { x: window.innerWidth / 2 - 200, y: window.innerHeight / 2 - 200 },
@@ -368,12 +294,7 @@ const App: React.FC = () => {
         onClose={() => setCreatorPanelOpen(false)} 
         initialPos={panelPositions.creator} 
         onDragEnd={(pos) => handlePanelDrag('creator', pos)}
-        triggers={customTriggers}
         sequences={allSequences}
-        onOpenTriggerEditor={() => handleOpenTriggerEditor(null)}
-        onEditTrigger={(trigger) => handleOpenTriggerEditor(trigger)}
-        onDeleteTrigger={handleDeleteTrigger}
-        onToggleTrigger={handleToggleTrigger}
         onOpenContextViewer={() => setContextDebugPanelOpen(p => !p)}
         onOpenCharacterStateViewer={() => setCharacterStateViewerOpen(p => !p)}
         onOpenSequenceEditor={handleEditSequence}
@@ -382,14 +303,6 @@ const App: React.FC = () => {
         activeSequences={activeSequences}
         onToggleSequence={handleToggleSequence}
         onManualStartSequence={handleManualStartSequence}
-      />}
-
-      {isTriggerEditorPanelOpen && <TriggerEditorPanel 
-        onClose={() => setTriggerEditorPanelOpen(false)} 
-        initialPos={panelPositions.triggerEditor} 
-        onDragEnd={(pos) => handlePanelDrag('triggerEditor', pos)}
-        onSave={handleSaveTrigger}
-        triggerToEdit={editingTrigger}
       />}
 
       <SequenceEditor

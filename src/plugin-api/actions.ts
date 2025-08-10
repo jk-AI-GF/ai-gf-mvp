@@ -45,7 +45,7 @@ export interface ActionDefinition {
  */
 export interface Actions {
   /**
-   * TriggerEditorPanel 등에서 사용할 수 있는 모든 액션의 목록과 명세를 반환합니다.
+   * 사용할 수 있는 모든 액션의 목록과 명세를 반환합니다.
    */
   getAvailableActions(): Promise<ActionDefinition[]>;
 

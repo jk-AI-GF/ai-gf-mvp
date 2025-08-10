@@ -1,20 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Panel from './Panel';
 import styles from './CreatorPanel.module.css';
-import { CustomTrigger } from '../../core/custom-trigger-manager';
 
 interface CreatorPanelProps {
   onClose: () => void;
-  onOpenTriggerEditor: (trigger: CustomTrigger | null) => void;
-  onEditTrigger: (trigger: CustomTrigger) => void;
-  onDeleteTrigger: (triggerId: string) => void;
-  onToggleTrigger: (triggerId: string, enabled: boolean) => void;
   onOpenContextViewer: () => void;
   onOpenCharacterStateViewer: () => void;
   onOpenSequenceEditor: (sequenceFile: string | null) => void;
   onEditSequence: (sequenceFile: string) => void;
   onDeleteSequence: (sequenceFile: string) => void;
-  triggers: CustomTrigger[];
   sequences: { name: string, type: 'sequence' | 'subroutine' }[];
   initialPos: { x: number, y: number };
   onDragEnd: (pos: { x: number, y: number }) => void;
@@ -25,16 +19,11 @@ interface CreatorPanelProps {
 
 const CreatorPanel: React.FC<CreatorPanelProps> = ({ 
   onClose, 
-  onOpenTriggerEditor, 
-  onEditTrigger,
-  onDeleteTrigger,
-  onToggleTrigger,
   onOpenContextViewer,
   onOpenCharacterStateViewer,
   onOpenSequenceEditor,
   onEditSequence,
   onDeleteSequence,
-  triggers,
   sequences,
   initialPos, 
   onDragEnd,
@@ -46,12 +35,15 @@ const CreatorPanel: React.FC<CreatorPanelProps> = ({
     <Panel title="크리에이터 패널" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
       <div className={styles.container}>
         <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>시퀀스</h3>
-          <div className={styles.triggerList}>
+          <h3 className={styles.sectionTitle}>시퀀스 & 서브루틴</h3>
+          <div className={styles.itemList}>
             {sequences.length === 0 && <p className={styles.emptyMessage}>생성된 시퀀스가 없습니다.</p>}
             {sequences.map(sequence => (
-              <div key={sequence.name} className={styles.triggerItem}>
-                <span className={styles.triggerName}>{sequence.name.replace('.json', '')}</span>
+              <div key={sequence.name} className={styles.item}>
+                <span className={styles.itemName} title={sequence.type}>
+                  {sequence.name.replace('.json', '')}
+                  <span className={styles.typeIndicator}>{sequence.type === 'subroutine' ? ' (S)' : ''}</span>
+                </span>
                 <div className={styles.controls}>
                   <button className={`${styles.controlButton} ${styles.deleteButton}`} onClick={() => onDeleteSequence(sequence.name)}>삭제</button>
                   <button className={`${styles.controlButton} ${styles.editButton}`} onClick={() => onEditSequence(sequence.name)}>편집</button>
@@ -63,6 +55,8 @@ const CreatorPanel: React.FC<CreatorPanelProps> = ({
                       type="checkbox" 
                       checked={activeSequences.includes(sequence.name)}
                       onChange={(e) => onToggleSequence(sequence.name, e.target.checked)}
+                      // Subroutines cannot be activated/deactivated via toggle
+                      disabled={sequence.type === 'subroutine'}
                     />
                     <span className={styles.slider}></span>
                   </label>
@@ -71,33 +65,7 @@ const CreatorPanel: React.FC<CreatorPanelProps> = ({
             ))}
           </div>
           <button className={styles.addButton} onClick={() => onOpenSequenceEditor(null)}>
-            새 시퀀스 만들기
-          </button>
-        </div>
-        <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>커스텀 트리거 (Legacy)</h3>
-          <div className={styles.triggerList}>
-            {triggers.length === 0 && <p className={styles.emptyMessage}>생성된 트리거가 없습니다.</p>}
-            {triggers.map(trigger => (
-              <div key={trigger.id} className={styles.triggerItem}>
-                <span className={styles.triggerName}>{trigger.name}</span>
-                <div className={styles.controls}>
-                  <button className={`${styles.controlButton} ${styles.editButton}`} onClick={() => onEditTrigger(trigger)}>수정</button>
-                  <button className={`${styles.controlButton} ${styles.deleteButton}`} onClick={() => onDeleteTrigger(trigger.id)}>삭제</button>
-                  <label className={styles.switch}>
-                    <input 
-                      type="checkbox" 
-                      checked={trigger.enabled} 
-                      onChange={(e) => onToggleTrigger(trigger.id, e.target.checked)}
-                    />
-                    <span className={styles.slider}></span>
-                  </label>
-                </div>
-              </div>
-            ))}
-          </div>
-          <button className={styles.addButton} onClick={() => onOpenTriggerEditor(null)}>
-            새 트리거 추가
+            새 시퀀스/서브루틴 만들기
           </button>
         </div>
         <div className={styles.section}>
@@ -115,3 +83,4 @@ const CreatorPanel: React.FC<CreatorPanelProps> = ({
 };
 
 export default CreatorPanel;
+

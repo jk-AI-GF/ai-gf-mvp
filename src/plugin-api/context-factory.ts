@@ -3,7 +3,6 @@ import { Actions } from './actions';
 import { SystemControls } from './system-controls';
 import { PluginContext } from './plugin-context';
 import eventBus from '../core/event-bus';
-import { TriggerEngine } from '../core/trigger-engine';
 import { characterState } from '../core/character-state';
 import { ActionRegistry } from '../core/action-registry';
 
@@ -12,7 +11,6 @@ import { ActionRegistry } from '../core/action-registry';
 
 export function createPluginContext(
   vrmManager: VRMManager,
-  triggerEngine: TriggerEngine,
   systemControls: SystemControls,
   actionRegistry: ActionRegistry, // ActionRegistry를 주입받음
 ): PluginContext {
@@ -28,7 +26,6 @@ export function createPluginContext(
 
   const pluginContext: PluginContext = {
     eventBus: eventBus,
-    registerTrigger: (trigger) => triggerEngine.registerTrigger(trigger),
     actions: actions,
     system: systemControls,
     get: (key: string) => window.electronAPI.invoke('context:get', key),

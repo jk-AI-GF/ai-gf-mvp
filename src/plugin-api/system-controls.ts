@@ -18,16 +18,4 @@ export interface SystemControls {
    * @param volume 볼륨 값 (0.0에서 1.0 사이).
    */
   setMasterVolume(volume: number): void;
-
-  /**
-   * JSON 정의를 기반으로 커스텀 트리거를 등록합니다.
-   * @param trigger 트리거의 JSON 객체
-   */
-  registerCustomTrigger(trigger: any): void;
-
-  /**
-   * ID를 기반으로 커스텀 트리거를 등록 해제합니다.
-   * @param triggerId 등록 해제할 트리거의 ID
-   */
-  unregisterCustomTrigger(triggerId: string): void;
 }

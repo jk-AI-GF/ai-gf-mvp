@@ -5,8 +5,6 @@ import * as path from 'path';
 import mime from 'mime';
 import { PluginContext, ICharacterState } from '../plugin-api/plugin-context';
 import { EventBus } from '../plugin-api/event-bus';
-import { TriggerEngine } from './trigger-engine';
-import { Trigger } from '../plugin-api/triggers';
 import { ContextStore } from './context-store';
 import { ModSettingsManager } from './mod-settings-manager';
 import { ActionDefinition } from '../plugin-api/actions';
@@ -27,7 +25,6 @@ export class ModLoader {
   private modsDir: string;
   private loadedMods: Map<string, ModManifest> = new Map();
   private eventBus: EventBus;
-  private triggerEngine: TriggerEngine;
   private contextStore: ContextStore;
   private modSettingsManager: ModSettingsManager;
   private sendToRenderer: (channel: string, ...args: any[]) => void;
@@ -39,7 +36,6 @@ export class ModLoader {
     appPath: string, 
     isPackaged: boolean, 
     eventBus: EventBus, 
-    triggerEngine: TriggerEngine, 
     contextStore: ContextStore, 
     modSettingsManager: ModSettingsManager,
     sendToRenderer: (channel: string, ...args: any[]) => void,
@@ -52,7 +48,6 @@ export class ModLoader {
       ? path.join(userDataPath, 'mods') 
       : path.join(appPath, 'userdata', 'mods');
     this.eventBus = eventBus;
-    this.triggerEngine = triggerEngine;
     this.contextStore = contextStore;
     this.modSettingsManager = modSettingsManager;
     this.sendToRenderer = sendToRenderer;
@@ -116,7 +111,6 @@ export class ModLoader {
         // PluginContext 객체 생성
         const pluginContext: PluginContext = {
           eventBus: this.eventBus,
-          registerTrigger: (trigger: Trigger) => this.triggerEngine.registerTrigger(trigger),
           get: (key: string) => this.contextStore.get(key),
           set: (key: string, value: any) => this.contextStore.set(key, value),
           getAll: () => this.contextStore.getAll(),
@@ -130,12 +124,6 @@ export class ModLoader {
             },
             setMasterVolume: (volume: number) => {
               this.sendToRenderer('set-master-volume', volume);
-            },
-            registerCustomTrigger: (trigger: any) => {
-              console.warn('[ModLoader] registerCustomTrigger is not supported for mods running in the main process.');
-            },
-            unregisterCustomTrigger: (triggerId: string) => {
-              console.warn('[ModLoader] unregisterCustomTrigger is not supported for mods running in the main process.');
             },
           },
           characterState: {

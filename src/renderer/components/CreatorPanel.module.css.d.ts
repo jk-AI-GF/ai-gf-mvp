@@ -9,14 +9,15 @@ interface CssExports {
   'deleteButton': string;
   'editButton': string;
   'emptyMessage': string;
+  'item': string;
+  'itemList': string;
+  'itemName': string;
   'runButton': string;
   'section': string;
   'sectionTitle': string;
   'slider': string;
   'switch': string;
-  'triggerItem': string;
-  'triggerList': string;
-  'triggerName': string;
+  'typeIndicator': string;
 }
 export const cssExports: CssExports;
 export default cssExports;

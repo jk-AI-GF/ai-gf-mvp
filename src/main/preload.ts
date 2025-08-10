@@ -1,6 +1,5 @@
 import { ipcRenderer } from 'electron';
 import { LlmSettings } from '../core/llm-settings';
-import { CustomTrigger } from '../core/custom-trigger-manager';
 
 // Expose ipcRenderer directly to the window object
 // This is safe because nodeIntegration is true and contextIsolation is false
@@ -70,11 +69,6 @@ import { CustomTrigger } from '../core/custom-trigger-manager';
   getAllMods: () => ipcRenderer.invoke('get-all-mods'),
   getModSettings: () => ipcRenderer.invoke('get-mod-settings'),
   setModEnabled: (modName: string, isEnabled: boolean) => ipcRenderer.invoke('set-mod-enabled', modName, isEnabled),
-
-  // --- Custom Triggers ---
-  getCustomTriggers: (): Promise<CustomTrigger[]> => ipcRenderer.invoke('get-custom-triggers'),
-  saveCustomTrigger: (trigger: CustomTrigger) => ipcRenderer.invoke('save-custom-trigger', trigger),
-  deleteCustomTrigger: (triggerId: string) => ipcRenderer.invoke('delete-custom-trigger', triggerId),
 
   // --- Sequence API ---
   getAllSequenceFilesWithType: (): Promise<{ name: string, type: 'sequence' | 'subroutine' }[]> => ipcRenderer.invoke('get-all-sequence-files-with-type'),

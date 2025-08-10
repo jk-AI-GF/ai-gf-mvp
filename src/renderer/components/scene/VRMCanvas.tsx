@@ -5,7 +5,6 @@ import Scene from './Scene';
 import { VRMManager } from '../../vrm-manager';
 import { PluginManager } from '../../../plugins/plugin-manager';
 import eventBus from '../../../core/event-bus';
-import { TriggerEngine } from '../../../core/trigger-engine';
 import { initAudioContext, playTTS, toggleTts, setMasterVolume } from '../../audio-service';
 import { AutoLookAtPlugin } from '../../../plugins/auto-look-at-plugin';
 import { AutoBlinkPlugin } from '../../../plugins/auto-blink-plugin';
@@ -15,10 +14,8 @@ import { ProactiveDialoguePlugin } from '../../../plugins/proactive-dialogue-plu
 import { ActionTestPlugin } from '../../../plugins/action-test-plugin';
 import { MToonMaterialOutlineWidthMode } from '@pixiv/three-vrm';
 import { GrabVrmPlugin } from '../../../plugins/grab-vrm-plugin';
-import { TimeSyncTestPlugin } from '../../../plugins/time-sync-test-plugin';
 import { LlmResponseHandlerPlugin } from '../../../plugins/LlmResponseHandlerPlugin';
 import { InteractionTrackerPlugin } from '../../../plugins/interaction-tracker-plugin';
-import { CustomTriggerManager } from '../../../core/custom-trigger-manager';
 import { SystemControls } from '../../../plugin-api/system-controls';
 import { registerCoreActions } from '../../../core/action-registrar';
 import { ActionRegistry } from '../../../core/action-registry';
@@ -28,7 +25,6 @@ interface VRMCanvasProps {
   onLoad: (managers: { 
     vrmManager: VRMManager; 
     pluginManager: PluginManager; 
-    customTriggerManager: CustomTriggerManager;
     actionRegistry: ActionRegistry;
     renderer: THREE.WebGLRenderer;
   }) => void;
@@ -86,7 +82,6 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     vrmManager.loadVRM('VRM/Liqu.vrm');
 
     // --- Plugin System ---
-    const triggerEngine = new TriggerEngine();
     const actionRegistry = new ActionRegistry();
 
     // 1. Register all core actions BEFORE creating the context
@@ -96,12 +91,10 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
       toggleTts: (enable: boolean) => toggleTts(enable),
       toggleMouseIgnore: () => window.electronAPI.toggleMouseIgnore(),
       setMasterVolume: (volume: number) => setMasterVolume(volume),
-      registerCustomTrigger: (trigger: any) => {},
-      unregisterCustomTrigger: (triggerId: string) => {},
     };
 
     // 2. Create context - it will now be populated with actions
-    const pluginContext = createPluginContext(vrmManager, triggerEngine, systemControls, actionRegistry);
+    const pluginContext = createPluginContext(vrmManager, systemControls, actionRegistry);
 
     // 3. Create and setup managers
     const pluginManager = new PluginManager(pluginContext);
@@ -111,18 +104,11 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     pluginManager.register(new ProactiveDialoguePlugin());
     pluginManager.register(new ActionTestPlugin());
     pluginManager.register(new GrabVrmPlugin());
-    pluginManager.register(new TimeSyncTestPlugin());
     pluginManager.register(new LlmResponseHandlerPlugin());
     pluginManager.register(new InteractionTrackerPlugin());
 
-    const customTriggerManager = new CustomTriggerManager(pluginContext);
-    customTriggerManager.loadAndRegisterAll();
-
-    systemControls.registerCustomTrigger = customTriggerManager.registerTrigger.bind(customTriggerManager);
-    systemControls.unregisterCustomTrigger = customTriggerManager.unregisterTrigger.bind(customTriggerManager);
-
     // 4. Pass all managers and the registry up to the App component
-    onLoad({ vrmManager, pluginManager, customTriggerManager, actionRegistry, renderer });
+    onLoad({ vrmManager, pluginManager, actionRegistry, renderer });
 
     const setOutlineMode = (mode: typeof MToonMaterialOutlineWidthMode.WorldCoordinates | typeof MToonMaterialOutlineWidthMode.ScreenCoordinates) => {
         if (vrmManager.currentVrm) {
@@ -155,7 +141,6 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
         requestAnimationFrame(animate);
         const delta = clock.getDelta();
         vrmManager.update(delta);
-        triggerEngine.evaluateTriggers();
 
         if (vrmManager.currentVrm) {
             pluginManager.update(delta, vrmManager.currentVrm);

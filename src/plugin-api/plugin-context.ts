@@ -1,7 +1,6 @@
 
 import { VRMManager } from '../renderer/vrm-manager';
 import { EventBus } from './event-bus';
-import { Trigger, Condition, Action } from './triggers';
 import { Actions } from './actions';
 import { SystemControls } from './system-controls';
 import { characterState } from '../core/character-state';
@@ -25,12 +24,6 @@ export interface PluginContext {
    * 앱의 중앙 이벤트 버스에 접근하여 이벤트를 발행하거나 구독할 수 있습니다.
    */
   eventBus: EventBus;
-
-  /**
-   * 새로운 트리거(조건 -> 행동)를 앱에 등록합니다.
-   * @param trigger 등록할 트리거 객체
-   */
-  registerTrigger(trigger: Trigger): void;
 
   /**
    * 플러그인/모드가 게임에 영향을 줄 수 있는 함수 호출을 제공합니다.

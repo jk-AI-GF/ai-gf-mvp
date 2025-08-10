@@ -5,12 +5,10 @@ import fsp from 'fs/promises';
 import Store from 'electron-store';
 import { ModLoader } from '../core/mod-loader';
 import { createEventBus, AppEvents } from '../core/event-bus';
-import { TriggerEngine } from '../core/trigger-engine';
 import { ContextStore } from '../core/context-store';
 import { ModSettingsManager } from '../core/mod-settings-manager';
 import { LlmSettings, DEFAULT_LLM_SETTINGS } from '../core/llm-settings';
 import { getAssetsPath, getUserDataPath, resolveAssetsPath, resolveUserDataPath } from './path-utils';
-import { CustomTrigger } from '../core/custom-trigger-manager';
 import { ActionDefinition } from '../plugin-api/actions';
 import { ICharacterState } from '../plugin-api/plugin-context';
 
@@ -129,48 +127,6 @@ ipcMain.on('set-persona', (event, persona: string) => store.set('persona', perso
 ipcMain.handle('get-persona', () => store.get('persona'));
 ipcMain.handle('get-llm-settings', () => ({ ...DEFAULT_LLM_SETTINGS, ...store.get('llmSettings') }));
 ipcMain.on('set-llm-settings', (event, settings: LlmSettings) => store.set('llmSettings', settings));
-
-// --- Custom Triggers (File-based) ---
-ipcMain.handle('get-custom-triggers', async () => {
-  const triggersDir = resolveUserDataPath('triggers');
-  try {
-    const files = await fsp.readdir(triggersDir);
-    const triggerPromises = files
-      .filter(file => file.endsWith('.json'))
-      .map(async file => {
-        try {
-          return JSON.parse(await fsp.readFile(path.join(triggersDir, file), 'utf-8'));
-        } catch (err) {
-          console.error(`Failed to read or parse trigger file: ${file}`, err);
-          return null;
-        }
-      });
-    return (await Promise.all(triggerPromises)).filter(Boolean);
-  } catch (error) {
-    return error.code === 'ENOENT' ? [] : Promise.reject(error);
-  }
-});
-ipcMain.handle('save-custom-trigger', async (event, trigger: CustomTrigger) => {
-  const filePath = path.join(resolveUserDataPath('triggers'), `${trigger.id}.json`);
-  try {
-    await fsp.writeFile(filePath, JSON.stringify(trigger, null, 2), 'utf-8');
-    return { success: true };
-  } catch (error) {
-    console.error(`Failed to save trigger ${trigger.id}:`, error);
-    return { success: false, error: error.message };
-  }
-});
-ipcMain.handle('delete-custom-trigger', async (event, triggerId: string) => {
-  const filePath = path.join(resolveUserDataPath('triggers'), `${triggerId}.json`);
-  try {
-    await fsp.unlink(filePath);
-    return { success: true };
-  } catch (error) {
-    if (error.code === 'ENOENT') return { success: true };
-    console.error(`Failed to delete trigger ${triggerId}:`, error);
-    return { success: false, error: error.message };
-  }
-});
 
 // --- Sequences ---
 const getSequencesByType = async (type: 'sequence' | 'subroutine') => {
@@ -572,7 +528,7 @@ app.on('ready', async () => {
 
   // Ensure userdata directories exist
   try {
-    const requiredDirs = ['vrm', 'poses', 'mods', 'animations', 'persona', 'triggers', 'sequences'];
+    const requiredDirs = ['vrm', 'poses', 'mods', 'animations', 'persona', 'sequences'];
     await Promise.all(requiredDirs.map(dir => fsp.mkdir(path.join(getUserDataPath(), dir), { recursive: true })));
     console.log('User data directories verified/created successfully.');
   } catch (error) {
@@ -581,17 +537,15 @@ app.on('ready', async () => {
 
   // Initialize core components
   const eventBus = createEventBus<AppEvents>();
-  const triggerEngine = new TriggerEngine();
   const contextStore = new ContextStore();
   const modSettingsManager = new ModSettingsManager(app.getPath('userData'));
   await modSettingsManager.loadSettings();
 
-  modLoader = new ModLoader(
+    modLoader = new ModLoader(
     app.getPath('userData'),
     app.getAppPath(),
     app.isPackaged,
     eventBus,
-    triggerEngine,
     contextStore,
     modSettingsManager,
     (channel: string, ...args: any[]) => {

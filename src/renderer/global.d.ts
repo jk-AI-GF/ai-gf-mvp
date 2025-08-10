@@ -7,7 +7,6 @@ import { PluginContext } from '../plugin-api/plugin-context';
 import { CharacterState } from '../core/character-state';
 import { TypedEventBus, AppEvents } from '../core/event-bus';
 import { LlmSettings } from '../core/llm-settings';
-import { CustomTrigger } from '../core/custom-trigger-manager';
 
 declare global {
   interface Window {
@@ -79,11 +78,6 @@ declare global {
       getAllMods: () => Promise<{ name: string; version: string; path: string; }[]>;
       getModSettings: () => Promise<Record<string, boolean>>;
       setModEnabled: (modName: string, isEnabled: boolean) => Promise<{ success: boolean }>;
-
-      // --- Custom Triggers ---
-      getCustomTriggers: () => Promise<CustomTrigger[]>;
-      saveCustomTrigger: (trigger: CustomTrigger) => Promise<{ success: boolean; error?: string }>;
-      deleteCustomTrigger: (triggerId: string) => Promise<{ success: boolean; error?: string }>;
 
       // --- Sequence API ---
       getAllSequenceFilesWithType: () => Promise<{ name: string, type: 'sequence' | 'subroutine' }[]>;
