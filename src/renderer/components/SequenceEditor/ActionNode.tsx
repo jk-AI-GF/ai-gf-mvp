@@ -80,7 +80,11 @@ const EmbeddedInput = ({ param, value, onParamChange }: { param: IPort, value: a
   switch (param.type) {
     case 'enum':
       return (
-        <select value={value || ''} onChange={e => onParamChange(e.target.value)} style={inputStyle}>
+        <select 
+          value={value ?? (param.options?.[0] || '')} 
+          onChange={e => onParamChange(e.target.value)} 
+          style={inputStyle}
+        >
           {param.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
         </select>
       );

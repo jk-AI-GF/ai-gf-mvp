@@ -53,7 +53,13 @@ export class ActionNodeModel extends BaseNode {
         // paramValues를 초기화합니다.
         if (actionDefinition.params) {
             actionDefinition.params.forEach(param => {
-                this.paramValues[param.name] = param.defaultValue ?? this.getDefaultValueForType(param.type);
+                if (param.type === 'enum' && param.options && param.options.length > 0) {
+                    // enum 타입의 경우, 기본값이 없으면 첫 번째 옵션을 사용
+                    this.paramValues[param.name] = param.defaultValue ?? param.options[0];
+                } else {
+                    // 다른 타입의 경우 기존 로직 사용
+                    this.paramValues[param.name] = param.defaultValue ?? this.getDefaultValueForType(param.type);
+                }
             });
         }
     }

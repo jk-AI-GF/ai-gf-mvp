@@ -1,4 +1,3 @@
-
 import eventBus from '../core/event-bus';
 import { VRMManager } from './vrm-manager';
 import { PluginManager } from '../plugins/plugin-manager';
@@ -84,9 +83,17 @@ export class ChatService {
       
       // 3. 최종 시스템 프롬프트에 서브루틴과 JSON 출력 형식을 추가합니다.
       const availableSubroutines = this.pluginManager.context?.sequenceManager?.getAvailableSubroutines() || [];
-      const subJson = JSON.stringify(availableSubroutines);
+      const subJson = JSON.stringify(availableSubroutines, null, 2);
       const systemPrompt = `${basePrompt}\n\n다음 JSON 배열은 현재 실행 가능한 Action(서브루틴) 목록입니다:
-${subJson}\n\nLLM 응답은 반드시 JSON 객체 하나만 포함해야 합니다. 형식은 다음과 같습니다.
+${subJson}
+
+사용자의 다음 요청을 분석하여, 가장 적절한 행동을 결정하세요.
+
+**응답 생성 규칙:**
+1.  **먼저 생각하기 (Think Step):** 사용자의 요청을 완수하기 위해 어떤 서브루틴을 사용해야 할지, 또는 단순 대화로 충분할지 판단합니다. 서브루틴을 사용해야 한다면, 해당 서브루틴의 'description'과 'capabilities'를 보고 어떤 'arguments'가 필요한지 분석합니다.
+2.  **최종 응답 생성 (JSON Output):** 생각한 내용을 바탕으로, 아래 형식 중 하나에 맞춰 **반드시 순수한 JSON 객체 하나만** 응답으로 생성합니다. 다른 설명이나 텍스트를 포함해서는 안 됩니다.
+
+**JSON 형식:**
 
 // 1. 캐릭터가 단순히 대답만 할 경우:
 {
@@ -99,16 +106,16 @@ ${subJson}\n\nLLM 응답은 반드시 JSON 객체 하나만 포함해야 합니�
 {
   "type": "action",
   "subroutine": "실행할 서브루틴의 이름",
-  "arguments": { "인자이름1": "값1", "인자이름2": "값2" }, // 서브루틴에 필요한 인자들
+  "arguments": { "key": "value" }, // 서브루틴의 description을 참고하여 필요한 모든 인자를 채워야 합니다.
   "text": "행동과 함께 출력할 대사입니다.",
   "expression": "표정 이름"
 }
 
-// 중요:
-// - 응답은 다른 어떤 텍스트도 없이 순수한 JSON 객체여야 합니다.
-// - 'subroutine'의 이름은 위에 제공된 Action 목록에 있는 이름과 정확히 일치해야 합니다.
-// - 'arguments'는 해당 서브루틴이 요구하는 인자를 모두 포함해야 합니다.
-// - 'expression'은 캐릭터의 표정을 나타내며, 필수 항목입니다.
+**매우 중요:**
+-   'subroutine'의 이름은 위에 제공된 Action 목록에 있는 이름과 정확히 일치해야 합니다.
+-   'arguments' 객체는 서브루틴의 'description'을 분석하여 **필요한 모든 키와 값을 포함**해야 합니다. 예를 들어, '캐릭터의 내부 상태 값을 변경합니다' 라는 설명이 있다면 'key'와 'value' 인자가 필요할 가능성이 높습니다.
+-   'expression'은 캐릭터의 표정을 나타내며, 필수 항목입니다.
+-   최종 출력은 반드시 JSON 객체여야 하며, 다른 텍스트나 설명이 포함되어서는 안 됩니다.
 `;
 
       let requestUrl: string;
@@ -154,31 +161,28 @@ ${subJson}\n\nLLM 응답은 반드시 JSON 객체 하나만 포함해야 합니�
       if (!text) {
         text = '응답이 없습니다.';
       }
-      // JSON 파싱 및 분기 처리
+      
       let payload: any;
       try {
-        payload = JSON.parse(text);
+        // LLM 응답에서 JSON 객체만 추출하는 정규식을 사용합니다.
+        // LLM이 생각 과정을 포함하여 응답하더라도 JSON 부분만 파싱합니다.
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          payload = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error("No JSON object found in the response.");
+        }
       } catch (err) {
-        // Try to extract JSON object embedded in markdown or extra text
-        const match = text.match(/({[\s\S]*})/);
-        if (match) {
-          try {
-            payload = JSON.parse(match[1]);
-          } catch (err2) {
-            console.warn('[ChatService] JSON 파싱 실패, 기본 대화로 처리합니다.', err2);
-          }
-        }
-        if (!payload) {
-          console.warn('[ChatService] JSON 파싱 실패, 기본 대화로 처리합니다.', err);
-          const fallbackExpr = extractExpression(text, vrmExpressionList);
-          const fallbackText = removeExpressionTag(text);
-          eventBus.emit('llm:responseReceived', { type: 'talk', text: fallbackText, expression: fallbackExpr });
-          eventBus.emit('chat:newMessage', { role: 'assistant', text: fallbackText });
-          eventBus.emit('ui:showFloatingMessage', { text: fallbackText });
-          this.chatHistory.push({ role: 'assistant', content: fallbackText });
-          return;
-        }
+        console.warn('[ChatService] JSON 파싱 실패, 기본 대화로 처리합니다.', { error: err, rawText: text });
+        const fallbackExpr = extractExpression(text, vrmExpressionList);
+        const fallbackText = removeExpressionTag(text);
+        eventBus.emit('llm:responseReceived', { type: 'talk', text: fallbackText, expression: fallbackExpr });
+        eventBus.emit('chat:newMessage', { role: 'assistant', text: fallbackText });
+        eventBus.emit('ui:showFloatingMessage', { text: fallbackText });
+        this.chatHistory.push({ role: 'assistant', content: fallbackText });
+        return;
       }
+
       // 처리된 JSON payload를 기반으로 분기
       if (payload.type === 'action') {
         const { subroutine, arguments: args, text: speech, expression: expr } = payload;

@@ -77,10 +77,10 @@ const App: React.FC = () => {
   useEffect(() => {
     const handleSequencesUpdated = async () => {
       if (sequenceManager) {
+        console.log('Received sequences-updated event, refreshing list...');
         const files = await window.electronAPI.getAllSequenceFilesWithType();
         setAllSequences(files);
-        // Re-initialize to update active sequences and listeners
-        await sequenceManager.initialize(); 
+        // Active sequences might have changed if a file was renamed or deleted.
         setActiveSequences(sequenceManager.getActiveSequenceFiles());
       }
     };
@@ -97,12 +97,11 @@ const App: React.FC = () => {
 
     try {
       await sequenceManager.deleteSequence(sequenceFile);
-      const files = await window.electronAPI.getAllSequenceFilesWithType();
-      setAllSequences(files);
-      setActiveSequences(sequenceManager.getActiveSequenceFiles());
+      // Manually trigger the update event after deletion.
+      eventBus.emit('sequences-updated');
     } catch (error) {
       console.error(`Failed to delete sequence ${sequenceFile}:`, error);
-      // Optionally show an error to the user
+      alert(`시퀀스 삭제 실패: ${error}`);
     }
   };
 

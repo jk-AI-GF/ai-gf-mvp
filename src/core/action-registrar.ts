@@ -323,41 +323,53 @@ export function registerCoreActions(
       description: '캐릭터의 내부 상태 값을 변경합니다.',
       params: [
         { name: 'key', type: 'enum', options: ['characterName', 'userName', 'curiosity', 'happiness', 'energy'], description: '변경할 상태' },
-        { name: 'mode', type: 'enum', options: ['set', 'add', 'subtract'], defaultValue: 'set', description: '변경 방식 (숫자 타입 전용)' },
+        { name: 'mode', type: 'enum', options: ['set', 'add', 'subtract'], defaultValue: 'set', description: '변경 방식' },
         { name: 'value', type: 'any', description: '변경할 값' },
       ],
     },
     (key: 'characterName' | 'userName' | 'curiosity' | 'happiness' | 'energy', mode: 'set' | 'add' | 'subtract', value: any) => {
-      if (key === 'characterName' || key === 'userName') {
-        if (typeof value === 'string') {
-          characterState[key] = value;
-        } else {
-          console.warn(`[Action] setCharacterState: ${key} requires a string value.`);
+      // 1. Key 유효성 검사
+      if (!key) {
+        console.error(`[Action] setCharacterState: 'key' is required but was not provided.`);
+        return;
+      }
+
+      // 2. 모드에 따른 로직 분기
+      if (mode === 'set') {
+        // 'set' 모드: 타입에 맞게 값을 직접 설정
+        if (key === 'characterName' || key === 'userName') {
+          if (typeof value === 'string') {
+            characterState[key] = value;
+          } else {
+            console.warn(`[Action] setCharacterState: '${key}' requires a string value for 'set' mode.`);
+          }
+        } else { // 'curiosity', 'happiness', 'energy'
+          const numValue = Number(value);
+          if (!isNaN(numValue)) {
+            characterState[key] = numValue; // Setter에서 0-1 클램핑 처리
+          } else {
+            console.warn(`[Action] setCharacterState: '${key}' requires a numeric value for 'set' mode.`);
+          }
         }
-        return;
-      }
+      } else {
+        // 'add' / 'subtract' 모드: 숫자 연산만 허용
+        // 이 블록에서는 key가 숫자형 상태임을 타입스크립트에게 명확히 알려줍니다.
+        const numericKey = key as 'curiosity' | 'happiness' | 'energy';
+        const currentValue = characterState[numericKey];
 
-      const currentValue = characterState[key];
-      if (typeof currentValue !== 'number' || typeof value !== 'number') {
-        console.warn(`[Action] setCharacterState: ${key} requires a numeric value for add/subtract operations.`);
-        return;
-      }
+        if (typeof currentValue !== 'number' || typeof value !== 'number') {
+          console.warn(`[Action] setCharacterState: '${key}' requires numeric values for '${mode}' mode.`);
+          return;
+        }
 
-      let newValue: number;
-      switch (mode) {
-        case 'set':
-          newValue = value;
-          break;
-        case 'add':
+        let newValue = currentValue;
+        if (mode === 'add') {
           newValue = currentValue + value;
-          break;
-        case 'subtract':
+        } else { // 'subtract'
           newValue = currentValue - value;
-          break;
+        }
+        characterState[numericKey] = newValue; // Setter에서 0-1 클램핑 처리
       }
-      
-      // ICharacterState의 setter가 자동으로 0-1 범위를 클램핑하고 이벤트를 발생시킴
-      characterState[key] = newValue;
     }
   );
 }
