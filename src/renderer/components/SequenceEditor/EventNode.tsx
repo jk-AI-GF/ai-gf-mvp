@@ -1,8 +1,7 @@
 import React, { memo } from 'react';
-import { NodeProps } from 'reactflow';
+import { NodeProps , Position } from 'reactflow';
 import { EventNodeModel } from '../../../core/sequence/EventNodeModel';
 import { renderHandles } from './node-style-utils';
-import { Position } from 'reactflow';
 
 const EventNode: React.FC<NodeProps<EventNodeModel>> = ({ data }) => {
   if (!(data instanceof EventNodeModel)) {

@@ -73,11 +73,6 @@ export function registerCoreActions(
     }
   );
 
-  (text: string) => {
-      playTTS(text);
-    }
-  ;
-
   registry.register(
     {
       name: 'moveCharacterToScreenPosition',

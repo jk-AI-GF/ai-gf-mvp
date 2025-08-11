@@ -4,9 +4,9 @@ import { ICharacterState } from '../plugin-api/plugin-context';
 import { AppEvents, TypedEventBus } from './event-bus';
 
 class CharacterState implements ICharacterState {
-    private _curiosity: number = 0.5;
-    private _happiness: number = 0.5;
-    private _energy: number = 0.8;
+    private _curiosity = 0.5;
+    private _happiness = 0.5;
+    private _energy = 0.8;
     private _lastInteractionTimestamp: number = Date.now();
     private eventBus: TypedEventBus<AppEvents> | null = null;
 

@@ -91,7 +91,7 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events, nodes }) => {
     fontSize: '14px',
   };
 
-  const getItemStyle = (category: string, disabled: boolean = false): React.CSSProperties => ({
+  const getItemStyle = (category: string, disabled = false): React.CSSProperties => ({
     padding: '6px 10px',
     margin: '0 5px 6px 5px',
     cursor: disabled ? 'not-allowed' : 'grab',

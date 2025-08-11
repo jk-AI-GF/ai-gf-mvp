@@ -9,7 +9,7 @@ export interface SerializedDelayNodeData {
 export class DelayNodeModel extends BaseNode {
     public delay: number; // 기본 지연 시간(초)
 
-    constructor(id: string, delay: number = 1.0) {
+    constructor(id: string, delay = 1.0) {
         const inputs: IPort[] = [
             { name: 'exec-in', type: 'execution', direction: 'in' },
             { name: 'delay', type: 'number', direction: 'in' }

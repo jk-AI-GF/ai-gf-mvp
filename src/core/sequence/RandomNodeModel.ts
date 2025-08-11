@@ -11,7 +11,7 @@ export class RandomNodeModel extends BaseNode {
     public min: number;
     public max: number;
 
-    constructor(id: string, min: number = 0, max: number = 1) {
+    constructor(id: string, min = 0, max = 1) {
         const inputs: IPort[] = [
             { name: 'min', type: 'number', direction: 'in' },
             { name: 'max', type: 'number', direction: 'in' },

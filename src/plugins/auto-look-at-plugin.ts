@@ -8,8 +8,8 @@ export class AutoLookAtPlugin implements IPlugin {
   public enabled = false; // Start disabled, enabled by PluginManager
 
   private context!: PluginContext;
-  private lastChangeTime: number = 0;
-  private nextChangeInterval: number = 0; // In milliseconds
+  private lastChangeTime = 0;
+  private nextChangeInterval = 0; // In milliseconds
 
   constructor() {
     this.setNextChangeInterval();

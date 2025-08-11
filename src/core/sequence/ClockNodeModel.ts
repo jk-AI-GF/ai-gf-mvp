@@ -11,7 +11,7 @@ export class ClockNodeModel extends BaseNode {
     public interval: number; // Interval in seconds
     private intervalId: NodeJS.Timeout | null = null;
 
-    constructor(id: string, interval: number = 1.0) {
+    constructor(id: string, interval = 1.0) {
         const inputs: IPort[] = [
              { name: 'interval', type: 'number', direction: 'in' }
         ];

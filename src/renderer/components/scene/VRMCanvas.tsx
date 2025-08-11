@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import Scene from './Scene';
@@ -20,13 +20,17 @@ import { SystemControls } from '../../../plugin-api/system-controls';
 import { registerCoreActions } from '../../../core/action-registrar';
 import { ActionRegistry } from '../../../core/action-registry';
 import { characterState } from '../../../core/character-state';
+import { SequenceManager } from '../../../core/sequence/SequenceManager';
+import { CharacterStateManager } from '../../../core/character-state-manager';
 
 interface VRMCanvasProps {
-  onLoad: (managers: { 
-    vrmManager: VRMManager; 
-    pluginManager: PluginManager; 
+  onLoad: (managers: {
+    vrmManager: VRMManager;
+    pluginManager: PluginManager;
     actionRegistry: ActionRegistry;
+    sequenceManager: SequenceManager;
     renderer: THREE.WebGLRenderer;
+    camera: THREE.Camera;
   }) => void;
 }
 
@@ -40,13 +44,10 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
 
     // --- Initialize Character State & Persistence ---
     characterState.initialize(eventBus);
-
     const unsubLoad = window.electronAPI.onLoadCharacterState((savedState: any) => {
-      console.log('[Renderer] Received initial character state from main:', savedState);
       characterState.hydrate(savedState);
-      unsubLoad(); 
+      unsubLoad();
     });
-
     eventBus.on('character-state:changed', (newState) => {
       window.electronAPI.sendCharacterStateChanged(newState);
     });
@@ -59,12 +60,8 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     const aspect = window.innerWidth / window.innerHeight;
     const frustumHeight = 3;
     const orthographicCamera = new THREE.OrthographicCamera(
-        -frustumHeight * aspect / 2,
-        frustumHeight * aspect / 2,
-        frustumHeight / 2,
-        -frustumHeight / 2,
-        0.1,
-        1000
+        -frustumHeight * aspect / 2, frustumHeight * aspect / 2,
+        frustumHeight / 2, -frustumHeight / 2, 0.1, 1000
     );
     orthographicCamera.position.set(0, 0.98, 1.0);
     orthographicCamera.zoom = 1.4;
@@ -77,23 +74,47 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     controls.target.set(0, 0.6, 0);
     controls.update();
 
-    // --- VRM Manager ---
+    // --- Managers Initialization ---
     const vrmManager = new VRMManager(scene, activeCamera, plane, eventBus);
-    vrmManager.loadVRM('VRM/Liqu.vrm');
-
-    // --- Plugin System ---
     const actionRegistry = new ActionRegistry();
-
     const systemControls: SystemControls = {
-      toggleTts: (enable: boolean) => toggleTts(enable),
+      toggleTts,
       toggleMouseIgnore: () => window.electronAPI.toggleMouseIgnore(),
-      setMasterVolume: (volume: number) => setMasterVolume(volume),
+      setMasterVolume,
     };
 
-    // 2. Create context - it will now be populated with actions
-    const pluginContext = createPluginContext(vrmManager, systemControls, actionRegistry);
+    // IMPORTANT: Register core actions BEFORE creating the context
+    registerCoreActions(actionRegistry, vrmManager, renderer);
 
-    // 3. Create and setup managers
+    const pluginContext = createPluginContext(vrmManager, systemControls, actionRegistry);
+    
+    // Inject state and sequence managers into the context
+    const charStateManager = new CharacterStateManager();
+    pluginContext.characterStateManager = charStateManager;
+    const sequenceManager = new SequenceManager(pluginContext);
+    pluginContext.sequenceManager = sequenceManager;
+
+    // Register sequence-related actions
+    actionRegistry.register(
+      {
+        name: 'executeSequence',
+        description: '다른 시퀀스를 실행합니다.',
+        params: [{ name: 'sequenceId', type: 'string', description: '실행할 시퀀스의 파일 이름', dynamicOptions: 'sequences' }],
+      },
+      (sequenceId: string) => sequenceManager.runSequenceById(sequenceId)
+    );
+    actionRegistry.register(
+      {
+        name: 'runSubroutine',
+        description: '지정된 인수를 사용하여 서브루틴을 실행합니다.',
+        params: [
+          { name: 'subroutineId', type: 'string', description: '실행할 서브루틴의 파일 이름', dynamicOptions: 'subroutines' },
+          { name: 'args', type: 'any', description: '서브루틴에 전달할 인수(키-값 쌍)' },
+        ],
+      },
+      (subroutineId: string, args: Record<string, any>) => sequenceManager.runSubroutine(subroutineId, args)
+    );
+
     const pluginManager = new PluginManager(pluginContext);
     pluginManager.register(new AutoLookAtPlugin());
     pluginManager.register(new AutoBlinkPlugin());
@@ -104,8 +125,13 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     pluginManager.register(new LlmResponseHandlerPlugin());
     pluginManager.register(new InteractionTrackerPlugin());
 
-    // 4. Pass all managers and the registry up to the App component
-    onLoad({ vrmManager, pluginManager, actionRegistry, renderer });
+    // --- Finalization ---
+    vrmManager.loadVRM('VRM/Liqu.vrm');
+    vrmManager.setActiveCamera(activeCamera);
+    sequenceManager.initialize().then(() => console.log("SequenceManager initialized and sequences loaded."));
+
+    // Pass all fully initialized managers up to the App component
+    onLoad({ vrmManager, pluginManager, actionRegistry, sequenceManager, renderer, camera: activeCamera });
 
     const setOutlineMode = (mode: typeof MToonMaterialOutlineWidthMode.WorldCoordinates | typeof MToonMaterialOutlineWidthMode.ScreenCoordinates) => {
         if (vrmManager.currentVrm) {
