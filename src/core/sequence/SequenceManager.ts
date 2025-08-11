@@ -88,6 +88,29 @@ export class SequenceManager {
   }
 
   /**
+   * 서브루틴의 논리적 이름(name)을 기반으로 해당 서브루틴의 파일 이름을 찾습니다.
+   * @param name 찾고자 하는 서브루틴의 이름 (예: 'greet')
+   * @returns 서브루틴의 파일 이름 (예: 'greeting-sequence.json') 또는 찾지 못한 경우 undefined
+   */
+  public findSubroutineFileByName(name: string): string | undefined {
+    const foundFiles: string[] = [];
+    for (const [fileName, definition] of this.subroutineDefinitions.entries()) {
+      if (definition.name === name) {
+        foundFiles.push(fileName);
+      }
+    }
+
+    if (foundFiles.length === 0) {
+      console.warn(`[SequenceManager] Subroutine with name '${name}' not found.`);
+      return undefined;
+    }
+    if (foundFiles.length > 1) {
+      console.warn(`[SequenceManager] Multiple subroutines found with name '${name}'. Using the first one: ${foundFiles[0]}. Found files: ${foundFiles.join(', ')}`);
+    }
+    return foundFiles[0];
+  }
+
+  /**
    * userData/sequences 폴더에서 모든 시퀀스 파일 목록을 가져와 내부 상태를 초기화합니다.
    */
   public async initialize(): Promise<void> {

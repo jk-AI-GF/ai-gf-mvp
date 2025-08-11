@@ -135,15 +135,16 @@ export class ChatService {
           try {
             payload = JSON.parse(match[1]);
           } catch (err2) {
-            console.error('[ChatService] JSON 파싱 실패, 기본 대화로 처리합니다.', err2);
+            console.warn('[ChatService] JSON 파싱 실패, 기본 대화로 처리합니다.', err2);
           }
         }
         if (!payload) {
-          console.error('[ChatService] JSON 파싱 실패, 기본 대화로 처리합니다.', err);
+          console.warn('[ChatService] JSON 파싱 실패, 기본 대화로 처리합니다.', err);
           const fallbackExpr = extractExpression(text, vrmExpressionList);
           const fallbackText = removeExpressionTag(text);
           eventBus.emit('llm:responseReceived', { type: 'talk', text: fallbackText, expression: fallbackExpr });
           eventBus.emit('chat:newMessage', { role: 'assistant', text: fallbackText });
+          eventBus.emit('ui:showFloatingMessage', { text: fallbackText });
           this.chatHistory.push({ role: 'assistant', content: fallbackText });
           return;
         }
@@ -151,15 +152,16 @@ export class ChatService {
       // 처리된 JSON payload를 기반으로 분기
       if (payload.type === 'action') {
         const { subroutine, arguments: args, text: speech, expression: expr } = payload;
-        // 서브루틴 실행
-        this.pluginManager.context?.sequenceManager?.runSubroutine(subroutine, args);
+        // 서브루틴 실행은 이제 LlmResponseHandlerPlugin이 담당합니다.
         eventBus.emit('llm:responseReceived', { type: 'action', subroutine, arguments: args, text: speech, expression: expr });
         eventBus.emit('chat:newMessage', { role: 'assistant', text: speech });
+        eventBus.emit('ui:showFloatingMessage', { text: speech });
         this.chatHistory.push({ role: 'assistant', content: speech });
       } else {
         const { text: speech, expression: expr } = payload;
         eventBus.emit('llm:responseReceived', { type: 'talk', text: speech, expression: expr });
         eventBus.emit('chat:newMessage', { role: 'assistant', text: speech });
+        eventBus.emit('ui:showFloatingMessage', { text: speech });
         this.chatHistory.push({ role: 'assistant', content: speech });
       }
 

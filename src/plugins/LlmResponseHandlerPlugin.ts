@@ -31,14 +31,24 @@ export class LlmResponseHandlerPlugin implements IPlugin {
   private handleLlmResponse = (data: { text: string; expression: string }): void => {
     if (!this.context) return;
 
-    if (!this.context) return;
     const { type } = data as any;
     if (type === 'action') {
       const { subroutine, arguments: args, expression, text } = data as any;
-      // 서브루틴 실행
-      this.context.sequenceManager?.runSubroutine(subroutine, args);
-      this.context.actions.setExpression(expression, 1.0, 0.5);
-      this.context.actions.playTTS(text);
+      
+      // LLM이 반환한 논리적 서브루틴 이름으로 실제 파일 이름을 찾습니다.
+      const subroutineFileName = this.context.sequenceManager?.findSubroutineFileByName(subroutine);
+
+      if (subroutineFileName) {
+        // 파일 이름을 찾았으면 서브루틴을 실행합니다.
+        this.context.sequenceManager?.runSubroutine(subroutineFileName, args);
+        this.context.actions.setExpression(expression, 1.0, 0.5);
+        this.context.actions.playTTS(text);
+      } else {
+        // 해당 서브루틴을 찾지 못했을 경우, 경고를 로그하고 일반 대화처럼 처리합니다.
+        console.warn(`[LlmResponseHandlerPlugin] Subroutine with name '${subroutine}' not found. Falling back to talk.`);
+        this.context.actions.setExpression(expression, 1.0, 0.5);
+        this.context.actions.playTTS(text);
+      }
     } else {
       const { text, expression } = data as any;
       this.context.actions.setExpression(expression, 1.0, 0.5);
