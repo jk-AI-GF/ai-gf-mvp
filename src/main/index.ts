@@ -23,6 +23,8 @@ interface StoreSchema {
 }
 
 const DEFAULT_CHARACTER_STATE: ICharacterState = {
+  characterName: 'AI',
+  userName: 'User',
   curiosity: 0.5,
   happiness: 0.5,
   energy: 0.8,

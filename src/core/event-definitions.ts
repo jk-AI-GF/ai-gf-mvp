@@ -153,6 +153,8 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
     name: 'character-state:changed',
     description: '캐릭터의 내부 상태(호기심, 행복 등)가 변경될 때 발생합니다. (전체 상태)',
     payloadSchema: [
+        { key: 'characterName', type: 'string', description: '캐릭터의 현재 이름' },
+        { key: 'userName', type: 'string', description: '캐릭터가 유저를 부르는 이름' },
         { key: 'curiosity', type: 'number', description: '현재 호기심 수치 (0-1)' },
         { key: 'happiness', type: 'number', description: '현재 행복 수치 (0-1)' },
         { key: 'energy', type: 'number', description: '현재 활력 수치 (0-1)' },
@@ -164,8 +166,8 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
     description: '캐릭터의 특정 내부 상태 값이 변경될 때 발생합니다.',
     payloadSchema: [
         { key: 'property', type: 'string', description: '변경된 속성 이름 (curiosity, happiness, energy 등)' },
-        { key: 'newValue', type: 'number', description: '변경된 새 값' },
-        { key: 'oldValue', type: 'number', description: '변경 전의 이전 값' }
+        { key: 'newValue', type: 'any', description: '변경된 새 값' },
+        { key: 'oldValue', type: 'any', description: '변경 전의 이전 값' }
     ],
   },
 ];

@@ -21,6 +21,8 @@ const CharacterStateViewer: React.FC<CharacterStateViewerProps> = ({ onClose, in
         const cs = pluginManager.context.characterState;
         // Create a new plain object by explicitly reading from the getters
         const newState: ICharacterState = {
+          characterName: cs.characterName,
+          userName: cs.userName,
           curiosity: cs.curiosity,
           happiness: cs.happiness,
           energy: cs.energy,
@@ -46,6 +48,14 @@ const CharacterStateViewer: React.FC<CharacterStateViewerProps> = ({ onClose, in
       <div className={styles.container}>
         {state ? (
           <>
+            <div className={styles.stateItem}>
+              <span className={styles.stateKey}>Character Name:</span>
+              <span className={styles.stateValue}>{state.characterName}</span>
+            </div>
+            <div className={styles.stateItem}>
+              <span className={styles.stateKey}>User Name:</span>
+              <span className={styles.stateValue}>{state.userName}</span>
+            </div>
             <div className={styles.stateItem}>
               <span className={styles.stateKey}>Curiosity:</span>
               <span className={styles.stateValue}>{state.curiosity.toFixed(3)}</span>

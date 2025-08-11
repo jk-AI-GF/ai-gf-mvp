@@ -4,11 +4,14 @@ import { VRMManager } from './vrm-manager';
 import { PluginManager } from '../plugins/plugin-manager';
 import { LlmSettings, SUPPORTED_MODELS } from '../core/llm-settings';
 
+import { characterState } from '../core/character-state';
+
 // 각 LLM 제공사의 대화 기록 형식을 지원하기 위한 타입
 type HistoryMessage = {
   role: 'user' | 'assistant' | 'system' | 'model';
   content: string;
 };
+
 
 /**
  * 텍스트에서 <표정: name> 태그를 추출합니다.
@@ -69,8 +72,12 @@ export class ChatService {
         ? Object.keys(this.vrmManager.currentVrm.expressionManager.expressionMap)
         : ['neutral', 'happy', 'sad'];
 
-      // 1. 시스템 프롬프트와 페르소나를 결합합니다.
-      const combinedSystemPrompt = `${llmSettings.systemPrompt}\n\n${persona}`;
+      // 0. Get current character state
+      const currentState = characterState.toJSON();
+      const stateJson = JSON.stringify(currentState, null, 2);
+
+      // 1. 시스템 프롬프트와 페르소나, 캐릭터 상태를 결합합니다.
+      const combinedSystemPrompt = `${llmSettings.systemPrompt}\n\n${persona}\n\n캐릭터의 현재 상태는 다음과 같습니다:\n${stateJson}`;
 
       // 2. 기본 프롬프트에 표정 태그 지시를 추가합니다.
       const basePrompt = `${combinedSystemPrompt}\n\n모든 응답에 <표정: [표정_이름]> 형식의 표정 태그를 포함해 주세요. 표정_이름은 다음 목록 중 하나여야 합니다: ${vrmExpressionList.join(', ')}. 예시: <표정: happy> 안녕하세요!`;

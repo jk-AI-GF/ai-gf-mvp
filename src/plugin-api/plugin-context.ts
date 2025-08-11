@@ -12,6 +12,8 @@ import { SequenceManager } from '../core/sequence/SequenceManager';
  * 메인 프로세스와 렌더러 프로세스 간에 공유됩니다.
  */
 export interface ICharacterState {
+  characterName: string;
+  userName: string;
   curiosity: number;
   happiness: number;
   energy: number;

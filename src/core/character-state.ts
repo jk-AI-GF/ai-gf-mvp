@@ -4,6 +4,8 @@ import { ICharacterState } from '../plugin-api/plugin-context';
 import { AppEvents, TypedEventBus } from './event-bus';
 
 class CharacterState implements ICharacterState {
+    private _characterName = 'AI';
+    private _userName = 'Master';
     private _curiosity = 0.5;
     private _happiness = 0.5;
     private _energy = 0.8;
@@ -18,7 +20,7 @@ class CharacterState implements ICharacterState {
         this.eventBus?.emit('character-state:changed', this.toJSON());
     }
 
-    private setProperty(property: keyof Omit<ICharacterState, 'lastInteractionTimestamp' | 'toJSON' | 'hydrate' | 'initialize'>, value: number) {
+    private setProperty(property: keyof Omit<ICharacterState, 'lastInteractionTimestamp' | 'toJSON' | 'hydrate' | 'initialize' | 'characterName' | 'userName'>, value: number) {
         const privateKey = `_${property}` as keyof this;
         if (typeof this[privateKey] !== 'number' || this[privateKey] === value) return;
         
@@ -28,6 +30,34 @@ class CharacterState implements ICharacterState {
 
         this.eventBus?.emit('character-state:propertyChanged', { property, newValue, oldValue });
         this.emitChangeEvent();
+    }
+
+    private setStringProperty(property: 'characterName' | 'userName', value: string) {
+        const privateKey = `_${property}` as keyof this;
+        if (typeof this[privateKey] !== 'string' || this[privateKey] === value) return;
+
+        const oldValue = this[privateKey] as string;
+        (this as any)[privateKey] = value;
+        const newValue = this[privateKey] as string;
+
+        this.eventBus?.emit('character-state:propertyChanged', { property, newValue, oldValue });
+        this.emitChangeEvent();
+    }
+
+    get characterName(): string {
+        return this._characterName;
+    }
+
+    set characterName(value: string) {
+        this.setStringProperty('characterName', value);
+    }
+
+    get userName(): string {
+        return this._userName;
+    }
+
+    set userName(value: string) {
+        this.setStringProperty('userName', value);
     }
 
     get curiosity(): number {
@@ -71,6 +101,8 @@ class CharacterState implements ICharacterState {
      * @param savedState The state object to load from.
      */
     public hydrate(savedState: Partial<ICharacterState>) {
+        this._characterName = savedState.characterName ?? this._characterName;
+        this._userName = savedState.userName ?? this._userName;
         this._curiosity = savedState.curiosity ?? this._curiosity;
         this._happiness = savedState.happiness ?? this._happiness;
         this._energy = savedState.energy ?? this._energy;
@@ -81,8 +113,10 @@ class CharacterState implements ICharacterState {
     /**
      * Returns a plain object representation of the state for serialization.
      */
-    public toJSON(): ICharacterState {
+    public toJSON(): Omit<ICharacterState, 'toJSON' | 'hydrate' | 'initialize'> {
         return {
+            characterName: this._characterName,
+            userName: this._userName,
             curiosity: this._curiosity,
             happiness: this._happiness,
             energy: this._energy,

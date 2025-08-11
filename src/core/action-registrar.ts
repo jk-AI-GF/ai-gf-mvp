@@ -306,13 +306,13 @@ export function registerCoreActions(
         { 
           name: 'key', 
           type: 'enum', 
-          options: ['curiosity', 'happiness', 'energy', 'lastInteractionTimestamp'], 
+          options: ['characterName', 'userName', 'curiosity', 'happiness', 'energy', 'lastInteractionTimestamp'], 
           description: '가져올 상태',
         },
       ],
-      returnType: 'number',
+      returnType: 'any',
     },
-    (key: 'curiosity' | 'happiness' | 'energy' | 'lastInteractionTimestamp') => {
+    (key: keyof Omit<ICharacterState, 'toJSON' | 'hydrate' | 'initialize'>) => {
       return characterState[key];
     }
   );
@@ -322,16 +322,26 @@ export function registerCoreActions(
       name: 'setCharacterState',
       description: '캐릭터의 내부 상태 값을 변경합니다.',
       params: [
-        { name: 'key', type: 'enum', options: ['curiosity', 'happiness', 'energy'], description: '변경할 상태' },
-        { name: 'mode', type: 'enum', options: ['set', 'add', 'subtract'], defaultValue: 'set', description: '변경 방식' },
-        { name: 'value', type: 'number', description: '변경할 값' },
+        { name: 'key', type: 'enum', options: ['characterName', 'userName', 'curiosity', 'happiness', 'energy'], description: '변경할 상태' },
+        { name: 'mode', type: 'enum', options: ['set', 'add', 'subtract'], defaultValue: 'set', description: '변경 방식 (숫자 타입 전용)' },
+        { name: 'value', type: 'any', description: '변경할 값' },
       ],
     },
-    (key: keyof ICharacterState, mode: 'set' | 'add' | 'subtract', value: number) => {
-      if (key === 'lastInteractionTimestamp') return; // 이 값은 직접 수정 불가
+    (key: 'characterName' | 'userName' | 'curiosity' | 'happiness' | 'energy', mode: 'set' | 'add' | 'subtract', value: any) => {
+      if (key === 'characterName' || key === 'userName') {
+        if (typeof value === 'string') {
+          characterState[key] = value;
+        } else {
+          console.warn(`[Action] setCharacterState: ${key} requires a string value.`);
+        }
+        return;
+      }
 
       const currentValue = characterState[key];
-      if (typeof currentValue !== 'number') return;
+      if (typeof currentValue !== 'number' || typeof value !== 'number') {
+        console.warn(`[Action] setCharacterState: ${key} requires a numeric value for add/subtract operations.`);
+        return;
+      }
 
       let newValue: number;
       switch (mode) {
@@ -347,7 +357,7 @@ export function registerCoreActions(
       }
       
       // ICharacterState의 setter가 자동으로 0-1 범위를 클램핑하고 이벤트를 발생시킴
-      (characterState as any)[key] = newValue;
+      characterState[key] = newValue;
     }
   );
 }
