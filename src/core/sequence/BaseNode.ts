@@ -38,13 +38,13 @@ export abstract class BaseNode {
      * 백그라운드 작업(예: 이벤트 리스닝, 타이머)을 시작하기에 적합한 위치입니다.
      * @param engine 이 노드를 실행하는 SequenceEngine의 인스턴스
      */
-    onActivate?(engine: SequenceEngine): void;
+    onActivate?: (engine: SequenceEngine) => void;
 
     /**
      * 시퀀스가 비활성화될 때 호출됩니다.
      * onActivate에서 시작된 모든 작업을 정리하기에 적합한 위치입니다.
      */
-    onDeactivate?(): void;
+    onDeactivate?: () => void;
 
     /**
      * 노드의 핵심 로직을 실행합니다.

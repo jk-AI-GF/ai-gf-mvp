@@ -23,7 +23,7 @@ export class ClockNodeModel extends BaseNode {
         this.interval = interval;
     }
 
-    onActivate(engine: SequenceEngine): void {
+    onActivate = (engine: SequenceEngine): void => {
         if (this.intervalId) {
             clearInterval(this.intervalId);
         }
@@ -40,7 +40,7 @@ export class ClockNodeModel extends BaseNode {
         console.log(`[ClockNode] Activated: Interval set to ${this.interval}s for node ${this.id}`);
     }
 
-    onDeactivate(): void {
+    onDeactivate = (): void => {
         if (this.intervalId) {
             clearInterval(this.intervalId);
             this.intervalId = null;

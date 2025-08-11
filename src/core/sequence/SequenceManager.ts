@@ -158,6 +158,7 @@ export class SequenceManager {
       this.deactivateSequence(fileName);
     }
     await window.electronAPI.setActiveSequences(Array.from(this.activeSequenceFiles));
+    this.pluginContext.eventBus.emit('sequences:activeListChanged', this.getActiveSequenceFiles());
   }
 
   /**

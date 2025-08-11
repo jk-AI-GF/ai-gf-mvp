@@ -88,6 +88,15 @@ const App: React.FC = () => {
     return () => unsubscribe();
   }, [sequenceManager]);
 
+  // Listen for internal state changes from the manager
+  useEffect(() => {
+    const handleActiveSequencesChanged = (newActiveList: string[]) => {
+      setActiveSequences(newActiveList);
+    };
+    const unsubscribe = eventBus.on('sequences:activeListChanged', handleActiveSequencesChanged);
+    return () => unsubscribe();
+  }, []);
+
 
   const handleDeleteSequence = async (sequenceFile: string) => {
     if (!sequenceManager) return;
@@ -121,15 +130,6 @@ const App: React.FC = () => {
       return;
     }
     await sequenceManager.manualStartSequence(sequenceFile);
-  };
-
-  const handleToggleSequence = async (sequenceFile: string, shouldActivate: boolean) => {
-    if (!sequenceManager) {
-      console.error("SequenceManager not available.");
-      return;
-    }
-    await sequenceManager.toggleSequence(sequenceFile, shouldActivate);
-    setActiveSequences(sequenceManager.getActiveSequenceFiles());
   };
 
   useEffect(() => {
@@ -300,7 +300,6 @@ const App: React.FC = () => {
         onEditSequence={handleEditSequence}
         onDeleteSequence={handleDeleteSequence}
         activeSequences={activeSequences}
-        onToggleSequence={handleToggleSequence}
         onManualStartSequence={handleManualStartSequence}
       />}
 

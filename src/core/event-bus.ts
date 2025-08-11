@@ -60,6 +60,7 @@ export type AppEvents = {
   /** 시스템 이벤트 */
   'system:mouse-ignore-toggle': boolean;
   'sequences-updated': void;
+  'sequences:activeListChanged': string[];
 };
 
 type Handler<T> = (payload: T) => void;

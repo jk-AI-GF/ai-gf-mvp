@@ -1,6 +1,7 @@
 import React from 'react';
 import Panel from './Panel';
 import styles from './CreatorPanel.module.css';
+import { useAppContext } from '../contexts/AppContext';
 
 interface CreatorPanelProps {
   onClose: () => void;
@@ -13,7 +14,6 @@ interface CreatorPanelProps {
   initialPos: { x: number, y: number };
   onDragEnd: (pos: { x: number, y: number }) => void;
   activeSequences: string[];
-  onToggleSequence: (sequenceFile: string, shouldActivate: boolean) => void;
   onManualStartSequence: (sequenceFile: string) => void;
 }
 
@@ -28,9 +28,25 @@ const CreatorPanel: React.FC<CreatorPanelProps> = ({
   initialPos, 
   onDragEnd,
   activeSequences,
-  onToggleSequence,
   onManualStartSequence,
 }) => {
+  const { actionRegistry } = useAppContext();
+
+  const handleToggleSequence = (sequenceFile: string, shouldActivate: boolean) => {
+    if (!actionRegistry) {
+      console.error("ActionRegistry not available.");
+      return;
+    }
+
+    const action = actionRegistry.get('toggleSequence')?.implementation;
+
+    if (action) {
+      action(sequenceFile, shouldActivate);
+    } else {
+      console.error(`Action "toggleSequence" not found.`);
+    }
+  };
+
   return (
     <Panel title="크리에이터 패널" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
       <div className={styles.container}>
@@ -73,7 +89,7 @@ const CreatorPanel: React.FC<CreatorPanelProps> = ({
                       <input 
                         type="checkbox" 
                         checked={activeSequences.includes(sequence.name)}
-                        onChange={(e) => onToggleSequence(sequence.name, e.target.checked)}
+                        onChange={(e) => handleToggleSequence(sequence.name, e.target.checked)}
                         disabled={sequence.type === 'subroutine'}
                       />
                       <span className={styles.slider}></span>

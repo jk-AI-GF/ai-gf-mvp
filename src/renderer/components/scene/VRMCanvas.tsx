@@ -88,7 +88,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
 
     const systemControls: SystemControls = {
       toggleTts: (enable: boolean) => toggleTts(enable),
-      toggleMouseIgnore: () => window.electronAPI.toggleMouseIgnore(),
+      toggleMouseIgnore: () => window.electronAPI.requestToggleMouseIgnore(),
       setMasterVolume: (volume: number) => setMasterVolume(volume),
     };
 

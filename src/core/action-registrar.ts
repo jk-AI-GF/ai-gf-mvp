@@ -7,7 +7,7 @@ import { playTTS } from '../renderer/audio-service';
 import { ActionDefinition } from '../plugin-api/actions';
 import { WebGLRenderer } from 'three';
 
-import { ICharacterState } from '../plugin-api/plugin-context';
+import { ICharacterState, PluginContext } from '../plugin-api/plugin-context';
 import { characterState } from './character-state';
 
 // action-registrar.ts
@@ -16,9 +16,15 @@ import { characterState } from './character-state';
 
 export function registerCoreActions(
   registry: ActionRegistry,
-  vrmManager: VRMManager,
+  context: PluginContext,
   renderer: WebGLRenderer,
 ) {
+  const { vrmManager, sequenceManager } = context;
+  if (!vrmManager || !renderer || !sequenceManager) {
+    console.error("Cannot register core actions: VRMManager, WebGLRenderer, or SequenceManager is missing from the context.");
+    return;
+  }
+  
   // getAvailableActions는 특별한 케이스로, 레지스트리 자체에서 정보를 가져옵니다.
   // 별도로 등록하지 않고 context-factory에서 직접 처리합니다.
 
@@ -382,6 +388,20 @@ export function registerCoreActions(
         }
         characterState[numericKey] = newValue; // Setter에서 0-1 클램핑 처리
       }
+    }
+  );
+
+  registry.register(
+    {
+      name: 'toggleSequence',
+      description: '지정된 시퀀스를 활성화하거나 비활성화합니다.',
+      params: [
+        { name: 'sequenceName', type: 'string', description: '토글할 시퀀스의 파일 이름' },
+        { name: 'shouldActivate', type: 'boolean', description: '활성화 여부' },
+      ],
+    },
+    (sequenceName: string, shouldActivate: boolean) => {
+      sequenceManager.toggleSequence(sequenceName, shouldActivate);
     }
   );
 }

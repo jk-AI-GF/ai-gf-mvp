@@ -87,11 +87,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // IMPORTANT: Update VRMManager with the final active camera
     managers.vrmManager.setActiveCamera(managers.camera);
 
-    // IMPORTANT: Register core actions now that all managers and cameras are ready
-    registerCoreActions(managers.actionRegistry, managers.vrmManager, managers.renderer);
-    console.log('[AppContext] Core actions registered.');
-
-    // Now that pluginManager is initialized, we can get its context and create the SequenceManager
+    // Now that pluginManager is initialized, we can get its context
     const context = managers.pluginManager.context;
     if (context) {
       // 전역 행동 상태 및 리소스 잠금을 관리할 매니저를 생성 및 주입
@@ -99,6 +95,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       context.characterStateManager = charStateManager;
       const seqManager = new SequenceManager(context);
       context.sequenceManager = seqManager;
+
+      // IMPORTANT: Register core actions now that all managers and the context are fully populated
+      registerCoreActions(managers.actionRegistry, context, managers.renderer);
+      console.log('[AppContext] Core actions registered.');
       
       seqManager.initialize().then(() => {
         setSequenceManager(seqManager);

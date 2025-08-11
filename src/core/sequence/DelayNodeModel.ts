@@ -8,6 +8,7 @@ export interface SerializedDelayNodeData {
 
 export class DelayNodeModel extends BaseNode {
     public delay: number; // 기본 지연 시간(초)
+    private activeTimers: Set<NodeJS.Timeout> = new Set();
 
     constructor(id: string, delay = 1.0) {
         const inputs: IPort[] = [
@@ -22,6 +23,12 @@ export class DelayNodeModel extends BaseNode {
         this.delay = delay;
     }
 
+    onDeactivate = (): void => {
+        console.log(`[DelayNode] Deactivating and clearing ${this.activeTimers.size} active timer(s) for node ${this.id}.`);
+        this.activeTimers.forEach(timerId => clearTimeout(timerId));
+        this.activeTimers.clear();
+    }
+
     async execute(
         context: PluginContext,
         inputs: { delay?: number }
@@ -32,10 +39,12 @@ export class DelayNodeModel extends BaseNode {
         console.log(`[DelayNode] Delaying execution for ${delayInSeconds} seconds.`);
 
         return new Promise(resolve => {
-            setTimeout(() => {
+            const timerId = setTimeout(() => {
                 console.log(`[DelayNode] Delay finished.`);
+                this.activeTimers.delete(timerId);
                 resolve({ nextExec: 'exec-out', outputs: {} });
             }, delayInSeconds * 1000);
+            this.activeTimers.add(timerId);
         });
     }
 

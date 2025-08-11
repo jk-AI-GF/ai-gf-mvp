@@ -34,7 +34,7 @@ describe('PluginManager', () => {
       get: jest.fn(),
       set: jest.fn(),
       getAll: jest.fn(),
-      characterState: { curiosity: 0, happiness: 0, energy: 0, lastInteractionTimestamp: 0 },
+      characterState: { characterName: '', userName: '', curiosity: 0, happiness: 0, energy: 0, lastInteractionTimestamp: 0 },
       vrmManager: undefined,
     };
     pluginManager = new PluginManager(mockContext);
