@@ -82,6 +82,16 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
         { key: 'partName', type: 'string', description: '우클릭된 부위 이름' }
     ],
   },
+  {
+    name: 'character:dragStart',
+    description: '캐릭터 드래그 시작',
+    payloadSchema: [],
+  },
+  {
+    name: 'character:dragEnd',
+    description: '캐릭터 드래그 종료',
+    payloadSchema: [],
+  },
   // UI
   {
     name: 'ui:showFloatingMessage',

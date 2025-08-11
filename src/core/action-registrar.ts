@@ -116,7 +116,10 @@ export function registerCoreActions(
       const targetPosition = new THREE.Vector3();
       if (raycaster.ray.intersectPlane(plane, targetPosition)) {
         // 교차점이 성공적으로 계산된 경우에만 이동을 실행합니다.
-        vrmManager.animateCharacterMove(targetPosition, duration);
+        eventBus.emit('character:dragStart'); // 중력 비활성화
+        vrmManager.animateCharacterMove(targetPosition, duration).then(() => {
+          eventBus.emit('character:dragEnd'); // 이동 완료 후 중력 재활성화
+        });
       } else {
         console.warn("moveCharacterToScreenPosition: Could not find an intersection point on the dynamic plane.");
       }

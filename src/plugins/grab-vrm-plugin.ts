@@ -88,6 +88,7 @@ export class GrabVrmPlugin implements IPlugin {
 
         this.context.actions.setPose("pose_grabbed.vrma");
         this.context.actions.showMessage("으악!");
+        this.context.eventBus.emit('character:dragStart');
 
         console.log('[GrabVrmPlugin] Started dragging character.');
         
@@ -119,6 +120,7 @@ export class GrabVrmPlugin implements IPlugin {
     if (!this.isDragging) return;
     
     this.isDragging = false;
+    this.context.eventBus.emit('character:dragEnd');
 
     this.context.actions.setPose("pose_stand_001.vrma");
 

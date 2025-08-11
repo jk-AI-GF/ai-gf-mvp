@@ -14,6 +14,7 @@ import { ProactiveDialoguePlugin } from '../../../plugins/proactive-dialogue-plu
 import { ActionTestPlugin } from '../../../plugins/action-test-plugin';
 import { MToonMaterialOutlineWidthMode } from '@pixiv/three-vrm';
 import { GrabVrmPlugin } from '../../../plugins/grab-vrm-plugin';
+import { GravityPlugin } from '../../../plugins/gravity-plugin';
 import { LlmResponseHandlerPlugin } from '../../../plugins/LlmResponseHandlerPlugin';
 import { InteractionTrackerPlugin } from '../../../plugins/interaction-tracker-plugin';
 import { SystemControls } from '../../../plugin-api/system-controls';
@@ -102,6 +103,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     pluginManager.register(new ProactiveDialoguePlugin());
     pluginManager.register(new ActionTestPlugin());
     pluginManager.register(new GrabVrmPlugin());
+    pluginManager.register(new GravityPlugin());
     pluginManager.register(new LlmResponseHandlerPlugin());
     pluginManager.register(new InteractionTrackerPlugin());
 
