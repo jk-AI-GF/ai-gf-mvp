@@ -686,6 +686,11 @@ export class VRMManager {
         });
     }
 
+    public setActiveCamera(camera: THREE.Camera) {
+        console.log(`[VRMManager] setActiveCamera called. Camera type: ${camera?.type}`);
+        this.activeCamera = camera;
+    }
+
     public async saveCurrentPose() {
         if (!this.currentVrm) {
             alert('VRM 모델이 로드되지 않았습니다.');

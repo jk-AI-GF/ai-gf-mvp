@@ -205,7 +205,7 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
     setLocks(serializedSequence.locks || []);
 
     const styledEdges = rawEdges.map((edge: SerializedEdge) => {
-      const sourceNode = newNodes.find(node => node.id === edge.source);
+      const sourceNode = newNodes.find((node: Node) => node.id === edge.source);
       const sourceInstance = sourceNode?.data as BaseNode;
       const sourcePort = sourceInstance?.outputs.find(p => p.name === edge.sourceHandle);
       const portType = sourcePort?.type || 'default';

@@ -248,6 +248,20 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
             onChange={(e) => setPersona(e.target.value)}
           />
         </div>
+
+        <h3 style={{ marginTop: '30px', marginBottom: '15px', fontSize: '1.5rem', borderBottom: '1px solid #444', paddingBottom: '10px' }}>
+          시스템 프롬프트
+        </h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <textarea
+            id="system-prompt-text"
+            rows={5}
+            placeholder="AI의 행동 규칙, 제약사항 등을 입력합니다."
+            style={{ ...inputStyle, resize: 'vertical' }}
+            value={llmSettings.systemPrompt}
+            onChange={(e) => setLlmSettings({ systemPrompt: e.target.value })}
+          />
+        </div>
       </div>
     </div>
   );

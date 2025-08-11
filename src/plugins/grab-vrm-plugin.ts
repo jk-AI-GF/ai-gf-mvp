@@ -125,6 +125,7 @@ export class GrabVrmPlugin implements IPlugin {
     this.isDragging = false;
 
     this.context.actions.setPose("pose_stand_001.vrma");
+    this.context.actions.moveCharacterToScreenPosition({ y: 1.0, duration: 0.5 });
 
     document.removeEventListener('mousemove', this.handleMouseMove);
     // 'mouseup' is registered with { once: true }, so it removes itself.

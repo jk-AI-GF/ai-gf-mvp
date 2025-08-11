@@ -5,14 +5,15 @@ import { VRMManager } from '../vrm-manager';
 import { PluginManager } from '../../plugins/plugin-manager';
 import { ChatService } from '../chat-service';
 import { LlmSettings, DEFAULT_LLM_SETTINGS } from '../../core/llm-settings';
-import { ActionRegistry } from '../../core/action-registry'; // 추가
+import { ActionRegistry } from '../../core/action-registry';
 import { SequenceManager } from '../../core/sequence/SequenceManager';
+import { registerCoreActions } from '../../core/action-registrar';
 import { CharacterStateManager } from '../../core/character-state-manager';
 
 interface AppContextType {
   vrmManager: VRMManager | null;
   pluginManager: PluginManager | null;
-  actionRegistry: ActionRegistry | null; // 추가
+  actionRegistry: ActionRegistry | null;
   sequenceManager: SequenceManager | null;
   chatService: ChatService | null;
   directionalLight: THREE.DirectionalLight | null;
@@ -21,7 +22,7 @@ interface AppContextType {
   windowOpacity: number;
   persona: string;
   llmSettings: LlmSettings;
-  renderer: THREE.WebGLRenderer | null; // 추가
+  renderer: THREE.WebGLRenderer | null;
   setWindowOpacity: (opacity: number) => void;
   setPersona: (persona: string) => void;
   setLlmSettings: (settings: Partial<LlmSettings>) => void;
@@ -42,7 +43,7 @@ export const useAppContext = () => {
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [vrmManager, setVrmManager] = useState<VRMManager | null>(null);
   const [pluginManager, setPluginManager] = useState<PluginManager | null>(null);
-  const [actionRegistry, setActionRegistry] = useState<ActionRegistry | null>(null); // 추가
+  const [actionRegistry, setActionRegistry] = useState<ActionRegistry | null>(null);
   const [sequenceManager, setSequenceManager] = useState<SequenceManager | null>(null);
   const [chatService, setChatService] = useState<ChatService | null>(null);
   const [directionalLight, setDirectionalLight] = useState<THREE.DirectionalLight | null>(null);
@@ -51,7 +52,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [windowOpacity, setWindowOpacityState] = useState(1.0);
   const [persona, setPersonaState] = useState('');
   const [llmSettings, setLlmSettingsState] = useState<LlmSettings>(DEFAULT_LLM_SETTINGS);
-  const [renderer, setRenderer] = useState<THREE.WebGLRenderer | null>(null); // 추가
+  const [renderer, setRenderer] = useState<THREE.WebGLRenderer | null>(null);
 
   useEffect(() => {
     window.electronAPI.getWindowOpacity().then(setWindowOpacityState);
@@ -72,14 +73,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const handleManagersLoad = useCallback((managers: { 
     vrmManager: VRMManager; 
     pluginManager: PluginManager;
-    actionRegistry: ActionRegistry; // 추가
-    renderer: THREE.WebGLRenderer; // 추가
+    actionRegistry: ActionRegistry;
+    renderer: THREE.WebGLRenderer;
+    camera: THREE.Camera;
   }) => {
+    // Set all managers from VRMCanvas
     setVrmManager(managers.vrmManager);
     setPluginManager(managers.pluginManager);
-    setActionRegistry(managers.actionRegistry); // 추가
-    setRenderer(managers.renderer); // 추가
+    setActionRegistry(managers.actionRegistry);
+    setRenderer(managers.renderer);
     setChatService(new ChatService(managers.vrmManager, managers.pluginManager));
+
+    // IMPORTANT: Update VRMManager with the final active camera
+    managers.vrmManager.setActiveCamera(managers.camera);
+
+    // IMPORTANT: Register core actions now that all managers and cameras are ready
+    registerCoreActions(managers.actionRegistry, managers.vrmManager, managers.renderer);
+    console.log('[AppContext] Core actions registered.');
 
     // Now that pluginManager is initialized, we can get its context and create the SequenceManager
     const context = managers.pluginManager.context;
@@ -144,7 +154,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           );
           console.log('[AppContext] "runSubroutine" action registered.');
         }
-      }).catch(err => {
+      }).catch((err: any) => {
         console.error("Failed to initialize SequenceManager:", err);
       });
     } else {
@@ -156,7 +166,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setWindowOpacityState(opacity);
     window.electronAPI.setWindowOpacity(opacity);
   };
-
+  
   const setPersona = (newPersona: string) => {
     setPersonaState(newPersona);
     window.electronAPI.setPersona(newPersona);
@@ -171,7 +181,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const value = { 
     vrmManager, 
     pluginManager, 
-    actionRegistry, // 추가
+    actionRegistry,
     sequenceManager,
     chatService,
     directionalLight,
@@ -180,7 +190,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     windowOpacity,
     persona,
     llmSettings,
-    renderer, // 추가
+    renderer,
     setWindowOpacity,
     setPersona,
     setLlmSettings,

@@ -84,9 +84,6 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     // --- Plugin System ---
     const actionRegistry = new ActionRegistry();
 
-    // 1. Register all core actions BEFORE creating the context
-    registerCoreActions(actionRegistry, vrmManager, renderer);
-
     const systemControls: SystemControls = {
       toggleTts: (enable: boolean) => toggleTts(enable),
       toggleMouseIgnore: () => window.electronAPI.toggleMouseIgnore(),
@@ -220,6 +217,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
             eventBus.emit('camera:modeChanged', 'free');
             setOutlineMode(MToonMaterialOutlineWidthMode.WorldCoordinates);
         }
+        vrmManager.setActiveCamera(activeCamera); // VRMManager에 활성 카메라 업데이트
     };
 
     const handleEditModeChange = (data: { isEditMode: boolean }) => {

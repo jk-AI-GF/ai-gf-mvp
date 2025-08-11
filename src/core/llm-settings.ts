@@ -16,6 +16,7 @@ export interface LlmSettings {
   selectedModel: string; // SUPPORTED_MODELS의 id와 일치
   temperature: number; // 0.0 ~ 2.0
   maxTokens: number;
+  systemPrompt: string;
 }
 
 // 각 모델의 상세 정보
@@ -47,4 +48,5 @@ export const DEFAULT_LLM_SETTINGS: LlmSettings = {
   selectedModel: 'gemini-1.5-flash', // 기본 모델
   temperature: 0.7,
   maxTokens: 1024,
+  systemPrompt: 'You are a friendly AI assistant.', // 기본 시스템 프롬프트
 };

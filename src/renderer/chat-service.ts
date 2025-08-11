@@ -69,17 +69,40 @@ export class ChatService {
         ? Object.keys(this.vrmManager.currentVrm.expressionManager.expressionMap)
         : ['neutral', 'happy', 'sad'];
 
-      // 기본 system prompt에 사용자 정의 Persona 및 표정 태그 형식을 포함
-      const basePrompt = `${persona}\n모든 응답에 <표정: [표정_이름]> 형식의 표정 태그를 포함해 주세요. 표정_이름은 다음 목록 중 하나여야 합니다: ${vrmExpressionList.join(', ')}. 예시: <표정: happy> 안녕하세요!`;
-      // 현재 실행 가능한 서브루틴 목록을 LLM에 제공하고, 응답은 반드시 JSON 형식으로 반환하도록 지시
+      // 1. 시스템 프롬프트와 페르소나를 결합합니다.
+      const combinedSystemPrompt = `${llmSettings.systemPrompt}\n\n${persona}`;
+
+      // 2. 기본 프롬프트에 표정 태그 지시를 추가합니다.
+      const basePrompt = `${combinedSystemPrompt}\n\n모든 응답에 <표정: [표정_이름]> 형식의 표정 태그를 포함해 주세요. 표정_이름은 다음 목록 중 하나여야 합니다: ${vrmExpressionList.join(', ')}. 예시: <표정: happy> 안녕하세요!`;
+      
+      // 3. 최종 시스템 프롬프트에 서브루틴과 JSON 출력 형식을 추가합니다.
       const availableSubroutines = this.pluginManager.context?.sequenceManager?.getAvailableSubroutines() || [];
       const subJson = JSON.stringify(availableSubroutines);
-      const systemPrompt = `${basePrompt}\n다음 JSON 배열은 현재 실행 가능한 Action(서브루틴) 목록입니다:\n${subJson}\n` +
-        'LLM 응답은 반드시 JSON 객체 하나만 포함해야 합니다. 형식은 다음과 같습니다.\n' +
-        '// type이 "talk"인 경우\n' +
-        '{"type":"talk","text":문자열,"expression":표정}\n' +
-        '// type이 "action"인 경우\n' +
-        '{"type":"action","subroutine":서브루틴이름,"arguments":{...},"text":대사,"expression":표정}';
+      const systemPrompt = `${basePrompt}\n\n다음 JSON 배열은 현재 실행 가능한 Action(서브루틴) 목록입니다:
+${subJson}\n\nLLM 응답은 반드시 JSON 객체 하나만 포함해야 합니다. 형식은 다음과 같습니다.
+
+// 1. 캐릭터가 단순히 대답만 할 경우:
+{
+  "type": "talk",
+  "text": "캐릭터가 할 대사입니다.",
+  "expression": "표정 이름"
+}
+
+// 2. 캐릭터가 행동(서브루틴)을 수행할 경우:
+{
+  "type": "action",
+  "subroutine": "실행할 서브루틴의 이름",
+  "arguments": { "인자이름1": "값1", "인자이름2": "값2" }, // 서브루틴에 필요한 인자들
+  "text": "행동과 함께 출력할 대사입니다.",
+  "expression": "표정 이름"
+}
+
+// 중요:
+// - 응답은 다른 어떤 텍스트도 없이 순수한 JSON 객체여야 합니다.
+// - 'subroutine'의 이름은 위에 제공된 Action 목록에 있는 이름과 정확히 일치해야 합니다.
+// - 'arguments'는 해당 서브루틴이 요구하는 인자를 모두 포함해야 합니다.
+// - 'expression'은 캐릭터의 표정을 나타내며, 필수 항목입니다.
+`;
 
       let requestUrl: string;
       let requestOptions: RequestInit;
