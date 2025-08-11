@@ -167,7 +167,8 @@ export function registerCoreActions(
       ],
     },
     async (poseName: string, blendTime?: number) => {
-      await vrmManager.loadAndApplyPose(poseName, blendTime);
+      // Ensure the promise from loadAndApplyPose is awaited and returned
+      return await vrmManager.loadAndApplyPose(poseName, blendTime);
     }
   );
 

@@ -429,7 +429,8 @@ export class VRMManager {
 
         const clip = await this.loadAndParseFile(absolutePath);
         if (clip?.type === 'pose') {
-            return this.applyPose(clip.data, blendTime);
+            // Make sure to await the promise from applyPose
+            return await this.applyPose(clip.data, blendTime);
         } else if (clip?.type === 'animation') {
             console.warn(`Attempted to apply an animation file as a pose: ${fileName}`);
         }
@@ -453,29 +454,41 @@ export class VRMManager {
     public applyPose(poseClip: THREE.AnimationClip, blendTime = 0.0): Promise<void> {
         return new Promise((resolve) => {
             if (!this.currentVrm || !this.mixer) {
-                resolve();
-                return;
+                return resolve();
             }
 
             const newAction = this.mixer.clipAction(poseClip);
             newAction.setLoop(THREE.LoopOnce, 0);
             newAction.clampWhenFinished = true;
 
+            // When the animation (pose) finishes, resolve the promise.
+            const listener = (e: any) => {
+                if (e.action === newAction) {
+                    this.mixer?.removeEventListener('finished', listener);
+                    resolve();
+                }
+            };
+            this.mixer.addEventListener('finished', listener);
+
             if (this.currentAction) {
                 this.currentAction.crossFadeTo(newAction, blendTime, true);
-                newAction.play();
             } else {
                 this.mixer.stopAllAction();
-                newAction.play();
             }
             
+            newAction.play();
             this.currentAction = newAction;
             this.eventBus.emit('vrm:poseApplied', { poseName: poseClip.name });
 
-            // Resolve the promise after the blend time has passed
-            setTimeout(() => {
-                resolve();
-            }, blendTime * 1000);
+            // If blendTime is 0, the 'finished' event might not fire as expected for a 0-duration clip.
+            // Resolve immediately in this case.
+            if (blendTime === 0 && poseClip.duration === 0) {
+                 // We still need to give one frame for the pose to apply before resolving.
+                requestAnimationFrame(() => {
+                    this.mixer?.removeEventListener('finished', listener);
+                    resolve();
+                });
+            }
         });
     }
 
