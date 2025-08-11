@@ -84,7 +84,15 @@ export function registerCoreActions(
       ],
     },
     (x: number, y: number, duration: number) => {
-      if (!vrmManager.currentVrm) return;
+      if (!vrmManager.currentVrm) {
+        console.warn("moveCharacterToScreenPosition: VRM not loaded.");
+        return;
+      }
+      // A more robust check for a valid camera object.
+      if (!vrmManager.activeCamera || !vrmManager.activeCamera.isCamera) {
+        console.error("moveCharacterToScreenPosition: Active camera is not a valid THREE.Camera. Aborting.", vrmManager.activeCamera);
+        return;
+      }
 
       // 1. 화면 비율 좌표를 NDC(-1 to 1)로 변환
       const ndc = new THREE.Vector2(

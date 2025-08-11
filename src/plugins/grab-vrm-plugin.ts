@@ -11,21 +11,18 @@ export class GrabVrmPlugin implements IPlugin {
 
   private context!: PluginContext;
   private vrmManager!: VRMManager;
-  private camera!: THREE.Camera;
 
   private isDragging = false;
   private raycaster = new THREE.Raycaster();
   private dragPlane = new THREE.Plane();
   private dragOffset = new THREE.Vector3();
   private intersection = new THREE.Vector3();
-  private cameraModeUnsubscribe: (() => void) | null = null;
   private partClickedUnsubscribe: (() => void) | null = null;
 
   constructor() {
     this.handleMouseDownOnPart = this.handleMouseDownOnPart.bind(this);
     this.handleMouseMove = this.handleMouseMove.bind(this);
     this.handleMouseUp = this.handleMouseUp.bind(this);
-    this.updateCamera = this.updateCamera.bind(this);
   }
 
   setup(context: PluginContext): void {
@@ -35,41 +32,40 @@ export class GrabVrmPlugin implements IPlugin {
       return;
     }
     this.vrmManager = context.vrmManager;
-    this.camera = this.vrmManager.activeCamera;
     console.log('[GrabVrmPlugin] Setup complete.');
   }
 
   onEnable(): void {
     console.log('[GrabVrmPlugin] Enabled.');
     this.partClickedUnsubscribe = this.context.eventBus.on('character_part_clicked', this.handleMouseDownOnPart);
-    this.cameraModeUnsubscribe = this.context.eventBus.on('camera:modeChanged', this.updateCamera);
   }
 
   onDisable(): void {
     console.log('[GrabVrmPlugin] Disabled.');
     this.partClickedUnsubscribe?.();
-    this.cameraModeUnsubscribe?.();
     // Ensure dragging state is reset if disabled mid-drag
     if (this.isDragging) {
       this.handleMouseUp();
     }
   }
 
-  private updateCamera(): void {
-    if (this.vrmManager) {
-      this.camera = this.vrmManager.activeCamera;
-    }
-  }
-
   private handleMouseDownOnPart({ partName }: { partName: string }): void {
-    if (!this.enabled || this.isDragging || !this.vrmManager.currentVrm || !this.vrmManager.hitboxes.length) return;
+    // General checks first
+    if (!this.enabled || this.isDragging || !this.vrmManager.currentVrm) return;
 
     if (partName === 'hips') {
+      // Camera-dependent checks and logic are moved inside here
+      const activeCamera = this.vrmManager.activeCamera;
+      if (!activeCamera) {
+        console.error("[GrabVrmPlugin] Cannot start drag: Active camera is not available at the moment of click.");
+        return;
+      }
+
       const mouse = new THREE.Vector2(
         ((window.event as MouseEvent).clientX / window.innerWidth) * 2 - 1,
         -((window.event as MouseEvent).clientY / window.innerHeight) * 2 + 1
       );
-      this.raycaster.setFromCamera(mouse, this.camera);
+      this.raycaster.setFromCamera(mouse, activeCamera);
 
       // Intersect with the actual hitboxes to find the precise click point.
       const intersects = this.raycaster.intersectObjects(this.vrmManager.hitboxes);
@@ -80,7 +76,7 @@ export class GrabVrmPlugin implements IPlugin {
 
         // Create the drag plane at the depth of the actual click point.
         this.dragPlane.setFromNormalAndCoplanarPoint(
-          this.camera.getWorldDirection(this.dragPlane.normal),
+          activeCamera.getWorldDirection(this.dragPlane.normal),
           clickPoint
         );
 
@@ -95,8 +91,8 @@ export class GrabVrmPlugin implements IPlugin {
 
         console.log('[GrabVrmPlugin] Started dragging character.');
         
-        if (this.camera instanceof THREE.PerspectiveCamera) {
-          const controls = (this.vrmManager.activeCamera.parent?.children.find((c: any) => c.constructor.name === 'OrbitControls') as any);
+        if (activeCamera instanceof THREE.PerspectiveCamera) {
+          const controls = (activeCamera.parent?.children.find((c: any) => c.constructor.name === 'OrbitControls') as any);
           if (controls) controls.enabled = false;
         }
       }
@@ -104,14 +100,14 @@ export class GrabVrmPlugin implements IPlugin {
   }
 
   private handleMouseMove(event: MouseEvent): void {
-    if (!this.isDragging || !this.vrmManager.currentVrm) return;
+    if (!this.isDragging || !this.vrmManager.currentVrm || !this.vrmManager.activeCamera) return;
 
     const mouse = new THREE.Vector2(
       (event.clientX / window.innerWidth) * 2 - 1,
       -(event.clientY / window.innerHeight) * 2 + 1
     );
 
-    this.raycaster.setFromCamera(mouse, this.camera);
+    this.raycaster.setFromCamera(mouse, this.vrmManager.activeCamera);
 
     // This logic works for both Perspective and Orthographic cameras.
     if (this.raycaster.ray.intersectPlane(this.dragPlane, this.intersection)) {
@@ -125,15 +121,15 @@ export class GrabVrmPlugin implements IPlugin {
     this.isDragging = false;
 
     this.context.actions.setPose("pose_stand_001.vrma");
-    this.context.actions.moveCharacterToScreenPosition({ y: 1.0, duration: 0.5 });
 
     document.removeEventListener('mousemove', this.handleMouseMove);
     // 'mouseup' is registered with { once: true }, so it removes itself.
 
     console.log('[GrabVrmPlugin] Stopped dragging character.');
 
-    if (this.camera instanceof THREE.PerspectiveCamera) {
-        const controls = (this.vrmManager.activeCamera.parent?.children.find((c: any) => c.constructor.name === 'OrbitControls') as any);
+    const activeCamera = this.vrmManager.activeCamera;
+    if (activeCamera instanceof THREE.PerspectiveCamera) {
+        const controls = (activeCamera.parent?.children.find((c: any) => c.constructor.name === 'OrbitControls') as any);
         if (controls) controls.enabled = true;
     }
   }
