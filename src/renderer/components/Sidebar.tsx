@@ -32,7 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const handleToggleMouseIgnore = () => {
-    pluginManager?.context.system.toggleMouseIgnore();
+    window.electronAPI.requestToggleMouseIgnore();
   };
 
   const handleQuit = () => {

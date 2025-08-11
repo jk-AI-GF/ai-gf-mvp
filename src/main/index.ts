@@ -349,10 +349,30 @@ ipcMain.handle('readFile', async (event, filePath: string) => {
 });
 
 // --- App Control ---
+const toggleMouseIgnoreAndUI = () => {
+  if (mainWindow) {
+    isIgnoringMouseEvents = !isIgnoringMouseEvents;
+    mainWindow.setIgnoreMouseEvents(isIgnoringMouseEvents, { forward: isIgnoringMouseEvents });
+    if (!isIgnoringMouseEvents) mainWindow.focus();
+    
+    // Notify the renderer process to update the UI state
+    mainWindow.webContents.send('set-ui-interactive-mode', !isIgnoringMouseEvents);
+    // Also notify about the raw mouse-ignore state for the button
+    mainWindow.webContents.send('system:mouse-ignore-toggle', isIgnoringMouseEvents);
+  }
+};
+
 ipcMain.on('quit-app', () => {
   BrowserWindow.getAllWindows().forEach((win) => win.destroy());
   app.quit();
 });
+
+// This is the new centralized handler
+ipcMain.on('request-toggle-mouse-ignore', () => {
+  toggleMouseIgnoreAndUI();
+});
+
+// Legacy handler for direct toggle (now deprecated but kept for compatibility if needed)
 ipcMain.on('toggle-mouse-ignore', () => {
   if (mainWindow) {
     isIgnoringMouseEvents = !isIgnoringMouseEvents;
@@ -559,21 +579,12 @@ app.on('ready', async () => {
   );
 
   // Shortcuts
-  const toggleMouseIgnore = () => {
-    if (mainWindow) {
-      isIgnoringMouseEvents = !isIgnoringMouseEvents;
-      mainWindow.setIgnoreMouseEvents(isIgnoringMouseEvents, { forward: isIgnoringMouseEvents });
-      if (!isIgnoringMouseEvents) mainWindow.focus();
-      
-      mainWindow.webContents.send('set-ui-interactive-mode', !isIgnoringMouseEvents);
-    }
-  };
-
   let currentShortcut = store.get('mouseIgnoreShortcut');
   const registerMouseIgnoreShortcut = () => {
     if (currentShortcut) {
       try {
-        globalShortcut.register(currentShortcut, toggleMouseIgnore);
+        // The shortcut now calls the centralized function
+        globalShortcut.register(currentShortcut, toggleMouseIgnoreAndUI);
       } catch (error) {
         console.error(`Failed to register shortcut "${currentShortcut}":`, error);
       }

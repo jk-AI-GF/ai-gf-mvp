@@ -226,6 +226,22 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     const handleEditModeChange = (data: { isEditMode: boolean }) => {
         pluginManager.setEditMode(data.isEditMode);
         handleSetCameraMode(data.isEditMode ? 'orbit' : 'fixed');
+
+        if (data.isEditMode && vrmManager.currentVrm) {
+            const hips = vrmManager.currentVrm.humanoid.getNormalizedBoneNode('hips');
+            if (hips) {
+                const targetPos = hips.getWorldPosition(new THREE.Vector3());
+                
+                // Calculate ideal camera position: behind and slightly above the target
+                const offset = new THREE.Vector3(0, 0.6, 2.0);
+                const cameraPos = targetPos.clone().add(offset);
+
+                // Set camera and controls instantly
+                perspectiveCamera.position.copy(cameraPos);
+                controls.target.copy(targetPos);
+                controls.update();
+            }
+        }
     };
 
     const requestCameraState = () => {

@@ -11,7 +11,7 @@ import { LlmSettings } from '../core/llm-settings';
 
       // App control
       quitApp: () => ipcRenderer.send('quit-app'),
-  toggleMouseIgnore: () => ipcRenderer.send('toggle-mouse-ignore'),
+  requestToggleMouseIgnore: () => ipcRenderer.send('request-toggle-mouse-ignore'),
 
   // File System API
   listDirectory: async (dirPath: string, basePath: 'assets' | 'userData' = 'assets') => ipcRenderer.invoke('list-directory', dirPath, basePath),

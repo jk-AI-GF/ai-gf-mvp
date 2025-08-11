@@ -37,7 +37,7 @@ declare global {
 
       // App control
       quitApp: () => void;
-      toggleMouseIgnore: () => void;
+      requestToggleMouseIgnore: () => void;
 
       // File System API
       listDirectory: (dirPath: string, basePath?: 'assets' | 'userData') => Promise<{ files: string[]; directories: string[]; error?: string }>;
