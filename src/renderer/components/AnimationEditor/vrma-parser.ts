@@ -155,3 +155,170 @@ export async function parseVrma(arrayBuffer: ArrayBuffer, fileName: string, vrm:
     throw new Error(`애니메이션 파일(${fileName})을 파싱하는 데 실패했습니다.`);
   }
 }
+
+/**
+ * Serializes a THREE.AnimationClip into a VRMA (binary glTF) ArrayBuffer.
+ * @param clip The AnimationClip to serialize.
+ * @param vrm The VRM model used as a reference for bone names.
+ * @returns A Promise that resolves with an ArrayBuffer of the .vrma file.
+ */
+export async function serializeVrma(clip: THREE.AnimationClip, vrm: VRM): Promise<ArrayBuffer> {
+  const boneNameMap = new Map<string, string>();
+  Object.entries(vrm.humanoid.humanBones).forEach(([humanBoneName, { node }]) => {
+    boneNameMap.set(node.name, humanBoneName);
+  });
+
+  const vrmAnimation: VRMAnimation = {
+    humanoid: { humanBones: {} },
+    expressions: { preset: {}, custom: {} },
+    lookAt: undefined,
+  };
+
+  const bufferViews: any[] = [];
+  const accessors: any[] = [];
+  const samplers: any[] = [];
+  const channels: any[] = [];
+  const binaryChunks: ArrayBuffer[] = [];
+  let byteOffset = 0;
+
+  clip.tracks.forEach(track => {
+    const trackNameParts = track.name.split('.');
+    const nodeName = trackNameParts[0];
+    const propertyName = trackNameParts[1];
+
+    const humanBoneName = boneNameMap.get(nodeName) as any;
+    if (!humanBoneName) {
+      console.warn(`Skipping track for non-humanoid bone: ${nodeName}`);
+      return;
+    }
+
+    // Create Buffer and BufferView for times
+    const times = track.times as Float32Array;
+    const timeBuffer = times.buffer.slice(times.byteOffset, times.byteOffset + times.byteLength);
+    const timeBufferViewIndex = bufferViews.length;
+    bufferViews.push({
+      buffer: 0,
+      byteOffset: byteOffset,
+      byteLength: timeBuffer.byteLength,
+    });
+    binaryChunks.push(timeBuffer);
+    byteOffset += timeBuffer.byteLength;
+
+    // Create Accessor for times
+    const timeAccessorIndex = accessors.length;
+    accessors.push({
+      bufferView: timeBufferViewIndex,
+      componentType: 5126, // FLOAT
+      count: times.length,
+      type: 'SCALAR',
+      max: [Math.max(...times)],
+      min: [Math.min(...times)],
+    });
+
+    // Create Buffer and BufferView for values
+    const values = track.values as Float32Array;
+    const valueBuffer = values.buffer.slice(values.byteOffset, values.byteOffset + values.byteLength);
+    const valueBufferViewIndex = bufferViews.length;
+    bufferViews.push({
+      buffer: 0,
+      byteOffset: byteOffset,
+      byteLength: valueBuffer.byteLength,
+    });
+    binaryChunks.push(valueBuffer);
+    byteOffset += valueBuffer.byteLength;
+
+    // Create Accessor for values
+    const valueAccessorIndex = accessors.length;
+    let valueType: 'VEC3' | 'VEC4' = 'VEC3';
+    if (propertyName === 'quaternion') {
+      valueType = 'VEC4';
+    }
+    accessors.push({
+      bufferView: valueBufferViewIndex,
+      componentType: 5126, // FLOAT
+      count: values.length / track.getValueSize(),
+      type: valueType,
+    });
+
+    // Create Sampler
+    const samplerIndex = samplers.length;
+    samplers.push({
+      input: timeAccessorIndex,
+      output: valueAccessorIndex,
+      interpolation: 'LINEAR',
+    });
+
+    // Create Channel and link to VRMAnimation
+    if (!vrmAnimation.humanoid.humanBones[humanBoneName]) {
+      vrmAnimation.humanoid.humanBones[humanBoneName] = { node: 0 }; // Placeholder node index
+    }
+
+    const channelTarget = {
+      node: 0, // Placeholder node index
+      path: propertyName,
+    };
+    
+    if (propertyName === 'position') {
+      vrmAnimation.humanoid.humanBones[humanBoneName].translation = samplerIndex;
+    } else if (propertyName === 'quaternion') {
+      vrmAnimation.humanoid.humanBones[humanBoneName].rotation = samplerIndex;
+    }
+    
+    channels.push({
+        sampler: samplerIndex,
+        target: channelTarget,
+    });
+  });
+
+  const totalByteLength = byteOffset;
+  const binaryBuffer = new Uint8Array(totalByteLength);
+  let currentOffset = 0;
+  for (const chunk of binaryChunks) {
+    binaryBuffer.set(new Uint8Array(chunk), currentOffset);
+    currentOffset += chunk.byteLength;
+  }
+
+  const json = {
+    asset: { version: '2.0', generator: 'AI-GF Animation Editor' },
+    animations: [{ name: clip.name, channels, samplers }],
+    extensions: { VRMC_vrm_animation: vrmAnimation },
+    extensionsUsed: ['VRMC_vrm_animation'],
+    accessors,
+    bufferViews,
+    buffers: [{ byteLength: totalByteLength }],
+    nodes: [{name: "AnimationNode"}], // Add a dummy node
+    scenes: [{nodes: [0]}],
+  };
+
+  const jsonString = JSON.stringify(json);
+  const jsonBuffer = new TextEncoder().encode(jsonString);
+
+  const JSON_CHUNK_TYPE = 0x4e4f534a;
+  const BIN_CHUNK_TYPE = 0x004e4942;
+  const GLB_HEADER_MAGIC = 0x46546c67;
+  const GLB_HEADER_LENGTH = 12;
+  const GLB_CHUNK_HEADER_LENGTH = 8;
+
+  const jsonChunkLength = Math.ceil(jsonBuffer.length / 4) * 4;
+  const binChunkLength = Math.ceil(binaryBuffer.length / 4) * 4;
+
+  const totalGBLength = GLB_HEADER_LENGTH + GLB_CHUNK_HEADER_LENGTH + jsonChunkLength + GLB_CHUNK_HEADER_LENGTH + binChunkLength;
+  const glbBuffer = new ArrayBuffer(totalGBLength);
+  const dataView = new DataView(glbBuffer);
+
+  let pos = 0;
+  dataView.setUint32(pos, GLB_HEADER_MAGIC, true); pos += 4;
+  dataView.setUint32(pos, 2, true); pos += 4; // version
+  dataView.setUint32(pos, totalGBLength, true); pos += 4;
+
+  dataView.setUint32(pos, jsonChunkLength, true); pos += 4;
+  dataView.setUint32(pos, JSON_CHUNK_TYPE, true); pos += 4;
+  new Uint8Array(glbBuffer, pos).set(jsonBuffer);
+  pos += jsonChunkLength;
+
+  dataView.setUint32(pos, binChunkLength, true); pos += 4;
+  dataView.setUint32(pos, BIN_CHUNK_TYPE, true); pos += 4;
+  new Uint8Array(glbBuffer, pos).set(binaryBuffer);
+
+  return glbBuffer;
+}

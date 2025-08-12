@@ -3,9 +3,15 @@ import * as THREE from 'three';
 import { useAppContext } from '../../contexts/AppContext';
 import Panel from '../Panel';
 import styles from './AnimationEditPanel.module.css';
-import { parseVrma } from './vrma-parser';
+import { parseVrma, serializeVrma } from './vrma-parser';
 import DopeSheetView from './DopeSheetView';
 import PlaybackControls from './PlaybackControls';
+import KeyframeEditor from './KeyframeEditor';
+
+interface SelectedKeyframe {
+  trackName: string;
+  keyIndex: number;
+}
 
 interface AnimationEditPanelProps {
   onClose: () => void;
@@ -24,6 +30,7 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
   const [animationClip, setAnimationClip] = useState<THREE.AnimationClip | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [selectedKeyframe, setSelectedKeyframe] = useState<SelectedKeyframe | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,6 +51,7 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
       setAnimationClip(null);
       setCurrentTime(0);
       setIsPlaying(false);
+      setSelectedKeyframe(null);
 
       try {
         const userPath = await window.electronAPI.resolvePath('userData', `animations/${animationName}`);
@@ -59,7 +67,7 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
         if (!filePath) {
           throw new Error(`애니메이션 파일을 찾을 수 없습니다: ${animationName}`);
         }
-
+        
         if (!vrmManager?.currentVrm) {
           throw new Error('애니메이션을 파싱하기 위해 VRM 모델이 먼저 로드되어야 합니다.');
         }
@@ -82,7 +90,7 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
     };
 
     loadAndParseAnimation();
-  }, [animationName]);
+  }, [animationName, vrmManager]);
 
   // Animation playback loop
   const animate = (time: number) => {
@@ -163,6 +171,86 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
     }
   };
 
+  const handleKeyframeSelect = (trackName: string, keyIndex: number) => {
+    setSelectedKeyframe({ trackName, keyIndex });
+    // Also move playhead to the selected keyframe's time
+    const track = animationClip?.tracks.find(t => t.name === trackName);
+    if (track) {
+      handleTimeChange(track.times[keyIndex]);
+    }
+  };
+
+  const handleKeyframeUpdate = (trackName: string, keyIndex: number, newTime: number, newValue: number[]) => {
+    if (!animationClip) return;
+
+    const newClip = animationClip.clone();
+    const track = newClip.tracks.find(t => t.name === trackName);
+
+    if (track) {
+      // Update value
+      const valueSize = track.getValueSize();
+      for (let i = 0; i < valueSize; i++) {
+        track.values[keyIndex * valueSize + i] = newValue[i];
+      }
+
+      // Update time and re-sort if necessary
+      track.times[keyIndex] = newTime;
+
+      // Simple bubble-swap to re-sort if time has changed
+      // A more robust solution would use a stable sort algorithm
+      let swapped;
+      do {
+        swapped = false;
+        for (let i = 0; i < track.times.length - 1; i++) {
+          if (track.times[i] > track.times[i+1]) {
+            // Swap time
+            [track.times[i], track.times[i+1]] = [track.times[i+1], track.times[i]];
+            // Swap corresponding values
+            const val1 = Array.from(track.values.slice(i*valueSize, (i+1)*valueSize));
+            const val2 = Array.from(track.values.slice((i+1)*valueSize, (i+2)*valueSize));
+            track.values.set(val2, i*valueSize);
+            track.values.set(val1, (i+1)*valueSize);
+            swapped = true;
+
+            // If we moved the selected key, we need to update its index
+            if (selectedKeyframe?.keyIndex === i) {
+              setSelectedKeyframe({trackName, keyIndex: i + 1});
+            } else if (selectedKeyframe?.keyIndex === i + 1) {
+              setSelectedKeyframe({trackName, keyIndex: i});
+            }
+          }
+        }
+      } while (swapped);
+      
+      setAnimationClip(newClip);
+    }
+  };
+
+  const handleSaveAnimation = async () => {
+    if (!animationClip || !vrmManager?.currentVrm) {
+      alert('저장할 애니메이션 데이터가 없거나 VRM 모델이 로드되지 않았습니다.');
+      return;
+    }
+    try {
+      setIsLoading(true);
+      const arrayBuffer = await serializeVrma(animationClip, vrmManager.currentVrm);
+      console.log('Serialized VRMA data (ArrayBuffer):', arrayBuffer);
+      alert(`'${animationClip.name}.vrma' 로 저장 준비 완료! (콘솔 로그 확인)`);
+      // TODO: Replace with actual file save API call
+      // const result = await window.electronAPI.saveAnimationToFile(arrayBuffer, `${animationClip.name}.vrma`);
+      // if (result.success) {
+      //   alert('성공적으로 저장되었습니다.');
+      // } else if (!result.canceled) {
+      //   alert(`저장 실패: ${result.error}`);
+      // }
+    } catch (error) {
+      console.error('Failed to serialize animation:', error);
+      alert(`애니메이션을 저장하는 중 오류 발생: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleClosePanel = () => {
     // The cleanup effect will handle resetting the pose
     onClose();
@@ -183,11 +271,16 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
               animationClip={animationClip}
               currentTime={currentTime}
               onTimeChange={handleTimeChange}
+              selectedKeyframe={selectedKeyframe}
+              onKeyframeSelect={handleKeyframeSelect}
             />
           </div>
           <div className={styles.keyframeEditorContainer}>
-            {/* KeyframeEditor will go here */}
-            <div className={styles.placeholder}>키프레임 상세 편집기 영역</div>
+            <KeyframeEditor 
+              animationClip={animationClip}
+              selectedKeyframe={selectedKeyframe}
+              onKeyframeUpdate={handleKeyframeUpdate}
+            />
           </div>
         </div>
       );
@@ -208,9 +301,14 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
               onPause={handlePause}
               onGoToStart={handleGoToStart}
             />
-            <button onClick={handleClosePanel} className={styles.backButton}>
-            &larr; 목록으로 돌아가기
-            </button>
+            <div className={styles.buttonGroup}>
+              <button onClick={handleSaveAnimation} className={styles.actionButton}>
+                저장
+              </button>
+              <button onClick={handleClosePanel} className={styles.backButton}>
+                &larr; 목록으로 돌아가기
+              </button>
+            </div>
         </div>
       </div>
     </Panel>

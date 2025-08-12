@@ -99,6 +99,14 @@
 
 .keyframeMarker:hover {
   background-color: #ffeb3b;
+  transform: rotate(45deg) scale(1.2);
+}
+
+.selectedKeyframe, .selectedKeyframe:hover {
+  background-color: #f44336;
+  border-color: #fff;
+  transform: rotate(45deg) scale(1.3);
+  z-index: 1;
 }
 
 .playhead {
@@ -109,4 +117,5 @@
   background-color: #f44336;
   pointer-events: none; /* Allows clicks to pass through */
   z-index: 10;
+  transform: translateX(-50%); /* Center the playhead */
 }

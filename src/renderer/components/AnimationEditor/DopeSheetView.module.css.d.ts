@@ -10,6 +10,7 @@ interface CssExports {
   'playhead': string;
   'ruler': string;
   'rulerContainer': string;
+  'selectedKeyframe': string;
   'trackList': string;
   'trackListContainer': string;
   'trackName': string;

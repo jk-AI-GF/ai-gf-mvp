@@ -6,7 +6,8 @@ interface DopeSheetViewProps {
   animationClip: THREE.AnimationClip;
   currentTime: number;
   onTimeChange: (newTime: number) => void;
-  // TODO: Add props for keyframe selection
+  selectedKeyframe: { trackName: string; keyIndex: number } | null;
+  onKeyframeSelect: (trackName: string, keyIndex: number) => void;
 }
 
 const PIXELS_PER_SECOND = 60; // 1초당 픽셀 너비
@@ -18,6 +19,8 @@ const DopeSheetView: React.FC<DopeSheetViewProps> = ({
   animationClip,
   currentTime,
   onTimeChange,
+  selectedKeyframe,
+  onKeyframeSelect,
 }) => {
   const { duration, tracks } = animationClip;
   const totalWidth = duration * PIXELS_PER_SECOND;
@@ -36,6 +39,10 @@ const DopeSheetView: React.FC<DopeSheetViewProps> = ({
   };
 
   const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Clicks on keyframes are handled by their own onClick, stop propagation.
+    if ((e.target as HTMLElement).classList.contains(styles.keyframeMarker)) {
+      return;
+    }
     if (!keyframeGridRef.current) return;
     const rect = keyframeGridRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left + keyframeGridRef.current.scrollLeft;
@@ -84,13 +91,20 @@ const DopeSheetView: React.FC<DopeSheetViewProps> = ({
           {tracks.map((track, trackIndex) => (
             <div key={trackIndex} className={styles.trackRow} style={{ height: TRACK_HEIGHT }}>
               {/* Render keyframes for this track */}
-              {Array.from(track.times).map((time, keyIndex) => (
-                <div
-                  key={keyIndex}
-                  className={styles.keyframeMarker}
-                  style={{ left: time * PIXELS_PER_SECOND }}
-                ></div>
-              ))}
+              {Array.from(track.times).map((time, keyIndex) => {
+                const isSelected = selectedKeyframe?.trackName === track.name && selectedKeyframe?.keyIndex === keyIndex;
+                return (
+                  <div
+                    key={keyIndex}
+                    className={`${styles.keyframeMarker} ${isSelected ? styles.selectedKeyframe : ''}`}
+                    style={{ left: time * PIXELS_PER_SECOND }}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent timeline click
+                      onKeyframeSelect(track.name, keyIndex);
+                    }}
+                  ></div>
+                );
+              })}
             </div>
           ))}
           {/* Playhead */}
