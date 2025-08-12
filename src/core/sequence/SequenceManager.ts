@@ -18,6 +18,7 @@ import { ClockNodeModel } from './ClockNodeModel';
 import { NumToStrNodeModel } from './NumToStrNodeModel';
 import { InputNodeModel } from './InputNodeModel';
 import { CallSubroutineNodeModel } from './CallSubroutineNodeModel';
+import { MousePositionNodeModel } from './MousePositionNodeModel';
 
 // 시퀀스 데이터의 구조를 정의합니다.
 interface SequenceData {
@@ -375,6 +376,10 @@ export class SequenceManager {
           model = callNode;
           break;
   
+        case 'mousePositionNode':
+          model = new MousePositionNodeModel(sNode.id);
+          break;
+
         default:
           console.error(`Unknown node type "${sNode.type}" for node ${sNode.id}.`);
           return null;

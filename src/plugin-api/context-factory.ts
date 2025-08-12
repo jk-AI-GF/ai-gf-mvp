@@ -5,9 +5,13 @@ import { PluginContext } from './plugin-context';
 import eventBus from '../core/event-bus';
 import { characterState } from '../core/character-state';
 import { ActionRegistry } from '../core/action-registry';
+import { ContextStore } from '../core/context-store';
 
 // This factory creates the context object that plugins will use to interact with the system.
 // It encapsulates the direct dependencies on managers and services.
+
+// Create a single, shared ContextStore instance for the entire renderer process.
+const rendererContextStore = new ContextStore();
 
 export function createPluginContext(
   vrmManager: VRMManager,
@@ -42,9 +46,9 @@ export function createPluginContext(
     eventBus: eventBus,
     actions: actions,
     system: systemControls,
-    get: (key: string) => window.electronAPI.invoke('context:get', key),
-    set: (key: string, value: any) => window.electronAPI.send('context:set', key, value),
-    getAll: () => window.electronAPI.invoke('context:getAll'),
+    get: (key: string) => rendererContextStore.get(key),
+    set: (key: string, value: any) => rendererContextStore.set(key, value),
+    getAll: () => rendererContextStore.getAll(),
     characterState: characterState,
     vrmManager: vrmManager,
     actionRegistry: actionRegistry,

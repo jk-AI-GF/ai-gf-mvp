@@ -27,6 +27,7 @@ import OperatorNode from './OperatorNode';
 import RandomNode from './RandomNode';
 import InputNode from './InputNode';
 import CallSubroutineNode from './CallSubroutineNode'; // Import the new node
+import MousePositionNode from './MousePositionNode';
 
 // Define node types for React Flow
 const nodeTypes = {
@@ -42,6 +43,7 @@ const nodeTypes = {
   numToStrNode: NumToStrNode,
   subroutineInputNode: InputNode,
   callSubroutineNode: CallSubroutineNode, // Register the new node
+  mousePositionNode: MousePositionNode,
 };
 
 // Define default options for all edges to make them interactive
@@ -67,6 +69,7 @@ import { ClockNodeModel } from '../../../core/sequence/ClockNodeModel';
 import { NumToStrNodeModel } from '../../../core/sequence/NumToStrNodeModel';
 import { InputNodeModel } from '../../../core/sequence/InputNodeModel';
 import { CallSubroutineNodeModel } from '../../../core/sequence/CallSubroutineNodeModel';
+import { MousePositionNodeModel } from '../../../core/sequence/MousePositionNodeModel';
 
 import ClockNode from './ClockNode';
 import NumToStrNode from './NumToStrNode';
@@ -465,6 +468,13 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
           type: 'callSubroutineNode',
           position,
           data: new CallSubroutineNodeModel(newNodeId),
+        };
+      } else if (droppedData.type === 'mousePositionNode') {
+        newNode = {
+          id: newNodeId,
+          type: 'mousePositionNode',
+          position,
+          data: new MousePositionNodeModel(newNodeId),
         };
       } else {
         return;

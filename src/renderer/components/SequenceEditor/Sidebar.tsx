@@ -198,6 +198,7 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events, nodes }) => {
       {!collapsedSections.data && (
         <>
           {renderDraggableItem('literalNode', 'Literal', '문자열, 숫자 등 고정 값을 만듭니다.', 'data', false)}
+          {renderDraggableItem('mousePositionNode', 'Mouse Position', '현재 마우스의 위치를 가져옵니다.', 'data', false)}
           {renderDraggableItem('randomNode', 'Random Number', '무작위 숫자를 생성합니다.', 'data', false)}
           {renderDraggableItem('numToStrNode', 'Int to String', '정수를 문자열로 변환합니다.', 'data', false)}
         </>

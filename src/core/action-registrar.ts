@@ -396,7 +396,7 @@ export function registerCoreActions(
       name: 'toggleSequence',
       description: '지정된 시퀀스를 활성화하거나 비활성화합니다.',
       params: [
-        { name: 'sequenceName', type: 'string', description: '토글할 시퀀스의 파일 이름' },
+        { name: 'sequenceName', type: 'string', description: '토글할 시퀀스의 파일 이름', dynamicOptions: 'sequences' },
         { name: 'shouldActivate', type: 'boolean', description: '활성화 여부' },
       ],
     },
