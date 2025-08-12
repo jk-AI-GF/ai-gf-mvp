@@ -117,14 +117,15 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events, nodes }) => {
     };
 
     const effectiveStyle = getItemStyle(category, disabled);
+    const color = categoryColors[category] || '#555555'; // 안전한 색상 참조
 
     return (
       <div
         onDragStart={handleDragStart}
         draggable={!disabled}
         style={effectiveStyle}
-        onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.backgroundColor = toRgba(categoryColors[category], 0.3); }}
-        onMouseLeave={(e) => { if (!disabled) e.currentTarget.style.backgroundColor = toRgba(categoryColors[category], 0.15); }}
+        onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.backgroundColor = toRgba(color, 0.3); }}
+        onMouseLeave={(e) => { if (!disabled) e.currentTarget.style.backgroundColor = toRgba(color, 0.15); }}
       >
         <div style={itemNameStyle}>{name}</div>
         <div style={itemDescStyle}>{description}</div>
@@ -145,28 +146,27 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events, nodes }) => {
       </h3>
       {!collapsedSections.start && (
         <>
-          {renderDraggableItem(
+          {React.cloneElement(renderDraggableItem(
             'subroutineInputNode',
             'Subroutine Input',
             '서브루틴의 입력을 정의합니다.',
             'start',
             sequenceType === 'sequence' || hasInputNode || hasClockNode
-          )}
-          {renderDraggableItem(
+          ), { key: 'subroutineInputNode' })}
+          {React.cloneElement(renderDraggableItem(
             'manualStartNode',
             'Manual Start',
             '수동으로 시퀀스를 시작합니다.',
             'manual',
             sequenceType === 'subroutine'
-          )}
-          {events.map((eventDef) => renderDraggableItem(
+          ), { key: 'manualStartNode' })}
+          {events.map((eventDef) => React.cloneElement(renderDraggableItem(
             'eventNode',
             eventDef.name,
             eventDef.description,
             'events',
-            sequenceType === 'subroutine',
-            { key: eventDef.name }
-          ))}
+            sequenceType === 'subroutine'
+          ), { key: eventDef.name }))}
         </>
       )}
 
@@ -177,16 +177,16 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events, nodes }) => {
       </h3>
       {!collapsedSections.control && (
         <>
-          {renderDraggableItem('delayNode', 'Delay', '실행을 잠시 멈춥니다.', 'control', false)}
-          {renderDraggableItem('branchNode', 'Branch (If)', '조건에 따라 실행 흐름을 분기합니다.', 'control', false)}
-          {renderDraggableItem('callSubroutineNode', 'Call Subroutine', '다른 서브루틴을 호출합니다.', 'control', false)}
-          {renderDraggableItem(
+          {React.cloneElement(renderDraggableItem('delayNode', 'Delay', '실행을 잠시 멈춥니다.', 'control', false), { key: 'delayNode' })}
+          {React.cloneElement(renderDraggableItem('branchNode', 'Branch (If)', '조건에 따라 실행 흐름을 분기합니다.', 'control', false), { key: 'branchNode' })}
+          {React.cloneElement(renderDraggableItem('callSubroutineNode', 'Call Subroutine', '다른 서브루틴을 호출합니다.', 'control', false), { key: 'callSubroutineNode' })}
+          {React.cloneElement(renderDraggableItem(
             'clockNode',
             'Clock',
             '일정 간격으로 실행 신호를 보냅니다.',
             'control',
             hasInputNode // subroutineInputNode가 있으면 Clock 비활성화
-          )}
+          ), { key: 'clockNode' })}
         </>
       )}
       
@@ -197,10 +197,10 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events, nodes }) => {
       </h3>
       {!collapsedSections.data && (
         <>
-          {renderDraggableItem('literalNode', 'Literal', '문자열, 숫자 등 고정 값을 만듭니다.', 'data', false)}
-          {renderDraggableItem('mousePositionNode', 'Mouse Position', '현재 마우스의 위치를 가져옵니다.', 'data', false)}
-          {renderDraggableItem('randomNode', 'Random Number', '무작위 숫자를 생성합니다.', 'data', false)}
-          {renderDraggableItem('numToStrNode', 'Int to String', '정수를 문자열로 변환합니다.', 'data', false)}
+          {React.cloneElement(renderDraggableItem('literalNode', 'Literal', '문자열, 숫자 등 고정 값을 만듭니다.', 'data', false), { key: 'literalNode' })}
+          {React.cloneElement(renderDraggableItem('mousePositionNode', 'Mouse Position', '현재 마우스의 위치를 가져옵니다.', 'data', false), { key: 'mousePositionNode' })}
+          {React.cloneElement(renderDraggableItem('randomNode', 'Random Number', '무작위 숫자를 생성합니다.', 'data', false), { key: 'randomNode' })}
+          {React.cloneElement(renderDraggableItem('numToStrNode', 'Int to String', '정수를 문자열로 변환합니다.', 'data', false), { key: 'numToStrNode' })}
         </>
       )}
 
@@ -211,9 +211,9 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events, nodes }) => {
       </h3>
       {!collapsedSections.operators && (
         <>
-          {renderDraggableItem('operatorNode', 'Math Operation', '산술 연산을 수행합니다.', 'operators', false, { category: 'math', operator: '+' })}
-          {renderDraggableItem('operatorNode', 'Comparison', '두 값을 비교합니다.', 'operators', false, { category: 'comparison', operator: '==' })}
-          {renderDraggableItem('operatorNode', 'Logic Operation', '논리 연산을 수행합니다.', 'operators', false, { category: 'logic', operator: 'AND' })}
+          {React.cloneElement(renderDraggableItem('operatorNode', 'Math Operation', '산술 연산을 수행합니다.', 'operators', false, { category: 'math', operator: '+' }), { key: 'op_math' })}
+          {React.cloneElement(renderDraggableItem('operatorNode', 'Comparison', '두 값을 비교합니다.', 'operators', false, { category: 'comparison', operator: '==' }), { key: 'op_compare' })}
+          {React.cloneElement(renderDraggableItem('operatorNode', 'Logic Operation', '논리 연산을 수행합니다.', 'operators', false, { category: 'logic', operator: 'AND' }), { key: 'op_logic' })}
         </>
       )}
 
@@ -222,17 +222,15 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events, nodes }) => {
       <h3 style={headerStyle} onClick={() => toggleSection('actions')}>
         Action Nodes {collapsedSections.actions ? '▼' : '▲'}
       </h3>
-      {!collapsedSections.actions && actions.map((action) => renderDraggableItem(
+      {!collapsedSections.actions && actions.map((action) => React.cloneElement(renderDraggableItem(
         'actionNode',
         action.name,
         action.description,
         'actions',
-        false,
-        { key: action.name }
-      ))}
+        false
+      ), { key: action.name }))}
     </aside>
   );
 };
 
 export default Sidebar;
-
