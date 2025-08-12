@@ -757,5 +757,28 @@ export class VRMManager {
         reader.onerror = (error) => console.error('FileReader error:', error);
         reader.readAsArrayBuffer(blob);
     }
+
+    public sampleAnimationClip(clip: THREE.AnimationClip, time: number): void {
+        if (!this.currentVrm || !this.mixer) return;
+
+        // Stop all other actions to prevent interference
+        this.mixer.stopAllAction();
+        this.currentAction = null;
+
+        const action = this.mixer.clipAction(clip);
+        action.reset();
+        action.setLoop(THREE.LoopOnce, 1);
+        action.clampWhenFinished = true;
+        
+        // Set the time and play the action
+        action.time = time;
+        action.play();
+
+        // Immediately pause the action. This "freezes" the pose at the specified time.
+        action.paused = true;
+
+        // We need to update the mixer once to apply the sampled pose
+        this.mixer.update(0);
+    }
 }
 

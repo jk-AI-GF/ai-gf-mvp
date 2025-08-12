@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { useAppContext } from '../../contexts/AppContext';
 import Panel from '../Panel';
 import styles from './AnimationEditPanel.module.css';
 import { parseVrma } from './vrma-parser';
@@ -19,6 +20,7 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
   onDragEnd, 
   animationName 
 }) => {
+  const { vrmManager } = useAppContext();
   const [animationClip, setAnimationClip] = useState<THREE.AnimationClip | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -28,6 +30,7 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
   const animationFrameId = useRef<number | null>(null);
   const lastTimeRef = useRef<number | null>(null);
 
+  // Load and parse the animation file
   useEffect(() => {
     if (!animationName) {
       setError('애니메이션 파일 이름이 제공되지 않았습니다.');
@@ -57,12 +60,16 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
           throw new Error(`애니메이션 파일을 찾을 수 없습니다: ${animationName}`);
         }
 
+        if (!vrmManager?.currentVrm) {
+          throw new Error('애니메이션을 파싱하기 위해 VRM 모델이 먼저 로드되어야 합니다.');
+        }
+
         const result = await window.electronAPI.readAbsoluteFile(filePath);
         if (!(result instanceof ArrayBuffer)) {
           throw new Error('파일을 ArrayBuffer 형식으로 읽지 못했습니다.');
         }
 
-        const clip = await parseVrma(result, animationName);
+        const clip = await parseVrma(result, animationName, vrmManager.currentVrm);
         setAnimationClip(clip);
         console.log('Parsed AnimationClip:', clip);
 
@@ -77,6 +84,7 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
     loadAndParseAnimation();
   }, [animationName]);
 
+  // Animation playback loop
   const animate = (time: number) => {
     if (lastTimeRef.current === null) {
       lastTimeRef.current = time;
@@ -112,6 +120,22 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
     };
   }, [isPlaying, animationClip]);
 
+  // Update VRM model pose when currentTime changes
+  useEffect(() => {
+    if (vrmManager && animationClip) {
+      vrmManager.sampleAnimationClip(animationClip, currentTime);
+    }
+  }, [currentTime, animationClip, vrmManager]);
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      if (vrmManager) {
+        vrmManager.resetToTPose();
+      }
+    };
+  }, [vrmManager]);
+
 
   if (!animationName) return null;
 
@@ -137,6 +161,11 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
     if (!isPlaying) {
       setCurrentTime(0);
     }
+  };
+
+  const handleClosePanel = () => {
+    // The cleanup effect will handle resetting the pose
+    onClose();
   };
 
   const renderContent = () => {
@@ -167,7 +196,7 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
   };
 
   return (
-    <Panel title={`에디터: ${animationName}`} onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd} width="90vw" height="600px">
+    <Panel title={`에디터: ${animationName}`} onClose={handleClosePanel} initialPos={initialPos} onDragEnd={onDragEnd} width="90vw" height="600px">
       <div className={styles.container}>
         <div className={styles.content}>
           {renderContent()}
@@ -179,7 +208,7 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
               onPause={handlePause}
               onGoToStart={handleGoToStart}
             />
-            <button onClick={onClose} className={styles.backButton}>
+            <button onClick={handleClosePanel} className={styles.backButton}>
             &larr; 목록으로 돌아가기
             </button>
         </div>
