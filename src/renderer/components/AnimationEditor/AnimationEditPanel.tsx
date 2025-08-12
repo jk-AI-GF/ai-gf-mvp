@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import Panel from '../Panel';
 import styles from './AnimationEditPanel.module.css';
 import { parseVrma } from './vrma-parser';
-import DopeSheetView from './DopeSheetView'; // 새로운 DopeSheetView를 임포트
+import DopeSheetView from './DopeSheetView';
+import PlaybackControls from './PlaybackControls';
 
 interface AnimationEditPanelProps {
   onClose: () => void;
@@ -20,8 +21,12 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
 }) => {
   const [animationClip, setAnimationClip] = useState<THREE.AnimationClip | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const animationFrameId = useRef<number | null>(null);
+  const lastTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!animationName) {
@@ -34,6 +39,8 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
       setIsLoading(true);
       setError(null);
       setAnimationClip(null);
+      setCurrentTime(0);
+      setIsPlaying(false);
 
       try {
         const userPath = await window.electronAPI.resolvePath('userData', `animations/${animationName}`);
@@ -70,10 +77,66 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
     loadAndParseAnimation();
   }, [animationName]);
 
+  const animate = (time: number) => {
+    if (lastTimeRef.current === null) {
+      lastTimeRef.current = time;
+    }
+    const deltaTime = (time - lastTimeRef.current) / 1000;
+    lastTimeRef.current = time;
+
+    setCurrentTime(prevTime => {
+      const newTime = prevTime + deltaTime;
+      if (animationClip && newTime >= animationClip.duration) {
+        setIsPlaying(false);
+        return animationClip.duration;
+      }
+      return newTime;
+    });
+
+    animationFrameId.current = requestAnimationFrame(animate);
+  };
+
+  useEffect(() => {
+    if (isPlaying) {
+      lastTimeRef.current = null; // Reset lastTime on play
+      animationFrameId.current = requestAnimationFrame(animate);
+    } else {
+      if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
+      }
+    }
+    return () => {
+      if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
+      }
+    };
+  }, [isPlaying, animationClip]);
+
+
   if (!animationName) return null;
 
   const handleTimeChange = (newTime: number) => {
-    setCurrentTime(newTime);
+    if (!isPlaying) {
+      setCurrentTime(newTime);
+    }
+  };
+
+  const handlePlay = () => {
+    if (!animationClip) return;
+    if (currentTime >= animationClip.duration) {
+      setCurrentTime(0);
+    }
+    setIsPlaying(true);
+  };
+
+  const handlePause = () => {
+    setIsPlaying(false);
+  };
+
+  const handleGoToStart = () => {
+    if (!isPlaying) {
+      setCurrentTime(0);
+    }
   };
 
   const renderContent = () => {
@@ -110,7 +173,12 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
           {renderContent()}
         </div>
         <div className={styles.footer}>
-            {/* PlaybackControls will go here */}
+            <PlaybackControls 
+              isPlaying={isPlaying}
+              onPlay={handlePlay}
+              onPause={handlePause}
+              onGoToStart={handleGoToStart}
+            />
             <button onClick={onClose} className={styles.backButton}>
             &larr; 목록으로 돌아가기
             </button>

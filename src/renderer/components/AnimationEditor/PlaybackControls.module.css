@@ -1,0 +1,26 @@
+.controlsContainer {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+.controlButton {
+  background-color: #4a4a4a;
+  border: 1px solid #6a6a6a;
+  color: white;
+  font-size: 16px;
+  width: 40px;
+  height: 30px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.controlButton:hover {
+  background-color: #5a5a5a;
+}
+
+.controlButton:active {
+  background-color: #3a3a3a;
+}
