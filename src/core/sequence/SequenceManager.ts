@@ -243,8 +243,10 @@ export class SequenceManager {
       console.log(`[SequenceManager] Sequence ${fileName} deleted successfully.`);
       this.allSequenceFiles = this.allSequenceFiles.filter(f => f !== fileName);
       this.sequenceCache.delete(fileName);
-      // UI 업데이트를 위해 이벤트를 발생시킬 수 있습니다.
-      // this.pluginContext.eventBus.emit('sequences-updated');
+      this.subroutineDefinitions.delete(fileName); // 서브루틴 정의도 삭제
+      
+      // UI 업데이트를 위해 이벤트를 발생시킵니다.
+      this.pluginContext.eventBus.emit('sequences-updated');
     } else {
       console.error(`[SequenceManager] Failed to delete sequence ${fileName}:`, result.error);
       throw new Error(result.error);
@@ -424,28 +426,61 @@ export class SequenceManager {
   }
 
   /**
-   * 직렬화된 시퀀스 데이터를 지정된 파일에 덮어씁니다.
-   * @param fileName - 저장할 시퀀스의 파일 이름입니다.
+   * 시퀀스를 파일에 저장하거나 업데이트합니다.
+   * fileName이 제공되면 해당 파일을 덮어쓰고, 그렇지 않으면 '다른 이름으로 저장' 대화 상자를 엽니다.
    * @param flow - React Flow 인스턴스에서 toObject()로 얻은 객체입니다.
+   * @param description - 시퀀스에 대한 설명입니다.
+   * @param capabilities - 서브루틴에 필요한 기능 목록입니다.
+   * @param locks - 서브루틴이 실행되는 동안 점유할 잠금 목록입니다.
+   * @param fileName - (선택 사항) 저장할 시퀀스의 파일 이름입니다.
    * @returns 성공 여부와 파일 경로를 포함하는 객체입니다.
    */
-  public async saveSequenceToFile(fileName: string, flow: any, description: string, capabilities: string[] = [], locks: string[] = []): Promise<{ success: boolean; filePath?: string; error?: string }> {
+  public async saveOrUpdateSequence(
+    flow: any, 
+    description: string, 
+    capabilities: string[] = [], 
+    locks: string[] = [], 
+    fileName?: string | null
+  ): Promise<{ success: boolean; filePath?: string; error?: string }> {
     try {
       const serializableData = this.serializeSequence(flow, description, capabilities, locks);
       const jsonString = JSON.stringify(serializableData, null, 2);
       
-      // 메인 프로세스에 파일 저장을 요청합니다.
-      const result = await window.electronAPI.saveSequenceToFile(fileName, jsonString);
+      let result;
+      if (fileName) {
+        // 기존 파일 덮어쓰기
+        result = await window.electronAPI.saveSequenceToFile(fileName, jsonString);
+      } else {
+        // '다른 이름으로 저장' 대화 상자 열기
+        result = await window.electronAPI.saveSequence(jsonString);
+      }
 
-      if (result.success) {
-        // 성공 시 캐시를 무효화하여 다음에 최신 버전을 로드하도록 합니다.
-        this.sequenceCache.delete(fileName);
+      if (result.success && result.filePath) {
+        // 성공 시 캐시를 무효화하고 파일 목록을 업데이트합니다.
+        const newFileName = await window.electronAPI.basename(result.filePath);
+        this.sequenceCache.delete(newFileName);
+        if (!this.allSequenceFiles.includes(newFileName)) {
+          this.allSequenceFiles.push(newFileName);
+        }
+        // 서브루틴 정의도 업데이트가 필요할 수 있습니다.
+        if (serializableData.type === 'subroutine') {
+          const def = await this.loadSubroutineDefinition(newFileName);
+          if (def) {
+            this.subroutineDefinitions.set(newFileName, def);
+          }
+        } else {
+          // 서브루틴이 아닌 것으로 저장되면 기존 정의를 삭제합니다.
+          this.subroutineDefinitions.delete(newFileName);
+        }
+        
+        // 상태 업데이트 후 이벤트를 발생시킵니다.
+        this.pluginContext.eventBus.emit('sequences-updated');
       }
       
       return result;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`[SequenceManager] Failed to save sequence to file ${fileName}:`, errorMessage);
+      console.error(`[SequenceManager] Failed to save sequence:`, errorMessage);
       return { success: false, error: errorMessage };
     }
   }

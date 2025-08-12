@@ -7,6 +7,7 @@ import { LlmSettings } from '../core/llm-settings';
   // Path API
   getPath: (pathName: 'assets' | 'userData') => ipcRenderer.invoke('get-path', pathName),
   resolvePath: (pathName: 'assets' | 'userData', subpath: string) => ipcRenderer.invoke('resolve-path', pathName, subpath),
+  basename: (filePath: string) => ipcRenderer.invoke('path:basename', filePath),
       fileExists: (filePath: string) => ipcRenderer.invoke('fs:exists', filePath),
 
       // App control

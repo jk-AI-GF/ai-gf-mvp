@@ -39,6 +39,16 @@ export class ChatService {
   constructor(vrmManager: VRMManager, pluginManager: PluginManager) {
     this.vrmManager = vrmManager;
     this.pluginManager = pluginManager;
+
+    // sequences-updated 이벤트 수신 시 사용 가능한 서브루틴 목록을 로깅합니다.
+    eventBus.on('sequences-updated', () => {
+      if (this.pluginManager.context?.sequenceManager) {
+        const availableSubroutines = this.pluginManager.context.sequenceManager.getAvailableSubroutines();
+        console.log('[ChatService] Sequences updated. Available subroutines:', availableSubroutines);
+      } else {
+        console.log('[ChatService] Sequences updated, but SequenceManager is not available.');
+      }
+    });
   }
 
   public async sendChatMessage(

@@ -264,24 +264,11 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
       console.error("SequenceManager is not initialized.");
       return;
     }
-    const currentNodes = getNodes();
-    const currentEdges = getEdges();
-
-    const flow = { nodes: currentNodes, edges: currentEdges };
-    let result;
-
+    const flow = { nodes: getNodes(), edges: getEdges() };
     try {
-      if (sequenceToLoad) {
-        result = await sequenceManager.saveSequenceToFile(sequenceToLoad, flow, description, capabilities, locks);
-      } else {
-        const serializableData = sequenceManager.serializeSequence(flow, description, capabilities, locks);
-        const jsonString = JSON.stringify(serializableData, null, 2);
-        result = await window.electronAPI.saveSequence(jsonString);
-      }
-
+      const result = await sequenceManager.saveOrUpdateSequence(flow, description, capabilities, locks, sequenceToLoad);
       if (result.success) {
         console.log('시퀀스가 성공적으로 저장되었습니다:', result.filePath);
-        eventBus.emit('sequences-updated');
         onClose();
       } else if (result.error) {
         console.error('시퀀스 저장 실패:', result.error);
@@ -298,18 +285,12 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
       console.error("SequenceManager is not initialized.");
       return;
     }
-    const currentNodes = getNodes();
-    const currentEdges = getEdges();
-    const flow = { nodes: currentNodes, edges: currentEdges };
-    
+    const flow = { nodes: getNodes(), edges: getEdges() };
     try {
-      const serializableData = sequenceManager.serializeSequence(flow, description, capabilities, locks);
-      const jsonString = JSON.stringify(serializableData, null, 2);
-      const result = await window.electronAPI.saveSequence(jsonString);
-
+      // fileName을 null로 전달하여 '다른 이름으로 저장'을 강제합니다.
+      const result = await sequenceManager.saveOrUpdateSequence(flow, description, capabilities, locks, null);
       if (result.success) {
         console.log('시퀀스가 성공적으로 저장되었습니다:', result.filePath);
-        eventBus.emit('sequences-updated');
         onClose();
       } else if (result.error) {
         console.error('시퀀스 저장 실패:', result.error);

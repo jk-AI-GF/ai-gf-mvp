@@ -95,6 +95,9 @@ ipcMain.handle('get-path', (event, pathName: 'assets' | 'userData') => {
 ipcMain.handle('resolve-path', (event, pathName: 'assets' | 'userData', subpath: string) => {
   return pathName === 'assets' ? resolveAssetsPath(subpath) : resolveUserDataPath(subpath);
 });
+ipcMain.handle('path:basename', (event, filePath: string) => {
+  return path.basename(filePath);
+});
 ipcMain.handle('fs:exists', async (event, filePath: string) => {
   try {
     await fsp.access(filePath);
