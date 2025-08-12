@@ -12,7 +12,7 @@ export class ContextStore {
    */
   public set(key: string, value: any): void {
     this.store.set(key, value);
-    console.log(`[ContextStore] Set ${key}:`, value);
+    // console.log(`[ContextStore] Set ${key}:`, value);
   }
 
   /**

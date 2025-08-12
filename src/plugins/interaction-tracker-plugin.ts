@@ -1,4 +1,4 @@
-// src/plugins/interaction-tracker-plugin.ts
+1// src/plugins/interaction-tracker-plugin.ts
 
 import { IPlugin } from './plugin-manager';
 import { PluginContext } from '../plugin-api/plugin-context';
@@ -65,7 +65,6 @@ export class InteractionTrackerPlugin implements IPlugin {
   private handleMouseMove(event: MouseEvent): void {
     const normalizedX = event.clientX / window.innerWidth;
     const normalizedY = event.clientY / window.innerHeight;
-    console.log(`[InteractionTrackerPlugin] Setting mousePosition to: x=${normalizedX.toFixed(3)}, y=${normalizedY.toFixed(3)}`);
     this.context.set('mousePosition', {
       x: normalizedX,
       y: normalizedY,

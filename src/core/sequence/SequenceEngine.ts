@@ -83,7 +83,6 @@ export class SequenceEngine {
   public deactivateSequence(sequenceId: string): void {
     const sequence = this.activeSequences.get(sequenceId);
     if (sequence) {
-      console.log(`[SequenceEngine] Deactivating sequence '${sequenceId}'.`);
       sequence.listeners.forEach(unsubscribe => unsubscribe());
 
       // Call onDeactivate for all nodes that have it
