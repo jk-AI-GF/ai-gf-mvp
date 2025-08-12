@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 import eventBus from '../../core/event-bus';
 import styles from './EditMenu.module.css';
+import VrmScaleSlider from './VrmScaleSlider';
 
 interface EditMenuProps {
   onOpenPosePanel: () => void;
@@ -87,6 +88,7 @@ const EditMenu: React.FC<EditMenuProps> = ({
         />
         <label htmlFor="showHitboxes" className={styles.checkboxLabel}>히트박스</label>
       </div>
+      <VrmScaleSlider />
     </div>
   );
 };

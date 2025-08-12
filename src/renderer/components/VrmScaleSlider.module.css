@@ -1,0 +1,17 @@
+.sliderContainer {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  color: white;
+  font-size: 14px;
+}
+
+.sliderLabel {
+  margin-right: 8px;
+  white-space: nowrap;
+}
+
+.slider {
+  flex-grow: 1;
+  margin-right: 8px;
+}

@@ -8,6 +8,8 @@ import { CharacterState } from '../core/character-state';
 import { TypedEventBus, AppEvents } from '../core/event-bus';
 import { LlmSettings } from '../core/llm-settings';
 
+declare module '*.module.css';
+
 declare global {
   interface Window {
     // --- Debug ---
