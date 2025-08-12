@@ -699,6 +699,14 @@ export class VRMManager {
         });
     }
 
+    public setHipPositionY(y: number): void {
+        if (!this.currentVrm) return;
+        const hipsNode = this.currentVrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Hips);
+        if (hipsNode) {
+            hipsNode.position.y = y;
+        }
+    }
+
     public setActiveCamera(camera: THREE.Camera) {
         console.log(`[VRMManager] setActiveCamera called. Camera type: ${camera?.type}`);
         this.activeCamera = camera;
@@ -718,10 +726,19 @@ export class VRMManager {
             const bonePose = originalPose[humanBoneName];
             if (!bonePose || !bonePose.rotation) continue;
 
-            // Only copy rotation for all bones, ignore position entirely.
             cleanedPose[humanBoneName] = {
                 rotation: bonePose.rotation,
             };
+        }
+
+        // Also save the hips position
+        const hipsNode = this.currentVrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Hips);
+        if (hipsNode) {
+            const hipsPosition = hipsNode.position.toArray();
+            if (!cleanedPose.hips) {
+                cleanedPose.hips = {};
+            }
+            cleanedPose.hips.position = hipsPosition as [number, number, number];
         }
 
         const jsonString = JSON.stringify(cleanedPose, null, 2);

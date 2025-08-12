@@ -1,0 +1,64 @@
+.hipSliderContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  background-color: #3a3a3a;
+  border-radius: 5px;
+  border: 1px solid #444;
+}
+
+.hipSliderContainer label {
+  font-weight: bold;
+  color: #e0e0e0;
+  margin-right: 10px;
+}
+
+.hipHeightSlider {
+  flex-grow: 1;
+  margin: 0 10px;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  background: #555;
+  outline: none;
+  opacity: 0.9;
+  transition: opacity .2s;
+  border-radius: 4px;
+}
+
+.hipHeightSlider:hover {
+  opacity: 1;
+}
+
+.hipHeightSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: #007bff;
+  cursor: pointer;
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
+
+.hipHeightSlider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: #007bff;
+  cursor: pointer;
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
+
+.hipSliderContainer span {
+  font-family: 'Courier New', Courier, monospace;
+  color: #c0c0c0;
+  background-color: #2a2a2a;
+  padding: 2px 6px;
+  border-radius: 3px;
+  min-width: 45px;
+  text-align: center;
+}

@@ -4,7 +4,8 @@ import * as THREE from 'three';
 import eventBus from '../../core/event-bus';
 import BoneSlider from './BoneSlider';
 import Panel from './Panel';
-import { useAppContext } from '../contexts/AppContext'; // useAppContext 임포트
+import { useAppContext } from '../contexts/AppContext';
+import styles from './JointControlPanel.module.css';
 
 interface JointControlPanelProps {
   onClose: () => void;
@@ -20,11 +21,12 @@ type BoneInfo = {
 };
 
 const JointControlPanel: React.FC<JointControlPanelProps> = ({ onClose, initialPos, onDragEnd }) => {
-  const { pluginManager } = useAppContext(); // useAppContext 사용
+  const { pluginManager } = useAppContext();
   const [bones, setBones] = useState<BoneInfo[]>([]);
+  const [hipHeight, setHipHeight] = useState(0);
 
   const updateBoneStateFromVrm = useCallback(() => {
-    const vrm = pluginManager?.context.vrmManager?.currentVrm; // pluginManager를 통해 vrm에 접근
+    const vrm = pluginManager?.context.vrmManager?.currentVrm;
     if (!vrm) {
       setBones([]);
       return;
@@ -41,10 +43,14 @@ const JointControlPanel: React.FC<JointControlPanelProps> = ({ onClose, initialP
       };
     }).filter((b): b is BoneInfo => b !== null);
     setBones(latestBones);
+
+    const hipsNode = vrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Hips);
+    if (hipsNode) {
+      setHipHeight(hipsNode.position.y);
+    }
   }, [pluginManager]);
 
   useEffect(() => {
-    // 컴포넌트 마운트 시 vrmManager가 준비되었는지 확인 후 상태 업데이트
     if (pluginManager?.context.vrmManager?.currentVrm) {
       updateBoneStateFromVrm();
     }
@@ -80,13 +86,24 @@ const JointControlPanel: React.FC<JointControlPanelProps> = ({ onClose, initialP
         return newBones;
     });
   }, [pluginManager]);
+
+  const handleHipHeightChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newHeight = parseFloat(event.target.value);
+    setHipHeight(newHeight);
+
+    const vrm = pluginManager?.context.vrmManager?.currentVrm;
+    if (!vrm) return;
+    const hipsNode = vrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Hips);
+    if (hipsNode) {
+      hipsNode.position.y = newHeight;
+    }
+  };
   
   const resetBone = useCallback((boneName: VRMHumanBoneName) => {
     const vrm = pluginManager?.context.vrmManager?.currentVrm;
     if (!vrm) return;
     const boneNode = vrm.humanoid.getNormalizedBoneNode(boneName);
     if (!boneNode) return;
-    // Resetting to identity quaternion
     boneNode.quaternion.set(0, 0, 0, 1);
     vrm.humanoid.getNormalizedBoneNode(boneName)?.updateWorldMatrix(true, true);
     updateBoneStateFromVrm();
@@ -97,14 +114,31 @@ const JointControlPanel: React.FC<JointControlPanelProps> = ({ onClose, initialP
       {bones.length === 0 ? (
         <p className="empty-message">VRM 모델을 로드해주세요.</p>
       ) : (
-        bones.map((bone) => (
-          <BoneSlider
-            key={bone.boneName}
-            {...bone}
-            onSliderChange={handleSliderChange}
-            onReset={resetBone}
-          />
-        ))
+        <>
+          <div className={styles.hipSliderContainer}>
+            <label htmlFor="hipHeight">캐릭터 높이 (Hips Y)</label>
+            <input
+              type="range"
+              id="hipHeight"
+              name="hipHeight"
+              min="-1.5"
+              max="1.5"
+              step="0.01"
+              value={hipHeight}
+              onChange={handleHipHeightChange}
+              className={styles.hipHeightSlider}
+            />
+            <span>{hipHeight.toFixed(2)}</span>
+          </div>
+          {bones.map((bone) => (
+            <BoneSlider
+              key={bone.boneName}
+              {...bone}
+              onSliderChange={handleSliderChange}
+              onReset={resetBone}
+            />
+          ))}
+        </>
       )}
     </Panel>
   );

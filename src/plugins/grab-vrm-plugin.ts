@@ -131,7 +131,7 @@ export class GrabVrmPlugin implements IPlugin {
     if (!this.isDragging) return;
     this.isDragging = false;
     this.context.eventBus.emit('character:dragEnd');
-    this.context.actions.setPose("pose_stand_001.vrma");
+    this.context.actions.setPose("pose_stand_001.vrma", 0.2);
 
     document.removeEventListener('mousemove', this.handleMouseMove);
 
