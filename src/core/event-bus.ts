@@ -4,7 +4,8 @@ import { ICharacterState } from '../plugin-api/plugin-context';
 // src/core/event-bus.ts
 export type LLMResponsePayload =
   | { type: 'talk'; text: string; expression: string }
-  | { type: 'action'; subroutine: string; arguments: Record<string, any>; text: string; expression: string };
+  | { type: 'action'; subroutine: string; arguments: Record<string, any>; text: string; expression: string }
+  | { type: 'action_array'; subroutines: { subroutine: string; arguments: Record<string, any> }[]; text: string; expression: string };
 
 export type AppEvents = {
   /** VRM 로드/해제 */

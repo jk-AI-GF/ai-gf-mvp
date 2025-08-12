@@ -100,7 +100,7 @@ ${subJson}
 사용자의 다음 요청을 분석하여, 가장 적절한 행동을 결정하세요.
 
 **응답 생성 규칙:**
-1.  **먼저 생각하기 (Think Step):** 사용자의 요청을 완수하기 위해 어떤 서브루틴을 사용해야 할지, 또는 단순 대화로 충분할지 판단합니다. 서브루틴을 사용해야 한다면, 해당 서브루틴의 'description'과 'capabilities'를 보고 어떤 'arguments'가 필요한지 분석합니다.
+1.  **먼저 생각하기 (Think Step):** 사용자의 요청을 완수하기 위해 어떤 서브루틴을 사용해야 할지, 또는 단순 대화로 충분할지 판단합니다. 복잡한 요청은 여러 서브루틴의 조합으로 해결할 수 있습니다.
 2.  **최종 응답 생성 (JSON Output):** 생각한 내용을 바탕으로, 아래 형식 중 하나에 맞춰 **반드시 순수한 JSON 객체 하나만** 응답으로 생성합니다. 다른 설명이나 텍스트를 포함해서는 안 됩니다.
 
 **JSON 형식:**
@@ -112,7 +112,7 @@ ${subJson}
   "expression": "표정 이름"
 }
 
-// 2. 캐릭터가 행동(서브루틴)을 수행할 경우:
+// 2. 캐릭터가 단일 행동(서브루틴)을 수행할 경우:
 {
   "type": "action",
   "subroutine": "실행할 서브루틴의 이름",
@@ -120,6 +120,18 @@ ${subJson}
   "text": "행동과 함께 출력할 대사입니다.",
   "expression": "표정 이름"
 }
+
+// 3. 캐릭터가 여러 행동을 순차적으로 수행할 경우:
+{
+  "type": "action_array",
+  "subroutines": [
+    { "subroutine": "첫 번째 서브루틴 이름", "arguments": { "key": "value" } },
+    { "subroutine": "두 번째 서브루틴 이름", "arguments": { "key": "value" } }
+  ],
+  "text": "모든 행동과 함께 출력할 대사입니다.",
+  "expression": "표정 이름"
+}
+
 
 **매우 중요:**
 -   'subroutine'의 이름은 위에 제공된 Action 목록에 있는 이름과 정확히 일치해야 합니다.
@@ -198,6 +210,12 @@ ${subJson}
         const { subroutine, arguments: args, text: speech, expression: expr } = payload;
         // 서브루틴 실행은 이제 LlmResponseHandlerPlugin이 담당합니다.
         eventBus.emit('llm:responseReceived', { type: 'action', subroutine, arguments: args, text: speech, expression: expr });
+        eventBus.emit('chat:newMessage', { role: 'assistant', text: speech });
+        eventBus.emit('ui:showFloatingMessage', { text: speech });
+        this.chatHistory.push({ role: 'assistant', content: speech });
+      } else if (payload.type === 'action_array') {
+        const { subroutines, text: speech, expression: expr } = payload;
+        eventBus.emit('llm:responseReceived', { type: 'action_array', subroutines, text: speech, expression: expr });
         eventBus.emit('chat:newMessage', { role: 'assistant', text: speech });
         eventBus.emit('ui:showFloatingMessage', { text: speech });
         this.chatHistory.push({ role: 'assistant', content: speech });
