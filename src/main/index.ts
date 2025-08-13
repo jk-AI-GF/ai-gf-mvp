@@ -319,12 +319,12 @@ ipcMain.handle('save-vrma-pose', (event, vrmaData: ArrayBuffer) => handleFileDia
 ipcMain.handle('open-vrm-file', () => handleFileDialog(
   'open',
   { title: 'Open VRM Model', defaultPath: path.join(getUserDataPath(), 'vrm'), properties: ['openFile'], filters: [{ name: 'VRM Models', extensions: ['vrm'] }] },
-  (filePath) => Promise.resolve(filePath)
+  (filePath) => Promise.resolve({ success: true, filePath })
 ).then(result => (result && (result as any).success === false) ? null : result));
 ipcMain.handle('open-vrma-file', () => handleFileDialog(
   'open',
   { title: 'Open VRMA Pose', defaultPath: path.join(getUserDataPath(), 'poses'), properties: ['openFile'], filters: [{ name: 'VRM Animation', extensions: ['vrma'] }] },
-  (filePath) => Promise.resolve(filePath)
+  (filePath) => Promise.resolve({ success: true, filePath })
 ).then(result => (result && (result as any).success === false) ? null : result));
 ipcMain.handle('open-persona-file', () => handleFileDialog(
   'open',
