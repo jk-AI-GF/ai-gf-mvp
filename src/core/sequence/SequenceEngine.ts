@@ -147,15 +147,9 @@ export class SequenceEngine {
         }
       });
 
-      // 이미 실행된 노드를 추적하여 무한 루프와 중복 실행을 방지합니다.
       const executedDataNodes: Set<string> = new Set();
 
-      /**
-       * 특정 노드의 특정 출력 핸들에서 나오는 값을 재귀적으로 계산하고 반환합니다.
-       * 만약 값이 컨텍스트에 없다면, 해당 값을 생성하는 소스 노드를 찾아 실행합니다.
-       */
       const getNodeOutputValue = async (nodeId: string, handleName: string): Promise<any> => {
-        // 1. 컨텍스트에 값이 이미 있는지 확인
         const existingValue = executionContext.getValue(nodeId, handleName);
         if (existingValue !== undefined) {
           return existingValue;
@@ -164,15 +158,12 @@ export class SequenceEngine {
         const sourceNode = nodeMap.get(nodeId);
         if (!sourceNode) return undefined;
 
-        // 2. 데이터 전용 노드이고 아직 실행되지 않았다면 실행
         const hasExecIn = sourceNode.data.inputs.some(p => p.type === 'execution');
         if (!hasExecIn && !executedDataNodes.has(sourceNode.id)) {
           console.log(`[SequenceEngine] Pull-executing data node: ${sourceNode.id} (${sourceNode.data.name})`);
           
-          // 3. 이 노드의 입력 값을 재귀적으로 먼저 계산
           const inputs = await calculateNodeInputs(sourceNode);
           
-          // 4. 노드 실행 및 출력 저장
           const result = await sourceNode.data.execute(this.pluginContext, inputs);
           if (result.outputs) {
             for (const outputName in result.outputs) {
@@ -182,13 +173,9 @@ export class SequenceEngine {
           executedDataNodes.add(sourceNode.id);
         }
         
-        // 5. 이제 값이 컨텍스트에 있을 것이므로 다시 조회하여 반환
         return executionContext.getValue(nodeId, handleName);
       };
 
-      /**
-       * 특정 노드의 모든 입력 값을 계산하여 맵으로 반환합니다.
-       */
       const calculateNodeInputs = async (node: Node<BaseNode>): Promise<Record<string, any>> => {
         const inputs: Record<string, any> = {};
         const connectedDataEdges = dataEdgesByTarget.get(node.id) || [];
@@ -200,57 +187,51 @@ export class SequenceEngine {
           }
         }
         
-        // paramValues와 연결된 입력을 병합 (연결된 값이 우선)
         if (node.data instanceof ActionNodeModel) {
           return { ...node.data.paramValues, ...inputs };
         }
         return inputs;
       };
 
-      // 실행 큐 및 초기화
-      const executionQueue: Node<BaseNode>[] = [startNode];
-      for (const key in initialOutputs) {
-        executionContext.setValue(startNode.id, key, initialOutputs[key]);
-      }
-
-      // 메인 실행 루프
-      while (executionQueue.length > 0) {
-        const currentNode = executionQueue.shift()!;
-        
-        // 1. 현재 노드의 입력 계산 (데이터 종속성 해결)
+      const processNode = async (currentNode: Node<BaseNode>) => {
         let finalInputs = await calculateNodeInputs(currentNode);
 
-        // 시작 노드인 경우, 초기 출력을 입력으로 병합합니다.
-        // 이것이 서브루틴 인수를 주입하는 핵심 메커니즘입니다.
         if (currentNode.id === startNode.id) {
           finalInputs = { ...finalInputs, ...initialOutputs };
         }
 
-        // 2. 노드 실행
         console.log(`[SequenceEngine] Executing node: ${currentNode.id} (${currentNode.data.name}) with inputs:`, finalInputs);
         const result = await currentNode.data.execute(this.pluginContext, finalInputs);
 
-        // 3. 출력 데이터 저장
         if (result.outputs) {
           for (const outputName in result.outputs) {
             executionContext.setValue(currentNode.id, outputName, result.outputs[outputName]);
           }
         }
 
-        // 4. 다음 실행 노드 큐에 추가
         if (result.nextExec) {
           const nextExecutionEdges = sequenceEdges.filter(
             e => e.source === currentNode.id && e.sourceHandle === result.nextExec
           );
 
-          for (const edge of nextExecutionEdges) {
+          const executionPromises = nextExecutionEdges.map(edge => {
             const nextNode = nodeMap.get(edge.target);
             if (nextNode) {
-              executionQueue.push(nextNode);
+              return processNode(nextNode);
             }
-          }
+            return Promise.resolve();
+          });
+
+          await Promise.all(executionPromises);
         }
+      };
+
+      for (const key in initialOutputs) {
+        executionContext.setValue(startNode.id, key, initialOutputs[key]);
       }
+
+      await processNode(startNode);
+
       console.log('[SequenceEngine] Execution finished.');
       resolve();
     });
