@@ -8,6 +8,7 @@ import { LlmSettings, DEFAULT_LLM_SETTINGS } from '../../core/llm-settings';
 import { ActionRegistry } from '../../core/action-registry';
 import { SequenceManager } from '../../core/sequence/SequenceManager';
 import { registerCoreActions } from '../../core/action-registrar';
+import { ContextStore } from '../../core/context-store';
 import { CharacterStateManager } from '../../core/character-state-manager';
 
 interface AppContextType {
@@ -16,6 +17,7 @@ interface AppContextType {
   actionRegistry: ActionRegistry | null;
   sequenceManager: SequenceManager | null;
   chatService: ChatService | null;
+  contextStore: ContextStore | null;
   directionalLight: THREE.DirectionalLight | null;
   ambientLight: THREE.AmbientLight | null;
   isUiInteractive: boolean;
@@ -46,6 +48,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [actionRegistry, setActionRegistry] = useState<ActionRegistry | null>(null);
   const [sequenceManager, setSequenceManager] = useState<SequenceManager | null>(null);
   const [chatService, setChatService] = useState<ChatService | null>(null);
+  const [contextStore, setContextStore] = useState<ContextStore | null>(null);
   const [directionalLight, setDirectionalLight] = useState<THREE.DirectionalLight | null>(null);
   const [ambientLight, setAmbientLight] = useState<THREE.AmbientLight | null>(null);
   const [isUiInteractive, setUiInteractive] = useState(true);
@@ -55,6 +58,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [renderer, setRenderer] = useState<THREE.WebGLRenderer | null>(null);
 
   useEffect(() => {
+    const store = new ContextStore();
+    setContextStore(store);
+
     window.electronAPI.getWindowOpacity().then(setWindowOpacityState);
     window.electronAPI.getPersona().then(setPersonaState);
     window.electronAPI.getLlmSettings().then(settings => {
@@ -93,6 +99,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       // 전역 행동 상태 및 리소스 잠금을 관리할 매니저를 생성 및 주입
       const charStateManager = new CharacterStateManager();
       context.characterStateManager = charStateManager;
+
+      // Make sure contextStore is initialized before assigning
+      if (contextStore) {
+        context.contextStore = contextStore;
+      }
+
       const seqManager = new SequenceManager(context);
       context.sequenceManager = seqManager;
 
@@ -166,7 +178,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     } else {
       console.error("Failed to get PluginContext, SequenceManager could not be initialized.");
     }
-  }, []);
+  }, [contextStore]);
 
   const setWindowOpacity = (opacity: number) => {
     setWindowOpacityState(opacity);
@@ -190,6 +202,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     actionRegistry,
     sequenceManager,
     chatService,
+    contextStore,
     directionalLight,
     ambientLight,
     isUiInteractive,

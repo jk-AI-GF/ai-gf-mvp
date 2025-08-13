@@ -22,12 +22,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   onOpenLightPanel,
   onOpenCreatorPanel,
 }) => {
-  const { pluginManager } = useAppContext();
+  const { pluginManager, contextStore } = useAppContext();
   const [isEditMode, setIsEditMode] = useState(false);
 
   const handleToggleEditMode = () => {
     const newMode = !isEditMode;
     setIsEditMode(newMode);
+    contextStore.set('isEditMode', newMode);
     eventBus.emit('ui:editModeToggled', { isEditMode: newMode });
   };
 

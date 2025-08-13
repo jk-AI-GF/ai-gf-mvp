@@ -7,6 +7,7 @@ import { characterState } from '../core/character-state';
 import { ActionRegistry } from '../core/action-registry';
 import { SequenceManager } from '../core/sequence/SequenceManager';
 import { PluginManager } from '../plugins/plugin-manager';
+import { ContextStore } from '../core/context-store';
 
 /**
  * 캐릭터 상태에 대한 인터페이스입니다.
@@ -89,8 +90,15 @@ export interface PluginContext {
    */
   pluginManager?: PluginManager;
 
+  /**
+   * 플러그인 간에 상태를 공유하는 데 사용되는 키-값 저장소입니다.
+   * (렌더러 프로세스에서만 사용 가능)
+   */
+  contextStore?: ContextStore;
+
   // 향후 추가될 API 예시:
   // getCurrentPersona(): Persona;
   // playAnimation(animationName: string): void;
   // showNotification(message: string): void;
 }
+

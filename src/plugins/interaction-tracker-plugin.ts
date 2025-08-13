@@ -33,7 +33,9 @@ export class InteractionTrackerPlugin implements IPlugin {
     this.context.eventBus.on('chat:newMessage', this.handleChatMessage);
     
     // 마우스 위치를 기본값으로 초기화합니다.
-    this.context.set('mousePosition', { x: 0, y: 0 });
+    if (this.context.contextStore) {
+      this.context.contextStore.set('mousePosition', { x: 0, y: 0 });
+    }
 
     window.addEventListener('mousemove', this.handleMouseMove);
     console.log('[InteractionTrackerPlugin] Enabled and listening for interactions.');
@@ -63,9 +65,10 @@ export class InteractionTrackerPlugin implements IPlugin {
   }
 
   private handleMouseMove(event: MouseEvent): void {
+    if (!this.context.contextStore) return;
     const normalizedX = event.clientX / window.innerWidth;
     const normalizedY = event.clientY / window.innerHeight;
-    this.context.set('mousePosition', {
+    this.context.contextStore.set('mousePosition', {
       x: normalizedX,
       y: normalizedY,
     });

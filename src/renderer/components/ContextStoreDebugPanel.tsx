@@ -10,22 +10,26 @@ interface ContextStoreDebugPanelProps {
 }
 
 const ContextStoreDebugPanel: React.FC<ContextStoreDebugPanelProps> = ({ onClose, initialPos, onDragEnd }) => {
-  const { pluginManager } = useAppContext();
+  const { contextStore } = useAppContext();
   const [contextData, setContextData] = useState<Record<string, any>>({});
 
   useEffect(() => {
-    if (!pluginManager) return;
+    if (!contextStore) return;
 
+    // Function to update the state from the store
     const updateContextData = () => {
-      const allData = pluginManager.context.getAll();
-      setContextData(allData);
+      setContextData(contextStore.getAll());
     };
 
-    updateContextData(); // Initial fetch
-    const intervalId = setInterval(updateContextData, 1000); // Update every second
+    // Initial fetch
+    updateContextData();
 
-    return () => clearInterval(intervalId); // Cleanup on unmount
-  }, [pluginManager]);
+    // Subscribe to future updates
+    const unsubscribe = contextStore.subscribe(updateContextData);
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, [contextStore]);
 
   return (
     <Panel title="컨텍스트 스토어 뷰어" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
@@ -38,13 +42,14 @@ const ContextStoreDebugPanel: React.FC<ContextStoreDebugPanelProps> = ({ onClose
             </tr>
           </thead>
           <tbody>
-            {Object.entries(contextData).map(([key, value]) => (
-              <tr key={key}>
-                <td>{key}</td>
-                <td><pre>{JSON.stringify(value, null, 2)}</pre></td>
-              </tr>
-            ))}
-             {Object.keys(contextData).length === 0 && (
+            {Object.entries(contextData).length > 0 ? (
+              Object.entries(contextData).map(([key, value]) => (
+                <tr key={key}>
+                  <td>{key}</td>
+                  <td><pre>{JSON.stringify(value, null, 2)}</pre></td>
+                </tr>
+              ))
+            ) : (
               <tr>
                 <td colSpan={2} className={styles.emptyMessage}>No data in context store.</td>
               </tr>
