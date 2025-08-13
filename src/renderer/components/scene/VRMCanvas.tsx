@@ -100,7 +100,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
 
     // 3. Create VRMManager, now passing the created pluginManager
     const vrmManager = new VRMManager(scene, activeCamera, plane, eventBus, pluginManager);
-    vrmManager.loadVRM('VRM/Liqu.vrm');
+    // vrmManager.loadVRM('VRM/Liqu.vrm'); // <--- 이 줄을 주석 처리하거나 삭제합니다. 로딩은 AppContext에서 관리합니다.
 
     // 4. Update the context in PluginManager to hold all the final managers
     pluginManager.context.vrmManager = vrmManager;

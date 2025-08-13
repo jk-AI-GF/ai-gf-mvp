@@ -13,6 +13,7 @@ export type AppEvents = {
   'vrm:unloaded': void;
   'vrm:poseApplied': { poseName: string };
   'vrm:animationFinished': { clipName: string };
+  'vrm:scaled': { scale: number };
 
   /** 카메라 */
   'camera:toggleMode': void;

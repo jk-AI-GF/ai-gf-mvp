@@ -104,6 +104,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setSequenceManager(seqManager);
         console.log("SequenceManager initialized and sequences loaded.");
 
+        // 이제 시퀀스 매니저가 준비되었으므로, VRM 모델 로딩을 시작합니다.
+        if (managers.vrmManager) {
+          console.log('[AppContext] Initializing VRM load...');
+          managers.vrmManager.loadVRM('VRM/Liqu.vrm');
+        }
+
         // Register sequence-related actions now that we have the manager
         if (managers.actionRegistry && !managers.actionRegistry.get('executeSequence')) {
           managers.actionRegistry.register(

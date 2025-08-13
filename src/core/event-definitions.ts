@@ -67,6 +67,13 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
         { key: 'poseName', type: 'string', description: '적용된 포즈 이름' }
     ],
   },
+  {
+    name: 'vrm:scaled',
+    description: 'VRM 모델 크기 변경',
+    payloadSchema: [
+        { key: 'scale', type: 'number', description: '적용된 크기 값' }
+    ],
+  },
   // Interaction
   {
     name: 'character_part_clicked',

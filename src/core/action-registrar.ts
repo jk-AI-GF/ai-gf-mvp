@@ -444,5 +444,18 @@ export function registerCoreActions(
       context.pluginManager?.restorePlugins();
     }
   );
+
+  registry.register(
+    {
+      name: 'setCharacterScale',
+      description: '캐릭터의 전체 크기를 조절합니다.',
+      params: [
+        { name: 'scale', type: 'number', defaultValue: 1.0, description: '크기 값 (1.0이 기본)' },
+      ],
+    },
+    (scale: number) => {
+      vrmManager.setScale(scale);
+    }
+  );
 }
 

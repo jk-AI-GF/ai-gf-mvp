@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
-import { VRMLoaderPlugin, VRM, VRMHumanBoneName, VRMPose } from '@pixiv/three-vrm';
+import { VRMLoaderPlugin, VRM, VRMHumanBoneName, VRMPose, VRMSpringBoneCollider, VRMSpringBoneColliderShapeCapsule, VRMSpringBoneColliderShapeSphere, VRMSpringBoneJoint } from '@pixiv/three-vrm';
 import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-vrm-animation';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils';
@@ -8,6 +8,16 @@ import { PluginManager } from '../plugins/plugin-manager';
 import eventBus, { AppEvents, TypedEventBus } from '../core/event-bus';
 
 type ParsedFile = { type: 'pose'; data: THREE.AnimationClip } | { type: 'animation'; data: THREE.AnimationClip } | null;
+
+interface InitialJointSettings {
+  stiffness: number;
+  hitRadius: number;
+}
+
+interface InitialColliderSettings {
+  radius: number;
+  tail?: THREE.Vector3;
+}
 
 function createAnimationClipFromVRMPose(vrmPose: VRMPose, vrm: VRM): THREE.AnimationClip {
     const tracks: THREE.KeyframeTrack[] = [];
@@ -202,6 +212,8 @@ export class VRMManager {
     private _plane: THREE.Mesh;
     public eventBus: TypedEventBus<AppEvents>;
     private pluginManager: PluginManager;
+    private initialJointSettings: Map<VRMSpringBoneJoint, InitialJointSettings> = new Map();
+    private initialColliderSettings: Map<VRMSpringBoneCollider, InitialColliderSettings> = new Map();
 
     constructor(
         scene: THREE.Scene, 
@@ -256,6 +268,8 @@ export class VRMManager {
             });
 
             this.createHitboxes(vrm);
+            this.captureInitialSpringBoneSettings();
+            this.setScale(1.0);
             this.pluginManager.disableAllAndRemember();
 
             const expressionNames = Object.keys(this.currentVrm.expressionManager.expressionMap);
@@ -789,6 +803,62 @@ export class VRMManager {
 
         // We need to update the mixer once to apply the sampled pose
         this.mixer.update(0);
+    }
+
+    private captureInitialSpringBoneSettings(): void {
+      if (!this.currentVrm) return;
+      
+      this.initialJointSettings.clear();
+      this.initialColliderSettings.clear();
+
+      this.currentVrm.springBoneManager?.joints.forEach((joint: VRMSpringBoneJoint) => {
+        this.initialJointSettings.set(joint, {
+          stiffness: joint.settings.stiffness,
+          hitRadius: joint.settings.hitRadius,
+        });
+      });
+
+      this.currentVrm.springBoneManager?.colliders.forEach((collider: VRMSpringBoneCollider) => {
+        const shape = collider.shape;
+        if (shape instanceof VRMSpringBoneColliderShapeCapsule) {
+          this.initialColliderSettings.set(collider, {
+            radius: shape.radius,
+            tail: shape.tail.clone(),
+          });
+        } else if (shape instanceof VRMSpringBoneColliderShapeSphere) {
+          this.initialColliderSettings.set(collider, {
+            radius: shape.radius,
+          });
+        }
+      });
+    }
+
+    public setScale(newScale: number): void {
+      const vrm = this.currentVrm;
+      if (!vrm) return;
+
+      vrm.scene.scale.setScalar(newScale);
+
+      vrm.springBoneManager?.joints.forEach((joint: VRMSpringBoneJoint) => {
+        const initial = this.initialJointSettings.get(joint);
+        if (initial) {
+          joint.settings.stiffness = initial.stiffness * newScale;
+          joint.settings.hitRadius = initial.hitRadius * newScale;
+        }
+      });
+
+      vrm.springBoneManager?.colliders.forEach((collider: VRMSpringBoneCollider) => {
+        const initial = this.initialColliderSettings.get(collider);
+        const shape = collider.shape;
+        if (initial) {
+          if (shape instanceof VRMSpringBoneColliderShapeCapsule && initial.tail) {
+            shape.radius = initial.radius * newScale;
+            shape.tail.copy(initial.tail).multiplyScalar(newScale);
+          } else if (shape instanceof VRMSpringBoneColliderShapeSphere) {
+            shape.radius = initial.radius * newScale;
+          }
+        }
+      });
     }
 }
 
