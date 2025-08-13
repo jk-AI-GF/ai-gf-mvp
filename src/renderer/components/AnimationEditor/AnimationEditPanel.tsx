@@ -232,6 +232,25 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
       alert('저장할 애니메이션 데이터가 없거나 VRM 모델이 로드되지 않았습니다.');
       return;
     }
+
+    // =================================================================
+    // DEBUGGING BLOCK
+    console.log('[SAVE TRIGGERED] Dumping AnimationClip state before serialization:');
+    console.log(animationClip);
+    const hipsTrack = animationClip.tracks.find(t => t.name === 'Normalized_Hips.position');
+    if (hipsTrack) {
+      console.log('[HIPS POSITION TRACK DATA AT SAVE TIME]');
+      console.log('  - Times:', hipsTrack.times);
+      console.log('  - Values:', hipsTrack.values);
+      const maxTime = hipsTrack.times.length > 0 ? Math.max(...hipsTrack.times) : -1;
+      const minTime = hipsTrack.times.length > 0 ? Math.min(...hipsTrack.times) : -1;
+      console.log('  - Max/Min Time:', maxTime, minTime);
+      console.log('  - Is Finite:', isFinite(maxTime) && isFinite(minTime));
+    } else {
+      console.warn('[HIPS POSITION TRACK DATA AT SAVE TIME] - Track not found!');
+    }
+    // =================================================================
+
     try {
       setIsLoading(true);
       const arrayBuffer = await serializeVrma(animationClip, vrmManager.currentVrm);

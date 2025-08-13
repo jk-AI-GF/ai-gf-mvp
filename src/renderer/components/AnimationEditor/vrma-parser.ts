@@ -235,19 +235,10 @@ export async function serializeVrma(clip: THREE.AnimationClip, vrm: VRM): Promis
   }
 
   for (const track of clip.tracks) {
-    const propertyName = track.name.split('.')[1];
-    const valueComponentCount = propertyName === 'position' ? 3 : 4;
-
-    // VALIDATION 1: Skip empty tracks
     if (track.times.length === 0) continue;
 
-    // VALIDATION 2: Skip if times and values lengths don't match
-    if (track.times.length * valueComponentCount !== track.values.length) {
-      console.warn(`Skipping track "${track.name}" due to mismatched times/values length.`);
-      continue;
-    }
-
     const nodeName = track.name.split('.')[0];
+    const propertyName = track.name.split('.')[1];
     const humanBoneName = normalizedNameToHumanBoneName[nodeName];
 
     if (!humanBoneName || !humanBoneToNodeIndex.has(humanBoneName)) {
@@ -255,60 +246,38 @@ export async function serializeVrma(clip: THREE.AnimationClip, vrm: VRM): Promis
     }
     const nodeIndex = humanBoneToNodeIndex.get(humanBoneName)!;
 
-    // VALIDATION 3: Sanitize data for NaN/Infinity
-    for(let i = 0; i < track.times.length; i++) {
-        if (!isFinite(track.times[i])) track.times[i] = 0;
-    }
-    for(let i = 0; i < track.values.length; i++) {
-        if (!isFinite(track.values[i])) track.values[i] = 0;
-    }
-
-    // --- Process Times ---
     const times = track.times;
     const timeBuffer = new Uint8Array(times.buffer, times.byteOffset, times.byteLength);
-    let timePadding = (4 - (timeBuffer.byteLength % 4)) % 4;
-    
     const timeBufferViewIndex = bufferViews.length;
     bufferViews.push({ buffer: 0, byteOffset: totalByteOffset, byteLength: timeBuffer.byteLength });
     binaryChunks.push(timeBuffer);
     totalByteOffset += timeBuffer.byteLength;
-    
-    if (timePadding > 0) {
-        binaryChunks.push(new Uint8Array(timePadding));
-        totalByteOffset += timePadding;
-    }
-
     const timeAccessorIndex = accessors.length;
     accessors.push({
       bufferView: timeBufferViewIndex, componentType: 5126, count: times.length,
       type: 'SCALAR', max: [Math.max(...times)], min: [Math.min(...times)],
     });
 
-    // --- Process Values ---
     const values = track.values;
     const valueBuffer = new Uint8Array(values.buffer, values.byteOffset, values.byteLength);
-    let valuePadding = (4 - (valueBuffer.byteLength % 4)) % 4;
-
+    const valueType = propertyName === 'position' ? 'VEC3' : 'VEC4';
+    const valueComponentCount = propertyName === 'position' ? 3 : 4;
     const valueBufferViewIndex = bufferViews.length;
     bufferViews.push({ buffer: 0, byteOffset: totalByteOffset, byteLength: valueBuffer.byteLength });
     binaryChunks.push(valueBuffer);
     totalByteOffset += valueBuffer.byteLength;
-
-    if (valuePadding > 0) {
-        binaryChunks.push(new Uint8Array(valuePadding));
-        totalByteOffset += valuePadding;
-    }
-
     const valueAccessorIndex = accessors.length;
     accessors.push({
       bufferView: valueBufferViewIndex, componentType: 5126,
-      count: values.length / valueComponentCount, type: propertyName === 'position' ? 'VEC3' : 'VEC4',
+      count: values.length / valueComponentCount, type: valueType,
     });
 
     const samplerIndex = samplers.length;
     samplers.push({ input: timeAccessorIndex, output: valueAccessorIndex, interpolation: 'LINEAR' });
 
+    // FINAL FIX: Convert property name to glTF standard
     const path = propertyName === 'position' ? 'translation' : 'rotation';
+
     channels.push({
       sampler: samplerIndex,
       target: { node: nodeIndex, path: path },
@@ -345,9 +314,9 @@ export async function serializeVrma(clip: THREE.AnimationClip, vrm: VRM): Promis
   const jsonString = JSON.stringify(gltfJson);
   const jsonBuffer = new TextEncoder().encode(jsonString);
   const jsonPadding = (4 - (jsonBuffer.length % 4)) % 4;
-  
-  // The total length of the binary chunk is already aligned
-  const totalLength = 12 + 8 + jsonBuffer.length + jsonPadding + (totalByteOffset > 0 ? (8 + totalByteOffset) : 0);
+  const binPadding = (4 - totalByteOffset % 4) % 4;
+
+  const totalLength = 12 + 8 + jsonBuffer.length + jsonPadding + (totalByteOffset > 0 ? (8 + totalByteOffset + binPadding) : 0);
   const finalBuffer = new ArrayBuffer(totalLength);
   const dataView = new DataView(finalBuffer);
   let pos = 0;
@@ -364,13 +333,14 @@ export async function serializeVrma(clip: THREE.AnimationClip, vrm: VRM): Promis
   pos += jsonPadding;
 
   if (totalByteOffset > 0) {
-    dataView.setUint32(pos, totalByteOffset, true); pos += 4;
+    dataView.setUint32(pos, totalByteOffset + binPadding, true); pos += 4;
     dataView.setUint32(pos, 0x004E4942, true); pos += 4;
     let bufferPos = 0;
     for (const chunk of binaryChunks) {
       new Uint8Array(finalBuffer, pos + bufferPos).set(chunk);
       bufferPos += chunk.byteLength;
     }
+    for (let i = 0; i < binPadding; i++) dataView.setUint8(pos + bufferPos + i, 0);
   }
 
   return finalBuffer;
