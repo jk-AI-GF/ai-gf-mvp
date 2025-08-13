@@ -42,10 +42,11 @@ export function registerCoreActions(
         },
         { name: 'loop', type: 'boolean', defaultValue: false, description: '반복 여부' },
         { name: 'crossFadeDuration', type: 'number', defaultValue: 0.5, description: '페이드 시간(초)' },
+        { name: 'waitUntilFinished', type: 'boolean', defaultValue: false, description: '종료까지 실행 대기' },
       ],
     },
-    (animationName: string, loop?: boolean, crossFadeDuration?: number) => {
-      return vrmManager.loadAndPlayAnimation(animationName, loop, crossFadeDuration);
+    async (animationName: string, loop?: boolean, crossFadeDuration?: number, waitUntilFinished?: boolean) => {
+      return vrmManager.loadAndPlayAnimation(animationName, loop, crossFadeDuration, waitUntilFinished);
     }
   );
 
@@ -84,8 +85,8 @@ export function registerCoreActions(
       name: 'moveCharacterToScreenPosition',
       description: '화면 비율 좌표로 캐릭터를 이동시킵니다.',
       params: [
-        { name: 'x', type: 'number', description: '화면 X 좌표 (0.0 ~ 1.0)', defaultValue: 0.5 },
-        { name: 'y', type: 'number', description: '화면 Y 좌표 (0.0 ~ 1.0)', defaultValue: 0.5 },
+        { name: 'x', type: 'number', description: '화면 X 좌표 (0.0-1.0은 화면 내)', defaultValue: 0.5 },
+        { name: 'y', type: 'number', description: '화면 Y 좌표 (0.0-1.0은 화면 내)', defaultValue: 0.5 },
         { name: 'duration', type: 'number', description: '이동 시간(초)', defaultValue: 1.0 },
       ],
     },

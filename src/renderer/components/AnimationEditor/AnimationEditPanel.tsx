@@ -222,7 +222,9 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
           }
         }
       } while (swapped);
-      
+      const newClip = animationClip.clone();
+      // ... 키값/시간 수정 + 정렬 ...
+      newClip.resetDuration();        // ← 추가
       setAnimationClip(newClip);
     }
   };

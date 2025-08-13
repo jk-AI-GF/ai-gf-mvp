@@ -92,7 +92,29 @@ const EmbeddedInput = ({ param, value, onParamChange }: { param: IPort, value: a
     case 'string':
       return <input type="text" value={value || ''} onChange={e => onParamChange(e.target.value)} style={inputStyle} />;
     case 'number':
-      return <input type="number" value={value || 0} onChange={e => onParamChange(parseFloat(e.target.value) || 0)} style={inputStyle} />;
+      return <input
+        type="text"
+        value={value ?? ''} // null/undefined일 경우 빈 문자열로 표시
+        onChange={e => {
+          const strVal = e.target.value;
+          if (strVal === '') {
+            onParamChange(undefined); // 입력 필드를 비울 수 있도록 undefined로 설정
+            return;
+          }
+          
+          const num = parseFloat(strVal);
+
+          // parseFloat가 전체 문자열을 성공적으로 숫자로 변환했는지 확인
+          // (예: "5a"가 5로 변환되는 것을 방지)
+          if (!isNaN(num) && String(num) === strVal) {
+            onParamChange(num);
+          } else {
+            // '-'나 '5a' 같은 중간 또는 유효하지 않은 값은 문자열로 저장
+            onParamChange(strVal);
+          }
+        }}
+        style={inputStyle}
+      />;
     case 'boolean':
       return <input type="checkbox" checked={!!value} onChange={e => onParamChange(e.target.checked)} style={{ marginLeft: '5px' }} />;
     default:

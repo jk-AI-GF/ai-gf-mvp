@@ -248,14 +248,6 @@ export class VRMManager {
             this.createHitboxes(vrm);
             await new Promise(resolve => setTimeout(resolve, 500));
 
-            // Play the model loading animation sequence
-            this.loadAndPlayAnimation('VRMA_02.vrma', false);
-            await this.animateVrmDrop(vrm, 0.5, 3.0, 0.0);
-
-            setTimeout(() => {
-                this.loadAndPlayAnimation('VRMA_03.vrma', false);
-            }, 3000);
-
             const expressionNames = Object.keys(this.currentVrm.expressionManager.expressionMap);
             this.eventBus.emit('vrm:loaded', { vrm: this.currentVrm, expressionNames });
 
@@ -411,13 +403,13 @@ export class VRMManager {
         return null;
     }
 
-    public async loadAndPlayAnimation(fileName: string, loop = false, crossFadeDuration = 0.5) {
+    public async loadAndPlayAnimation(fileName: string, loop = false, crossFadeDuration = 0.5, waitUntilFinished = false) {
         const absolutePath = await this._resolveResourcePath('animation', fileName);
         if (!absolutePath) return;
         
         const clip = await this.loadAndParseFile(absolutePath);
         if (clip?.type === 'animation') {
-            this.playAnimation(clip.data, loop, crossFadeDuration);
+            return this.playAnimation(clip.data, loop, crossFadeDuration, waitUntilFinished);
         } else if (clip?.type === 'pose') {
             console.warn(`Attempted to play a pose file as an animation: ${fileName}`);
         }
@@ -492,28 +484,50 @@ export class VRMManager {
         });
     }
 
-    public playAnimation(clip: THREE.AnimationClip, loop = false, crossFadeDuration = 0.5): void {
-        if (!this.currentVrm || !this.mixer) return;
-
-        // Stop all previous actions to ensure the new animation plays with full influence.
-        this.mixer.stopAllAction();
-
-        const newAction = this.mixer.clipAction(clip);
-        newAction.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 0);
-        if (!loop) {
-            newAction.clampWhenFinished = true;
-            
-            const listener = (e: any) => {
-                if (e.action === newAction) {
-                    this.eventBus.emit('vrm:animationFinished', { clipName: clip.name });
-                    this.mixer?.removeEventListener('finished', listener);
+    public playAnimation(clip: THREE.AnimationClip, loop = false, crossFadeDuration = 0.5, waitUntilFinished = false): Promise<void> {
+        return new Promise((resolve) => {
+            if (!this.currentVrm || !this.mixer) {
+                return resolve();
+            }
+    
+            // Stop all previous actions to ensure the new animation plays with full influence.
+            this.mixer.stopAllAction();
+    
+            const newAction = this.mixer.clipAction(clip);
+            newAction.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 0);
+    
+            if (waitUntilFinished) {
+                if (loop) {
+                    console.warn('[VRMManager] playAnimation: waitUntilFinished is true, but the animation is set to loop. The action will not wait and resolve immediately.');
+                    resolve();
+                } else {
+                    newAction.clampWhenFinished = true;
+                    const listener = (e: any) => {
+                        if (e.action === newAction) {
+                            this.eventBus.emit('vrm:animationFinished', { clipName: clip.name });
+                            this.mixer?.removeEventListener('finished', listener);
+                            resolve();
+                        }
+                    };
+                    this.mixer.addEventListener('finished', listener);
                 }
-            };
-            this.mixer.addEventListener('finished', listener);
-        }
-        
-        newAction.play();
-        this.currentAction = newAction;
+            } else {
+                if (!loop) {
+                    newAction.clampWhenFinished = true;
+                    const listener = (e: any) => {
+                        if (e.action === newAction) {
+                            this.eventBus.emit('vrm:animationFinished', { clipName: clip.name });
+                            this.mixer?.removeEventListener('finished', listener);
+                        }
+                    };
+                    this.mixer.addEventListener('finished', listener);
+                }
+                resolve(); // Resolve immediately if not waiting
+            }
+            
+            newAction.play();
+            this.currentAction = newAction;
+        });
     }
 
     public resetToTPose(): void {
@@ -522,20 +536,6 @@ export class VRMManager {
         this.currentAction = null;
         this.currentVrm.humanoid.resetNormalizedPose();
         this.eventBus.emit('vrm:poseApplied', { poseName: 'T-Pose' });
-    }
-
-    private animateVrmDrop(vrm: VRM, duration: number, startY: number, endY: number): Promise<void> {
-        return new Promise((resolve) => {
-            const startTime = performance.now();
-            const step = () => {
-                const elapsedTime = (performance.now() - startTime) / 1000;
-                const progress = Math.min(elapsedTime / duration, 1);
-                vrm.scene.position.y = startY + (endY - startY) * progress;
-                if (progress < 1) requestAnimationFrame(step);
-                else resolve();
-            };
-            requestAnimationFrame(step);
-        });
     }
 
     public animateCharacterMove(targetPosition: THREE.Vector3, duration: number): Promise<void> {
