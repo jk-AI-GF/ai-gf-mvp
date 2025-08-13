@@ -45,9 +45,9 @@ const EditMenu: React.FC<EditMenuProps> = ({
 
   const handleLoadVRM = async () => {
     if (!vrmManager) return;
-    const filePath = await window.electronAPI.openVrmFile();
-    if (filePath) {
-      vrmManager.loadVRM(filePath);
+    const result = await window.electronAPI.openVrmFile();
+    if (result && result.success) {
+      vrmManager.loadVRM(result.filePath);
     }
   };
 
@@ -58,9 +58,9 @@ const EditMenu: React.FC<EditMenuProps> = ({
 
   const handleLoadPose = async () => {
     if (!vrmManager) return;
-    const filePath = await window.electronAPI.openVrmaFile();
-    if (filePath) {
-      await vrmManager.applyPoseFromFile(filePath);
+    const result = await window.electronAPI.openVrmaFile();
+    if (result && result.success) {
+      await vrmManager.applyPoseFromFile(result.filePath);
     }
   };
 

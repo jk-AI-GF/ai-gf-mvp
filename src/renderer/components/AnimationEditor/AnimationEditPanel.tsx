@@ -80,6 +80,7 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
         const clip = await parseVrma(result, animationName, vrmManager.currentVrm);
         setAnimationClip(clip);
         console.log('Parsed AnimationClip:', clip);
+        console.log('Track names:', clip.tracks.map(t => t.name));
 
       } catch (err) {
         console.error('Failed to load and parse animation:', err);
@@ -234,17 +235,14 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
     try {
       setIsLoading(true);
       const arrayBuffer = await serializeVrma(animationClip, vrmManager.currentVrm);
-      console.log('Serialized VRMA data (ArrayBuffer):', arrayBuffer);
-      alert(`'${animationClip.name}.vrma' 로 저장 준비 완료! (콘솔 로그 확인)`);
-      // TODO: Replace with actual file save API call
-      // const result = await window.electronAPI.saveAnimationToFile(arrayBuffer, `${animationClip.name}.vrma`);
-      // if (result.success) {
-      //   alert('성공적으로 저장되었습니다.');
-      // } else if (!result.canceled) {
-      //   alert(`저장 실패: ${result.error}`);
-      // }
+      const result = await window.electronAPI.saveVrmaAnimation(arrayBuffer);
+      if (result.success) {
+        alert('성공적으로 저장되었습니다.');
+      } else if (result.error) {
+        alert(`저장 실패: ${result.error}`);
+      }
     } catch (error) {
-      console.error('Failed to serialize animation:', error);
+      console.error('Failed to serialize or save animation:', error);
       alert(`애니메이션을 저장하는 중 오류 발생: ${error.message}`);
     } finally {
       setIsLoading(false);

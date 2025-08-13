@@ -300,6 +300,14 @@ ipcMain.handle('load-sequence', () => handleFileDialog(
     return { success: true, data, filePath };
   }
 ));
+ipcMain.handle('save-vrma-animation', (event, vrmaData: ArrayBuffer) => handleFileDialog(
+  'save',
+  { title: 'Save VRMA Animation', defaultPath: path.join(getUserDataPath(), 'animations', `animation_${Date.now()}.vrma`), filters: [{ name: 'VRM Animation', extensions: ['vrma'] }] },
+  async (filePath) => {
+    await fsp.writeFile(filePath, Buffer.from(vrmaData));
+    return { success: true, message: `VRMA animation saved to ${filePath}` };
+  }
+));
 ipcMain.handle('save-vrma-pose', (event, vrmaData: ArrayBuffer) => handleFileDialog(
   'save',
   { title: 'Save VRMA Pose', defaultPath: path.join(getUserDataPath(), 'poses', `pose_${Date.now()}.vrma`), filters: [{ name: 'VRM Animation', extensions: ['vrma'] }] },

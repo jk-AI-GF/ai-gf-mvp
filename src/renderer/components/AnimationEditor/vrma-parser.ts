@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { VRM } from '@pixiv/three-vrm';
+import { VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
 import { VRMAnimationLoaderPlugin, VRMAnimation, createVRMAnimationClip } from '@pixiv/three-vrm-animation';
 
 // --- Ramer-Douglas-Peucker Algorithm for Keyframe Reduction ---
@@ -158,167 +158,161 @@ export async function parseVrma(arrayBuffer: ArrayBuffer, fileName: string, vrm:
 
 /**
  * Serializes a THREE.AnimationClip into a VRMA (binary glTF) ArrayBuffer.
+ * This function manually constructs a valid GLB file with a VRMC_vrm_animation extension.
  * @param clip The AnimationClip to serialize.
  * @param vrm The VRM model used as a reference for bone names.
  * @returns A Promise that resolves with an ArrayBuffer of the .vrma file.
  */
 export async function serializeVrma(clip: THREE.AnimationClip, vrm: VRM): Promise<ArrayBuffer> {
-  const boneNameMap = new Map<string, string>();
-  Object.entries(vrm.humanoid.humanBones).forEach(([humanBoneName, { node }]) => {
-    boneNameMap.set(node.name, humanBoneName);
-  });
-
-  const vrmAnimation: VRMAnimation = {
-    humanoid: { humanBones: {} },
-    expressions: { preset: {}, custom: {} },
-    lookAt: undefined,
+  const normalizedNameToHumanBoneName: { [key: string]: string } = {
+    "Normalized_Hips": "hips", "Normalized_Spine": "spine", "Normalized_Chest": "chest",
+    "Normalized_UpperChest": "upperChest", "Normalized_Neck": "neck", "Normalized_Head": "head",
+    "Normalized_LeftEye": "leftEye", "Normalized_RightEye": "rightEye",
+    "Normalized_LeftShoulder": "leftShoulder", "Normalized_LeftArm": "leftUpperArm",
+    "Normalized_LeftForeArm": "leftLowerArm", "Normalized_LeftHand": "leftHand",
+    "Normalized_RightShoulder": "rightShoulder", "Normalized_RightArm": "rightUpperArm",
+    "Normalized_RightForeArm": "rightLowerArm", "Normalized_RightHand": "rightHand",
+    "Normalized_LeftUpLeg": "leftUpperLeg", "Normalized_LeftLeg": "leftLowerLeg",
+    "Normalized_LeftFoot": "leftFoot", "Normalized_LeftToes": "leftToes",
+    "Normalized_RightUpLeg": "rightUpperLeg", "Normalized_RightLeg": "rightLowerLeg",
+    "Normalized_RightFoot": "rightFoot", "Normalized_RightToes": "rightToes",
+    "Normalized_LeftHandIndex1": "leftIndexProximal", "Normalized_LeftHandIndex2": "leftIndexIntermediate", "Normalized_LeftHandIndex3": "leftIndexDistal",
+    "Normalized_LeftHandLittle1": "leftLittleProximal", "Normalized_LeftHandLittle2": "leftLittleIntermediate", "Normalized_LeftHandLittle3": "leftLittleDistal",
+    "Normalized_LeftHandMiddle1": "leftMiddleProximal", "Normalized_LeftHandMiddle2": "leftMiddleIntermediate", "Normalized_LeftHandMiddle3": "leftMiddleDistal",
+    "Normalized_LeftHandRing1": "leftRingProximal", "Normalized_LeftHandRing2": "leftRingIntermediate", "Normalized_LeftHandRing3": "leftRingDistal",
+    "Normalized_LeftHandThumb1": "leftThumbProximal", "Normalized_LeftHandThumb2": "leftThumbIntermediate", "Normalized_LeftHandThumb3": "leftThumbDistal",
+    "Normalized_RightHandIndex1": "rightIndexProximal", "Normalized_RightHandIndex2": "rightIndexIntermediate", "Normalized_RightHandIndex3": "rightIndexDistal",
+    "Normalized_RightHandLittle1": "rightLittleProximal", "Normalized_RightHandLittle2": "rightLittleIntermediate", "Normalized_RightHandLittle3": "rightLittleDistal",
+    "Normalized_RightHandMiddle1": "rightMiddleProximal", "Normalized_RightHandMiddle2": "rightMiddleIntermediate", "Normalized_RightHandMiddle3": "rightMiddleDistal",
+    "Normalized_RightHandRing1": "rightRingProximal", "Normalized_RightHandRing2": "rightRingIntermediate", "Normalized_RightHandRing3": "rightRingDistal",
+    "Normalized_RightHandThumb1": "rightThumbProximal", "Normalized_RightHandThumb2": "rightThumbIntermediate", "Normalized_RightHandThumb3": "rightThumbDistal",
   };
+
+  const nodeNameToHumanBoneName = new Map<string, string>();
+  if (vrm.humanoid.humanBones) {
+    for (const [humanBoneName, boneNode] of Object.entries(vrm.humanoid.humanBones)) {
+      nodeNameToHumanBoneName.set(boneNode.node.name, humanBoneName);
+    }
+  }
 
   const bufferViews: any[] = [];
   const accessors: any[] = [];
   const samplers: any[] = [];
   const channels: any[] = [];
-  const binaryChunks: ArrayBuffer[] = [];
-  let byteOffset = 0;
+  const nodes: any[] = [];
+  const binaryChunks: Uint8Array[] = [];
+  let totalByteOffset = 0;
 
-  clip.tracks.forEach(track => {
+  const vrmAnimation = { humanoid: { humanBones: {} as { [key: string]: any } } };
+  const nodeNameMap = new Map<string, number>();
+
+  for (const track of clip.tracks) {
     const trackNameParts = track.name.split('.');
     const nodeName = trackNameParts[0];
     const propertyName = trackNameParts[1];
 
-    const humanBoneName = boneNameMap.get(nodeName) as any;
-    if (!humanBoneName) {
-      console.warn(`Skipping track for non-humanoid bone: ${nodeName}`);
-      return;
+    let humanBoneName = normalizedNameToHumanBoneName[nodeName] || nodeNameToHumanBoneName.get(nodeName) || nodeName;
+    
+    const humanBoneNameKey = humanBoneName as VRMHumanBoneName;
+    if (!vrm.humanoid.humanBones[humanBoneNameKey] || (propertyName !== 'position' && propertyName !== 'quaternion')) {
+      continue;
     }
 
-    // Create Buffer and BufferView for times
-    const times = track.times as Float32Array;
-    const timeBuffer = times.buffer.slice(times.byteOffset, times.byteOffset + times.byteLength);
-    const timeBufferViewIndex = bufferViews.length;
-    bufferViews.push({
-      buffer: 0,
-      byteOffset: byteOffset,
-      byteLength: timeBuffer.byteLength,
-    });
-    binaryChunks.push(timeBuffer);
-    byteOffset += timeBuffer.byteLength;
+    if (!nodeNameMap.has(humanBoneName)) {
+      nodeNameMap.set(humanBoneName, nodes.length);
+      nodes.push({ name: humanBoneName });
+    }
+    const nodeIndex = nodeNameMap.get(humanBoneName)!;
 
-    // Create Accessor for times
+    const times = track.times;
+    const timeBuffer = new Uint8Array(times.buffer, times.byteOffset, times.byteLength);
+    const timeBufferViewIndex = bufferViews.length;
+    bufferViews.push({ buffer: 0, byteOffset: totalByteOffset, byteLength: timeBuffer.byteLength });
+    binaryChunks.push(timeBuffer);
+    totalByteOffset += timeBuffer.byteLength;
+
     const timeAccessorIndex = accessors.length;
     accessors.push({
-      bufferView: timeBufferViewIndex,
-      componentType: 5126, // FLOAT
-      count: times.length,
-      type: 'SCALAR',
-      max: [Math.max(...times)],
-      min: [Math.min(...times)],
+      bufferView: timeBufferViewIndex, componentType: 5126, count: times.length,
+      type: 'SCALAR', max: [Math.max(...times)], min: [Math.min(...times)],
     });
 
-    // Create Buffer and BufferView for values
-    const values = track.values as Float32Array;
-    const valueBuffer = values.buffer.slice(values.byteOffset, values.byteOffset + values.byteLength);
+    const values = track.values;
+    const valueBuffer = new Uint8Array(values.buffer, values.byteOffset, values.byteLength);
+    const valueType = propertyName === 'position' ? 'VEC3' : 'VEC4';
+    const valueComponentCount = propertyName === 'position' ? 3 : 4;
     const valueBufferViewIndex = bufferViews.length;
-    bufferViews.push({
-      buffer: 0,
-      byteOffset: byteOffset,
-      byteLength: valueBuffer.byteLength,
-    });
+    bufferViews.push({ buffer: 0, byteOffset: totalByteOffset, byteLength: valueBuffer.byteLength });
     binaryChunks.push(valueBuffer);
-    byteOffset += valueBuffer.byteLength;
+    totalByteOffset += valueBuffer.byteLength;
 
-    // Create Accessor for values
     const valueAccessorIndex = accessors.length;
-    let valueType: 'VEC3' | 'VEC4' = 'VEC3';
-    if (propertyName === 'quaternion') {
-      valueType = 'VEC4';
-    }
     accessors.push({
-      bufferView: valueBufferViewIndex,
-      componentType: 5126, // FLOAT
-      count: values.length / track.getValueSize(),
-      type: valueType,
+      bufferView: valueBufferViewIndex, componentType: 5126,
+      count: values.length / valueComponentCount, type: valueType,
     });
 
-    // Create Sampler
     const samplerIndex = samplers.length;
-    samplers.push({
-      input: timeAccessorIndex,
-      output: valueAccessorIndex,
-      interpolation: 'LINEAR',
-    });
+    samplers.push({ input: timeAccessorIndex, output: valueAccessorIndex, interpolation: 'LINEAR' });
 
-    // Create Channel and link to VRMAnimation
-    if (!vrmAnimation.humanoid.humanBones[humanBoneName]) {
-      vrmAnimation.humanoid.humanBones[humanBoneName] = { node: 0 }; // Placeholder node index
-    }
-
-    const channelTarget = {
-      node: 0, // Placeholder node index
-      path: propertyName,
-    };
-    
-    if (propertyName === 'position') {
-      vrmAnimation.humanoid.humanBones[humanBoneName].translation = samplerIndex;
-    } else if (propertyName === 'quaternion') {
-      vrmAnimation.humanoid.humanBones[humanBoneName].rotation = samplerIndex;
-    }
-    
     channels.push({
-        sampler: samplerIndex,
-        target: channelTarget,
+      sampler: samplerIndex,
+      target: { node: nodeIndex, path: propertyName === 'position' ? 'translation' : 'rotation' },
     });
-  });
 
-  const totalByteLength = byteOffset;
-  const binaryBuffer = new Uint8Array(totalByteLength);
-  let currentOffset = 0;
-  for (const chunk of binaryChunks) {
-    binaryBuffer.set(new Uint8Array(chunk), currentOffset);
-    currentOffset += chunk.byteLength;
+    const boneData = vrmAnimation.humanoid.humanBones[humanBoneName] ??= {};
+    if (propertyName === 'position') boneData.translation = samplerIndex;
+    else boneData.rotation = samplerIndex;
   }
 
-  const json = {
-    asset: { version: '2.0', generator: 'AI-GF Animation Editor' },
-    animations: [{ name: clip.name, channels, samplers }],
-    extensions: { VRMC_vrm_animation: vrmAnimation },
-    extensionsUsed: ['VRMC_vrm_animation'],
+  if (channels.length === 0) {
+    console.error("serializeVrma: No valid animation tracks were found to serialize.");
+    return new ArrayBuffer(0);
+  }
+
+  const gltfJson = {
+    asset: { version: '2.0', generator: 'AI-GF MVP' },
+    scenes: [{ nodes: Array.from(Array(nodes.length).keys()) }],
+    nodes,
+    animations: [{ name: clip.name || 'animation', channels, samplers }],
     accessors,
     bufferViews,
-    buffers: [{ byteLength: totalByteLength }],
-    nodes: [{name: "AnimationNode"}], // Add a dummy node
-    scenes: [{nodes: [0]}],
+    buffers: [{ byteLength: totalByteOffset }],
+    extensions: { VRMC_vrm_animation: vrmAnimation },
+    extensionsUsed: ['VRMC_vrm_animation'],
   };
 
-  const jsonString = JSON.stringify(json);
+  const jsonString = JSON.stringify(gltfJson);
   const jsonBuffer = new TextEncoder().encode(jsonString);
+  const jsonPadding = (4 - (jsonBuffer.length % 4)) % 4;
+  const binPadding = (4 - totalByteOffset % 4) % 4;
 
-  const JSON_CHUNK_TYPE = 0x4e4f534a;
-  const BIN_CHUNK_TYPE = 0x004e4942;
-  const GLB_HEADER_MAGIC = 0x46546c67;
-  const GLB_HEADER_LENGTH = 12;
-  const GLB_CHUNK_HEADER_LENGTH = 8;
-
-  const jsonChunkLength = Math.ceil(jsonBuffer.length / 4) * 4;
-  const binChunkLength = Math.ceil(binaryBuffer.length / 4) * 4;
-
-  const totalGBLength = GLB_HEADER_LENGTH + GLB_CHUNK_HEADER_LENGTH + jsonChunkLength + GLB_CHUNK_HEADER_LENGTH + binChunkLength;
-  const glbBuffer = new ArrayBuffer(totalGBLength);
-  const dataView = new DataView(glbBuffer);
-
+  const totalLength = 12 + 8 + jsonBuffer.length + jsonPadding + 8 + totalByteOffset + binPadding;
+  const finalBuffer = new ArrayBuffer(totalLength);
+  const dataView = new DataView(finalBuffer);
   let pos = 0;
-  dataView.setUint32(pos, GLB_HEADER_MAGIC, true); pos += 4;
-  dataView.setUint32(pos, 2, true); pos += 4; // version
-  dataView.setUint32(pos, totalGBLength, true); pos += 4;
 
-  dataView.setUint32(pos, jsonChunkLength, true); pos += 4;
-  dataView.setUint32(pos, JSON_CHUNK_TYPE, true); pos += 4;
-  new Uint8Array(glbBuffer, pos).set(jsonBuffer);
-  pos += jsonChunkLength;
+  dataView.setUint32(pos, 0x46546C67, true); pos += 4;
+  dataView.setUint32(pos, 2, true); pos += 4;
+  dataView.setUint32(pos, totalLength, true); pos += 4;
 
-  dataView.setUint32(pos, binChunkLength, true); pos += 4;
-  dataView.setUint32(pos, BIN_CHUNK_TYPE, true); pos += 4;
-  new Uint8Array(glbBuffer, pos).set(binaryBuffer);
+  dataView.setUint32(pos, jsonBuffer.length + jsonPadding, true); pos += 4;
+  dataView.setUint32(pos, 0x4E4F534A, true); pos += 4;
+  new Uint8Array(finalBuffer, pos).set(jsonBuffer);
+  pos += jsonBuffer.length;
+  for (let i = 0; i < jsonPadding; i++) dataView.setUint8(pos + i, 0x20);
+  pos += jsonPadding;
 
-  return glbBuffer;
+  if (totalByteOffset > 0) {
+    dataView.setUint32(pos, totalByteOffset + binPadding, true); pos += 4;
+    dataView.setUint32(pos, 0x004E4942, true); pos += 4;
+    let bufferPos = 0;
+    for (const chunk of binaryChunks) {
+      new Uint8Array(finalBuffer, pos + bufferPos).set(chunk);
+      bufferPos += chunk.byteLength;
+    }
+    for (let i = 0; i < binPadding; i++) dataView.setUint8(pos + bufferPos + i, 0);
+  }
+
+  return finalBuffer;
 }
