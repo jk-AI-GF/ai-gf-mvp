@@ -157,14 +157,14 @@ export async function parseVrma(arrayBuffer: ArrayBuffer, fileName: string, vrm:
 }
 
 /**
- * Serializes a THREE.AnimationClip into a VRMA (binary glTF) ArrayBuffer.
- * This function manually constructs a valid GLB file with a VRMC_vrm_animation extension.
+ * Serializes a THREE.AnimationClip into a VRMA (binary glTF) ArrayBuffer,
+ * following the correct structure where the VRM extension maps to standard glTF animation nodes.
  * @param clip The AnimationClip to serialize.
  * @param vrm The VRM model used as a reference for bone names.
  * @returns A Promise that resolves with an ArrayBuffer of the .vrma file.
  */
 export async function serializeVrma(clip: THREE.AnimationClip, vrm: VRM): Promise<ArrayBuffer> {
-  const normalizedNameToHumanBoneName: { [key: string]: string } = {
+  const normalizedNameToHumanBoneName: { [key: string]: VRMHumanBoneName } = {
     "Normalized_Hips": "hips", "Normalized_Spine": "spine", "Normalized_Chest": "chest",
     "Normalized_UpperChest": "upperChest", "Normalized_Neck": "neck", "Normalized_Head": "head",
     "Normalized_LeftEye": "leftEye", "Normalized_RightEye": "rightEye",
@@ -180,20 +180,13 @@ export async function serializeVrma(clip: THREE.AnimationClip, vrm: VRM): Promis
     "Normalized_LeftHandLittle1": "leftLittleProximal", "Normalized_LeftHandLittle2": "leftLittleIntermediate", "Normalized_LeftHandLittle3": "leftLittleDistal",
     "Normalized_LeftHandMiddle1": "leftMiddleProximal", "Normalized_LeftHandMiddle2": "leftMiddleIntermediate", "Normalized_LeftHandMiddle3": "leftMiddleDistal",
     "Normalized_LeftHandRing1": "leftRingProximal", "Normalized_LeftHandRing2": "leftRingIntermediate", "Normalized_LeftHandRing3": "leftRingDistal",
-    "Normalized_LeftHandThumb1": "leftThumbProximal", "Normalized_LeftHandThumb2": "leftThumbIntermediate", "Normalized_LeftHandThumb3": "leftThumbDistal",
+    "Normalized_LeftHandThumb1": "leftThumbMetacarpal", "Normalized_LeftHandThumb2": "leftThumbProximal", "Normalized_LeftHandThumb3": "leftThumbDistal",
     "Normalized_RightHandIndex1": "rightIndexProximal", "Normalized_RightHandIndex2": "rightIndexIntermediate", "Normalized_RightHandIndex3": "rightIndexDistal",
     "Normalized_RightHandLittle1": "rightLittleProximal", "Normalized_RightHandLittle2": "rightLittleIntermediate", "Normalized_RightHandLittle3": "rightLittleDistal",
     "Normalized_RightHandMiddle1": "rightMiddleProximal", "Normalized_RightHandMiddle2": "rightMiddleIntermediate", "Normalized_RightHandMiddle3": "rightMiddleDistal",
     "Normalized_RightHandRing1": "rightRingProximal", "Normalized_RightHandRing2": "rightRingIntermediate", "Normalized_RightHandRing3": "rightRingDistal",
-    "Normalized_RightHandThumb1": "rightThumbProximal", "Normalized_RightHandThumb2": "rightThumbIntermediate", "Normalized_RightHandThumb3": "rightThumbDistal",
+    "Normalized_RightHandThumb1": "rightThumbMetacarpal", "Normalized_RightHandThumb2": "rightThumbProximal", "Normalized_RightHandThumb3": "rightThumbDistal",
   };
-
-  const nodeNameToHumanBoneName = new Map<string, string>();
-  if (vrm.humanoid.humanBones) {
-    for (const [humanBoneName, boneNode] of Object.entries(vrm.humanoid.humanBones)) {
-      nodeNameToHumanBoneName.set(boneNode.node.name, humanBoneName);
-    }
-  }
 
   const bufferViews: any[] = [];
   const accessors: any[] = [];
@@ -203,33 +196,87 @@ export async function serializeVrma(clip: THREE.AnimationClip, vrm: VRM): Promis
   const binaryChunks: Uint8Array[] = [];
   let totalByteOffset = 0;
 
-  const vrmAnimation = { humanoid: { humanBones: {} as { [key: string]: any } } };
-  const nodeNameMap = new Map<string, number>();
+  const humanBoneToNodeIndex = new Map<VRMHumanBoneName, number>();
+
+  const animatedBones = new Set<VRMHumanBoneName>();
+  for (const track of clip.tracks) {
+    if (track.times.length === 0) continue;
+    const nodeName = track.name.split('.')[0];
+    const humanBoneName = normalizedNameToHumanBoneName[nodeName];
+    if (humanBoneName) {
+      animatedBones.add(humanBoneName);
+    }
+  }
+
+  const rootNodes: any[] = [];
+  const allVrmNodes = new Map<THREE.Object3D, number>();
+
+  for (const boneName of animatedBones) {
+    const boneNode = vrm.humanoid.getRawBoneNode(boneName);
+    if (boneNode && !allVrmNodes.has(boneNode)) {
+      const nodeIndex = nodes.length;
+      allVrmNodes.set(boneNode, nodeIndex);
+      humanBoneToNodeIndex.set(boneName, nodeIndex);
+      nodes.push({ name: boneName });
+    }
+  }
+
+  for (const [boneNode, nodeIndex] of allVrmNodes.entries()) {
+    if (boneNode.parent && allVrmNodes.has(boneNode.parent)) {
+      const parentNodeIndex = allVrmNodes.get(boneNode.parent)!;
+      const parentGltfNode = nodes[parentNodeIndex];
+      if (!parentGltfNode.children) {
+        parentGltfNode.children = [];
+      }
+      parentGltfNode.children.push(nodeIndex);
+    } else {
+      rootNodes.push(nodeIndex);
+    }
+  }
 
   for (const track of clip.tracks) {
-    const trackNameParts = track.name.split('.');
-    const nodeName = trackNameParts[0];
-    const propertyName = trackNameParts[1];
+    const propertyName = track.name.split('.')[1];
+    const valueComponentCount = propertyName === 'position' ? 3 : 4;
 
-    let humanBoneName = normalizedNameToHumanBoneName[nodeName] || nodeNameToHumanBoneName.get(nodeName) || nodeName;
-    
-    const humanBoneNameKey = humanBoneName as VRMHumanBoneName;
-    if (!vrm.humanoid.humanBones[humanBoneNameKey] || (propertyName !== 'position' && propertyName !== 'quaternion')) {
+    // VALIDATION 1: Skip empty tracks
+    if (track.times.length === 0) continue;
+
+    // VALIDATION 2: Skip if times and values lengths don't match
+    if (track.times.length * valueComponentCount !== track.values.length) {
+      console.warn(`Skipping track "${track.name}" due to mismatched times/values length.`);
       continue;
     }
 
-    if (!nodeNameMap.has(humanBoneName)) {
-      nodeNameMap.set(humanBoneName, nodes.length);
-      nodes.push({ name: humanBoneName });
-    }
-    const nodeIndex = nodeNameMap.get(humanBoneName)!;
+    const nodeName = track.name.split('.')[0];
+    const humanBoneName = normalizedNameToHumanBoneName[nodeName];
 
+    if (!humanBoneName || !humanBoneToNodeIndex.has(humanBoneName)) {
+      continue;
+    }
+    const nodeIndex = humanBoneToNodeIndex.get(humanBoneName)!;
+
+    // VALIDATION 3: Sanitize data for NaN/Infinity
+    for(let i = 0; i < track.times.length; i++) {
+        if (!isFinite(track.times[i])) track.times[i] = 0;
+    }
+    for(let i = 0; i < track.values.length; i++) {
+        if (!isFinite(track.values[i])) track.values[i] = 0;
+    }
+
+    // --- Process Times ---
     const times = track.times;
     const timeBuffer = new Uint8Array(times.buffer, times.byteOffset, times.byteLength);
+    let timePadding = (4 - (timeBuffer.byteLength % 4)) % 4;
+    
     const timeBufferViewIndex = bufferViews.length;
     bufferViews.push({ buffer: 0, byteOffset: totalByteOffset, byteLength: timeBuffer.byteLength });
     binaryChunks.push(timeBuffer);
     totalByteOffset += timeBuffer.byteLength;
+    
+    if (timePadding > 0) {
+        binaryChunks.push(new Uint8Array(timePadding));
+        totalByteOffset += timePadding;
+    }
 
     const timeAccessorIndex = accessors.length;
     accessors.push({
@@ -237,32 +284,35 @@ export async function serializeVrma(clip: THREE.AnimationClip, vrm: VRM): Promis
       type: 'SCALAR', max: [Math.max(...times)], min: [Math.min(...times)],
     });
 
+    // --- Process Values ---
     const values = track.values;
     const valueBuffer = new Uint8Array(values.buffer, values.byteOffset, values.byteLength);
-    const valueType = propertyName === 'position' ? 'VEC3' : 'VEC4';
-    const valueComponentCount = propertyName === 'position' ? 3 : 4;
+    let valuePadding = (4 - (valueBuffer.byteLength % 4)) % 4;
+
     const valueBufferViewIndex = bufferViews.length;
     bufferViews.push({ buffer: 0, byteOffset: totalByteOffset, byteLength: valueBuffer.byteLength });
     binaryChunks.push(valueBuffer);
     totalByteOffset += valueBuffer.byteLength;
 
+    if (valuePadding > 0) {
+        binaryChunks.push(new Uint8Array(valuePadding));
+        totalByteOffset += valuePadding;
+    }
+
     const valueAccessorIndex = accessors.length;
     accessors.push({
       bufferView: valueBufferViewIndex, componentType: 5126,
-      count: values.length / valueComponentCount, type: valueType,
+      count: values.length / valueComponentCount, type: propertyName === 'position' ? 'VEC3' : 'VEC4',
     });
 
     const samplerIndex = samplers.length;
     samplers.push({ input: timeAccessorIndex, output: valueAccessorIndex, interpolation: 'LINEAR' });
 
+    const path = propertyName === 'position' ? 'translation' : 'rotation';
     channels.push({
       sampler: samplerIndex,
-      target: { node: nodeIndex, path: propertyName === 'position' ? 'translation' : 'rotation' },
+      target: { node: nodeIndex, path: path },
     });
-
-    const boneData = vrmAnimation.humanoid.humanBones[humanBoneName] ??= {};
-    if (propertyName === 'position') boneData.translation = samplerIndex;
-    else boneData.rotation = samplerIndex;
   }
 
   if (channels.length === 0) {
@@ -270,24 +320,34 @@ export async function serializeVrma(clip: THREE.AnimationClip, vrm: VRM): Promis
     return new ArrayBuffer(0);
   }
 
+  const vrmExtHumanoidBones: { [name in VRMHumanBoneName]?: { node: number } } = {};
+  for (const [humanBoneName, nodeIndex] of humanBoneToNodeIndex.entries()) {
+    vrmExtHumanoidBones[humanBoneName] = { node: nodeIndex };
+  }
+
   const gltfJson = {
     asset: { version: '2.0', generator: 'AI-GF MVP' },
-    scenes: [{ nodes: Array.from(Array(nodes.length).keys()) }],
+    extensionsUsed: ['VRMC_vrm_animation'],
+    extensionsRequired: ['VRMC_vrm_animation'],
+    scenes: [{ nodes: rootNodes }],
     nodes,
     animations: [{ name: clip.name || 'animation', channels, samplers }],
     accessors,
     bufferViews,
     buffers: [{ byteLength: totalByteOffset }],
-    extensions: { VRMC_vrm_animation: vrmAnimation },
-    extensionsUsed: ['VRMC_vrm_animation'],
+    extensions: {
+      VRMC_vrm_animation: {
+        humanoid: { humanBones: vrmExtHumanoidBones },
+      },
+    },
   };
 
   const jsonString = JSON.stringify(gltfJson);
   const jsonBuffer = new TextEncoder().encode(jsonString);
   const jsonPadding = (4 - (jsonBuffer.length % 4)) % 4;
-  const binPadding = (4 - totalByteOffset % 4) % 4;
-
-  const totalLength = 12 + 8 + jsonBuffer.length + jsonPadding + 8 + totalByteOffset + binPadding;
+  
+  // The total length of the binary chunk is already aligned
+  const totalLength = 12 + 8 + jsonBuffer.length + jsonPadding + (totalByteOffset > 0 ? (8 + totalByteOffset) : 0);
   const finalBuffer = new ArrayBuffer(totalLength);
   const dataView = new DataView(finalBuffer);
   let pos = 0;
@@ -304,14 +364,13 @@ export async function serializeVrma(clip: THREE.AnimationClip, vrm: VRM): Promis
   pos += jsonPadding;
 
   if (totalByteOffset > 0) {
-    dataView.setUint32(pos, totalByteOffset + binPadding, true); pos += 4;
+    dataView.setUint32(pos, totalByteOffset, true); pos += 4;
     dataView.setUint32(pos, 0x004E4942, true); pos += 4;
     let bufferPos = 0;
     for (const chunk of binaryChunks) {
       new Uint8Array(finalBuffer, pos + bufferPos).set(chunk);
       bufferPos += chunk.byteLength;
     }
-    for (let i = 0; i < binPadding; i++) dataView.setUint8(pos + bufferPos + i, 0);
   }
 
   return finalBuffer;
