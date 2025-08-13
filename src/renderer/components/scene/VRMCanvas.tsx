@@ -79,24 +79,34 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     controls.target.set(0, 0.6, 0);
     controls.update();
 
-    // --- VRM Manager ---
-    const vrmManager = new VRMManager(scene, activeCamera, plane, eventBus);
-    vrmManager.loadVRM('VRM/Liqu.vrm');
-
-    // --- Plugin System ---
+    // --- Action Registry and System Controls ---
     const actionRegistry = new ActionRegistry();
-
     const systemControls: SystemControls = {
       toggleTts: (enable: boolean) => toggleTts(enable),
       toggleMouseIgnore: () => window.electronAPI.requestToggleMouseIgnore(),
       setMasterVolume: (volume: number) => setMasterVolume(volume),
     };
 
-    // 2. Create context - it will now be populated with actions
-    const pluginContext = createPluginContext(vrmManager, systemControls, actionRegistry);
+    // --- Plugin and VRM Managers ---
+    // The order is important here. PluginManager needs a context, but the context
+    // needs a VRMManager. We create a preliminary context, then the managers,
+    // and finally update the context with the managers.
 
-    // 3. Create and setup managers
-    const pluginManager = new PluginManager(pluginContext);
+    // 1. Create a preliminary context without managers
+    const preliminaryContext = createPluginContext(null, systemControls, actionRegistry);
+    
+    // 2. Create PluginManager with the preliminary context
+    const pluginManager = new PluginManager(preliminaryContext);
+
+    // 3. Create VRMManager, now passing the created pluginManager
+    const vrmManager = new VRMManager(scene, activeCamera, plane, eventBus, pluginManager);
+    vrmManager.loadVRM('VRM/Liqu.vrm');
+
+    // 4. Update the context in PluginManager to hold all the final managers
+    pluginManager.context.vrmManager = vrmManager;
+    pluginManager.context.pluginManager = pluginManager;
+
+    // 5. Register all plugins
     pluginManager.register(new AutoLookAtPlugin());
     pluginManager.register(new AutoBlinkPlugin());
     pluginManager.register(new AutoIdleAnimationPlugin());
@@ -107,7 +117,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     pluginManager.register(new LlmResponseHandlerPlugin());
     pluginManager.register(new InteractionTrackerPlugin());
 
-    // 4. Pass all managers and the registry up to the App component
+    // 6. Pass all managers and the registry up to the App component
     onLoad({ vrmManager, pluginManager, actionRegistry, renderer, camera: activeCamera });
 
     const setOutlineMode = (mode: typeof MToonMaterialOutlineWidthMode.WorldCoordinates | typeof MToonMaterialOutlineWidthMode.ScreenCoordinates) => {

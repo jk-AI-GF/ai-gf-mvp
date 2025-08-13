@@ -4,6 +4,7 @@ import { VRMLoaderPlugin, VRM, VRMHumanBoneName, VRMPose } from '@pixiv/three-vr
 import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-vrm-animation';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils';
+import { PluginManager } from '../plugins/plugin-manager';
 import eventBus, { AppEvents, TypedEventBus } from '../core/event-bus';
 
 type ParsedFile = { type: 'pose'; data: THREE.AnimationClip } | { type: 'animation'; data: THREE.AnimationClip } | null;
@@ -200,12 +201,20 @@ export class VRMManager {
     public activeCamera: THREE.Camera;
     private _plane: THREE.Mesh;
     public eventBus: TypedEventBus<AppEvents>;
+    private pluginManager: PluginManager;
 
-    constructor(scene: THREE.Scene, camera: THREE.Camera, plane: THREE.Mesh, eventBusInstance: TypedEventBus<AppEvents>) {
+    constructor(
+        scene: THREE.Scene, 
+        camera: THREE.Camera, 
+        plane: THREE.Mesh, 
+        eventBusInstance: TypedEventBus<AppEvents>,
+        pluginManager: PluginManager
+    ) {
         this.activeCamera = camera;
         this.scene = scene;
         this._plane = plane;
         this.eventBus = eventBusInstance;
+        this.pluginManager = pluginManager;
 
         this.loader = new GLTFLoader();
         this.loader.register((parser) => new VRMLoaderPlugin(parser));
@@ -215,6 +224,7 @@ export class VRMManager {
     }
 
     public async loadVRM(filePathOrUrl: string): Promise<void> {
+
         if (this.currentVrm) {
             this.eventBus.emit('vrm:unloaded');
             this.scene.remove(this.currentVrm.scene);
@@ -246,7 +256,7 @@ export class VRMManager {
             });
 
             this.createHitboxes(vrm);
-            await new Promise(resolve => setTimeout(resolve, 500));
+            this.pluginManager.disableAllAndRemember();
 
             const expressionNames = Object.keys(this.currentVrm.expressionManager.expressionMap);
             this.eventBus.emit('vrm:loaded', { vrm: this.currentVrm, expressionNames });

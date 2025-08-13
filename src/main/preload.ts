@@ -71,6 +71,8 @@ import { LlmSettings } from '../core/llm-settings';
   getAllMods: () => ipcRenderer.invoke('get-all-mods'),
   getModSettings: () => ipcRenderer.invoke('get-mod-settings'),
   setModEnabled: (modName: string, isEnabled: boolean) => ipcRenderer.invoke('set-mod-enabled', modName, isEnabled),
+  getPluginList: (): Promise<string[]> => ipcRenderer.invoke('get-plugin-list'),
+  updatePluginList: (plugins: string[]) => ipcRenderer.send('update-plugin-list', plugins),
 
   // --- Sequence API ---
   getAllSequenceFilesWithType: (): Promise<{ name: string, type: 'sequence' | 'subroutine' }[]> => ipcRenderer.invoke('get-all-sequence-files-with-type'),
@@ -143,6 +145,8 @@ declare global {
       getAllMods: () => Promise<{ name: string, version: string, path: string }[]>;
       getModSettings: () => Promise<any>;
       setModEnabled: (modName: string, isEnabled: boolean) => Promise<{ success: boolean }>;
+      getPluginList: () => Promise<string[]>;
+      updatePluginList: (plugins: string[]) => void;
 
       // --- Sequence API ---
       getAllSequenceFilesWithType: () => Promise<{ name: string, type: 'sequence' | 'subroutine' }[]>;

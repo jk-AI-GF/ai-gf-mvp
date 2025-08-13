@@ -97,6 +97,13 @@ const App: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (pluginManager) {
+      const pluginNames = Array.from(pluginManager.plugins.keys());
+      window.electronAPI.updatePluginList(pluginNames);
+    }
+  }, [pluginManager]);
+
 
   const handleDeleteSequence = async (sequenceFile: string) => {
     if (!sequenceManager) return;

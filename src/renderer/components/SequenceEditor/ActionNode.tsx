@@ -39,6 +39,11 @@ const DynamicSelectInput = ({ param, value, onParamChange }: { param: IPort, val
             if (poseFiles) {
                 fetchedOptions = poseFiles;
             }
+        } else if (param.dynamicOptions === 'plugins') {
+            const pluginList = await window.electronAPI.getPluginList();
+            if (pluginList) {
+                fetchedOptions = pluginList;
+            }
         }
         setOptions(fetchedOptions);
       } catch (err) {
@@ -73,7 +78,7 @@ const DynamicSelectInput = ({ param, value, onParamChange }: { param: IPort, val
 // 노드 내부의 입력 필드 컴포넌트
 const EmbeddedInput = ({ param, value, onParamChange }: { param: IPort, value: any, onParamChange: (val: any) => void }) => {
   // 동적 옵션 힌트 확인
-  if (param.dynamicOptions === 'animations' || param.dynamicOptions === 'sequences' || param.dynamicOptions === 'poses') {
+  if (param.dynamicOptions === 'animations' || param.dynamicOptions === 'sequences' || param.dynamicOptions === 'poses' || param.dynamicOptions === 'plugins') {
     return <DynamicSelectInput param={param} value={value} onParamChange={onParamChange} />;
   }
 

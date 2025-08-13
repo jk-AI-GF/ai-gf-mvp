@@ -51,6 +51,7 @@ export class PluginManager {
   public context: PluginContext;
   private isEditMode = false;
   private pluginsDisabledByEditMode: Set<string> = new Set();
+  private previouslyEnabledPlugins: Set<string> = new Set();
 
   constructor(context: PluginContext) {
     this.context = context;
@@ -125,11 +126,43 @@ export class PluginManager {
   enable(name: string): void {
     const plugin = this.plugins.get(name);
     if (plugin && !plugin.enabled) {
+      // 편집 모드이고 플러그인이 편집 모드에서 실행되도록 설정되지 않은 경우 활성화하지 않습니다.
+      if (this.isEditMode && !plugin.runInEditMode) {
+        console.log(`Plugin "${name}" cannot be enabled in edit mode.`);
+        // 이 경우를 대비해 편집 모드로 인해 비활성화된 플러그인 목록에 추가할 수도 있습니다.
+        this.pluginsDisabledByEditMode.add(name);
+        return;
+      }
       plugin.enabled = true;
       plugin.onEnable();
       this.context.eventBus.emit('plugin:enabled', { pluginName: name });
       console.log(`Plugin enabled: ${name}`);
     }
+  }
+
+  /**
+   * 모든 활성 플러그인을 비활성화하고 그 이름을 기억합니다.
+   */
+  disableAllAndRemember(): void {
+    this.previouslyEnabledPlugins.clear();
+    for (const plugin of this.plugins.values()) {
+      if (plugin.enabled) {
+        this.previouslyEnabledPlugins.add(plugin.name);
+        this.disable(plugin.name);
+      }
+    }
+    console.log('All plugins disabled, state saved.');
+  }
+
+  /**
+   * 이전에 활성화되었던 플러그인을 복원합니다.
+   */
+  restorePlugins(): void {
+    console.log('Restoring previously enabled plugins...');
+    for (const name of this.previouslyEnabledPlugins) {
+      this.enable(name);
+    }
+    this.previouslyEnabledPlugins.clear();
   }
 
   /**

@@ -49,6 +49,7 @@ let overlayWindow: BrowserWindow | null = null;
 let mainWindow: BrowserWindow | null = null;
 let isIgnoringMouseEvents = false;
 let availableActionsCache: ActionDefinition[] = [];
+let pluginListCache: string[] = [];
 let modLoader: ModLoader;
 let modsLoaded = false;
 let lastSavedState: Partial<ICharacterState> | null = null;
@@ -73,6 +74,14 @@ if (require('electron-squirrel-startup')) {
 //==============================================================================
 // IPC HANDLER REGISTRATION
 //==============================================================================
+
+// --- Plugin List Cache ---
+ipcMain.on('update-plugin-list', (event, plugins: string[]) => {
+  pluginListCache = plugins;
+});
+ipcMain.handle('get-plugin-list', () => {
+  return pluginListCache;
+});
 
 // --- Character State Persistence ---
 ipcMain.on('character-state:changed', (event, newState: ICharacterState) => {

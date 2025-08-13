@@ -404,5 +404,45 @@ export function registerCoreActions(
       sequenceManager.toggleSequence(sequenceName, shouldActivate);
     }
   );
+
+  registry.register(
+    {
+      name: 'togglePlugin',
+      description: '지정된 플러그인을 활성화하거나 비활성화합니다.',
+      params: [
+        { name: 'pluginName', type: 'string', description: '토글할 플러그인의 이름', dynamicOptions: 'plugins' },
+        { name: 'enabled', type: 'boolean', description: '활성화 여부' },
+      ],
+    },
+    (pluginName: string, enabled: boolean) => {
+      if (enabled) {
+        context.pluginManager?.enable(pluginName);
+      } else {
+        context.pluginManager?.disable(pluginName);
+      }
+    }
+  );
+
+  registry.register(
+    {
+      name: 'disableAllPlugins',
+      description: '모든 활성 플러그인을 비활성화하고 현재 상태를 기억합니다.',
+      params: [],
+    },
+    () => {
+      context.pluginManager?.disableAllAndRemember();
+    }
+  );
+
+  registry.register(
+    {
+      name: 'restorePlugins',
+      description: '이전에 disableAllPlugins으로 비활성화된 플러그인들을 다시 활성화합니다.',
+      params: [],
+    },
+    () => {
+      context.pluginManager?.restorePlugins();
+    }
+  );
 }
 
