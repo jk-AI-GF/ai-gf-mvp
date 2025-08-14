@@ -277,6 +277,7 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
       const result = await sequenceManager.saveOrUpdateSequence(flow, description, capabilities, locks, sequenceToLoad);
       if (result.success) {
         console.log('시퀀스가 성공적으로 저장되었습니다:', result.filePath);
+        // The event is now emitted from the manager, so no need to emit here.
         onClose();
       } else if (result.error) {
         console.error('시퀀스 저장 실패:', result.error);
@@ -299,6 +300,7 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
       const result = await sequenceManager.saveOrUpdateSequence(flow, description, capabilities, locks, null);
       if (result.success) {
         console.log('시퀀스가 성공적으로 저장되었습니다:', result.filePath);
+        // The event is now emitted from the manager, so no need to emit here.
         onClose();
       } else if (result.error) {
         console.error('시퀀스 저장 실패:', result.error);

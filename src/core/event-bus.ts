@@ -63,7 +63,10 @@ export type AppEvents = {
 
   /** 시스템 이벤트 */
   'system:mouse-ignore-toggle': boolean;
-  'sequences-updated': void;
+  'sequences-updated': {
+    allSequences: { name: string, type: 'sequence' | 'subroutine' }[],
+    activeSequences: string[],
+  };
   'sequences:activeListChanged': string[];
 };
 

@@ -45,6 +45,7 @@ interface AppContextType {
   setLlmSettings: (settings: Partial<LlmSettings>) => void;
   setDirectionalLight: (light: THREE.DirectionalLight) => void;
   setAmbientLight: (light: THREE.AmbientLight) => void;
+  isSequenceManagerInitialized: boolean;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -78,6 +79,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     renderer: null,
   });
 
+  const [isSequenceManagerInitialized, setSequenceManagerInitialized] = useState(false);
   const [directionalLight, setDirectionalLight] = useState<THREE.DirectionalLight | null>(null);
   const [ambientLight, setAmbientLight] = useState<THREE.AmbientLight | null>(null);
   const [isUiInteractive, setUiInteractive] = useState(true);
@@ -172,6 +174,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     sequenceManager.initialize().then(() => {
       console.log("[AppContext] SequenceManager initialized.");
+      setSequenceManagerInitialized(true); // Signal that initialization is complete
       vrmManager.loadVRM('VRM/Liqu.vrm');
     }).catch(err => console.error("Failed to initialize SequenceManager:", err));
 
@@ -206,6 +209,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setLlmSettings,
     setDirectionalLight,
     setAmbientLight,
+    isSequenceManagerInitialized,
   };
 
   return (

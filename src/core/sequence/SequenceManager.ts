@@ -244,10 +244,15 @@ export class SequenceManager {
       console.log(`[SequenceManager] Sequence ${fileName} deleted successfully.`);
       this.allSequenceFiles = this.allSequenceFiles.filter(f => f !== fileName);
       this.sequenceCache.delete(fileName);
-      this.subroutineDefinitions.delete(fileName); // 서브루틴 정의도 삭제
+      this.subroutineDefinitions.delete(fileName);
       
-      // UI 업데이트를 위해 이벤트를 발생시킵니다.
-      this.pluginContext.eventBus.emit('sequences-updated');
+      const updatedAllFiles = await window.electronAPI.getAllSequenceFilesWithType();
+      this.allSequenceFiles = updatedAllFiles.map(f => f.name);
+
+      this.pluginContext.eventBus.emit('sequences-updated', {
+        allSequences: updatedAllFiles,
+        activeSequences: this.getActiveSequenceFiles(),
+      });
     } else {
       console.error(`[SequenceManager] Failed to delete sequence ${fileName}:`, result.error);
       throw new Error(result.error);
@@ -461,35 +466,45 @@ export class SequenceManager {
       const serializableData = this.serializeSequence(flow, description, capabilities, locks);
       const jsonString = JSON.stringify(serializableData, null, 2);
       
-      let result;
-      if (fileName) {
-        // 기존 파일 덮어쓰기
-        result = await window.electronAPI.saveSequenceToFile(fileName, jsonString);
-      } else {
-        // '다른 이름으로 저장' 대화 상자 열기
-        result = await window.electronAPI.saveSequence(jsonString);
-      }
+      const result = fileName 
+        ? await window.electronAPI.saveSequenceToFile(fileName, jsonString)
+        : await window.electronAPI.saveSequence(jsonString);
 
       if (result.success && result.filePath) {
-        // 성공 시 캐시를 무효화하고 파일 목록을 업데이트합니다.
         const newFileName = await window.electronAPI.basename(result.filePath);
+        
+        // Invalidate cache for the saved file to force a re-read
         this.sequenceCache.delete(newFileName);
+
+        // Hot-reload the sequence if it's currently active to apply logic changes immediately
+        if (this.activeSequenceFiles.has(newFileName)) {
+          console.log(`[SequenceManager] Hot-reloading active sequence: ${newFileName}`);
+          this.deactivateSequence(newFileName);
+          await this.activateSequence(newFileName);
+        }
+
+        // Update internal file list if it's a new file
         if (!this.allSequenceFiles.includes(newFileName)) {
           this.allSequenceFiles.push(newFileName);
         }
-        // 서브루틴 정의도 업데이트가 필요할 수 있습니다.
+
+        // Update subroutine definitions cache
         if (serializableData.type === 'subroutine') {
-          const def = await this.loadSubroutineDefinition(newFileName);
+          const def = await this.loadSubroutineDefinition(newFileName, serializableData);
           if (def) {
             this.subroutineDefinitions.set(newFileName, def);
           }
         } else {
-          // 서브루틴이 아닌 것으로 저장되면 기존 정의를 삭제합니다.
           this.subroutineDefinitions.delete(newFileName);
         }
         
-        // 상태 업데이트 후 이벤트를 발생시킵니다.
-        this.pluginContext.eventBus.emit('sequences-updated');
+        const updatedAllFiles = await window.electronAPI.getAllSequenceFilesWithType();
+        this.allSequenceFiles = updatedAllFiles.map(f => f.name);
+
+        this.pluginContext.eventBus.emit('sequences-updated', {
+          allSequences: updatedAllFiles,
+          activeSequences: this.getActiveSequenceFiles(),
+        });
       }
       
       return result;
@@ -538,21 +553,26 @@ export class SequenceManager {
   /**
    * 서브루틴 정의 파일을 로드하여 메타데이터를 반환합니다.
    * @param fileName 서브루틴 파일 이름
+   * @param data 직렬화된 데이터 (선택 사항, 제공되면 파일 I/O를 건너뜁니다)
    */
-  private async loadSubroutineDefinition(fileName: string): Promise<SubroutineDefinition | undefined> {
+  private async loadSubroutineDefinition(fileName: string, data?: any): Promise<SubroutineDefinition | undefined> {
     try {
-      const filePath = await window.electronAPI.resolvePath('userData', `sequences/${fileName}`);
-      const exists = await window.electronAPI.fileExists(filePath);
-      if (!exists) {
-        console.warn(`[SequenceManager] Subroutine file not found: ${fileName}`);
-        return undefined;
+      let json = data;
+      if (!json) {
+        const filePath = await window.electronAPI.resolvePath('userData', `sequences/${fileName}`);
+        const exists = await window.electronAPI.fileExists(filePath);
+        if (!exists) {
+          console.warn(`[SequenceManager] Subroutine file not found: ${fileName}`);
+          return undefined;
+        }
+        const fileBuffer = await window.electronAPI.readAbsoluteFile(filePath);
+        if (!(fileBuffer instanceof ArrayBuffer)) {
+          console.error(`[SequenceManager] Failed to read subroutine file buffer: ${fileName}`);
+          return undefined;
+        }
+        json = JSON.parse(new TextDecoder().decode(fileBuffer));
       }
-      const fileBuffer = await window.electronAPI.readAbsoluteFile(filePath);
-      if (!(fileBuffer instanceof ArrayBuffer)) {
-        console.error(`[SequenceManager] Failed to read subroutine file buffer: ${fileName}`);
-        return undefined;
-      }
-      const json = JSON.parse(new TextDecoder().decode(fileBuffer));
+
       if (json.type !== 'subroutine') {
         return undefined;
       }

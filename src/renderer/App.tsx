@@ -32,6 +32,7 @@ const App: React.FC = () => {
     chatService, isUiInteractive, persona, llmSettings, pluginManager, 
     actionRegistry,
     sequenceManager,
+    isSequenceManagerInitialized,
   } = useAppContext();
 
   const [isSettingsModalOpen, setSettingsModalOpen] = useState(false);
@@ -61,41 +62,43 @@ const App: React.FC = () => {
   
   const isInitialMount = useRef(true);
 
-  // Update local state when manager is available or changes
+  // This effect now correctly waits for the manager to be fully initialized.
   useEffect(() => {
     const fetchSequences = async () => {
-      if (sequenceManager) {
+      if (isSequenceManagerInitialized && sequenceManager) {
+        console.log('[App] SequenceManager is initialized. Fetching sequences...');
         const files = await window.electronAPI.getAllSequenceFilesWithType();
         setAllSequences(files);
         setActiveSequences(sequenceManager.getActiveSequenceFiles());
       }
     };
     fetchSequences();
-  }, [sequenceManager]);
+  }, [isSequenceManagerInitialized, sequenceManager]);
 
-  // Listen for external updates (e.g., after saving in editor)
+  // This effect handles updates after the initial load, like saving or deleting.
   useEffect(() => {
-    const handleSequencesUpdated = async () => {
-      if (sequenceManager) {
-        console.log('Received sequences-updated event, refreshing list...');
-        const files = await window.electronAPI.getAllSequenceFilesWithType();
-        setAllSequences(files);
-        // Active sequences might have changed if a file was renamed or deleted.
-        setActiveSequences(sequenceManager.getActiveSequenceFiles());
+    const handleSequencesUpdated = (data: { allSequences: { name: string, type: 'sequence' | 'subroutine' }[], activeSequences: string[] }) => {
+      if (data) {
+        console.log('[App] Received sequences-updated event with data, updating state directly.');
+        setAllSequences(data.allSequences);
+        setActiveSequences(data.activeSequences);
       }
     };
     const unsubscribe = eventBus.on('sequences-updated', handleSequencesUpdated);
     return () => unsubscribe();
-  }, [sequenceManager]);
+  }, []); // No dependencies needed as it uses the event payload
 
-  // Listen for internal state changes from the manager
+  // This effect handles real-time changes to the active sequence list (toggling).
   useEffect(() => {
+    if (!isSequenceManagerInitialized) return;
+
     const handleActiveSequencesChanged = (newActiveList: string[]) => {
+      console.log('[App] Received sequences:activeListChanged event, updating active list.');
       setActiveSequences(newActiveList);
     };
     const unsubscribe = eventBus.on('sequences:activeListChanged', handleActiveSequencesChanged);
     return () => unsubscribe();
-  }, []);
+  }, [isSequenceManagerInitialized]);
 
   useEffect(() => {
     if (pluginManager) {
@@ -113,8 +116,7 @@ const App: React.FC = () => {
 
     try {
       await sequenceManager.deleteSequence(sequenceFile);
-      // Manually trigger the update event after deletion.
-      eventBus.emit('sequences-updated');
+      // The event is now emitted from the manager, so no need to emit here.
     } catch (error) {
       console.error(`Failed to delete sequence ${sequenceFile}:`, error);
       alert(`시퀀스 삭제 실패: ${error}`);
