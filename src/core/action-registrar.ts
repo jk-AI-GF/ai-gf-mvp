@@ -457,5 +457,20 @@ export function registerCoreActions(
       vrmManager.setScale(scale);
     }
   );
+
+  registry.register(
+    {
+      name: 'setRotation',
+      description: '캐릭터를 Y축 기준으로 회전시킵니다.',
+      params: [
+        { name: 'y', type: 'number', description: 'Y축 회전값 (degrees)', defaultValue: 0 },
+        { name: 'blendTime', type: 'number', defaultValue: 0.5, description: '블렌딩 시간(초)' },
+      ],
+    },
+    (y: number, blendTime: number) => {
+      const yRad = THREE.MathUtils.degToRad(y);
+      return vrmManager.animateCharacterRotation(yRad, blendTime);
+    }
+  );
 }
 

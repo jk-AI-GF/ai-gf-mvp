@@ -586,6 +586,38 @@ export class VRMManager {
         });
     }
 
+    public animateCharacterRotation(targetYRotation: number, duration: number): Promise<void> {
+        if (!this.currentVrm) return Promise.resolve();
+    
+        const vrm = this.currentVrm;
+        const startRotation = vrm.scene.quaternion.clone();
+        const targetRotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, targetYRotation, 0, 'YXZ'));
+    
+        return new Promise((resolve) => {
+            if (duration <= 0) {
+                vrm.scene.quaternion.copy(targetRotation);
+                resolve();
+                return;
+            }
+    
+            const startTime = performance.now();
+            const step = () => {
+                const elapsedTime = (performance.now() - startTime) / 1000;
+                const progress = Math.min(elapsedTime / duration, 1);
+    
+                // Correct way to slerp: copy the start rotation and slerp towards the target
+                vrm.scene.quaternion.copy(startRotation).slerp(targetRotation, progress);
+    
+                if (progress < 1) {
+                    requestAnimationFrame(step);
+                } else {
+                    resolve();
+                }
+            };
+            requestAnimationFrame(step);
+        });
+    }
+
     public animateExpression(expressionName: string, targetWeight: number, duration: number): void {
         if (!this.currentVrm?.expressionManager) return;
         const expressionManager = this.currentVrm.expressionManager;
