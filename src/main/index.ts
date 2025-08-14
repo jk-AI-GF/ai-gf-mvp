@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Tray, Menu, globalShortcut, dialog, session, ipcMain, screen } from 'electron';
+import { app, BrowserWindow, globalShortcut, dialog, session, ipcMain, screen } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import fsp from 'fs/promises';
@@ -44,7 +44,7 @@ const store = new Store<StoreSchema>({
 });
 
 // --- Global Variables ---
-let tray: Tray | null = null;
+
 let mainWindow: BrowserWindow | null = null;
 let isIgnoringMouseEvents = false;
 let availableActionsCache: ActionDefinition[] = [];
@@ -481,15 +481,7 @@ const createWindow = (): void => {
   });
 };
 
-const createTray = (): void => {
-  const iconPath = resolveAssetsPath('icon.png');
-  tray = new Tray(iconPath);
-  const contextMenu = Menu.buildFromTemplate([
-    { label: 'Quit', click: () => app.quit() },
-  ]);
-  tray.setToolTip('AI-GF MVP');
-  tray.setContextMenu(contextMenu);
-};
+
 
 app.on('ready', async () => {
   // CSP
@@ -498,9 +490,8 @@ app.on('ready', async () => {
     callback({ responseHeaders: { ...details.responseHeaders, "Content-Security-Policy": [policy] } });
   });
 
-  // Create windows and tray
+  // Create window
   createWindow();
-  createTray();
 
   // Set initial opacity
   mainWindow.setOpacity(store.get('windowOpacity', 1.0));
