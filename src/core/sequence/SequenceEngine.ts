@@ -7,6 +7,8 @@ import { EventNodeModel } from './EventNodeModel';
 import { LiteralNodeModel } from './LiteralNodeModel';
 import { DataProviderNodeModel } from './DataProviderNodeModel';
 
+import { OperatorNodeModel } from './OperatorNodeModel';
+
 interface ActiveSequence {
   nodes: Node<BaseNode>[];
   edges: Edge[];
@@ -167,7 +169,11 @@ export class SequenceEngine {
 
         // Check if the node is a data provider or a literal, which don't have exec inputs
         // and should be evaluated on demand (pull).
-        if (sourceNode.data instanceof DataProviderNodeModel || sourceNode.data instanceof LiteralNodeModel) {
+        if (
+          sourceNode.data instanceof DataProviderNodeModel || 
+          sourceNode.data instanceof LiteralNodeModel ||
+          sourceNode.data instanceof OperatorNodeModel
+        ) {
           console.log(`[SequenceEngine] Pull-evaluating data node: ${sourceNode.id} (${sourceNode.data.name})`);
           
           // DataProviderNode and LiteralNode might have inputs in the future, so we calculate them.
@@ -177,8 +183,8 @@ export class SequenceEngine {
           if (sourceNode.data instanceof DataProviderNodeModel) {
             // DataProviderNode has a specific `evaluate` method
             resultOutputs = await sourceNode.data.evaluate(this.pluginContext);
-          } else if (sourceNode.data instanceof LiteralNodeModel) {
-            // LiteralNode uses the standard `execute` which just returns its value.
+          } else if (sourceNode.data instanceof LiteralNodeModel || sourceNode.data instanceof OperatorNodeModel) {
+            // LiteralNode and OperatorNode use the standard `execute` which just returns its value.
             const result = await sourceNode.data.execute(this.pluginContext, inputs);
             resultOutputs = result.outputs;
           }
@@ -220,7 +226,11 @@ export class SequenceEngine {
       const processNode = async (currentNode: Node<BaseNode>) => {
         // Data-only nodes (like DataProvider or Literal) are evaluated on demand by `getNodeOutputValue`,
         // so we don't "execute" them in the main execution flow.
-        if (currentNode.data instanceof DataProviderNodeModel || currentNode.data instanceof LiteralNodeModel) {
+        if (
+          currentNode.data instanceof DataProviderNodeModel || 
+          currentNode.data instanceof LiteralNodeModel ||
+          currentNode.data instanceof OperatorNodeModel
+        ) {
           return;
         }
 
