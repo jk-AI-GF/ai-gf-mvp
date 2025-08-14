@@ -27,7 +27,6 @@ import OperatorNode from './OperatorNode';
 import RandomNode from './RandomNode';
 import InputNode from './InputNode';
 import CallSubroutineNode from './CallSubroutineNode'; // Import the new node
-import MousePositionNode from './MousePositionNode';
 import DataProviderNode from './DataProviderNode'; // Import the new data provider node
 
 // Define node types for React Flow
@@ -44,7 +43,6 @@ const nodeTypes = {
   numToStrNode: NumToStrNode,
   subroutineInputNode: InputNode,
   callSubroutineNode: CallSubroutineNode, // Register the new node
-  mousePositionNode: MousePositionNode,
   dataProviderNode: DataProviderNode, // Register the new data provider node type
 };
 
@@ -71,7 +69,6 @@ import { ClockNodeModel } from '../../../core/sequence/ClockNodeModel';
 import { NumToStrNodeModel } from '../../../core/sequence/NumToStrNodeModel';
 import { InputNodeModel } from '../../../core/sequence/InputNodeModel';
 import { CallSubroutineNodeModel } from '../../../core/sequence/CallSubroutineNodeModel';
-import { MousePositionNodeModel } from '../../../core/sequence/MousePositionNodeModel';
 import { DataProviderNodeModel } from '../../../core/sequence/DataProviderNodeModel';
 
 import ClockNode from './ClockNode';
@@ -459,13 +456,6 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
           type: 'callSubroutineNode',
           position,
           data: new CallSubroutineNodeModel(newNodeId),
-        };
-      } else if (droppedData.type === 'mousePositionNode') {
-        newNode = {
-          id: newNodeId,
-          type: 'mousePositionNode',
-          position,
-          data: new MousePositionNodeModel(newNodeId),
         };
       } else if (droppedData.type === 'dataProviderNode') {
         const providerDef = dataProviders.find(p => p.name === droppedData.name);

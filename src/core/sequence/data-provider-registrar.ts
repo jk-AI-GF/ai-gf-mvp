@@ -14,6 +14,25 @@ export function registerCoreDataProviders(
 
   registry.register(
     {
+      name: 'getMousePosition',
+      description: '현재 마우스 커서의 화면 좌표(px)를 가져옵니다.',
+      params: [],
+      outputs: [
+        { name: 'x', type: 'number', description: '화면 X 좌표 (px)' },
+        { name: 'y', type: 'number', description: '화면 Y 좌표 (px)' },
+      ],
+    },
+    () => {
+      const mousePosition = context.contextStore.get('mousePosition') as { x: number; y: number; } | undefined;
+      // Fallback to 0,0 if the value isn't set yet
+      const x = mousePosition?.x ?? 0;
+      const y = mousePosition?.y ?? 0;
+      return { x, y };
+    }
+  );
+
+  registry.register(
+    {
       name: 'getCharacterScreenPosition',
       description: '캐릭터의 현재 화면 좌표(0.0-1.0)를 가져옵니다.',
       params: [], // 입력 파라미터 없음

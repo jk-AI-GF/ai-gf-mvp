@@ -18,7 +18,6 @@ import { ClockNodeModel } from './ClockNodeModel';
 import { NumToStrNodeModel } from './NumToStrNodeModel';
 import { InputNodeModel } from './InputNodeModel';
 import { CallSubroutineNodeModel } from './CallSubroutineNodeModel';
-import { MousePositionNodeModel } from './MousePositionNodeModel';
 import { DataProviderNodeModel } from './DataProviderNodeModel';
 
 // 시퀀스 데이터의 구조를 정의합니다.
@@ -384,10 +383,6 @@ export class SequenceManager {
           model = callNode;
           break;
   
-        case 'mousePositionNode':
-          model = new MousePositionNodeModel(sNode.id);
-          break;
-
         case 'dataProviderNode':
           const registry = this.pluginContext.dataProviderRegistry;
           if (!registry) {
