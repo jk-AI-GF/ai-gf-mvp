@@ -51,6 +51,8 @@ export type AppEvents = {
   'character_part_right_clicked': { partName: string };
   'character:dragStart': void;
   'character:dragEnd': void;
+  'character:grabStart': void;
+  'character:grabEnd': void;
 
   /** 캐릭터 상태 */
   'character-state:changed': ICharacterState;

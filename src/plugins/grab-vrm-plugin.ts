@@ -81,7 +81,7 @@ export class GrabVrmPlugin implements IPlugin {
         this.restRotation.copy(hips.quaternion);
 
         this.context.actions.showMessage("으악!");
-        this.context.eventBus.emit('character:dragStart');
+        this.context.eventBus.emit('character:grabStart');
 
         if (activeCamera instanceof THREE.PerspectiveCamera) {
           const controls = (activeCamera.parent?.children.find((c: any) => c.constructor.name === 'OrbitControls') as any);
@@ -130,7 +130,7 @@ export class GrabVrmPlugin implements IPlugin {
   private handleMouseUp(): void {
     if (!this.isDragging) return;
     this.isDragging = false;
-    this.context.eventBus.emit('character:dragEnd');
+    this.context.eventBus.emit('character:grabEnd');
     this.context.actions.setPose("pose_stand_001.vrma", 0.2);
 
     document.removeEventListener('mousemove', this.handleMouseMove);

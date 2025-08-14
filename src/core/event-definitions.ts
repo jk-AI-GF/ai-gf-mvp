@@ -90,6 +90,16 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
     ],
   },
   {
+    name: 'character:grabStart',
+    description: '캐릭터 잡기 시작',
+    payloadSchema: [],
+  },
+  {
+    name: 'character:grabEnd',
+    description: '캐릭터 잡기 종료',
+    payloadSchema: [],
+  },
+  {
     name: 'character:dragStart',
     description: '캐릭터 드래그 시작',
     payloadSchema: [],
