@@ -19,6 +19,7 @@ import { NumToStrNodeModel } from './NumToStrNodeModel';
 import { InputNodeModel } from './InputNodeModel';
 import { CallSubroutineNodeModel } from './CallSubroutineNodeModel';
 import { MousePositionNodeModel } from './MousePositionNodeModel';
+import { DataProviderNodeModel } from './DataProviderNodeModel';
 
 // 시퀀스 데이터의 구조를 정의합니다.
 interface SequenceData {
@@ -380,6 +381,20 @@ export class SequenceManager {
   
         case 'mousePositionNode':
           model = new MousePositionNodeModel(sNode.id);
+          break;
+
+        case 'dataProviderNode':
+          const registry = this.pluginContext.dataProviderRegistry;
+          if (!registry) {
+            console.error(`DataProviderRegistry not found in context. Cannot load dataProviderNode ${sNode.id}.`);
+            return null;
+          }
+          const providerInfo = registry.get(data.providerName);
+          if (!providerInfo) {
+            console.error(`Data provider "${data.providerName}" not found in registry. Cannot load node ${sNode.id}.`);
+            return null;
+          }
+          model = new DataProviderNodeModel(sNode.id, providerInfo.definition);
           break;
 
         default:

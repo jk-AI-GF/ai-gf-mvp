@@ -23,16 +23,14 @@ import { ActionRegistry } from '../../../core/action-registry';
 import { characterState } from '../../../core/character-state';
 
 interface VRMCanvasProps {
-  onLoad: (managers: { 
+  pluginManager: PluginManager;
+  onLoad: (instances: { 
     vrmManager: VRMManager; 
-    pluginManager: PluginManager; 
-    actionRegistry: ActionRegistry;
     renderer: THREE.WebGLRenderer;
-    camera: THREE.Camera;
   }) => void;
 }
 
-const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
+const VRMCanvas: React.FC<VRMCanvasProps> = ({ pluginManager, onLoad }) => {
   const handleSceneLoad = useCallback((instances: {
     scene: THREE.Scene;
     renderer: THREE.WebGLRenderer;
@@ -79,46 +77,12 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
     controls.target.set(0, 0.6, 0);
     controls.update();
 
-    // --- Action Registry and System Controls ---
-    const actionRegistry = new ActionRegistry();
-    const systemControls: SystemControls = {
-      toggleTts: (enable: boolean) => toggleTts(enable),
-      toggleMouseIgnore: () => window.electronAPI.requestToggleMouseIgnore(),
-      setMasterVolume: (volume: number) => setMasterVolume(volume),
-    };
-
-    // --- Plugin and VRM Managers ---
-    // The order is important here. PluginManager needs a context, but the context
-    // needs a VRMManager. We create a preliminary context, then the managers,
-    // and finally update the context with the managers.
-
-    // 1. Create a preliminary context without managers
-    const preliminaryContext = createPluginContext(null, systemControls, actionRegistry);
-    
-    // 2. Create PluginManager with the preliminary context
-    const pluginManager = new PluginManager(preliminaryContext);
-
-    // 3. Create VRMManager, now passing the created pluginManager
+    // --- VRM Manager ---
     const vrmManager = new VRMManager(scene, activeCamera, plane, eventBus, pluginManager);
-    // vrmManager.loadVRM('VRM/Liqu.vrm'); // <--- 이 줄을 주석 처리하거나 삭제합니다. 로딩은 AppContext에서 관리합니다.
+    vrmManager.setActiveCamera(activeCamera);
 
-    // 4. Update the context in PluginManager to hold all the final managers
-    pluginManager.context.vrmManager = vrmManager;
-    pluginManager.context.pluginManager = pluginManager;
-
-    // 5. Register all plugins
-    pluginManager.register(new AutoLookAtPlugin());
-    pluginManager.register(new AutoBlinkPlugin());
-    pluginManager.register(new AutoIdleAnimationPlugin());
-    pluginManager.register(new ProactiveDialoguePlugin());
-    pluginManager.register(new ActionTestPlugin());
-    pluginManager.register(new GrabVrmPlugin());
-    pluginManager.register(new GravityPlugin());
-    pluginManager.register(new LlmResponseHandlerPlugin());
-    pluginManager.register(new InteractionTrackerPlugin());
-
-    // 6. Pass all managers and the registry up to the App component
-    onLoad({ vrmManager, pluginManager, actionRegistry, renderer, camera: activeCamera });
+    // --- Pass managers up to the App component ---
+    onLoad({ vrmManager, renderer });
 
     const setOutlineMode = (mode: typeof MToonMaterialOutlineWidthMode.WorldCoordinates | typeof MToonMaterialOutlineWidthMode.ScreenCoordinates) => {
         if (vrmManager.currentVrm) {
@@ -276,7 +240,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ onLoad }) => {
         eventBus.off('camera:setMode', ({ mode }) => handleSetCameraMode(mode));
         eventBus.off('ui:editModeToggled', handleEditModeChange);
     };
-  }, [onLoad]);
+  }, [pluginManager, onLoad]);
 
   return <Scene onLoad={handleSceneLoad} />;
 };

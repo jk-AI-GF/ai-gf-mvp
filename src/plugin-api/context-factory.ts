@@ -10,13 +10,11 @@ import { ContextStore } from '../core/context-store';
 // This factory creates the context object that plugins will use to interact with the system.
 // It encapsulates the direct dependencies on managers and services.
 
-// Create a single, shared ContextStore instance for the entire renderer process.
-const rendererContextStore = new ContextStore();
-
 export function createPluginContext(
-  vrmManager: VRMManager,
+  vrmManager: VRMManager | null, // VRMManager can be initially null
   systemControls: SystemControls,
-  actionRegistry: ActionRegistry, // ActionRegistry를 주입받음
+  actionRegistry: ActionRegistry,
+  contextStore: ContextStore, // Inject ContextStore
 ): PluginContext {
 
   // ActionRegistry를 동적으로 조회하는 Proxy를 생성합니다.
@@ -37,7 +35,7 @@ export function createPluginContext(
       }
 
       // 액션이 없으면 undefined 반환
-      console.warn(`[PluginContext] Action "${actionName}" not found in ActionRegistry.`);
+      // console.warn(`[PluginContext] Action "${actionName}" not found in ActionRegistry.`);
       return undefined;
     },
   });
@@ -46,12 +44,13 @@ export function createPluginContext(
     eventBus: eventBus,
     actions: actions,
     system: systemControls,
-    get: (key: string) => rendererContextStore.get(key),
-    set: (key: string, value: any) => rendererContextStore.set(key, value),
-    getAll: () => rendererContextStore.getAll(),
+    get: (key: string) => contextStore.get(key),
+    set: (key: string, value: any) => contextStore.set(key, value),
+    getAll: () => contextStore.getAll(),
     characterState: characterState,
     vrmManager: vrmManager,
     actionRegistry: actionRegistry,
+    // The 'contextStore' property itself is added later in AppContext to avoid circular dependencies
   };
 
   return pluginContext;

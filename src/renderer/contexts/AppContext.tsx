@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode, useMemo } from 'react';
 import * as THREE from 'three';
 import VRMCanvas from '../components/scene/VRMCanvas';
 import { VRMManager } from '../vrm-manager';
@@ -12,6 +12,18 @@ import { registerCoreActions } from '../../core/action-registrar';
 import { registerCoreDataProviders } from '../../core/sequence/data-provider-registrar';
 import { ContextStore } from '../../core/context-store';
 import { CharacterStateManager } from '../../core/character-state-manager';
+import { createPluginContext } from '../../plugin-api/context-factory';
+import { SystemControls } from '../../plugin-api/system-controls';
+import { toggleTts, setMasterVolume } from '../audio-service';
+import { AutoLookAtPlugin } from '../../plugins/auto-look-at-plugin';
+import { AutoBlinkPlugin } from '../../plugins/auto-blink-plugin';
+import { AutoIdleAnimationPlugin } from '../../plugins/auto-idle-animation-plugin';
+import { ProactiveDialoguePlugin } from '../../plugins/proactive-dialogue-plugin';
+import { ActionTestPlugin } from '../../plugins/action-test-plugin';
+import { GrabVrmPlugin } from '../../plugins/grab-vrm-plugin';
+import { GravityPlugin } from '../../plugins/gravity-plugin';
+import { LlmResponseHandlerPlugin } from '../../plugins/LlmResponseHandlerPlugin';
+import { InteractionTrackerPlugin } from '../../plugins/interaction-tracker-plugin';
 
 interface AppContextType {
   vrmManager: VRMManager | null;
@@ -46,149 +58,124 @@ export const useAppContext = () => {
 };
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [vrmManager, setVrmManager] = useState<VRMManager | null>(null);
-  const [pluginManager, setPluginManager] = useState<PluginManager | null>(null);
-  const [actionRegistry, setActionRegistry] = useState<ActionRegistry | null>(null);
-  const [dataProviderRegistry, setDataProviderRegistry] = useState<DataProviderRegistry | null>(null);
-  const [sequenceManager, setSequenceManager] = useState<SequenceManager | null>(null);
-  const [chatService, setChatService] = useState<ChatService | null>(null);
-  const [contextStore, setContextStore] = useState<ContextStore | null>(null);
+  const [managers, setManagers] = useState<{
+    vrmManager: VRMManager | null;
+    pluginManager: PluginManager | null;
+    actionRegistry: ActionRegistry | null;
+    dataProviderRegistry: DataProviderRegistry | null;
+    sequenceManager: SequenceManager | null;
+    chatService: ChatService | null;
+    contextStore: ContextStore | null;
+    renderer: THREE.WebGLRenderer | null;
+  }>({
+    vrmManager: null,
+    pluginManager: null,
+    actionRegistry: null,
+    dataProviderRegistry: null,
+    sequenceManager: null,
+    chatService: null,
+    contextStore: null,
+    renderer: null,
+  });
+
   const [directionalLight, setDirectionalLight] = useState<THREE.DirectionalLight | null>(null);
   const [ambientLight, setAmbientLight] = useState<THREE.AmbientLight | null>(null);
   const [isUiInteractive, setUiInteractive] = useState(true);
   const [windowOpacity, setWindowOpacityState] = useState(1.0);
   const [persona, setPersonaState] = useState('');
   const [llmSettings, setLlmSettingsState] = useState<LlmSettings>(DEFAULT_LLM_SETTINGS);
-  const [renderer, setRenderer] = useState<THREE.WebGLRenderer | null>(null);
+
+  // Memoize core managers to ensure they are created only once
+  const coreManagers = useMemo(() => {
+    console.log('[AppContext] Initializing core managers...');
+    const contextStore = new ContextStore();
+    const actionRegistry = new ActionRegistry();
+    const dataProviderRegistry = new DataProviderRegistry();
+    
+    const systemControls: SystemControls = {
+      toggleTts: (enable: boolean) => toggleTts(enable),
+      toggleMouseIgnore: () => window.electronAPI.requestToggleMouseIgnore(),
+      setMasterVolume: (volume: number) => setMasterVolume(volume),
+    };
+
+    // Create a preliminary context that will be fleshed out later
+    const pluginContext = createPluginContext(null, systemControls, actionRegistry, contextStore);
+    
+    const pluginManager = new PluginManager(pluginContext);
+    
+    // Add the fully-formed contextStore to the context object
+    pluginContext.contextStore = contextStore;
+
+    return { contextStore, actionRegistry, dataProviderRegistry, pluginManager };
+  }, []);
 
   useEffect(() => {
-    const store = new ContextStore();
-    setContextStore(store);
-
-    // 데이터 프로바이더 레지스트리 초기화
-    const dpRegistry = new DataProviderRegistry();
-    setDataProviderRegistry(dpRegistry);
-
     window.electronAPI.getWindowOpacity().then(setWindowOpacityState);
     window.electronAPI.getPersona().then(setPersonaState);
     window.electronAPI.getLlmSettings().then(settings => {
-      if (settings) {
-        setLlmSettingsState(prev => ({ ...prev, ...settings }));
-      }
+      if (settings) setLlmSettingsState(prev => ({ ...prev, ...settings }));
     });
 
-    const handleUiModeChange = (isInteractive: boolean) => {
-      setUiInteractive(isInteractive);
-    };
+    const handleUiModeChange = (isInteractive: boolean) => setUiInteractive(isInteractive);
     const unsubscribe = window.electronAPI.on('set-ui-interactive-mode', handleUiModeChange);
     return () => unsubscribe();
   }, []);
 
-  const handleManagersLoad = useCallback((managers: { 
-    vrmManager: VRMManager; 
-    pluginManager: PluginManager;
-    actionRegistry: ActionRegistry;
+  const handleCanvasLoad = useCallback((loadedInstances: {
+    vrmManager: VRMManager;
     renderer: THREE.WebGLRenderer;
-    camera: THREE.Camera;
   }) => {
-    // Set all managers from VRMCanvas
-    setVrmManager(managers.vrmManager);
-    setPluginManager(managers.pluginManager);
-    setActionRegistry(managers.actionRegistry);
-    setRenderer(managers.renderer);
-    setChatService(new ChatService(managers.vrmManager, managers.pluginManager));
+    console.log('[AppContext] VRMCanvas loaded, finalizing managers...');
+    const { vrmManager, renderer } = loadedInstances;
+    const { contextStore, actionRegistry, dataProviderRegistry, pluginManager } = coreManagers;
 
-    // IMPORTANT: Update VRMManager with the final active camera
-    managers.vrmManager.setActiveCamera(managers.camera);
+    // Now that we have the vrmManager, update the plugin context
+    pluginManager.context.vrmManager = vrmManager;
+    pluginManager.context.pluginManager = pluginManager;
 
-    // Now that pluginManager is initialized, we can get its context
-    const context = managers.pluginManager.context;
-    if (context && dataProviderRegistry) {
-      // 전역 행동 상태 및 리소스 잠금을 관리할 매니저를 생성 및 주입
-      const charStateManager = new CharacterStateManager();
-      context.characterStateManager = charStateManager;
-      context.dataProviderRegistry = dataProviderRegistry;
+    const charStateManager = new CharacterStateManager();
+    pluginManager.context.characterStateManager = charStateManager;
+    pluginManager.context.dataProviderRegistry = dataProviderRegistry;
 
-      // Make sure contextStore is initialized before assigning
-      if (contextStore) {
-        context.contextStore = contextStore;
-      }
+    const sequenceManager = new SequenceManager(pluginManager.context);
+    pluginManager.context.sequenceManager = sequenceManager;
 
-      const seqManager = new SequenceManager(context);
-      context.sequenceManager = seqManager;
+    // IMPORTANT: Register core actions and data providers now that the context is fully populated
+    registerCoreActions(actionRegistry, pluginManager.context, renderer);
+    registerCoreDataProviders(dataProviderRegistry, pluginManager.context);
+    console.log('[AppContext] Core actions and data providers registered.');
 
-      // IMPORTANT: Register core actions and data providers now that all managers and the context are fully populated
-      registerCoreActions(managers.actionRegistry, context, managers.renderer);
-      registerCoreDataProviders(dataProviderRegistry, context);
-      console.log('[AppContext] Core actions and data providers registered.');
-      
-      seqManager.initialize().then(() => {
-        setSequenceManager(seqManager);
-        console.log("SequenceManager initialized and sequences loaded.");
+    // Register all plugins
+    pluginManager.register(new AutoLookAtPlugin());
+    pluginManager.register(new AutoBlinkPlugin());
+    pluginManager.register(new AutoIdleAnimationPlugin());
+    pluginManager.register(new ProactiveDialoguePlugin());
+    pluginManager.register(new ActionTestPlugin());
+    pluginManager.register(new GrabVrmPlugin());
+    pluginManager.register(new GravityPlugin());
+    pluginManager.register(new LlmResponseHandlerPlugin());
+    pluginManager.register(new InteractionTrackerPlugin());
+    console.log('[AppContext] All plugins registered.');
 
-        // 이제 시퀀스 매니저가 준비되었으므로, VRM 모델 로딩을 시작합니다.
-        if (managers.vrmManager) {
-          console.log('[AppContext] Initializing VRM load...');
-          managers.vrmManager.loadVRM('VRM/Liqu.vrm');
-        }
+    const chatService = new ChatService(vrmManager, pluginManager);
 
-        // Register sequence-related actions now that we have the manager
-        if (managers.actionRegistry && !managers.actionRegistry.get('executeSequence')) {
-          managers.actionRegistry.register(
-            {
-              name: 'executeSequence',
-              description: '다른 시퀀스를 실행합니다.',
-              params: [
-                {
-                  name: 'sequenceId',
-                  type: 'string',
-                  description: '실행할 시퀀스의 파일 이름',
-                  dynamicOptions: 'sequences',
-                },
-              ],
-            },
-            (sequenceId: string) => {
-              console.log(`[Action] Executing sequence: ${sequenceId}`);
-              seqManager.runSequenceById(sequenceId);
-            }
-          );
-          console.log('[AppContext] "executeSequence" action registered.');
-        }
+    setManagers({
+      vrmManager,
+      pluginManager,
+      actionRegistry,
+      dataProviderRegistry,
+      sequenceManager,
+      chatService,
+      contextStore,
+      renderer,
+    });
 
-        // Register runSubroutine action
-        if (managers.actionRegistry && !managers.actionRegistry.get('runSubroutine')) {
-          managers.actionRegistry.register(
-            {
-              name: 'runSubroutine',
-              description: '지정된 인수를 사용하여 서브루틴을 실행합니다.',
-              params: [
-                {
-                  name: 'subroutineId',
-                  type: 'string',
-                  description: '실행할 서브루틴의 파일 이름',
-                  dynamicOptions: 'subroutines', // This tells the UI to populate a dropdown with subroutine files
-                },
-                {
-                  name: 'args',
-                  type: 'any',
-                  description: '서브루틴에 전달할 인수(키-값 쌍)',
-                },
-              ],
-            },
-            (subroutineId: string, args: Record<string, any>) => {
-              console.log(`[Action] Running subroutine: ${subroutineId} with args:`, args);
-              seqManager.runSubroutine(subroutineId, args);
-            }
-          );
-          console.log('[AppContext] "runSubroutine" action registered.');
-        }
-      }).catch((err: any) => {
-        console.error("Failed to initialize SequenceManager:", err);
-      });
-    } else {
-      console.error("Failed to get PluginContext or DataProviderRegistry, SequenceManager could not be initialized.");
-    }
-  }, [dataProviderRegistry, contextStore]);
+    sequenceManager.initialize().then(() => {
+      console.log("[AppContext] SequenceManager initialized.");
+      vrmManager.loadVRM('VRM/Liqu.vrm');
+    }).catch(err => console.error("Failed to initialize SequenceManager:", err));
+
+  }, [coreManagers]);
 
   const setWindowOpacity = (opacity: number) => {
     setWindowOpacityState(opacity);
@@ -207,20 +194,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const value = { 
-    vrmManager, 
-    pluginManager, 
-    actionRegistry,
-    dataProviderRegistry,
-    sequenceManager,
-    chatService,
-    contextStore,
+    ...managers,
     directionalLight,
     ambientLight,
     isUiInteractive,
     windowOpacity,
     persona,
     llmSettings,
-    renderer,
     setWindowOpacity,
     setPersona,
     setLlmSettings,
@@ -230,8 +210,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   return (
     <AppContext.Provider value={value}>
-      <VRMCanvas onLoad={handleManagersLoad} />
-      {vrmManager && pluginManager && chatService && children}
+      <VRMCanvas 
+        pluginManager={coreManagers.pluginManager}
+        onLoad={handleCanvasLoad} 
+      />
+      {managers.vrmManager && managers.pluginManager && managers.chatService && children}
     </AppContext.Provider>
   );
 };
+
