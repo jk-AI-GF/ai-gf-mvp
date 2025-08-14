@@ -200,9 +200,9 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events, dataProviders, nodes
       {!collapsedSections.data && (
         <>
           {React.cloneElement(renderDraggableItem('literalNode', 'Literal', '문자열, 숫자 등 고정 값을 만듭니다.', 'data', false), { key: 'literalNode' })}
-          {React.cloneElement(renderDraggableItem('mousePositionNode', 'Mouse Position', '현재 마우스의 위치를 가져옵니다.', 'data', false), { key: 'mousePositionNode' })}
           {React.cloneElement(renderDraggableItem('randomNode', 'Random Number', '무작위 숫자를 생성합니다.', 'data', false), { key: 'randomNode' })}
           {React.cloneElement(renderDraggableItem('numToStrNode', 'Int to String', '정수를 문자열로 변환합니다.', 'data', false), { key: 'numToStrNode' })}
+          {React.cloneElement(renderDraggableItem('commentNode', 'Comment', '메모를 위한 주석 노드입니다.', 'data', false), { key: 'commentNode' })}
           {dataProviders.map((provider) => React.cloneElement(renderDraggableItem(
             'dataProviderNode',
             provider.name,

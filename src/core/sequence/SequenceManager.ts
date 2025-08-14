@@ -19,6 +19,7 @@ import { NumToStrNodeModel } from './NumToStrNodeModel';
 import { InputNodeModel } from './InputNodeModel';
 import { CallSubroutineNodeModel } from './CallSubroutineNodeModel';
 import { DataProviderNodeModel } from './DataProviderNodeModel';
+import { CommentNodeModel } from './CommentNodeModel';
 
 // 시퀀스 데이터의 구조를 정의합니다.
 interface SequenceData {
@@ -397,12 +398,23 @@ export class SequenceManager {
           model = new DataProviderNodeModel(sNode.id, providerInfo.definition);
           break;
 
+        case 'commentNode':
+          model = new CommentNodeModel(sNode.id, data.comment, data.width, data.height);
+          break;
+
         default:
           console.error(`Unknown node type "${sNode.type}" for node ${sNode.id}.`);
           return null;
       }
   
-      return { ...sNode, data: model };
+      const finalNode: Node<BaseNode> = { ...sNode, data: model };
+
+      // For comment nodes, apply the saved size to the node's style directly.
+      if (sNode.type === 'commentNode' && data.width && data.height) {
+        finalNode.style = { width: data.width, height: data.height };
+      }
+
+      return finalNode;
     });
   
     const deserializedNodes = (await Promise.all(nodePromises))
@@ -419,6 +431,14 @@ export class SequenceManager {
   public serializeSequence(flow: any, description: string, capabilities: string[] = [], locks: string[] = []): any {
     const serializedNodes = flow.nodes.map((node: Node<BaseNode>) => {
       const serializedData = node.data.serialize();
+      
+      // For comment nodes, get the actual rendered size from the node object,
+      // not from the data model, to ensure it's the source of truth.
+      if (node.type === 'commentNode' && node.width && node.height) {
+        (serializedData as any).width = Math.round(node.width);
+        (serializedData as any).height = Math.round(node.height);
+      }
+
       const { data, ...rest } = node;
       return { ...rest, data: serializedData };
     });

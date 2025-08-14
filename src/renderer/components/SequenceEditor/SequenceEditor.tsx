@@ -28,6 +28,7 @@ import RandomNode from './RandomNode';
 import InputNode from './InputNode';
 import CallSubroutineNode from './CallSubroutineNode'; // Import the new node
 import DataProviderNode from './DataProviderNode'; // Import the new data provider node
+import CommentNode from './CommentNode'; // Import the new comment node
 
 // Define node types for React Flow
 const nodeTypes = {
@@ -44,6 +45,7 @@ const nodeTypes = {
   subroutineInputNode: InputNode,
   callSubroutineNode: CallSubroutineNode, // Register the new node
   dataProviderNode: DataProviderNode, // Register the new data provider node type
+  commentNode: CommentNode, // Register the new comment node type
 };
 
 // Define default options for all edges to make them interactive
@@ -70,6 +72,7 @@ import { NumToStrNodeModel } from '../../../core/sequence/NumToStrNodeModel';
 import { InputNodeModel } from '../../../core/sequence/InputNodeModel';
 import { CallSubroutineNodeModel } from '../../../core/sequence/CallSubroutineNodeModel';
 import { DataProviderNodeModel } from '../../../core/sequence/DataProviderNodeModel';
+import { CommentNodeModel } from '../../../core/sequence/CommentNodeModel';
 
 import ClockNode from './ClockNode';
 import NumToStrNode from './NumToStrNode';
@@ -466,6 +469,15 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
           type: 'dataProviderNode',
           position,
           data: new DataProviderNodeModel(newNodeId, providerDef),
+        };
+      } else if (droppedData.type === 'commentNode') {
+        const model = new CommentNodeModel(newNodeId);
+        newNode = {
+          id: newNodeId,
+          type: 'commentNode',
+          position,
+          data: model,
+          style: { width: model.width, height: model.height },
         };
       } else {
         return;
