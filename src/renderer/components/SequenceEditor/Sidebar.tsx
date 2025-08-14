@@ -1,11 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { ActionDefinition } from '../../../plugin-api/actions';
+import { DataProviderDefinition } from '../../../plugin-api/data-providers';
 import { EventDefinition } from '../../../core/event-definitions';
 import { Node } from 'reactflow';
 
 interface SidebarProps {
   actions: ActionDefinition[];
   events: EventDefinition[];
+  dataProviders: DataProviderDefinition[];
   nodes: Node[];
 }
 
@@ -49,7 +51,7 @@ const toRgba = (hex: string, alpha: number) => {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
-const Sidebar: React.FC<SidebarProps> = ({ actions, events, nodes }) => {
+const Sidebar: React.FC<SidebarProps> = ({ actions, events, dataProviders, nodes }) => {
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
     start: false,
     control: false,
@@ -201,6 +203,13 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events, nodes }) => {
           {React.cloneElement(renderDraggableItem('mousePositionNode', 'Mouse Position', '현재 마우스의 위치를 가져옵니다.', 'data', false), { key: 'mousePositionNode' })}
           {React.cloneElement(renderDraggableItem('randomNode', 'Random Number', '무작위 숫자를 생성합니다.', 'data', false), { key: 'randomNode' })}
           {React.cloneElement(renderDraggableItem('numToStrNode', 'Int to String', '정수를 문자열로 변환합니다.', 'data', false), { key: 'numToStrNode' })}
+          {dataProviders.map((provider) => React.cloneElement(renderDraggableItem(
+            'dataProviderNode',
+            provider.name,
+            provider.description,
+            'data',
+            false
+          ), { key: provider.name }))}
         </>
       )}
 

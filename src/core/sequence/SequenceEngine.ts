@@ -5,6 +5,7 @@ import { ManualStartNodeModel } from './ManualStartNodeModel';
 import { ActionNodeModel } from './ActionNodeModel';
 import { EventNodeModel } from './EventNodeModel';
 import { LiteralNodeModel } from './LiteralNodeModel';
+import { DataProviderNodeModel } from './DataProviderNodeModel';
 
 interface ActiveSequence {
   nodes: Node<BaseNode>[];
@@ -158,16 +159,33 @@ export class SequenceEngine {
         const sourceNode = nodeMap.get(nodeId);
         if (!sourceNode) return undefined;
 
-        const hasExecIn = sourceNode.data.inputs.some(p => p.type === 'execution');
-        if (!hasExecIn && !executedDataNodes.has(sourceNode.id)) {
-          console.log(`[SequenceEngine] Pull-executing data node: ${sourceNode.id} (${sourceNode.data.name})`);
+        // If this node has already been evaluated in this run, don't re-evaluate.
+        // This is crucial for data nodes that shouldn't be called multiple times.
+        if (executedDataNodes.has(sourceNode.id)) {
+          return executionContext.getValue(nodeId, handleName);
+        }
+
+        // Check if the node is a data provider or a literal, which don't have exec inputs
+        // and should be evaluated on demand (pull).
+        if (sourceNode.data instanceof DataProviderNodeModel || sourceNode.data instanceof LiteralNodeModel) {
+          console.log(`[SequenceEngine] Pull-evaluating data node: ${sourceNode.id} (${sourceNode.data.name})`);
           
+          // DataProviderNode and LiteralNode might have inputs in the future, so we calculate them.
           const inputs = await calculateNodeInputs(sourceNode);
           
-          const result = await sourceNode.data.execute(this.pluginContext, inputs);
-          if (result.outputs) {
-            for (const outputName in result.outputs) {
-              executionContext.setValue(sourceNode.id, outputName, result.outputs[outputName]);
+          let resultOutputs: Record<string, any> = {};
+          if (sourceNode.data instanceof DataProviderNodeModel) {
+            // DataProviderNode has a specific `evaluate` method
+            resultOutputs = await sourceNode.data.evaluate(this.pluginContext);
+          } else if (sourceNode.data instanceof LiteralNodeModel) {
+            // LiteralNode uses the standard `execute` which just returns its value.
+            const result = await sourceNode.data.execute(this.pluginContext, inputs);
+            resultOutputs = result.outputs;
+          }
+          
+          if (resultOutputs) {
+            for (const outputName in resultOutputs) {
+              executionContext.setValue(sourceNode.id, outputName, resultOutputs[outputName]);
             }
           }
           executedDataNodes.add(sourceNode.id);
@@ -183,19 +201,32 @@ export class SequenceEngine {
         for (const edge of connectedDataEdges) {
           const sourceValue = await getNodeOutputValue(edge.source, edge.sourceHandle!);
           if (sourceValue !== undefined) {
+            // When connecting to an ActionNode, the target handle is the param name.
+            // For other nodes, it might be different. This logic holds.
             inputs[edge.targetHandle!] = sourceValue;
           }
         }
         
+        // For ActionNodes, we merge the connected inputs with the default values stored in the node.
         if (node.data instanceof ActionNodeModel) {
+          // The connected inputs should override the default paramValues.
           return { ...node.data.paramValues, ...inputs };
         }
+
+        // For other node types, we just return the connected inputs.
         return inputs;
       };
 
       const processNode = async (currentNode: Node<BaseNode>) => {
+        // Data-only nodes (like DataProvider or Literal) are evaluated on demand by `getNodeOutputValue`,
+        // so we don't "execute" them in the main execution flow.
+        if (currentNode.data instanceof DataProviderNodeModel || currentNode.data instanceof LiteralNodeModel) {
+          return;
+        }
+
         let finalInputs = await calculateNodeInputs(currentNode);
 
+        // For the very first node, merge any initial/payload outputs.
         if (currentNode.id === startNode.id) {
           finalInputs = { ...finalInputs, ...initialOutputs };
         }
@@ -208,7 +239,7 @@ export class SequenceEngine {
             executionContext.setValue(currentNode.id, outputName, result.outputs[outputName]);
           }
         }
-
+        
         if (result.nextExec) {
           const nextExecutionEdges = sequenceEdges.filter(
             e => e.source === currentNode.id && e.sourceHandle === result.nextExec
@@ -229,7 +260,7 @@ export class SequenceEngine {
       for (const key in initialOutputs) {
         executionContext.setValue(startNode.id, key, initialOutputs[key]);
       }
-
+      
       await processNode(startNode);
 
       console.log('[SequenceEngine] Execution finished.');

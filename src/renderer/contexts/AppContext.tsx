@@ -6,8 +6,10 @@ import { PluginManager } from '../../plugins/plugin-manager';
 import { ChatService } from '../chat-service';
 import { LlmSettings, DEFAULT_LLM_SETTINGS } from '../../core/llm-settings';
 import { ActionRegistry } from '../../core/action-registry';
+import { DataProviderRegistry } from '../../core/sequence/data-provider-registry';
 import { SequenceManager } from '../../core/sequence/SequenceManager';
 import { registerCoreActions } from '../../core/action-registrar';
+import { registerCoreDataProviders } from '../../core/sequence/data-provider-registrar';
 import { ContextStore } from '../../core/context-store';
 import { CharacterStateManager } from '../../core/character-state-manager';
 
@@ -15,6 +17,7 @@ interface AppContextType {
   vrmManager: VRMManager | null;
   pluginManager: PluginManager | null;
   actionRegistry: ActionRegistry | null;
+  dataProviderRegistry: DataProviderRegistry | null;
   sequenceManager: SequenceManager | null;
   chatService: ChatService | null;
   contextStore: ContextStore | null;
@@ -46,6 +49,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [vrmManager, setVrmManager] = useState<VRMManager | null>(null);
   const [pluginManager, setPluginManager] = useState<PluginManager | null>(null);
   const [actionRegistry, setActionRegistry] = useState<ActionRegistry | null>(null);
+  const [dataProviderRegistry, setDataProviderRegistry] = useState<DataProviderRegistry | null>(null);
   const [sequenceManager, setSequenceManager] = useState<SequenceManager | null>(null);
   const [chatService, setChatService] = useState<ChatService | null>(null);
   const [contextStore, setContextStore] = useState<ContextStore | null>(null);
@@ -60,6 +64,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => {
     const store = new ContextStore();
     setContextStore(store);
+
+    // 데이터 프로바이더 레지스트리 초기화
+    const dpRegistry = new DataProviderRegistry();
+    setDataProviderRegistry(dpRegistry);
 
     window.electronAPI.getWindowOpacity().then(setWindowOpacityState);
     window.electronAPI.getPersona().then(setPersonaState);
@@ -95,10 +103,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     // Now that pluginManager is initialized, we can get its context
     const context = managers.pluginManager.context;
-    if (context) {
+    if (context && dataProviderRegistry) {
       // 전역 행동 상태 및 리소스 잠금을 관리할 매니저를 생성 및 주입
       const charStateManager = new CharacterStateManager();
       context.characterStateManager = charStateManager;
+      context.dataProviderRegistry = dataProviderRegistry;
 
       // Make sure contextStore is initialized before assigning
       if (contextStore) {
@@ -108,9 +117,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const seqManager = new SequenceManager(context);
       context.sequenceManager = seqManager;
 
-      // IMPORTANT: Register core actions now that all managers and the context are fully populated
+      // IMPORTANT: Register core actions and data providers now that all managers and the context are fully populated
       registerCoreActions(managers.actionRegistry, context, managers.renderer);
-      console.log('[AppContext] Core actions registered.');
+      registerCoreDataProviders(dataProviderRegistry, context);
+      console.log('[AppContext] Core actions and data providers registered.');
       
       seqManager.initialize().then(() => {
         setSequenceManager(seqManager);
@@ -176,9 +186,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         console.error("Failed to initialize SequenceManager:", err);
       });
     } else {
-      console.error("Failed to get PluginContext, SequenceManager could not be initialized.");
+      console.error("Failed to get PluginContext or DataProviderRegistry, SequenceManager could not be initialized.");
     }
-  }, []);
+  }, [dataProviderRegistry, contextStore]);
 
   const setWindowOpacity = (opacity: number) => {
     setWindowOpacityState(opacity);
@@ -200,6 +210,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     vrmManager, 
     pluginManager, 
     actionRegistry,
+    dataProviderRegistry,
     sequenceManager,
     chatService,
     contextStore,

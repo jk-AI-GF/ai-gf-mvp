@@ -5,6 +5,7 @@ import { Actions } from './actions';
 import { SystemControls } from './system-controls';
 import { characterState } from '../core/character-state';
 import { ActionRegistry } from '../core/action-registry';
+import { DataProviderRegistry } from '../core/sequence/data-provider-registry';
 import { SequenceManager } from '../core/sequence/SequenceManager';
 import { PluginManager } from '../plugins/plugin-manager';
 import { ContextStore } from '../core/context-store';
@@ -73,6 +74,12 @@ export interface PluginContext {
    * (렌더러 프로세스에서만 사용 가능)
    */
   actionRegistry?: ActionRegistry;
+
+  /**
+   * 데이터 프로바이더의 정의와 구현을 관리하는 중앙 레지스트리입니다.
+   * (렌더러 프로세스에서만 사용 가능)
+   */
+  dataProviderRegistry?: DataProviderRegistry;
 
   /**
    * 시퀀스 및 서브루틴의 실행을 관리합니다.

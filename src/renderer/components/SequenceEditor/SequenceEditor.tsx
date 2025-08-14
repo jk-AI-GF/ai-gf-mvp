@@ -28,6 +28,7 @@ import RandomNode from './RandomNode';
 import InputNode from './InputNode';
 import CallSubroutineNode from './CallSubroutineNode'; // Import the new node
 import MousePositionNode from './MousePositionNode';
+import DataProviderNode from './DataProviderNode'; // Import the new data provider node
 
 // Define node types for React Flow
 const nodeTypes = {
@@ -44,6 +45,7 @@ const nodeTypes = {
   subroutineInputNode: InputNode,
   callSubroutineNode: CallSubroutineNode, // Register the new node
   mousePositionNode: MousePositionNode,
+  dataProviderNode: DataProviderNode, // Register the new data provider node type
 };
 
 // Define default options for all edges to make them interactive
@@ -70,12 +72,14 @@ import { NumToStrNodeModel } from '../../../core/sequence/NumToStrNodeModel';
 import { InputNodeModel } from '../../../core/sequence/InputNodeModel';
 import { CallSubroutineNodeModel } from '../../../core/sequence/CallSubroutineNodeModel';
 import { MousePositionNodeModel } from '../../../core/sequence/MousePositionNodeModel';
+import { DataProviderNodeModel } from '../../../core/sequence/DataProviderNodeModel';
 
 import ClockNode from './ClockNode';
 import NumToStrNode from './NumToStrNode';
 
 import { BaseNode, IPort } from '../../../core/sequence/BaseNode';
 import { EVENT_DEFINITIONS, EventDefinition } from '../../../core/event-definitions';
+import { DataProviderDefinition } from '../../../plugin-api/data-providers';
 import eventBus from '../../../core/event-bus';
 
 let id = 0;
@@ -165,12 +169,13 @@ const EDGE_CLASS_MAP: { [key: string]: string } = {
 };
 
 const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClose: () => void }> = ({ sequenceToLoad, onClose }) => {
-  const { actionRegistry, sequenceManager } = useAppContext();
+  const { actionRegistry, dataProviderRegistry, sequenceManager } = useAppContext();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const { screenToFlowPosition, getNodes, getEdges, fitView } = useReactFlow();
   const [actions, setActions] = useState<ActionDefinition[]>([]);
+  const [dataProviders, setDataProviders] = useState<DataProviderDefinition[]>([]);
   const [events, setEvents] = useState<EventDefinition[]>([]);
   const [description, setDescription] = useState('');
   const [capabilities, setCapabilities] = useState<string[]>([]);
@@ -256,8 +261,11 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
     if (actionRegistry) {
       setActions(actionRegistry.getAllActionDefinitions());
     }
+    if (dataProviderRegistry) {
+      setDataProviders(dataProviderRegistry.getAllDefinitions());
+    }
     setEvents(EVENT_DEFINITIONS);
-  }, [actionRegistry]);
+  }, [actionRegistry, dataProviderRegistry]);
 
   const handleSave = useCallback(async () => {
     if (!sequenceManager) {
@@ -457,13 +465,23 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
           position,
           data: new MousePositionNodeModel(newNodeId),
         };
+      } else if (droppedData.type === 'dataProviderNode') {
+        const providerDef = dataProviders.find(p => p.name === droppedData.name);
+        if (!providerDef) return;
+
+        newNode = {
+          id: newNodeId,
+          type: 'dataProviderNode',
+          position,
+          data: new DataProviderNodeModel(newNodeId, providerDef),
+        };
       } else {
         return;
       }
 
       setNodes((nds) => nds.concat(newNode));
     },
-    [screenToFlowPosition, setNodes, actions, events],
+    [screenToFlowPosition, setNodes, actions, events, dataProviders],
   );
 
   const isValidConnection = (connection: Connection) => {
@@ -487,7 +505,7 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
 
   return (
     <div style={{ display: 'flex', height: '100%' }}>
-      <Sidebar actions={actions} events={events} nodes={nodes} />
+      <Sidebar actions={actions} events={events} dataProviders={dataProviders} nodes={nodes} />
       <div 
         className={styles.reactFlowWrapper}
         style={{ flex: 1, height: '100%', position: 'relative' }} 
