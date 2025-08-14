@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { DataProviderRegistry } from './data-provider-registry';
-import { PluginContext } from '../../plugin-api/plugin-context';
+import { ICharacterState, PluginContext } from '../../plugin-api/plugin-context';
 
 export function registerCoreDataProviders(
   registry: DataProviderRegistry,
@@ -28,6 +28,45 @@ export function registerCoreDataProviders(
       const x = mousePosition?.x ?? 0;
       const y = mousePosition?.y ?? 0;
       return { x, y };
+    }
+  );
+
+  registry.register(
+    {
+      name: 'getCharacterState',
+      description: '캐릭터의 현재 내부 상태 값을 가져옵니다.',
+      params: [
+        { 
+          name: 'key', 
+          type: 'enum', 
+          options: ['characterName', 'userName', 'curiosity', 'happiness', 'energy', 'lastInteractionTimestamp'], 
+          description: '가져올 상태',
+        },
+      ],
+      outputs: [
+        { name: 'value', type: 'any', description: '상태 값' },
+      ],
+    },
+    (params: { key: keyof Omit<ICharacterState, 'toJSON' | 'hydrate' | 'initialize'> }) => {
+      const { characterState } = context;
+      if (!params || !params.key) return { value: null };
+      return { value: characterState[params.key] };
+    }
+  );
+
+  registry.register(
+    {
+      name: 'getContextValue',
+      description: '전역 컨텍스트(ContextStore)에서 값을 가져옵니다.',
+      params: [{ name: 'key', type: 'string', description: '가져올 키' }],
+      outputs: [
+        { name: 'value', type: 'any', description: '컨텍스트 값' },
+      ],
+    },
+    async (params: { key: string }) => {
+      if (!params || !params.key) return { value: null };
+      const value = await window.electronAPI.invoke('context:get', params.key);
+      return { value };
     }
   );
 

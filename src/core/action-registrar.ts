@@ -295,43 +295,12 @@ export function registerCoreActions(
 
   registry.register(
     {
-        name: 'getContext',
-        description: '전역 컨텍스트에서 값을 가져옵니다.',
-        params: [{ name: 'key', type: 'string', description: '가져올 키' }],
-        returnType: 'any',
-    },
-    (key: string) => {
-        return window.electronAPI.invoke('context:get', key);
-    }
-  );
-
-  registry.register(
-    {
       name: 'log',
       description: '콘솔에 디버그 메시지를 출력합니다.',
       params: [{ name: 'message', type: 'any', description: '출력할 메시지' }],
     },
     (message: any) => {
       console.log('[SEQUENCE DEBUG]', message);
-    }
-  );
-
-  registry.register(
-    {
-      name: 'getCharacterState',
-      description: '캐릭터의 현재 내부 상태 값을 가져옵니다.',
-      params: [
-        { 
-          name: 'key', 
-          type: 'enum', 
-          options: ['characterName', 'userName', 'curiosity', 'happiness', 'energy', 'lastInteractionTimestamp'], 
-          description: '가져올 상태',
-        },
-      ],
-      returnType: 'any',
-    },
-    (key: keyof Omit<ICharacterState, 'toJSON' | 'hydrate' | 'initialize'>) => {
-      return characterState[key];
     }
   );
 

@@ -181,8 +181,8 @@ export class SequenceEngine {
           
           let resultOutputs: Record<string, any> = {};
           if (sourceNode.data instanceof DataProviderNodeModel) {
-            // DataProviderNode has a specific `evaluate` method
-            resultOutputs = await sourceNode.data.evaluate(this.pluginContext);
+            // DataProviderNode has a specific `evaluate` method that takes inputs
+            resultOutputs = await sourceNode.data.evaluate(this.pluginContext, inputs);
           } else if (sourceNode.data instanceof LiteralNodeModel || sourceNode.data instanceof OperatorNodeModel) {
             // LiteralNode and OperatorNode use the standard `execute` which just returns its value.
             const result = await sourceNode.data.execute(this.pluginContext, inputs);
