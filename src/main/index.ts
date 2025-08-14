@@ -457,6 +457,7 @@ const createWindow = (): void => {
     transparent: true,
     resizable: false,
     fullscreen: true,
+    minimizable: false,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       webSecurity: true,
@@ -475,8 +476,14 @@ const createWindow = (): void => {
   mainWindow.on('blur', () => {
     if (mainWindow && !mainWindow.isDestroyed() && isIgnoringMouseEvents) {
       mainWindow.hide();
-      mainWindow.show();
+      mainWindow.showInactive();
       mainWindow.setAlwaysOnTop(true, 'screen-saver');
+    }
+  });
+
+  mainWindow.on('focus', () => {
+    if (isIgnoringMouseEvents) {
+      toggleMouseIgnoreAndUI();
     }
   });
 };
