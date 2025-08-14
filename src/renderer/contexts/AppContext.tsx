@@ -178,7 +178,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     } else {
       console.error("Failed to get PluginContext, SequenceManager could not be initialized.");
     }
-  }, [contextStore]);
+  }, []);
 
   const setWindowOpacity = (opacity: number) => {
     setWindowOpacityState(opacity);
