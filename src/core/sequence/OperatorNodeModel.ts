@@ -70,20 +70,32 @@ export class OperatorNodeModel extends BaseNode {
         const { a, b } = inputs;
         let result: any;
 
+        // Helper to safely parse numbers
+        const parseNum = (val: any): number => {
+            const num = parseFloat(val);
+            return isNaN(num) ? 0 : num; // Return 0 if not a valid number
+        };
+
         switch (this.operator) {
             // Math
-            case '+': result = a + b; break;
-            case '-': result = a - b; break;
-            case '*': result = a * b; break;
-            case '/': result = a / b; break;
-            case '%': result = a % b; break;
+            case '+': result = parseNum(a) + parseNum(b); break;
+            case '-': result = parseNum(a) - parseNum(b); break;
+            case '*': result = parseNum(a) * parseNum(b); break;
+            case '/': 
+                const numB = parseNum(b);
+                result = numB !== 0 ? parseNum(a) / numB : 0; // Prevent division by zero
+                break;
+            case '%': 
+                const divisor = parseNum(b);
+                result = divisor !== 0 ? parseNum(a) % divisor : 0; // Prevent division by zero
+                break;
             // Comparison
-            case '==': result = a == b; break;
-            case '!=': result = a != b; break;
-            case '>': result = a > b; break;
-            case '>=': result = a >= b; break;
-            case '<': result = a < b; break;
-            case '<=': result = a <= b; break;
+            case '==': result = a == b; break; // Keep loose equality for flexibility
+            case '!=': result = a != b; break; // Keep loose inequality for flexibility
+            case '>': result = parseNum(a) > parseNum(b); break;
+            case '>=': result = parseNum(a) >= parseNum(b); break;
+            case '<': result = parseNum(a) < parseNum(b); break;
+            case '<=': result = parseNum(a) <= parseNum(b); break;
             // Logic
             case 'AND': result = a && b; break;
             case 'OR': result = a || b; break;
