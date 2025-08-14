@@ -45,7 +45,6 @@ const store = new Store<StoreSchema>({
 
 // --- Global Variables ---
 let tray: Tray | null = null;
-let overlayWindow: BrowserWindow | null = null;
 let mainWindow: BrowserWindow | null = null;
 let isIgnoringMouseEvents = false;
 let availableActionsCache: ActionDefinition[] = [];
@@ -64,7 +63,6 @@ process.on('uncaughtException', (error) => {
 // --- Webpack Declarations ---
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
-declare const OVERLAY_WINDOW_WEBPACK_ENTRY: string;
 
 // --- Squirrel Startup ---
 if (require('electron-squirrel-startup')) {
@@ -413,8 +411,7 @@ ipcMain.handle('set-action-definitions', (event, actions: ActionDefinition[]) =>
   return true;
 });
 ipcMain.on('proxy-action', (event, actionName: string, args: any[]) => {
-  const targetWindow = overlayWindow?.isVisible() ? overlayWindow : mainWindow;
-  targetWindow?.webContents.send('execute-action', actionName, args);
+  mainWindow?.webContents.send('execute-action', actionName, args);
 });
 ipcMain.on('context:set', (event, key: string, value: any) => {});
 ipcMain.handle('context:get', (event, key: string) => {});
@@ -484,44 +481,10 @@ const createWindow = (): void => {
   });
 };
 
-const createOverlayWindow = (): void => {
-  const { width, height } = screen.getPrimaryDisplay().size;
-  overlayWindow = new BrowserWindow({
-    height, width, x: 0, y: 0,
-    skipTaskbar: true,
-    frame: false,
-    titleBarStyle: 'hidden',
-    transparent: true,
-    alwaysOnTop: true,
-    show: false,
-    webPreferences: {
-      preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
-      webSecurity: true,
-      nodeIntegration: true,
-      contextIsolation: false,
-      webgl: true,
-    },
-  });
-  overlayWindow.loadURL(OVERLAY_WINDOW_WEBPACK_ENTRY);
-  overlayWindow.on('closed', () => overlayWindow = null);
-};
-
-const toggleOverlayWindow = (): void => {
-  if (!overlayWindow) return;
-  if (overlayWindow.isVisible()) {
-    overlayWindow.hide();
-    mainWindow?.show();
-  } else {
-    overlayWindow.show();
-    mainWindow?.hide();
-  }
-};
-
 const createTray = (): void => {
   const iconPath = resolveAssetsPath('icon.png');
   tray = new Tray(iconPath);
   const contextMenu = Menu.buildFromTemplate([
-    { label: 'Toggle Overlay', click: toggleOverlayWindow },
     { label: 'Quit', click: () => app.quit() },
   ]);
   tray.setToolTip('AI-GF MVP');
@@ -537,7 +500,6 @@ app.on('ready', async () => {
 
   // Create windows and tray
   createWindow();
-  createOverlayWindow();
   createTray();
 
   // Set initial opacity
@@ -591,8 +553,7 @@ app.on('ready', async () => {
     contextStore,
     modSettingsManager,
     (channel: string, ...args: any[]) => {
-      const targetWindow = overlayWindow?.isVisible() ? overlayWindow : mainWindow;
-      targetWindow?.webContents.send(channel, ...args);
+      mainWindow?.webContents.send(channel, ...args);
     },
     ipcMain,
     () => availableActionsCache
@@ -623,8 +584,6 @@ app.on('ready', async () => {
     currentShortcut = shortcut;
     registerMouseIgnoreShortcut();
   });
-
-  globalShortcut.register('CommandOrControl+Shift+T', toggleOverlayWindow);
 });
 
 app.on('will-quit', () => {
