@@ -18,6 +18,8 @@ export class GravityPlugin implements IPlugin {
 
   private dragStartUnsubscribe: (() => void) | null = null;
   private dragEndUnsubscribe: (() => void) | null = null;
+  private grabStartUnsubscribe: (() => void) | null = null;
+  private grabEndUnsubscribe: (() => void) | null = null;
 
   setup(context: PluginContext): void {
     this.context = context;
@@ -37,12 +39,23 @@ export class GravityPlugin implements IPlugin {
       this.isGravityActive = true;
       console.log('[GravityPlugin] Gravity reactivated due to drag end.');
     });
+    this.grabStartUnsubscribe = this.context.eventBus.on('character:grabStart', () => {
+      this.isGravityActive = false;
+      this.velocityY = 0; // 드래그 시작 시 속도 초기화
+      console.log('[GravityPlugin] Gravity deactivated due to grab start.');
+    });
+    this.grabEndUnsubscribe = this.context.eventBus.on('character:grabEnd', () => {
+      this.isGravityActive = true;
+      console.log('[GravityPlugin] Gravity reactivated due to grab end.');
+    });
   }
 
   onDisable(): void {
     console.log('[GravityPlugin] Disabled.');
     this.dragStartUnsubscribe?.();
     this.dragEndUnsubscribe?.();
+    this.grabStartUnsubscribe?.();
+    this.grabEndUnsubscribe?.();
   }
 
   update(deltaTime: number, vrm: VRM): void {
