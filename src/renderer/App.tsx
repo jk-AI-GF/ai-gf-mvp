@@ -18,6 +18,7 @@ import CharacterStateViewer from './components/CharacterStateViewer';
 import SequenceEditor from './components/SequenceEditor/SequenceEditor';
 import Chat from './components/Chat';
 import FloatingMessageManager from './components/FloatingMessageManager';
+import { ImageAssetDisplay } from './components/ImageAssetDisplay';
 import UIModeNotification from './components/UIModeNotification';
 import eventBus from '../core/event-bus';
 import { useAppContext } from './contexts/AppContext';
@@ -331,6 +332,7 @@ const App: React.FC = () => {
       />}
       
       <FloatingMessageManager />
+      <ImageAssetDisplay />
     </div>
   );
 };

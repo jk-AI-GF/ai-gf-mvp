@@ -19,9 +19,9 @@ export function registerCoreActions(
   context: PluginContext,
   renderer: WebGLRenderer,
 ) {
-  const { vrmManager, sequenceManager } = context;
-  if (!vrmManager || !renderer || !sequenceManager) {
-    console.error("Cannot register core actions: VRMManager, WebGLRenderer, or SequenceManager is missing from the context.");
+  const { vrmManager, sequenceManager, imageAssetManager } = context;
+  if (!vrmManager || !renderer || !sequenceManager || !imageAssetManager) {
+    console.error("Cannot register core actions: A required manager is missing from the context.");
     return;
   }
   
@@ -439,6 +439,68 @@ export function registerCoreActions(
     (y: number, blendTime: number) => {
       const yRad = THREE.MathUtils.degToRad(y);
       return vrmManager.animateCharacterRotation(yRad, blendTime);
+    }
+  );
+
+  // --- 2D Asset Actions ---
+  registry.register(
+    {
+      name: 'showImageAsset',
+      description: '화면에 2D 이미지 에셋을 표시하고 ID를 반환합니다.',
+      params: [
+        { name: 'fileName', type: 'string', description: '표시할 이미지 파일 이름', dynamicOptions: 'assets' },
+        { name: 'x', type: 'number', defaultValue: 0.5, description: '초기 X 위치 (0-1)' },
+        { name: 'y', type: 'number', defaultValue: 0.5, description: '초기 Y 위치 (0-1)' },
+        { name: 'scale', type: 'number', defaultValue: 1.0, description: '초기 크기' },
+      ],
+      returns: { type: 'string', description: '생성된 에셋의 고유 ID' },
+    },
+    async (fileName: string, x?: number, y?: number, scale?: number) => {
+      return imageAssetManager.show(fileName, { x, y, scale });
+    }
+  );
+
+  registry.register(
+    {
+      name: 'hideImageAsset',
+      description: 'ID로 특정 2D 이미지 에셋을 숨깁니다.',
+      params: [
+        { name: 'assetId', type: 'string', description: '숨길 에셋의 ID' },
+      ],
+    },
+    (assetId: string) => {
+      imageAssetManager.hide(assetId);
+    }
+  );
+
+  registry.register(
+    {
+      name: 'moveImageAsset',
+      description: 'ID로 특정 2D 이미지 에셋을 이동시킵니다.',
+      params: [
+        { name: 'assetId', type: 'string', description: '이동할 에셋의 ID' },
+        { name: 'x', type: 'number', description: '새로운 X 위치 (0-1)' },
+        { name: 'y', type: 'number', description: '새로운 Y 위치 (0-1)' },
+        // { name: 'duration', type: 'number', defaultValue: 0.5, description: '이동 시간(초)' }, // TODO: Add animation support
+      ],
+    },
+    (assetId: string, x: number, y: number) => {
+      imageAssetManager.update(assetId, { x, y });
+    }
+  );
+
+  registry.register(
+    {
+      name: 'updateImageAsset',
+      description: 'ID로 특정 2D 이미지 에셋의 속성을 변경합니다.',
+      params: [
+        { name: 'assetId', type: 'string', description: '수정할 에셋의 ID' },
+        { name: 'scale', type: 'number', description: '새로운 크기' },
+        { name: 'opacity', type: 'number', description: '새로운 투명도 (0-1)' },
+      ],
+    },
+    (assetId: string, scale?: number, opacity?: number) => {
+      imageAssetManager.update(assetId, { scale, opacity });
     }
   );
 }

@@ -197,4 +197,12 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
         { key: 'oldValue', type: 'any', description: '변경 전의 이전 값' }
     ],
   },
+  // 2D Assets
+  {
+    name: 'assets:updated',
+    description: '화면에 표시되는 2D 에셋 목록이 변경될 때 발생합니다.',
+    payloadSchema: [
+        { key: 'assets', type: 'any', description: '현재 화면에 표시된 모든 에셋의 상태 배열' }
+    ],
+  },
 ];

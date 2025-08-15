@@ -13,6 +13,7 @@ import { registerCoreDataProviders } from '../../core/sequence/data-provider-reg
 import { ContextStore } from '../../core/context-store';
 import { CharacterStateManager } from '../../core/character-state-manager';
 import { createPluginContext } from '../../plugin-api/context-factory';
+import eventBus from '../../core/event-bus';
 import { SystemControls } from '../../plugin-api/system-controls';
 import { toggleTts, setMasterVolume } from '../audio-service';
 import { AutoLookAtPlugin } from '../../plugins/auto-look-at-plugin';
@@ -24,10 +25,12 @@ import { GrabVrmPlugin } from '../../plugins/grab-vrm-plugin';
 import { GravityPlugin } from '../../plugins/gravity-plugin';
 import { LlmResponseHandlerPlugin } from '../../plugins/LlmResponseHandlerPlugin';
 import { InteractionTrackerPlugin } from '../../plugins/interaction-tracker-plugin';
+import { ImageAssetManager } from '../image-asset-manager';
 
 interface AppContextType {
   vrmManager: VRMManager | null;
   pluginManager: PluginManager | null;
+  imageAssetManager: ImageAssetManager | null;
   actionRegistry: ActionRegistry | null;
   dataProviderRegistry: DataProviderRegistry | null;
   sequenceManager: SequenceManager | null;
@@ -62,6 +65,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [managers, setManagers] = useState<{
     vrmManager: VRMManager | null;
     pluginManager: PluginManager | null;
+    imageAssetManager: ImageAssetManager | null;
     actionRegistry: ActionRegistry | null;
     dataProviderRegistry: DataProviderRegistry | null;
     sequenceManager: SequenceManager | null;
@@ -71,6 +75,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }>({
     vrmManager: null,
     pluginManager: null,
+    imageAssetManager: null,
     actionRegistry: null,
     dataProviderRegistry: null,
     sequenceManager: null,
@@ -93,6 +98,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const contextStore = new ContextStore();
     const actionRegistry = new ActionRegistry();
     const dataProviderRegistry = new DataProviderRegistry();
+    const imageAssetManager = new ImageAssetManager(eventBus);
     
     const systemControls: SystemControls = {
       toggleTts: (enable: boolean) => toggleTts(enable),
@@ -107,8 +113,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
     // Add the fully-formed contextStore to the context object
     pluginContext.contextStore = contextStore;
+    pluginContext.imageAssetManager = imageAssetManager;
 
-    return { contextStore, actionRegistry, dataProviderRegistry, pluginManager };
+    return { contextStore, actionRegistry, dataProviderRegistry, pluginManager, imageAssetManager };
   }, []);
 
   useEffect(() => {
@@ -129,7 +136,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }) => {
     console.log('[AppContext] VRMCanvas loaded, finalizing managers...');
     const { vrmManager, renderer } = loadedInstances;
-    const { contextStore, actionRegistry, dataProviderRegistry, pluginManager } = coreManagers;
+    const { contextStore, actionRegistry, dataProviderRegistry, pluginManager, imageAssetManager } = coreManagers;
 
     // Now that we have the vrmManager, update the plugin context
     pluginManager.context.vrmManager = vrmManager;
@@ -164,6 +171,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setManagers({
       vrmManager,
       pluginManager,
+      imageAssetManager,
       actionRegistry,
       dataProviderRegistry,
       sequenceManager,

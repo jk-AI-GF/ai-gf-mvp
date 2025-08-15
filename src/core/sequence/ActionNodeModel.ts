@@ -34,11 +34,11 @@ export class ActionNodeModel extends BaseNode {
             });
         }
 
-        // actionDefinition에서 returnType을 확인하고 출력 포트를 추가합니다.
-        if (actionDefinition.returnType) {
+        // actionDefinition에서 returns 객체를 확인하고 출력 포트를 추가합니다.
+        if (actionDefinition.returns) {
             outputs.push({
                 name: 'returnValue', // 반환 값 포트의 고정된 이름
-                type: actionDefinition.returnType,
+                type: actionDefinition.returns.type,
                 direction: 'out',
             });
         }
@@ -108,8 +108,8 @@ export class ActionNodeModel extends BaseNode {
             // 액션을 실행하고 반환 값을 받습니다.
             const actionResult = await action(...args);
             
-            // 반환 값이 있고, 액션 정의에 returnType이 명시되어 있다면 outputs에 저장합니다.
-            if (this.actionDefinition.returnType && actionResult !== undefined) {
+            // 반환 값이 있고, 액션 정의에 returns가 명시되어 있다면 outputs에 저장합니다.
+            if (this.actionDefinition.returns && actionResult !== undefined) {
                 outputs['returnValue'] = actionResult;
             }
         } catch (error) {

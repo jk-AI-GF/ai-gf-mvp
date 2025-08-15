@@ -9,6 +9,7 @@ import { DataProviderRegistry } from '../core/sequence/data-provider-registry';
 import { SequenceManager } from '../core/sequence/SequenceManager';
 import { PluginManager } from '../plugins/plugin-manager';
 import { ContextStore } from '../core/context-store';
+import { ImageAssetManager } from '../renderer/image-asset-manager';
 
 /**
  * 캐릭터 상태에 대한 인터페이스입니다.
@@ -70,10 +71,16 @@ export interface PluginContext {
   vrmManager?: VRMManager;
 
   /**
+   * 2D 이미지 에셋을 관리합니다. (렌더러 프로세스에서만 사용 가능)
+   */
+  imageAssetManager?: ImageAssetManager;
+
+  /**
    * 액션의 정의와 구현을 관리하는 중앙 레지스트리입니다.
    * (렌더러 프로세스에서만 사용 가능)
    */
   actionRegistry?: ActionRegistry;
+
 
   /**
    * 데이터 프로바이더의 정의와 구현을 관리하는 중앙 레지스트리입니다.

@@ -36,7 +36,7 @@ export interface ActionDefinition {
   name: string; // keyof Actions 대신 string으로 변경
   description: string;
   params: ActionParam[];
-  returnType?: ActionReturnType; // 액션의 반환 값 타입
+  returns?: { type: ActionReturnType; description: string }; // 액션의 반환 값 상세 정의
 }
 
 /**

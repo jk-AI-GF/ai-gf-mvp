@@ -218,6 +218,43 @@ ipcMain.handle('get-poses', async () => {
     return [];
   }
 });
+
+ipcMain.handle('get-2d-asset-list', async () => {
+  try {
+    const assetsDir = resolveUserDataPath('assets');
+    const files = await fsp.readdir(assetsDir);
+    return files.filter(file => /\.(png|jpe?g|gif)$/i.test(file));
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      return []; // Folder doesn't exist yet
+    }
+    console.error('Failed to get 2D asset list:', error);
+    return [];
+  }
+});
+
+ipcMain.handle('get-2d-asset-data', async (event, fileName: string) => {
+  try {
+    // Basic security check to prevent path traversal
+    if (fileName.includes('..')) {
+      throw new Error('Invalid file name.');
+    }
+    const assetsDir = resolveUserDataPath('assets');
+    const filePath = path.join(assetsDir, fileName);
+
+    // Ensure the file is within the intended directory
+    if (path.dirname(filePath) !== assetsDir) {
+      throw new Error('Security violation: Access denied.');
+    }
+
+    const data = await fsp.readFile(filePath, 'base64');
+    const mimeType = require('mime-types').lookup(filePath) || 'application/octet-stream';
+    return { success: true, data: `data:${mimeType};base64,${data}` };
+  } catch (error) {
+    console.error(`Failed to get 2D asset data for ${fileName}:`, error);
+    return { success: false, error: error.message };
+  }
+});
 ipcMain.handle('delete-sequence', async (event, sequenceFile: string) => {
   const sequencesDir = resolveUserDataPath('sequences');
   const filePath = path.join(sequencesDir, sequenceFile);
@@ -530,7 +567,7 @@ app.on('ready', async () => {
 
   // Ensure userdata directories exist
   try {
-        const requiredDirs = ['vrm', 'poses', 'mods', 'animations', 'persona', 'sequences'];
+        const requiredDirs = ['vrm', 'poses', 'mods', 'animations', 'persona', 'sequences', 'assets'];
     await Promise.all(requiredDirs.map(dir => fsp.mkdir(path.join(getUserDataPath(), dir), { recursive: true })));
     console.log('User data directories verified/created successfully.');
   } catch (error) {

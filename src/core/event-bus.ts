@@ -1,5 +1,6 @@
 import { VRM } from '@pixiv/three-vrm';
 import { ICharacterState } from '../plugin-api/plugin-context';
+import { ImageAssetState } from '../plugin-api/asset-types';
 
 // src/core/event-bus.ts
 export type LLMResponsePayload =
@@ -57,6 +58,9 @@ export type AppEvents = {
   /** 캐릭터 상태 */
   'character-state:changed': ICharacterState;
   'character-state:propertyChanged': { property: keyof Omit<ICharacterState, 'toJSON' | 'hydrate' | 'initialize'>; newValue: any; oldValue: any };
+
+  /** 2D 에셋 */
+  'assets:updated': { assets: ImageAssetState[] };
 
   /** 공통 에러 */
   'error': { scope: string; error: Error };
