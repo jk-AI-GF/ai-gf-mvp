@@ -34,8 +34,8 @@ export function registerCoreActions(
   // --- LLM Actions ---
   registry.register(
     {
-      name: 'llm.invoke',
-      description: 'LLM에 동적 프롬프트를 보내고 응답을 받습니다.',
+    name: 'llm.invoke',
+      description: 'LLM에 동적 프롬프트를 보내고 캐릭터의 반응을 유도합니다.',
       params: [
         { name: 'userRequest', type: 'string', description: 'LLM에게 전달할 핵심 요청' },
         { name: 'includeBasePrompt', type: 'boolean', defaultValue: true, description: '기본 시스템 프롬프트를 포함할지 여부' },
@@ -43,9 +43,8 @@ export function registerCoreActions(
         { name: 'includeCharacterState', type: 'boolean', defaultValue: true, description: '캐릭터의 현재 상태를 포함할지 여부' },
         { name: 'includeSubroutines', type: 'boolean', defaultValue: true, description: '사용 가능한 서브루틴 목록과 JSON 출력 형식을 포함할지 여부' },
         { name: 'includeChatHistory', type: 'boolean', defaultValue: false, description: '현재 대화 기록을 포함할지 여부' },
-        { name: 'responseAsJson', type: 'boolean', defaultValue: false, description: '응답을 순수 텍스트 대신 JSON 객체(문자열)로 받을지 여부' },
       ],
-      returns: { type: 'string', description: 'LLM의 응답 (텍스트 또는 JSON 문자열)' },
+      returns: { type: 'string', description: 'LLM의 텍스트 응답' },
     },
     async (
       userRequest: string,
@@ -53,34 +52,19 @@ export function registerCoreActions(
       includePersona?: boolean,
       includeCharacterState?: boolean,
       includeSubroutines?: boolean,
-      includeChatHistory?: boolean,
-      responseAsJson?: boolean
+      includeChatHistory?: boolean
     ) => {
-      try {
-        const llmSettings = await window.electronAPI.getLlmSettings();
-        const persona = await window.electronAPI.getPersona();
+      const llmSettings = await window.electronAPI.getLlmSettings();
+      const persona = await window.electronAPI.getPersona();
 
-        const systemPrompt = chatService.buildDynamicSystemPrompt(persona, llmSettings, {
-          userRequest,
-          includeBasePrompt,
-          includePersona,
-          includeCharacterState,
-          includeSubroutines,
-        });
-
-        const history = includeChatHistory ? chatService.getChatHistory() : [];
-        
-        const payload = await chatService.invokeLlm(systemPrompt, history, llmSettings);
-        
-        if (responseAsJson) {
-          return JSON.stringify(payload);
-        }
-        
-        return payload.text || '';
-      } catch (error) {
-        console.error('[Action] llm.invoke failed:', error);
-        return responseAsJson ? '{}' : '';
-      }
+      return chatService.invokeLlmAsAction(persona, llmSettings, {
+        userRequest,
+        includeBasePrompt,
+        includePersona,
+        includeCharacterState,
+        includeSubroutines,
+        includeChatHistory,
+      });
     }
   );
   
