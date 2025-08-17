@@ -20,32 +20,16 @@ const AnimationPanel: React.FC<AnimationPanelProps> = ({ onClose, initialPos, on
     const fetchAnimations = async () => {
       setError(null);
       try {
-        // Fetch from both userdata and assets
-        const [userResult, assetsResult] = await Promise.all([
-          window.electronAPI.listDirectory('animations', 'userData'),
-          window.electronAPI.listDirectory('Animation', 'assets')
-        ]);
-
-        if (userResult.error || assetsResult.error) {
-          const errorMessage = userResult.error || assetsResult.error;
-          console.error('Error fetching animations:', errorMessage);
-          throw new Error('애니메이션 폴더를 읽는 중 오류가 발생했습니다.');
-        }
-
-        // Combine and deduplicate file lists
-        const combinedFiles = new Set([...(userResult.files || []), ...(assetsResult.files || [])]);
-        const animFiles = Array.from(combinedFiles).filter((file: string) => 
-          file.toLowerCase().endsWith('.vrma') || file.toLowerCase().endsWith('.fbx')
-        );
-        
+        const animFiles = await window.electronAPI.listAssets('animation');
         setAnimationFiles(animFiles);
 
         if (animFiles.length === 0) {
           setError('저장된 애니메이션 파일(.vrma, .fbx)이 없습니다.');
         }
       } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
         console.error('Failed to list animations:', err);
-        setError(err.message || '알 수 없는 오류가 발생했습니다.');
+        setError(errorMessage);
       }
     };
 

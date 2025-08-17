@@ -541,9 +541,8 @@ export class SequenceManager {
     }
 
     try {
-      const filePath = await window.electronAPI.resolvePath('userData', `sequences/${fileName}`);
-      const fileExists = await window.electronAPI.fileExists(filePath);
-      if (!fileExists) {
+      const filePath = await window.electronAPI.invoke<string | null>('resource:resolve-path', 'sequence', fileName);
+      if (!filePath) {
         console.warn(`[SequenceManager] Sequence file not found, cannot load: ${fileName}`);
         return null;
       }
@@ -574,9 +573,8 @@ export class SequenceManager {
     try {
       let json = data;
       if (!json) {
-        const filePath = await window.electronAPI.resolvePath('userData', `sequences/${fileName}`);
-        const exists = await window.electronAPI.fileExists(filePath);
-        if (!exists) {
+        const filePath = await window.electronAPI.invoke<string | null>('resource:resolve-path', 'sequence', fileName);
+        if (!filePath) {
           console.warn(`[SequenceManager] Subroutine file not found: ${fileName}`);
           return undefined;
         }

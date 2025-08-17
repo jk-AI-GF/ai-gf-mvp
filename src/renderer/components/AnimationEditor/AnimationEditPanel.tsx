@@ -55,7 +55,7 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
 
       try {
         const userPath = await window.electronAPI.resolvePath('userData', `animations/${animationName}`);
-        const assetPath = await window.electronAPI.resolvePath('assets', `Animation/${animationName}`);
+        const assetPath = await window.electronAPI.resolvePath('assets', `animations/${animationName}`);
         
         let filePath: string | null = null;
         if (await window.electronAPI.fileExists(userPath)) {

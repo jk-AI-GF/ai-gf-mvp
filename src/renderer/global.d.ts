@@ -34,7 +34,7 @@ declare global {
     electronAPI: {
       // Path API
       getPath: (pathName: 'assets' | 'userData') => Promise<string>;
-      resolvePath: (pathName: 'assets' | 'userData', subpath: string) => Promise<string>;
+      resolvePath: (pathName: 'assets' | 'userData' | 'customAssets', subpath: string) => Promise<string>;
       basename: (filePath: string) => Promise<string>;
       fileExists: (filePath: string) => Promise<boolean>;
 

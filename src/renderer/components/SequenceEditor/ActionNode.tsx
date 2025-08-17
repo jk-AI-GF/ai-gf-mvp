@@ -16,34 +16,17 @@ const DynamicSelectInput = ({ param, value, onParamChange }: { param: IPort, val
       setError(null);
       try {
         let fetchedOptions: string[] = [];
+        // Use the new centralized listAssets API
         if (param.dynamicOptions === 'animations') {
-          const [userResult, assetsResult] = await Promise.all([
-            window.electronAPI.listDirectory('animations', 'userData'),
-            window.electronAPI.listDirectory('Animation', 'assets')
-          ]);
-
-          if (userResult.error || assetsResult.error) {
-            throw new Error(userResult.error || assetsResult.error);
-          }
-
-          const combinedFiles = new Set([...(userResult.files || []), ...(assetsResult.files || [])]);
-          fetchedOptions = Array.from(combinedFiles).filter((file: string) => 
-            file.toLowerCase().endsWith('.vrma') || file.toLowerCase().endsWith('.fbx')
-          );
-        } else if (param.dynamicOptions === 'sequences') {
-            fetchedOptions = await window.electronAPI.getSequenceFiles();
-        } else if (param.dynamicOptions === 'subroutines') {
-            fetchedOptions = await window.electronAPI.getSubroutineFiles();
+          fetchedOptions = await window.electronAPI.listAssets('animation');
         } else if (param.dynamicOptions === 'poses') {
-            const poseFiles = await window.electronAPI.getPoses();
-            if (poseFiles) {
-                fetchedOptions = poseFiles;
-            }
+          fetchedOptions = await window.electronAPI.listAssets('pose');
+        } else if (param.dynamicOptions === 'sequences') {
+          fetchedOptions = await window.electronAPI.getSequenceFiles(); // This can be migrated later if needed
+        } else if (param.dynamicOptions === 'subroutines') {
+          fetchedOptions = await window.electronAPI.getSubroutineFiles(); // This can be migrated later if needed
         } else if (param.dynamicOptions === 'plugins') {
-            const pluginList = await window.electronAPI.getPluginList();
-            if (pluginList) {
-                fetchedOptions = pluginList;
-            }
+          fetchedOptions = await window.electronAPI.getPluginList();
         }
         setOptions(fetchedOptions);
       } catch (err) {

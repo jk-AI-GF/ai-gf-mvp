@@ -35,9 +35,7 @@ export class ModLoader {
   private getAvailableActions: () => ActionDefinition[];
 
   constructor(
-    userDataPath: string, 
-    appPath: string, 
-    isPackaged: boolean, 
+    modsDir: string,
     eventBus: EventBus, 
     contextStore: ContextStore, 
     modSettingsManager: ModSettingsManager,
@@ -45,11 +43,7 @@ export class ModLoader {
     ipcMain: IpcMain,
     getAvailableActions: () => ActionDefinition[]
   ) {
-    // 개발 환경에서는 프로젝트 루트의 userdata/mods를 사용하고,
-    // 배포 환경에서는 Electron의 userData 경로를 사용합니다.
-    this.modsDir = isPackaged 
-      ? path.join(userDataPath, 'mods') 
-      : path.join(appPath, 'userdata', 'mods');
+    this.modsDir = modsDir;
     this.eventBus = eventBus;
     this.contextStore = contextStore;
     this.modSettingsManager = modSettingsManager;

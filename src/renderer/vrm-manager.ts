@@ -244,13 +244,18 @@ export class VRMManager {
         }
         this.removeHitboxes();
 
-        const fileContent = await this._readFile(filePathOrUrl);
-        if (!fileContent) return;
+        const vrmPath = await window.electronAPI.invoke<string | null>('resource:resolve-path', 'vrm', filePathOrUrl);
+        if (!vrmPath) {
+            alert(`Failed to find VRM model: ${filePathOrUrl}`);
+            return;
+        }
 
         try {
-            const gltf = await new Promise<GLTF>((resolve, reject) => {
-                this.loader.parse(fileContent, '', resolve, reject);
-            });
+            const fileContent = await window.electronAPI.readAbsoluteFile(vrmPath);
+            if (!(fileContent instanceof ArrayBuffer)) {
+                throw new Error('Failed to read VRM file content.');
+            }
+            const gltf = await this.loader.parseAsync(fileContent, '');
 
             const vrm = gltf.userData.vrm as VRM;
             vrm.scene.position.set(0, -10.0, 0);
@@ -331,104 +336,55 @@ export class VRMManager {
         }
     }
 
-    private async _readFile(filePath: string): Promise<ArrayBuffer | null> {
-        try {
-            // electronAPI.readFile을 사용하여 절대/상대 경로의 파일을 읽습니다.
-            const fileContent = await window.electronAPI.readFile(filePath);
-            if (!(fileContent instanceof ArrayBuffer)) {
-                const error = fileContent as any;
-                if (error && error.error) {
-                     throw new Error(error.error);
-                }
-                throw new Error('Invalid file content received.');
-            }
-            return fileContent;
-        } catch (error) {
-            console.error(`Failed to read file ${filePath}:`, error);
-            alert(`파일을 읽는 데 실패했습니다: ${filePath}`);
-            return null;
-        }
-    }
-
-    /**
-     * Resolves a resource path by checking userdata first, then falling back to assets.
-     * @param resourceType - The type of resource, which determines the subfolder.
-     * @param fileName - The name of the file to resolve.
-     * @returns The full absolute path if found, otherwise null.
-     */
-    private async _resolveResourcePath(resourceType: 'animation' | 'pose' | 'vrm', fileName: string): Promise<string | null> {
-        const subfolders = {
-            animation: { user: 'animations', asset: 'Animation' },
-            pose: { user: 'poses', asset: 'Pose' },
-            vrm: { user: 'vrm', asset: 'VRM' },
-        };
-        const { user, asset } = subfolders[resourceType];
-
-        // 1. Check userdata
-        const userPath = await window.electronAPI.resolvePath('userData', `${user}/${fileName}`);
-        if (await window.electronAPI.fileExists(userPath)) {
-            return userPath;
-        }
-
-        // 2. Fallback to assets
-        const assetPath = await window.electronAPI.resolvePath('assets', `${asset}/${fileName}`);
-        if (await window.electronAPI.fileExists(assetPath)) {
-            return assetPath;
-        }
-        
-        console.error(`Resource '${fileName}' not found in 'userdata/${user}' or 'assets/${asset}'.`);
-        return null;
-    }
-
-    /**
-     * Loads and parses a file from an absolute path.
-     * @param absolutePath - The full, absolute path to the file.
-     * @returns A ParsedFile object or null if parsing fails.
-     */
     private async loadAndParseFile(absolutePath: string): Promise<ParsedFile> {
         if (!this.currentVrm) {
             console.error('[VRMManager] Cannot parse file because no VRM is loaded.');
             return null;
         }
 
-        const fileContent = await this._readFile(absolutePath);
-        if (!fileContent) return null;
-        
-        let clip: THREE.AnimationClip | null = null;
         try {
-            const jsonString = new TextDecoder().decode(fileContent);
-            const jsonParsed = JSON.parse(jsonString);
-            if (jsonParsed.hips && this.currentVrm) {
-                clip = createAnimationClipFromVRMPose(jsonParsed as VRMPose, this.currentVrm);
+            const fileContent = await window.electronAPI.readAbsoluteFile(absolutePath);
+            if (!(fileContent instanceof ArrayBuffer)) {
+                throw new Error(`Failed to read file content for: ${absolutePath}`);
             }
-        } catch (e) { /* Not a JSON, proceed */ }
 
-        if (!clip) {
-            try {
-                if (absolutePath.endsWith('.vrma')) {
+            if (absolutePath.endsWith('.vrma')) {
+                // First, try to parse as JSON (pose)
+                try {
+                    const jsonString = new TextDecoder().decode(fileContent);
+                    const jsonParsed = JSON.parse(jsonString);
+                    if (jsonParsed.hips && this.currentVrm) { // Pose heuristic
+                        const clip = createAnimationClipFromVRMPose(jsonParsed as VRMPose, this.currentVrm);
+                        return { type: 'pose', data: clip };
+                    }
+                } catch (e) {
+                    // If JSON parsing fails, assume it's a binary animation
                     const gltf = await this.loader.parseAsync(fileContent, '');
                     const vrmAnim = gltf.userData.vrmAnimations?.[0];
-                    if (vrmAnim) clip = createVRMAnimationClip(vrmAnim, this.currentVrm!);
-                } else if (absolutePath.endsWith('.fbx')) {
-                    const fbxAsset = this.fbxLoader.parse(fileContent, '');
-                    if (fbxAsset) {
-                        // Convert the Mixamo FBX animation to a VRM-compatible animation clip
-                        clip = convertMixamoAnimation(fbxAsset, this.currentVrm!);
+                    if (vrmAnim) {
+                        const clip = createVRMAnimationClip(vrmAnim, this.currentVrm!);
+                        return { type: 'animation', data: clip };
                     }
                 }
-            } catch (error) {
-                console.error(`[VRMManager] Failed to parse binary file ${absolutePath}:`, error);
+                // If it's a .vrma but doesn't fit either format, fall through to return null
+            } else if (absolutePath.endsWith('.fbx')) {
+                const fbxAsset = this.fbxLoader.parse(fileContent, '');
+                if (fbxAsset) {
+                    const clip = convertMixamoAnimation(fbxAsset, this.currentVrm!);
+                    if (clip) {
+                        return { type: 'animation', data: clip };
+                    }
+                }
             }
+        } catch (error) {
+            console.error(`[VRMManager] Failed to parse file ${absolutePath}:`, error);
         }
-
-        if (clip) {
-            return { type: clip.duration < 0.1 ? 'pose' : 'animation', data: clip };
-        }
+        
         return null;
     }
 
     public async loadAndPlayAnimation(fileName: string, loop = false, crossFadeDuration = 0.5, waitUntilFinished = false) {
-        const absolutePath = await this._resolveResourcePath('animation', fileName);
+        const absolutePath = await window.electronAPI.invoke<string | null>('resource:resolve-path', 'animation', fileName);
         if (!absolutePath) return;
         
         const clip = await this.loadAndParseFile(absolutePath);
@@ -440,7 +396,7 @@ export class VRMManager {
    }
 
     public async loadAndApplyPose(fileName: string, blendTime?: number): Promise<void> {
-        const absolutePath = await this._resolveResourcePath('pose', fileName);
+        const absolutePath = await window.electronAPI.invoke<string | null>('resource:resolve-path', 'pose', fileName);
         if (!absolutePath) return;
 
         const clip = await this.loadAndParseFile(absolutePath);

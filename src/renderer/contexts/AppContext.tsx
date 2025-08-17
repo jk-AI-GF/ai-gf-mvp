@@ -183,7 +183,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     sequenceManager.initialize().then(() => {
       console.log("[AppContext] SequenceManager initialized.");
       setSequenceManagerInitialized(true); // Signal that initialization is complete
-      vrmManager.loadVRM('VRM/Liqu.vrm');
+                // VRM 모델을 로드합니다. 파일명만 전달해야 합니다.
+          vrmManager.loadVRM('Liqu.vrm');
     }).catch((err: any) => console.error("Failed to initialize SequenceManager:", err));
 
   }, [coreManagers]);

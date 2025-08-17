@@ -237,17 +237,20 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
     console.log('시퀀스를 성공적으로 불러왔습니다.');
   }, [setNodes, setEdges, sequenceManager, fitView, setDescription, setCapabilities, setLocks]);
 
-  // Auto-load sequence if sequenceToLoad is provided
   useEffect(() => {
     if (sequenceToLoad) {
       const load = async () => {
         try {
-          const filePath = await window.electronAPI.resolvePath('userData', `sequences/${sequenceToLoad}`);
+          // Use the new resourceManager-backed API
+          const filePath = await window.electronAPI.invoke<string | null>('resolve-path', 'customAssets', `sequences/${sequenceToLoad}`);
+          if (!filePath) {
+            throw new Error(`Sequence file not found: ${sequenceToLoad}`);
+          }
           const sequenceJSON = await window.electronAPI.readAbsoluteFile(filePath);
           if (sequenceJSON instanceof ArrayBuffer) {
             loadSequenceData(new TextDecoder().decode(sequenceJSON));
           } else {
-            console.error(`Failed to read sequence file for editing: ${sequenceToLoad}`, sequenceJSON.error);
+            console.error(`Failed to read sequence file for editing: ${sequenceToLoad}`, (sequenceJSON as any).error);
           }
         } catch (error) {
           console.error(`Error auto-loading sequence ${sequenceToLoad}:`, error);

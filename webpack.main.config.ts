@@ -18,7 +18,7 @@ export const mainConfig: Configuration = {
     ...plugins,
     new CopyWebpackPlugin({
       patterns: [
-        { from: 'assets', to: 'assets' }
+        { from: 'public', to: 'public' }
       ]
     })
   ],

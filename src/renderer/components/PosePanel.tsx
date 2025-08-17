@@ -15,63 +15,20 @@ const PosePanel: React.FC<PosePanelProps> = ({ onClose, initialPos, onDragEnd })
   const [poseFiles, setPoseFiles] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchPoses = useCallback(async () => {
-    setError(null);
-    try {
-      // Fetch from both userdata and assets
-      const [userResult, assetsResult] = await Promise.all([
-        window.electronAPI.listDirectory('poses', 'userData'),
-        window.electronAPI.listDirectory('Pose', 'assets')
-      ]);
-
-      if (userResult.error || assetsResult.error) {
-        console.error('Error fetching poses:', userResult.error || assetsResult.error);
-        throw new Error('포즈 폴더 중 하나를 읽는 데 실패했습니다.');
-      }
-
-      // Combine and deduplicate file lists
-      const combinedFiles = new Set([...userResult.files, ...assetsResult.files]);
-      const vrmaFiles = Array.from(combinedFiles).filter((file: string) => file.endsWith('.vrma'));
-      
-      setPoseFiles(vrmaFiles);
-
-      if (vrmaFiles.length === 0) {
-        setError('저장된 포즈 파일(.vrma)이 없습니다.');
-      }
-    } catch (err) {
-      console.error('Failed to list poses:', err);
-      setError('포즈 목록을 불러오는 데 실패했습니다.');
-    }
-  }, []);
-
   useEffect(() => {
     const fetchPoses = async () => {
       setError(null);
       try {
-        // Fetch from both userdata and assets
-        const [userResult, assetsResult] = await Promise.all([
-          window.electronAPI.listDirectory('poses', 'userData'),
-          window.electronAPI.listDirectory('Pose', 'assets')
-        ]);
-
-        if (userResult.error || assetsResult.error) {
-          const errorMessage = userResult.error || assetsResult.error;
-          console.error('Error fetching poses:', errorMessage);
-          throw new Error('포즈 목록을 불러오는 중 오류가 발생했습니다.');
-        }
-
-        // Combine and deduplicate file lists
-        const combinedFiles = new Set([...(userResult.files || []), ...(assetsResult.files || [])]);
-        const vrmaFiles = Array.from(combinedFiles).filter((file: string) => file.toLowerCase().endsWith('.vrma'));
-        
+        const vrmaFiles = await window.electronAPI.listAssets('pose');
         setPoseFiles(vrmaFiles);
 
         if (vrmaFiles.length === 0) {
           setError('저장된 포즈 파일(.vrma)이 없습니다.');
         }
       } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
         console.error('Failed to list poses:', err);
-        setError(err.message || '알 수 없는 오류가 발생했습니다.');
+        setError(errorMessage);
       }
     };
 

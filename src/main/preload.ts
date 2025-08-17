@@ -6,23 +6,23 @@ import { LlmSettings } from '../core/llm-settings';
 (window as typeof window & { electronAPI: unknown }).electronAPI = {
   // Path API
   getPath: (pathName: 'assets' | 'userData') => ipcRenderer.invoke('get-path', pathName),
-  resolvePath: (pathName: 'assets' | 'userData', subpath: string) => ipcRenderer.invoke('resolve-path', pathName, subpath),
+  resolvePath: (pathName: 'assets' | 'userData' | 'customAssets', subpath: string) => ipcRenderer.invoke('resolve-path', pathName, subpath), // Legacy, to be removed
   basename: (filePath: string) => ipcRenderer.invoke('path:basename', filePath),
-  fileExists: (filePath: string) => ipcRenderer.invoke('fs:exists', filePath),
+  fileExists: (filePath: string) => ipcRenderer.invoke('fs:exists', filePath), // Legacy, to be removed
 
   // App control
   quitApp: () => ipcRenderer.send('quit-app'),
   requestToggleMouseIgnore: () => ipcRenderer.send('request-toggle-mouse-ignore'),
 
   // File System API
-  listDirectory: async (dirPath: string, basePath: 'assets' | 'userData' = 'assets') => ipcRenderer.invoke('list-directory', dirPath, basePath),
+  listDirectory: async (dirPath: string, basePath: 'assets' | 'userData' = 'assets') => ipcRenderer.invoke('list-directory', dirPath, basePath), // Legacy, to be removed
   saveVrmaAnimation: (animationData: ArrayBuffer) => ipcRenderer.invoke('save-vrma-animation', animationData),
   saveVrmaPose: (poseData: ArrayBuffer) => ipcRenderer.invoke('save-vrma-pose', poseData),
   openVrmFile: () => ipcRenderer.invoke('open-vrm-file'),
   openVrmaFile: () => ipcRenderer.invoke('open-vrma-file'),
   savePersonaToFile: (persona: string) => ipcRenderer.invoke('save-persona-to-file', persona),
   openPersonaFile: () => ipcRenderer.invoke('open-persona-file'),
-  readAssetFile: async (filePath: string) => ipcRenderer.invoke('read-asset-file', filePath),
+  readAssetFile: async (filePath: string) => ipcRenderer.invoke('read-asset-file', filePath), // Legacy, to be removed
   readAbsoluteFile: async (filePath: string) => ipcRenderer.invoke('read-absolute-file', filePath),
   readFile: async (filePath: string) => ipcRenderer.invoke('readFile', filePath),
 
@@ -75,7 +75,9 @@ import { LlmSettings } from '../core/llm-settings';
   updatePluginList: (plugins: string[]) => ipcRenderer.send('update-plugin-list', plugins),
 
   // --- Sequence API ---
-  getAllSequenceFilesWithType: (): Promise<{ name: string, type: 'sequence' | 'subroutine' }[]> => ipcRenderer.invoke('get-all-sequence-files-with-type'),
+        // --- Sequence API ---
+      listAssets: (assetType: 'vrm' | 'animation' | 'pose' | 'image' | 'sequence') => ipcRenderer.invoke('list-assets', assetType),
+      getAllSequenceFilesWithType: (): Promise<{ name: string, type: 'sequence' | 'subroutine' }[]> => ipcRenderer.invoke('get-all-sequence-files-with-type'),
   getSequenceFiles: (): Promise<string[]> => ipcRenderer.invoke('get-sequence-files'),
   getSubroutineFiles: (): Promise<string[]> => ipcRenderer.invoke('get-subroutine-files'),
   getPoses: (): Promise<string[]> => ipcRenderer.invoke('get-poses'),
@@ -97,23 +99,23 @@ declare global {
     electronAPI: {
       // Path API
       getPath: (pathName: 'assets' | 'userData') => Promise<string>;
-      resolvePath: (pathName: 'assets' | 'userData', subpath: string) => Promise<string>;
+      resolvePath: (pathName: 'assets' | 'userData' | 'customAssets', subpath: string) => Promise<string>; // Legacy
       basename: (filePath: string) => Promise<string>;
-      fileExists: (filePath: string) => Promise<boolean>;
+      fileExists: (filePath: string) => Promise<boolean>; // Legacy
 
       // App control
       quitApp: () => void;
       requestToggleMouseIgnore: () => void;
 
       // File System API
-      listDirectory: (dirPath: string, basePath?: 'assets' | 'userData') => Promise<{ files?: string[], error?: string }>;
+      listDirectory: (dirPath: string, basePath?: 'assets' | 'userData') => Promise<{ files?: string[], error?: string }>; // Legacy
       saveVrmaAnimation: (animationData: ArrayBuffer) => Promise<{ success: boolean, message?: string, error?: string }>;
       saveVrmaPose: (poseData: ArrayBuffer) => Promise<{ success: boolean, message?: string, error?: string }>;
       openVrmFile: () => Promise<{ success: boolean, filePath: string } | null>;
       openVrmaFile: () => Promise<{ success: boolean, filePath: string } | null>;
       savePersonaToFile: (persona: string) => Promise<{ success: boolean, message?: string, error?: string }>;
       openPersonaFile: () => Promise<string | null>;
-      readAssetFile: (filePath: string) => Promise<ArrayBuffer | { error: string }>;
+      readAssetFile: (filePath: string) => Promise<ArrayBuffer | { error: string }>; // Legacy
       readAbsoluteFile: (filePath: string) => Promise<ArrayBuffer | { error: string }>;
       readFile: (filePath: string) => Promise<ArrayBuffer | { error: string }>;
 
@@ -149,10 +151,11 @@ declare global {
       updatePluginList: (plugins: string[]) => void;
 
       // --- Sequence API ---
+      listAssets: (assetType: 'vrm' | 'animation' | 'pose' | 'image' | 'sequence') => Promise<string[]>;
       getAllSequenceFilesWithType: () => Promise<{ name: string, type: 'sequence' | 'subroutine' }[]>;
       getSequenceFiles: () => Promise<string[]>;
       getSubroutineFiles: () => Promise<string[]>;
-      getPoses: () => Promise<string[]>;
+      getPoses: () => Promise<string[]>; // Legacy
       saveSequence: (sequenceData: string) => Promise<{ success: boolean, filePath?: string, error?: string, canceled?: boolean }>;
       saveSequenceToFile: (fileName: string, sequenceData: string) => Promise<{ success: boolean, filePath?: string, error?: string }>;
       loadSequence: () => Promise<{ success: boolean, data?: string, filePath?: string, error?: string, canceled?: boolean }>;

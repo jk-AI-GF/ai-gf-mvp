@@ -1,3 +1,4 @@
+import '../core/path-manager';
 import { app, BrowserWindow, globalShortcut, dialog, session, ipcMain, screen } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -8,7 +9,8 @@ import { createEventBus, AppEvents } from '../core/event-bus';
 import { ContextStore } from '../core/context-store';
 import { ModSettingsManager } from '../core/mod-settings-manager';
 import { LlmSettings, DEFAULT_LLM_SETTINGS } from '../core/llm-settings';
-import { getAssetsPath, getUserDataPath, resolveAssetsPath, resolveUserDataPath } from './path-utils';
+import { PathManager } from '../core/path-manager';
+import { resourceManager } from '../core/resource-manager';
 import { ActionDefinition } from '../plugin-api/actions';
 import { ICharacterState } from '../plugin-api/plugin-context';
 
@@ -96,15 +98,32 @@ ipcMain.on('set-active-sequences', (event, activeSequences: string[]) => {
 });
 
 // --- Path and Resource IPC Handlers ---
-ipcMain.handle('get-path', (event, pathName: 'assets' | 'userData') => {
-  return pathName === 'assets' ? getAssetsPath() : getUserDataPath();
+ipcMain.handle('resource:resolve-path', (event, assetType, fileName) => {
+  return resourceManager.resolvePath(assetType, fileName);
 });
-ipcMain.handle('resolve-path', (event, pathName: 'assets' | 'userData', subpath: string) => {
-  return pathName === 'assets' ? resolveAssetsPath(subpath) : resolveUserDataPath(subpath);
+ipcMain.handle('list-assets', (event, assetType) => {
+  return resourceManager.listAssets(assetType);
+});
+// Legacy handler, to be removed
+ipcMain.handle('get-path', (event, pathName: 'assets' | 'userData') => {
+  return pathName === 'assets' ? PathManager.getStaticAssetPath() : PathManager.getUserDataPath();
+});
+// Legacy handler, to be removed
+ipcMain.handle('resolve-path', (event, pathName: 'assets' | 'userData' | 'customAssets', subpath: string) => {
+  switch (pathName) {
+    case 'assets':
+      return PathManager.getStaticAssetPath(subpath);
+    case 'customAssets':
+      return PathManager.getCustomAssetsPath(subpath);
+    case 'userData':
+    default:
+      return PathManager.getUserDataPath(subpath);
+  }
 });
 ipcMain.handle('path:basename', (event, filePath: string) => {
   return path.basename(filePath);
 });
+// Legacy handler, to be removed
 ipcMain.handle('fs:exists', async (event, filePath: string) => {
   try {
     await fsp.access(filePath);
@@ -113,10 +132,11 @@ ipcMain.handle('fs:exists', async (event, filePath: string) => {
     return false;
   }
 });
+// Legacy handler, to be removed
 ipcMain.handle('list-directory', async (event, dirPath: string, basePath: 'assets' | 'userData') => {
   try {
-    const rootPath = basePath === 'userData' ? getUserDataPath() : getAssetsPath();
-    const fullPath = basePath === 'userData' ? resolveUserDataPath(dirPath) : resolveAssetsPath(dirPath);
+    const rootPath = basePath === 'userData' ? PathManager.getUserDataPath() : PathManager.getStaticAssetPath();
+    const fullPath = basePath === 'userData' ? PathManager.getUserDataPath(dirPath) : PathManager.getStaticAssetPath(dirPath);
     if (!fullPath.startsWith(rootPath)) {
       throw new Error(`Security violation: Attempted to access directory outside of the allowed path: ${dirPath}`);
     }
@@ -142,7 +162,7 @@ ipcMain.on('set-llm-settings', (event, settings: LlmSettings) => store.set('llmS
 
 // --- Sequences ---
 const getSequencesByType = async (type: 'sequence' | 'subroutine') => {
-  const sequencesDir = resolveUserDataPath('sequences');
+  const sequencesDir = PathManager.getCustomAssetsPath('sequences');
   try {
     const files = await fsp.readdir(sequencesDir);
     const jsonFiles = files.filter(file => file.endsWith('.json'));
@@ -170,7 +190,7 @@ const getSequencesByType = async (type: 'sequence' | 'subroutine') => {
 };
 
 ipcMain.handle('get-all-sequence-files-with-type', async () => {
-  const sequencesDir = resolveUserDataPath('sequences');
+  const sequencesDir = PathManager.getCustomAssetsPath('sequences');
   try {
     const files = await fsp.readdir(sequencesDir);
     const jsonFiles = files.filter(file => file.endsWith('.json'));
@@ -202,26 +222,12 @@ ipcMain.handle('get-sequence-files', () => getSequencesByType('sequence'));
 ipcMain.handle('get-subroutine-files', () => getSequencesByType('subroutine'));
 
 ipcMain.handle('get-poses', async () => {
-  try {
-    const userPosesDir = resolveUserDataPath('poses');
-    const assetPosesDir = resolveAssetsPath('Pose');
-
-    const userPosesPromise = fsp.readdir(userPosesDir).catch((): string[] => []);
-    const assetPosesPromise = fsp.readdir(assetPosesDir).catch((): string[] => []);
-
-    const [userFiles, assetFiles] = await Promise.all([userPosesPromise, assetPosesPromise]);
-
-    const combinedFiles = new Set([...userFiles, ...assetFiles]);
-    return Array.from(combinedFiles).filter(file => file.toLowerCase().endsWith('.vrma'));
-  } catch (error) {
-    console.error('Failed to get poses:', error);
-    return [];
-  }
+  return resourceManager.listAssets('pose');
 });
 
 ipcMain.handle('get-2d-asset-list', async () => {
   try {
-    const assetsDir = resolveUserDataPath('assets');
+    const assetsDir = PathManager.getCustomAssetsPath('assets');
     const files = await fsp.readdir(assetsDir);
     return files.filter(file => /\.(png|jpe?g|gif)$/i.test(file));
   } catch (error) {
@@ -239,7 +245,7 @@ ipcMain.handle('get-2d-asset-data', async (event, fileName: string) => {
     if (fileName.includes('..')) {
       throw new Error('Invalid file name.');
     }
-    const assetsDir = resolveUserDataPath('assets');
+    const assetsDir = PathManager.getCustomAssetsPath('assets');
     const filePath = path.join(assetsDir, fileName);
 
     // Ensure the file is within the intended directory
@@ -256,7 +262,7 @@ ipcMain.handle('get-2d-asset-data', async (event, fileName: string) => {
   }
 });
 ipcMain.handle('delete-sequence', async (event, sequenceFile: string) => {
-  const sequencesDir = resolveUserDataPath('sequences');
+  const sequencesDir = PathManager.getCustomAssetsPath('sequences');
   const filePath = path.join(sequencesDir, sequenceFile);
   if (path.dirname(filePath) !== sequencesDir) {
     return { success: false, error: 'Security violation: Invalid file path.' };
@@ -270,7 +276,7 @@ ipcMain.handle('delete-sequence', async (event, sequenceFile: string) => {
   }
 });
 ipcMain.handle('save-sequence-to-file', async (event, fileName: string, sequenceData: string) => {
-  const sequencesDir = resolveUserDataPath('sequences');
+  const sequencesDir = PathManager.getCustomAssetsPath('sequences');
   const filePath = path.join(sequencesDir, fileName);
   if (path.dirname(filePath) !== sequencesDir) {
     return { success: false, error: 'Security violation: Invalid file path.' };
@@ -330,7 +336,7 @@ const handleFileDialog = async (
 
 ipcMain.handle('save-sequence', (event, sequenceData: string) => handleFileDialog(
   'save',
-  { title: '시퀀스 저장', defaultPath: path.join(getUserDataPath(), 'sequences', `sequence-${Date.now()}.json`), filters: [{ name: 'JSON Files', extensions: ['json'] }] },
+  { title: '시퀀스 저장', defaultPath: PathManager.getCustomAssetsPath('sequences', `sequence-${Date.now()}.json`), filters: [{ name: 'JSON Files', extensions: ['json'] }] },
   async (filePath) => {
     await fsp.writeFile(filePath, sequenceData, 'utf-8');
     return { success: true, filePath };
@@ -338,7 +344,7 @@ ipcMain.handle('save-sequence', (event, sequenceData: string) => handleFileDialo
 ));
 ipcMain.handle('load-sequence', () => handleFileDialog(
   'open',
-  { title: '시퀀스 불러오기', defaultPath: path.join(getUserDataPath(), 'sequences'), properties: ['openFile'], filters: [{ name: 'JSON Files', extensions: ['json'] }] },
+  { title: '시퀀스 불러오기', defaultPath: PathManager.getCustomAssetsPath('sequences'), properties: ['openFile'], filters: [{ name: 'JSON Files', extensions: ['json'] }] },
   async (filePath) => {
     const data = await fsp.readFile(filePath, 'utf-8');
     return { success: true, data, filePath };
@@ -346,7 +352,7 @@ ipcMain.handle('load-sequence', () => handleFileDialog(
 ));
 ipcMain.handle('save-vrma-animation', (event, vrmaData: ArrayBuffer) => handleFileDialog(
   'save',
-  { title: 'Save VRMA Animation', defaultPath: path.join(getUserDataPath(), 'animations', `animation_${Date.now()}.vrma`), filters: [{ name: 'VRM Animation', extensions: ['vrma'] }] },
+  { title: 'Save VRMA Animation', defaultPath: PathManager.getCustomAssetsPath('animations', `animation_${Date.now()}.vrma`), filters: [{ name: 'VRM Animation', extensions: ['vrma'] }] },
   async (filePath) => {
     await fsp.writeFile(filePath, Buffer.from(vrmaData));
     return { success: true, message: `VRMA animation saved to ${filePath}` };
@@ -354,7 +360,7 @@ ipcMain.handle('save-vrma-animation', (event, vrmaData: ArrayBuffer) => handleFi
 ));
 ipcMain.handle('save-vrma-pose', (event, vrmaData: ArrayBuffer) => handleFileDialog(
   'save',
-  { title: 'Save VRMA Pose', defaultPath: path.join(getUserDataPath(), 'poses', `pose_${Date.now()}.vrma`), filters: [{ name: 'VRM Animation', extensions: ['vrma'] }] },
+  { title: 'Save VRMA Pose', defaultPath: PathManager.getCustomAssetsPath('poses', `pose_${Date.now()}.vrma`), filters: [{ name: 'VRM Animation', extensions: ['vrma'] }] },
   async (filePath) => {
     await fsp.writeFile(filePath, Buffer.from(vrmaData));
     return { success: true, message: `VRMA pose saved to ${filePath}` };
@@ -362,22 +368,22 @@ ipcMain.handle('save-vrma-pose', (event, vrmaData: ArrayBuffer) => handleFileDia
 ));
 ipcMain.handle('open-vrm-file', () => handleFileDialog(
   'open',
-  { title: 'Open VRM Model', defaultPath: path.join(getUserDataPath(), 'vrm'), properties: ['openFile'], filters: [{ name: 'VRM Models', extensions: ['vrm'] }] },
+  { title: 'Open VRM Model', defaultPath: PathManager.getCustomAssetsPath('vrm'), properties: ['openFile'], filters: [{ name: 'VRM Models', extensions: ['vrm'] }] },
   (filePath) => Promise.resolve({ success: true, filePath })
 ).then(result => (result && (result as any).success === false) ? null : result));
 ipcMain.handle('open-vrma-file', () => handleFileDialog(
   'open',
-  { title: 'Open VRMA Pose', defaultPath: path.join(getUserDataPath(), 'poses'), properties: ['openFile'], filters: [{ name: 'VRM Animation', extensions: ['vrma'] }] },
+  { title: 'Open VRMA Pose', defaultPath: PathManager.getCustomAssetsPath('poses'), properties: ['openFile'], filters: [{ name: 'VRM Animation', extensions: ['vrma'] }] },
   (filePath) => Promise.resolve({ success: true, filePath })
 ).then(result => (result && (result as any).success === false) ? null : result));
 ipcMain.handle('open-persona-file', () => handleFileDialog(
   'open',
-  { title: 'Open Persona File', defaultPath: path.join(getUserDataPath(), 'persona'), properties: ['openFile'], filters: [{ name: 'Text Files', extensions: ['txt'] }] },
+  { title: 'Open Persona File', defaultPath: PathManager.getCustomAssetsPath('persona'), properties: ['openFile'], filters: [{ name: 'Text Files', extensions: ['txt'] }] },
   (filePath) => fsp.readFile(filePath, 'utf8')
 ).then(result => (result && (result as any).success === false) ? null : result));
 ipcMain.handle('save-persona-to-file', (event, persona: string) => handleFileDialog(
   'save',
-  { title: 'Save Persona', defaultPath: path.join(getUserDataPath(), 'persona', 'persona.txt'), filters: [{ name: 'Text Files', extensions: ['txt'] }] },
+  { title: 'Save Persona', defaultPath: PathManager.getCustomAssetsPath('persona', 'persona.txt'), filters: [{ name: 'Text Files', extensions: ['txt'] }] },
   async (filePath) => {
     await fsp.writeFile(filePath, persona, 'utf8');
     return { success: true, message: `Persona saved to ${filePath}` };
@@ -386,8 +392,8 @@ ipcMain.handle('save-persona-to-file', (event, persona: string) => handleFileDia
 
 // --- File System Access ---
 ipcMain.handle('read-asset-file', async (event, filePath: string) => {
-  const fullPath = resolveAssetsPath(filePath);
-  if (!fullPath.startsWith(getAssetsPath())) throw new Error('Attempted to read file outside the assets directory.');
+  const fullPath = PathManager.getStaticAssetPath(filePath);
+  if (!fullPath.startsWith(PathManager.getStaticAssetPath())) throw new Error('Attempted to read file outside the assets directory.');
   return fsp.readFile(fullPath).then(data => data.buffer).catch(err => ({ error: err.message }));
 });
 ipcMain.handle('read-absolute-file', async (event, filePath: string) => {
@@ -397,8 +403,8 @@ ipcMain.handle('read-absolute-file', async (event, filePath: string) => {
 ipcMain.handle('readFile', async (event, filePath: string) => {
   let fullPath = filePath;
   if (!path.isAbsolute(filePath)) {
-    fullPath = resolveAssetsPath(filePath);
-    if (!fullPath.startsWith(getAssetsPath())) throw new Error('Attempted to access file outside the assets directory.');
+    fullPath = PathManager.getStaticAssetPath(filePath);
+    if (!fullPath.startsWith(PathManager.getStaticAssetPath())) throw new Error('Attempted to access file outside the assets directory.');
   }
   return fsp.readFile(fullPath).then(data => data.buffer).catch(err => ({ error: err.message }));
 });
@@ -458,7 +464,7 @@ ipcMain.handle('set-mod-enabled', async (event, modName: string, isEnabled: bool
   return { success: true };
 });
 ipcMain.handle('get-all-mods', async () => {
-  const modsDir = resolveUserDataPath('mods');
+  const modsDir = PathManager.getCustomAssetsPath('mods');
   try {
     await fs.promises.mkdir(modsDir, { recursive: true });
     const modFolders = await fs.promises.readdir(modsDir, { withFileTypes: true });
@@ -567,23 +573,21 @@ app.on('ready', async () => {
 
   // Ensure userdata directories exist
   try {
-        const requiredDirs = ['vrm', 'poses', 'mods', 'animations', 'persona', 'sequences', 'assets'];
-    await Promise.all(requiredDirs.map(dir => fsp.mkdir(path.join(getUserDataPath(), dir), { recursive: true })));
-    console.log('User data directories verified/created successfully.');
+    const requiredDirs = ['vrm', 'poses', 'mods', 'animations', 'persona', 'sequences', 'assets'];
+    await Promise.all(requiredDirs.map(dir => fsp.mkdir(PathManager.getCustomAssetsPath(dir), { recursive: true })));
+    console.log('User custom asset directories verified/created successfully.');
   } catch (error) {
-    console.error('Failed to create user data directories:', error);
+    console.error('Failed to create user custom asset directories:', error);
   }
 
   // Initialize core components
   const eventBus = createEventBus<AppEvents>();
   const contextStore = new ContextStore();
-  const modSettingsManager = new ModSettingsManager(app.getPath('userData'));
+  const modSettingsManager = new ModSettingsManager(PathManager.getUserDataPath());
   await modSettingsManager.loadSettings();
 
     modLoader = new ModLoader(
-    app.getPath('userData'),
-    app.getAppPath(),
-    app.isPackaged,
+    PathManager.getCustomAssetsPath('mods'),
     eventBus,
     contextStore,
     modSettingsManager,
