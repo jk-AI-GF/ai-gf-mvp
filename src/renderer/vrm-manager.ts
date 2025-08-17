@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
-import { VRMLoaderPlugin, VRM, VRMHumanBoneName, VRMPose, VRMSpringBoneCollider, VRMSpringBoneColliderShapeCapsule, VRMSpringBoneColliderShapeSphere, VRMSpringBoneJoint } from '@pixiv/three-vrm';
+import { VRMLoaderPlugin, VRMMetaLoaderPlugin, VRM, VRMHumanBoneName, VRMPose, VRMSpringBoneCollider, VRMSpringBoneColliderShapeCapsule, VRMSpringBoneColliderShapeSphere, VRMSpringBoneJoint } from '@pixiv/three-vrm';
 import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-vrm-animation';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils';
@@ -233,6 +233,35 @@ export class VRMManager {
         this.loader.register((parser) => new VRMAnimationLoaderPlugin(parser));
 
         this.fbxLoader = new FBXLoader();
+    }
+
+    public async readVRMMeta(filePath: string): Promise<VRM['meta'] | null> {
+        try {
+            const fileContent = await window.electronAPI.readAbsoluteFile(filePath);
+            if (!(fileContent instanceof ArrayBuffer)) {
+                throw new Error('Failed to read VRM file content.');
+            }
+
+            const metaLoader = new GLTFLoader();
+            metaLoader.register((parser) => {
+                return new VRMMetaLoaderPlugin(parser, {
+                    needThumbnailImage: true,
+                });
+            });
+
+            const gltf = await metaLoader.parseAsync(fileContent, '');
+            
+            const vrmMeta = gltf.userData.vrmMeta as VRM['meta'];
+            if (!vrmMeta) {
+                console.error('VRM metadata not found in the parsed GLTF.');
+                return null;
+            }
+            
+            return vrmMeta;
+        } catch (error) {
+            console.error('Failed to read VRM metadata:', error);
+            return null;
+        }
     }
 
     public async loadVRM(filePathOrUrl: string): Promise<void> {
