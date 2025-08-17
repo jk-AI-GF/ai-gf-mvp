@@ -153,25 +153,39 @@ LLM이나 플러그인에서 사용자가 만든 서브루틴을 호출하는 �
 
 ---
 
-## 7. 에셋 및 콘텐츠 파이프라인 (Asset & Content Pipeline)
+## 7. 리소스 관리 (Resource Management)
 
-애플리케이션은 VRM 모델, 애니메이션, 포즈 등 다양한 외부 에셋을 사용합니다. 에셋은 빌드 시 포함되는 **코어 에셋**과 사용자가 직접 추가하는 **유저 에셋**으로 나뉩니다.
+애플리케이션은 VRM 모델, 애니메이션, 포즈 등 다양한 외부 리소스를 사용합니다. 리소스 관리는 `PathManager`와 `ResourceManager` 두 개의 핵심 클래스를 통해 중앙에서 처리되며, 개발 환경과 배포 환경의 차이를 자동으로 해결합니다.
 
-### 에셋 로딩 워크플로우
+### 리소스 폴더 구조와 역할
 
-1.  **코어 에셋 (`assets/`)**
-    *   **위치**: 프로젝트 루트의 `assets/` 디렉토리. 이 디렉토리의 내용은 Webpack에 의해 빌드 시 애플리케이션에 패키징됩니다.
-    *   **접근 방법**: `path-utils.ts`의 `getAssetPath()` 함수를 통해 접근해야 합니다. 이 함수는 개발 환경과 프로덕션(패키징된) 환경의 경로 차이를 자동으로 처리하여 올바른 절대 경로를 반환합니다. **파일 경로를 하드코딩해서는 안 됩니다.**
+| 폴더 종류 | 역할 및 경로 |
+| :--- | :--- |
+| **Public Assets** | **애플리케이션 기본 리소스 폴더**<br/>- **개발 환경**: `D:\ai-gf\ai-gf-mvp\public`<br/>- **배포 환경**: 사용자가 설치한 프로그램 폴더 내 `resources\app\public` |
+| **User Data** | **사용자 데이터 및 설정 폴더**<br/>- **개발 환경**: `D:\ai-gf\ai-gf-mvp\.appdata\userData`<br/>- **배포 환경**: `C:\Users\<사용자이름>\AppData\Roaming\ai-gf-mvp` |
+| **Custom Assets** | **사용자 커스텀 리소스 폴더 (가장 중요)**<br/>- **개발 환경**: `.appdata\userData\custom`<br/>- **배포 환경**: `C:\Users\<사용자이름>\AppData\Roaming\ai-gf-mvp\custom`<br/>- **용도**: 사용자가 직접 추가하는 VRM, 애니메이션, 모드 등이 저장되는 핵심 폴더입니다. |
 
-2.  **유저 에셋 (`userdata/`)**
-    *   **위치**: 애플리케이션 설정 디렉토리 내의 `userdata/` 폴더. 이 폴더의 정확한 위치는 OS마다 다르며, `electron-store`가 관리합니다. (예: Windows의 `%APPDATA%`)
-    *   **접근 방법**: `path-utils.ts`의 `getUserdataPath()` 함수를 통해 해당 디렉토리의 절대 경로를 얻을 수 있습니다. 이 경로를 기반으로 하위 디렉토리(vrm, animations 등)에 접근합니다.
+### PathManager와 ResourceManager의 연계
 
-### 주요 에셋 관리자
+두 클래스는 역할 분리가 명확하여 매우 효율적으로 동작합니다.
 
-*   **VRM 모델**: `VRMManager`가 로딩과 관리를 담당합니다.
-*   **애니메이션/포즈**: 관련 액션(`playAnimation`, `applyPose` 등) 내부에서 `getAssetPath` 또는 `getUserdataPath`를 통해 파일 경로를 조합하여 로드합니다. 현재는 중앙화된 관리자 없이 각 기능에서 직접 경로를 처리합니다.
-    *   **시퀀스/서브루틴**: `SequenceManager`가 `userdata/sequences` 디렉토리의 `*.json` 파일들을 관리합니다.
+*   **`PathManager` (지도 제작자)**: "애니메이션 리소스는 어디에 있지?" 라는 질문에 "기본 리소스는 `public/animations`에 있고, 사용자 커스텀 리소스는 `custom/animations`에 있어" 와 같이 **경로 목록을 제공하는 역할**만 합니다. 개발/배포 환경의 차이는 `PathManager`가 내부적으로 모두 처리합니다.
+
+*   **`ResourceManager` (사서)**: `PathManager`에게 받은 지도(경로 목록)를 가지고, "알았어, 그럼 그 폴더들에서 `idle.fbx` 파일이 실제로 있는지 찾아볼게" 또는 "그 폴더들에 있는 모든 애니메이션 파일 목록을 정리해서 줄게" 와 같이 **실질적인 파일 검색 및 목록화 작업**을 수행합니다. `ResourceManager`는 항상 기본 리소스보다 사용자 커스텀 리소스를 우선적으로 탐색합니다.
+
+### 새로운 리소스 로딩 워크플로우
+
+이제 모든 리소스를 가져오는 방법은 아래 두 단계로 통일됩니다.
+
+1.  **UI에 목록 표시하기 (예: 드롭다운 메뉴 채우기):**
+    *   **API**: `window.electronAPI.listAssets('animation')`
+    *   **설명**: 지정된 타입('vrm', 'animation', 'pose' 등)의 모든 사용 가능한 리소스 파일 이름을 배열로 반환합니다. `ResourceManager`가 내부적으로 기본 폴더와 커스텀 폴더를 모두 검색하여 합친 후 중복을 제거한 최종 목록을 제공합니다.
+
+2.  **실제 리소스 경로 얻기 (예: 애니메이션 재생):**
+    *   **API**: `window.electronAPI.invoke('resource:resolve-path', 'animation', 'idle.fbx')`
+    *   **설명**: 리소스 타입과 파일 이름을 전달하면, `ResourceManager`가 파일의 실제 절대 경로를 찾아 반환합니다. 사용자가 동일한 이름의 파일을 커스텀 폴더에 추가했다면, 커스텀 폴더의 파일 경로가 우선적으로 반환됩니다. 이 API는 주로 렌더러 프로세스에서 경로가 필요할 때 사용됩니다.
+
+이 새로운 워크플로우는 기존에 흩어져 있던 `get-poses`, `list-directory` 등의 레거시 함수들을 대체하는 표준 방식입니다.
 
 ---
 

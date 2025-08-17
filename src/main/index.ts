@@ -132,20 +132,6 @@ ipcMain.handle('fs:exists', async (event, filePath: string) => {
     return false;
   }
 });
-// Legacy handler, to be removed
-ipcMain.handle('list-directory', async (event, dirPath: string, basePath: 'assets' | 'userData') => {
-  try {
-    const rootPath = basePath === 'userData' ? PathManager.getUserDataPath() : PathManager.getStaticAssetPath();
-    const fullPath = basePath === 'userData' ? PathManager.getUserDataPath(dirPath) : PathManager.getStaticAssetPath(dirPath);
-    if (!fullPath.startsWith(rootPath)) {
-      throw new Error(`Security violation: Attempted to access directory outside of the allowed path: ${dirPath}`);
-    }
-    const files = await fsp.readdir(fullPath);
-    return { files };
-  } catch (error) {
-    return error.code === 'ENOENT' ? { files: [] } : { error: error.message };
-  }
-});
 
 // --- Settings IPC Handlers ---
 ipcMain.on('set-window-opacity', (event, opacity: number) => {
@@ -220,10 +206,6 @@ ipcMain.handle('get-all-sequence-files-with-type', async () => {
 
 ipcMain.handle('get-sequence-files', () => getSequencesByType('sequence'));
 ipcMain.handle('get-subroutine-files', () => getSequencesByType('subroutine'));
-
-ipcMain.handle('get-poses', async () => {
-  return resourceManager.listAssets('pose');
-});
 
 ipcMain.handle('get-2d-asset-list', async () => {
   try {

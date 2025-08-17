@@ -74,6 +74,11 @@
 -   **`event-bus.ts`**: 애플리케이션 전역에서 사용되는 발행/구독(Pub/Sub) 이벤트 버스입니다.
 -   **`event-definitions.ts`**: 시퀀스 에디터에 노출될 이벤트들의 상세 메타데이터(설명, 데이터 구조)를 정의합니다.
 
+### `path-manager.ts` & `resource-manager.ts` - 리소스 관리
+
+-   **`path-manager.ts`**: **"지도 제작자"** 역할을 합니다. 개발 환경과 배포 환경의 경로 차이를 모두 해결하고, 특정 리소스 타입(예: 'animation')에 대한 검색 경로 목록(예: `[public/animations, custom/animations]`)을 제공하는 책임을 가집니다.
+-   **`resource-manager.ts`**: **"사서"** 역할을 합니다. `PathManager`로부터 받은 경로 목록(지도)을 사용하여, 실제 파일 시스템에서 리소스를 검색(`resolvePath`)하거나 특정 타입의 모든 리소스 목록을 취합(`listAssets`)하는 실질적인 파일 I/O 작업을 담당합니다.
+
 ---
 
 ## 5. 플러그인 아키텍처 (`src/plugins/` & `src/plugin-api/`)

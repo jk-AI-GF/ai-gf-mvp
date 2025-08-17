@@ -15,7 +15,6 @@ import { LlmSettings } from '../core/llm-settings';
   requestToggleMouseIgnore: () => ipcRenderer.send('request-toggle-mouse-ignore'),
 
   // File System API
-  listDirectory: async (dirPath: string, basePath: 'assets' | 'userData' = 'assets') => ipcRenderer.invoke('list-directory', dirPath, basePath), // Legacy, to be removed
   saveVrmaAnimation: (animationData: ArrayBuffer) => ipcRenderer.invoke('save-vrma-animation', animationData),
   saveVrmaPose: (poseData: ArrayBuffer) => ipcRenderer.invoke('save-vrma-pose', poseData),
   openVrmFile: () => ipcRenderer.invoke('open-vrm-file'),
@@ -80,7 +79,6 @@ import { LlmSettings } from '../core/llm-settings';
       getAllSequenceFilesWithType: (): Promise<{ name: string, type: 'sequence' | 'subroutine' }[]> => ipcRenderer.invoke('get-all-sequence-files-with-type'),
   getSequenceFiles: (): Promise<string[]> => ipcRenderer.invoke('get-sequence-files'),
   getSubroutineFiles: (): Promise<string[]> => ipcRenderer.invoke('get-subroutine-files'),
-  getPoses: (): Promise<string[]> => ipcRenderer.invoke('get-poses'),
   saveSequence: (sequenceData: string) => ipcRenderer.invoke('save-sequence', sequenceData),
   saveSequenceToFile: (fileName: string, sequenceData: string) => ipcRenderer.invoke('save-sequence-to-file', fileName, sequenceData),
   loadSequence: () => ipcRenderer.invoke('load-sequence'),
@@ -108,7 +106,6 @@ declare global {
       requestToggleMouseIgnore: () => void;
 
       // File System API
-      listDirectory: (dirPath: string, basePath?: 'assets' | 'userData') => Promise<{ files?: string[], error?: string }>; // Legacy
       saveVrmaAnimation: (animationData: ArrayBuffer) => Promise<{ success: boolean, message?: string, error?: string }>;
       saveVrmaPose: (poseData: ArrayBuffer) => Promise<{ success: boolean, message?: string, error?: string }>;
       openVrmFile: () => Promise<{ success: boolean, filePath: string } | null>;
@@ -155,7 +152,6 @@ declare global {
       getAllSequenceFilesWithType: () => Promise<{ name: string, type: 'sequence' | 'subroutine' }[]>;
       getSequenceFiles: () => Promise<string[]>;
       getSubroutineFiles: () => Promise<string[]>;
-      getPoses: () => Promise<string[]>; // Legacy
       saveSequence: (sequenceData: string) => Promise<{ success: boolean, filePath?: string, error?: string, canceled?: boolean }>;
       saveSequenceToFile: (fileName: string, sequenceData: string) => Promise<{ success: boolean, filePath?: string, error?: string }>;
       loadSequence: () => Promise<{ success: boolean, data?: string, filePath?: string, error?: string, canceled?: boolean }>;
