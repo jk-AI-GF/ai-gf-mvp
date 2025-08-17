@@ -4,12 +4,12 @@
  */
 
 // 지원하는 LLM 제공사
-export type LlmProvider = 'OpenAI' | 'Google' | 'Anthropic';
+export type LlmProvider = 'openai' | 'google' | 'anthropic';
 
 // electron-store에 저장될 LLM 설정 전체 구조
 export interface LlmSettings {
   apiKeys: {
-    openAI: string;
+    openai: string;
     google: string;
     anthropic: string;
   };
@@ -29,19 +29,24 @@ export interface ModelInfo {
 
 // 지원하는 모델 목록
 export const SUPPORTED_MODELS: ModelInfo[] = [
-  { id: 'gpt-4o', displayName: 'GPT-4o (OpenAI)', provider: 'OpenAI', modelId: 'gpt-4o' },
-  { id: 'gpt-4-turbo', displayName: 'GPT-4 Turbo (OpenAI)', provider: 'OpenAI', modelId: 'gpt-4-turbo' },
-  { id: 'gemini-1.5-pro', displayName: 'Gemini 1.5 Pro (Google)', provider: 'Google', modelId: 'gemini-1.5-pro-latest' },
-  { id: 'gemini-1.5-flash', displayName: 'Gemini 1.5 Flash (Google)', provider: 'Google', modelId: 'gemini-1.5-flash-latest' },
-  { id: 'claude-3.5-sonnet', displayName: 'Claude 3.5 Sonnet (Anthropic)', provider: 'Anthropic', modelId: 'claude-3-5-sonnet-20240620' },
-  { id: 'claude-3-opus', displayName: 'Claude 3 Opus (Anthropic)', provider: 'Anthropic', modelId: 'claude-3-opus-20240229' },
-  { id: 'claude-3-haiku', displayName: 'Claude 3 Haiku (Anthropic)', provider: 'Anthropic', modelId: 'claude-3-haiku-20240307' },
+  { id: 'gpt-5', displayName: 'GPT-5 (OpenAI)', provider: 'openai', modelId: 'gpt-5' },
+  { id: 'gpt-4.1', displayName: 'GPT-4.1 (OpenAI)', provider: 'openai', modelId: 'gpt-4.1' },
+  { id: 'gpt-4o', displayName: 'GPT-4o (OpenAI)', provider: 'openai', modelId: 'gpt-4o' },
+  { id: 'gpt-4-turbo', displayName: 'GPT-4 Turbo (OpenAI)', provider: 'openai', modelId: 'gpt-4-turbo' },
+  { id: 'gemini-2.5-pro', displayName: 'Gemini 2.5 Pro (Google)', provider: 'google', modelId: 'gemini-2.5-pro' },
+  { id: 'gemini-2.5-flash', displayName: 'Gemini 2.5 Flash (Google)', provider: 'google', modelId: 'gemini-2.5-flash-latest' },
+  { id: 'gemini-1.5-pro', displayName: 'Gemini 1.5 Pro (Google)', provider: 'google', modelId: 'gemini-1.5-pro-latest' },
+  { id: 'gemini-1.5-flash', displayName: 'Gemini 1.5 Flash (Google)', provider: 'google', modelId: 'gemini-1.5-flash-latest' },
+  { id: 'claude-4.1-opus', displayName: 'Claude 4.1 Opus (Anthropic)', provider: 'anthropic', modelId: 'claude-opus-4-1-20250805' },
+  { id: 'claude-3.5-sonnet', displayName: 'Claude 3.5 Sonnet (Anthropic)', provider: 'anthropic', modelId: 'claude-3-5-sonnet-20240620' },
+  { id: 'claude-3-opus', displayName: 'Claude 3 Opus (Anthropic)', provider: 'anthropic', modelId: 'claude-3-opus-20240229' },
+  { id: 'claude-3-haiku', displayName: 'Claude 3 Haiku (Anthropic)', provider: 'anthropic', modelId: 'claude-3-haiku-20240307' },
 ];
 
 // 기본 LLM 설정
 export const DEFAULT_LLM_SETTINGS: LlmSettings = {
   apiKeys: {
-    openAI: '',
+    openai: '',
     google: '',
     anthropic: '',
   },

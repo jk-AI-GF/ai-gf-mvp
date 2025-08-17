@@ -186,19 +186,19 @@ export class ChatService {
     const modelInfo = SUPPORTED_MODELS.find(m => m.id === llmSettings.selectedModel);
     if (!modelInfo) throw new Error('선택된 LLM 모델을 찾을 수 없습니다.');
     const { provider, modelId } = modelInfo;
-    const apiKey = llmSettings.apiKeys[provider.toLowerCase() as keyof typeof llmSettings.apiKeys];
+    const apiKey = llmSettings.apiKeys[provider];
     if (!apiKey) throw new Error(`${provider} API 키가 설정되어 있지 않습니다.`);
 
     let requestUrl: string;
     let requestOptions: RequestInit;
     switch (provider) {
-      case 'Google':
+      case 'google':
         ({ requestUrl, requestOptions } = this._buildGoogleRequest(apiKey, modelId, systemPrompt, history, llmSettings));
         break;
-      case 'OpenAI':
+      case 'openai':
         ({ requestUrl, requestOptions } = this._buildOpenAIRequest(apiKey, modelId, systemPrompt, history, llmSettings));
         break;
-      case 'Anthropic':
+      case 'anthropic':
         ({ requestUrl, requestOptions } = this._buildAnthropicRequest(apiKey, modelId, systemPrompt, history, llmSettings));
         break;
       default:
@@ -215,13 +215,13 @@ export class ChatService {
     const data = await res.json();
     let text = '';
     switch (provider) {
-      case 'Google':
+      case 'google':
         text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
         break;
-      case 'OpenAI':
+      case 'openai':
         text = data.choices?.[0]?.message?.content || '';
         break;
-      case 'Anthropic':
+      case 'anthropic':
         text = data.content?.[0]?.text || '';
         break;
     }

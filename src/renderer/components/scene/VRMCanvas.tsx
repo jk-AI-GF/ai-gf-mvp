@@ -77,6 +77,24 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ pluginManager, onLoad }) => {
     controls.target.set(0, 0.6, 0);
     controls.update();
 
+    const focusCameraOnCharacter = () => {
+      if (vrmManager.currentVrm) {
+        const hips = vrmManager.currentVrm.humanoid.getNormalizedBoneNode('hips');
+        if (hips) {
+          const targetPos = hips.getWorldPosition(new THREE.Vector3());
+          
+          // Calculate ideal camera position: behind and slightly above the target
+          const offset = new THREE.Vector3(0, 0.6, 2.0);
+          const cameraPos = targetPos.clone().add(offset);
+
+          // Set camera and controls instantly
+          perspectiveCamera.position.copy(cameraPos);
+          controls.target.copy(targetPos);
+          controls.update();
+        }
+      }
+    };
+
     // --- VRM Manager ---
     const vrmManager = new VRMManager(scene, activeCamera, plane, eventBus, pluginManager);
     vrmManager.setActiveCamera(activeCamera);
@@ -105,6 +123,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ pluginManager, onLoad }) => {
             setOutlineMode(MToonMaterialOutlineWidthMode.ScreenCoordinates);
         } else {
             setOutlineMode(MToonMaterialOutlineWidthMode.WorldCoordinates);
+            focusCameraOnCharacter(); // Focus camera when a new VRM is loaded in orbit (edit) mode
         }
     });
 
@@ -201,20 +220,8 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ pluginManager, onLoad }) => {
         pluginManager.setEditMode(data.isEditMode);
         handleSetCameraMode(data.isEditMode ? 'orbit' : 'fixed');
 
-        if (data.isEditMode && vrmManager.currentVrm) {
-            const hips = vrmManager.currentVrm.humanoid.getNormalizedBoneNode('hips');
-            if (hips) {
-                const targetPos = hips.getWorldPosition(new THREE.Vector3());
-                
-                // Calculate ideal camera position: behind and slightly above the target
-                const offset = new THREE.Vector3(0, 0.6, 2.0);
-                const cameraPos = targetPos.clone().add(offset);
-
-                // Set camera and controls instantly
-                perspectiveCamera.position.copy(cameraPos);
-                controls.target.copy(targetPos);
-                controls.update();
-            }
+        if (data.isEditMode) {
+            focusCameraOnCharacter();
         }
     };
 

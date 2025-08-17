@@ -174,8 +174,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
               id="openai-api-key"
               placeholder="sk-..."
               style={inputStyle}
-              value={llmSettings.apiKeys.openAI}
-              onChange={(e) => handleApiKeyChange('openAI', e.target.value)}
+              value={llmSettings.apiKeys.openai}
+              onChange={(e) => handleApiKeyChange('openai', e.target.value)}
             />
           </div>
 
