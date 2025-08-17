@@ -51,6 +51,9 @@ export class ChatService {
     });
   }
 
+  /**
+   * 사용자의 채팅 메시지를 처리하고 LLM 응답을 요청합니다.
+   */
   public async sendChatMessage(
     message: string,
     persona: string,
@@ -59,42 +62,55 @@ export class ChatService {
     const userMsg = message.trim();
     if (!userMsg) return;
 
+    // UI에 사용자 메시지를 즉시 표시하고 기록에 추가합니다.
     eventBus.emit('chat:newMessage', { role: 'user', text: userMsg });
     this.chatHistory.push({ role: 'user', content: userMsg });
 
-    const modelInfo = SUPPORTED_MODELS.find(m => m.id === llmSettings.selectedModel);
-    if (!modelInfo) {
-      eventBus.emit('chat:newMessage', { role: 'assistant', text: '선택된 LLM 모델을 찾을 수 없습니다.' });
-      return;
-    }
-
-    const { provider, modelId } = modelInfo;
-    const apiKey = llmSettings.apiKeys[provider.toLowerCase() as keyof typeof llmSettings.apiKeys];
-
-    if (!apiKey) {
-      eventBus.emit('chat:newMessage', { role: 'assistant', text: `${provider} API 키가 설정되어 있지 않습니다. 설정에서 입력해 주세요.` });
-      return;
-    }
-
     try {
-      const vrmExpressionList = this.vrmManager.currentVrm
-        ? Object.keys(this.vrmManager.currentVrm.expressionManager.expressionMap)
-        : ['neutral', 'happy', 'sad'];
+      // 채팅 시나리오에 맞는 시스템 프롬프트를 생성합니다.
+      const systemPrompt = this._buildChatSystemPrompt(persona, llmSettings);
 
-      // 0. Get current character state
-      const currentState = characterState.toJSON();
-      const stateJson = JSON.stringify(currentState, null, 2);
+      // 범용 LLM 호출 함수를 사용합니다.
+      const payload = await this._invokeLlm(systemPrompt, this.chatHistory, llmSettings);
 
-      // 1. 시스템 프롬프트와 페르소나, 캐릭터 상태를 결합합니다.
-      const combinedSystemPrompt = `${llmSettings.systemPrompt}\n\n${persona}\n\n캐릭터의 현재 상태는 다음과 같습니다:\n${stateJson}`;
-
-      // 2. 기본 프롬프트에 표정 태그 지시를 추가합니다.
-      const basePrompt = `${combinedSystemPrompt}\n\n모든 응답에 <표정: [표정_이름]> 형식의 표정 태그를 포함해 주세요. 표정_이름은 다음 목록 중 하나여야 합니다: ${vrmExpressionList.join(', ')}. 예시: <표정: happy> 안녕하세요!`;
+      // LLM 응답을 기반으로 관련 이벤트를 발생시켜 다른 시스템들이 처리하도록 합니다.
+      const speech = payload.text || "죄송해요, 잘 이해하지 못했어요.";
       
-      // 3. 최종 시스템 프롬프트에 서브루틴과 JSON 출력 형식을 추가합니다.
-      const availableSubroutines = this.pluginManager.context?.sequenceManager?.getAvailableSubroutines() || [];
-      const subJson = JSON.stringify(availableSubroutines, null, 2);
-      const systemPrompt = `${basePrompt}\n\n다음 JSON 배열은 현재 실행 가능한 Action(서브루틴) 목록입니다:
+      // 기능 플러그인(LlmResponseHandlerPlugin 등)을 위한 핵심 이벤트
+      eventBus.emit('llm:responseReceived', payload);
+      
+      // UI 업데이트를 위한 이벤트
+      eventBus.emit('chat:newMessage', { role: 'assistant', text: speech });
+      eventBus.emit('ui:showFloatingMessage', { text: speech });
+      
+      // 대화 기록에 어시스턴트의 응답을 추가합니다.
+      this.chatHistory.push({ role: 'assistant', content: speech });
+
+    } catch (err: any) {
+      console.error(`LLM API call failed:`, err);
+      eventBus.emit('chat:newMessage', { role: 'assistant', text: `API 호출 실패: ${err.message}` });
+    }
+  }
+
+  /**
+   * 채팅 시나리오에 특화된 시스템 프롬프트를 생성합니다.
+   */
+  private _buildChatSystemPrompt(persona: string, llmSettings: LlmSettings): string {
+    const vrmExpressionList = this.vrmManager.currentVrm
+      ? Object.keys(this.vrmManager.currentVrm.expressionManager.expressionMap)
+      : ['neutral', 'happy', 'sad'];
+
+    const currentState = characterState.toJSON();
+    const stateJson = JSON.stringify(currentState, null, 2);
+
+    const combinedSystemPrompt = `${llmSettings.systemPrompt}\n\n${persona}\n\n캐릭터의 현재 상태는 다음과 같습니다:\n${stateJson}`;
+
+    const basePrompt = `${combinedSystemPrompt}\n\n모든 응답에 <표정: [표정_이름]> 형식의 표정 태그를 포함해 주세요. 표정_이름은 다음 목록 중 하나여야 합니다: ${vrmExpressionList.join(', ')}. 예시: <표정: happy> 안녕하세요!`;
+    
+    const availableSubroutines = this.pluginManager.context?.sequenceManager?.getAvailableSubroutines() || [];
+    const subJson = JSON.stringify(availableSubroutines, null, 2);
+    
+    return `${basePrompt}\n\n다음 JSON 배열은 현재 실행 가능한 Action(서브루틴) 목록입니다:
 ${subJson}
 
 사용자의 다음 요청을 분석하여, 가장 적절한 행동을 결정하세요.
@@ -139,98 +155,95 @@ ${subJson}
 -   'expression'은 캐릭터의 표정을 나타내며, 필수 항목입니다.
 -   최종 출력은 반드시 JSON 객체여야 하며, 다른 텍스트나 설명이 포함되어서는 안 됩니다.
 `;
+  }
 
-      let requestUrl: string;
-      let requestOptions: RequestInit;
+  /**
+   * LLM API를 호출하고 응답을 파싱하는 범용 함수입니다.
+   * @param systemPrompt LLM에 전달할 시스템 프롬프트
+   * @param history 대화 기록
+   * @param llmSettings 사용할 LLM 설정
+   * @returns 파싱된 JSON 객체 응답
+   */
+  private async _invokeLlm(
+    systemPrompt: string,
+    history: HistoryMessage[],
+    llmSettings: LlmSettings
+  ): Promise<any> {
+    const modelInfo = SUPPORTED_MODELS.find(m => m.id === llmSettings.selectedModel);
+    if (!modelInfo) {
+      throw new Error('선택된 LLM 모델을 찾을 수 없습니다.');
+    }
 
-      switch (provider) {
-        case 'Google':
-          ({ requestUrl, requestOptions } = this._buildGoogleRequest(apiKey, modelId, systemPrompt, this.chatHistory, llmSettings));
-          break;
-        case 'OpenAI':
-          ({ requestUrl, requestOptions } = this._buildOpenAIRequest(apiKey, modelId, systemPrompt, this.chatHistory, llmSettings));
-          break;
-        case 'Anthropic':
-          ({ requestUrl, requestOptions } = this._buildAnthropicRequest(apiKey, modelId, systemPrompt, this.chatHistory, llmSettings));
-          break;
-        default:
-          throw new Error(`Unsupported LLM provider: ${provider}`);
-      }
+    const { provider, modelId } = modelInfo;
+    const apiKey = llmSettings.apiKeys[provider.toLowerCase() as keyof typeof llmSettings.apiKeys];
 
-      const res = await fetch(requestUrl, requestOptions);
+    if (!apiKey) {
+      throw new Error(`${provider} API 키가 설정되어 있지 않습니다. 설정에서 입력해 주세요.`);
+    }
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        const errorMessage = errorData.error?.message || res.statusText;
-        throw new Error(`API Error (${res.status}): ${errorMessage}`);
-      }
+    let requestUrl: string;
+    let requestOptions: RequestInit;
 
-      const data = await res.json();
-      let text = '';
+    switch (provider) {
+      case 'Google':
+        ({ requestUrl, requestOptions } = this._buildGoogleRequest(apiKey, modelId, systemPrompt, history, llmSettings));
+        break;
+      case 'OpenAI':
+        ({ requestUrl, requestOptions } = this._buildOpenAIRequest(apiKey, modelId, systemPrompt, history, llmSettings));
+        break;
+      case 'Anthropic':
+        ({ requestUrl, requestOptions } = this._buildAnthropicRequest(apiKey, modelId, systemPrompt, history, llmSettings));
+        break;
+      default:
+        throw new Error(`Unsupported LLM provider: ${provider}`);
+    }
 
-      switch (provider) {
-        case 'Google':
-          text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-          break;
-        case 'OpenAI':
-          text = data.choices?.[0]?.message?.content || '';
-          break;
-        case 'Anthropic':
-          text = data.content?.[0]?.text || '';
-          break;
-      }
+    const res = await fetch(requestUrl, requestOptions);
 
-      if (!text) {
-        text = '응답이 없습니다.';
-      }
-      
-      let payload: any;
-      try {
-        // LLM 응답에서 JSON 객체만 추출하는 정규식을 사용합니다.
-        // LLM이 생각 과정을 포함하여 응답하더라도 JSON 부분만 파싱합니다.
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          payload = JSON.parse(jsonMatch[0]);
-        } else {
-          throw new Error("No JSON object found in the response.");
-        }
-      } catch (err) {
-        console.warn('[ChatService] JSON 파싱 실패, 기본 대화로 처리합니다.', { error: err, rawText: text });
+    if (!res.ok) {
+      const errorData = await res.json();
+      const errorMessage = errorData.error?.message || res.statusText;
+      throw new Error(`API Error (${res.status}): ${errorMessage}`);
+    }
+
+    const data = await res.json();
+    let text = '';
+
+    switch (provider) {
+      case 'Google':
+        text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        break;
+      case 'OpenAI':
+        text = data.choices?.[0]?.message?.content || '';
+        break;
+      case 'Anthropic':
+        text = data.content?.[0]?.text || '';
+        break;
+    }
+
+    if (!text) {
+      throw new Error('LLM으로부터 빈 응답을 받았습니다.');
+    }
+    
+    try {
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      } else {
+        // JSON 객체를 찾지 못한 경우, 일반 대화로 간주하고 fallback 객체를 반환합니다.
+        console.warn('[ChatService] 응답에서 JSON 객체를 찾지 못해 기본 대화로 처리합니다.', { rawText: text });
+        const vrmExpressionList = this.vrmManager.currentVrm ? Object.keys(this.vrmManager.currentVrm.expressionManager.expressionMap) : ['neutral'];
         const fallbackExpr = extractExpression(text, vrmExpressionList);
         const fallbackText = removeExpressionTag(text);
-        eventBus.emit('llm:responseReceived', { type: 'talk', text: fallbackText, expression: fallbackExpr });
-        eventBus.emit('chat:newMessage', { role: 'assistant', text: fallbackText });
-        eventBus.emit('ui:showFloatingMessage', { text: fallbackText });
-        this.chatHistory.push({ role: 'assistant', content: fallbackText });
-        return;
+        return { type: 'talk', text: fallbackText, expression: fallbackExpr };
       }
-
-      // 처리된 JSON payload를 기반으로 분기
-      if (payload.type === 'action') {
-        const { subroutine, arguments: args, text: speech, expression: expr } = payload;
-        // 서브루틴 실행은 이제 LlmResponseHandlerPlugin이 담당합니다.
-        eventBus.emit('llm:responseReceived', { type: 'action', subroutine, arguments: args, text: speech, expression: expr });
-        eventBus.emit('chat:newMessage', { role: 'assistant', text: speech });
-        eventBus.emit('ui:showFloatingMessage', { text: speech });
-        this.chatHistory.push({ role: 'assistant', content: speech });
-      } else if (payload.type === 'action_array') {
-        const { subroutines, text: speech, expression: expr } = payload;
-        eventBus.emit('llm:responseReceived', { type: 'action_array', subroutines, text: speech, expression: expr });
-        eventBus.emit('chat:newMessage', { role: 'assistant', text: speech });
-        eventBus.emit('ui:showFloatingMessage', { text: speech });
-        this.chatHistory.push({ role: 'assistant', content: speech });
-      } else {
-        const { text: speech, expression: expr } = payload;
-        eventBus.emit('llm:responseReceived', { type: 'talk', text: speech, expression: expr });
-        eventBus.emit('chat:newMessage', { role: 'assistant', text: speech });
-        eventBus.emit('ui:showFloatingMessage', { text: speech });
-        this.chatHistory.push({ role: 'assistant', content: speech });
-      }
-
-    }
-    catch (err: any) {
-      console.error(`${provider} API call failed:`, err);
-      eventBus.emit('chat:newMessage', { role: 'assistant', text: `${provider} API 호출 실패: ${err.message}` });
+    } catch (err) {
+      // JSON 파싱 중 에러가 발생한 경우에도 동일하게 처리합니다.
+      console.warn('[ChatService] JSON 파싱 중 예외가 발생하여 기본 대화로 처리합니다.', { error: err, rawText: text });
+      const vrmExpressionList = this.vrmManager.currentVrm ? Object.keys(this.vrmManager.currentVrm.expressionManager.expressionMap) : ['neutral'];
+      const fallbackExpr = extractExpression(text, vrmExpressionList);
+      const fallbackText = removeExpressionTag(text);
+      return { type: 'talk', text: fallbackText, expression: fallbackExpr };
     }
   }
 
