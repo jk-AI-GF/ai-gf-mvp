@@ -5,10 +5,7 @@ import { LlmSettings } from '../core/llm-settings';
 // This is safe because nodeIntegration is true and contextIsolation is false
 (window as typeof window & { electronAPI: unknown }).electronAPI = {
   // Path API
-  getPath: (pathName: 'assets' | 'userData') => ipcRenderer.invoke('get-path', pathName),
-  resolvePath: (pathName: 'assets' | 'userData' | 'customAssets', subpath: string) => ipcRenderer.invoke('resolve-path', pathName, subpath), // Legacy, to be removed
   basename: (filePath: string) => ipcRenderer.invoke('path:basename', filePath),
-  fileExists: (filePath: string) => ipcRenderer.invoke('fs:exists', filePath), // Legacy, to be removed
 
   // App control
   quitApp: () => ipcRenderer.send('quit-app'),
@@ -21,9 +18,7 @@ import { LlmSettings } from '../core/llm-settings';
   openVrmaFile: () => ipcRenderer.invoke('open-vrma-file'),
   savePersonaToFile: (persona: string) => ipcRenderer.invoke('save-persona-to-file', persona),
   openPersonaFile: () => ipcRenderer.invoke('open-persona-file'),
-  readAssetFile: async (filePath: string) => ipcRenderer.invoke('read-asset-file', filePath), // Legacy, to be removed
   readAbsoluteFile: async (filePath: string) => ipcRenderer.invoke('read-absolute-file', filePath),
-  readFile: async (filePath: string) => ipcRenderer.invoke('readFile', filePath),
 
   // Action API
   playAnimation: (animationName: string, loop: boolean, crossFadeDuration: number) => ipcRenderer.invoke('play-animation', animationName, loop, crossFadeDuration),
@@ -96,10 +91,7 @@ declare global {
   interface Window {
     electronAPI: {
       // Path API
-      getPath: (pathName: 'assets' | 'userData') => Promise<string>;
-      resolvePath: (pathName: 'assets' | 'userData' | 'customAssets', subpath: string) => Promise<string>; // Legacy
       basename: (filePath: string) => Promise<string>;
-      fileExists: (filePath: string) => Promise<boolean>; // Legacy
 
       // App control
       quitApp: () => void;
@@ -112,9 +104,7 @@ declare global {
       openVrmaFile: () => Promise<{ success: boolean, filePath: string } | null>;
       savePersonaToFile: (persona: string) => Promise<{ success: boolean, message?: string, error?: string }>;
       openPersonaFile: () => Promise<string | null>;
-      readAssetFile: (filePath: string) => Promise<ArrayBuffer | { error: string }>; // Legacy
       readAbsoluteFile: (filePath: string) => Promise<ArrayBuffer | { error: string }>;
-      readFile: (filePath: string) => Promise<ArrayBuffer | { error: string }>;
 
       // Action API
       playAnimation: (animationName: string, loop: boolean, crossFadeDuration: number) => Promise<void>;

@@ -21,7 +21,7 @@ export class ResourceManager {
       vrm: [PathManager.getCustomAssetsPath('vrm'), PathManager.getStaticAssetPath('vrm')],
       animation: [PathManager.getCustomAssetsPath('animations'), PathManager.getStaticAssetPath('animations')],
       pose: [PathManager.getCustomAssetsPath('poses'), PathManager.getStaticAssetPath('poses')],
-      image: [PathManager.getCustomAssetsPath('images'), PathManager.getStaticAssetPath('images')],
+      image: [PathManager.getCustomAssetsPath('assets'), PathManager.getStaticAssetPath('assets')],
       sequence: [PathManager.getCustomAssetsPath('sequences')], // 시퀀스는 사용자가 생성하는 데이터이므로 custom 폴더만 검색
     };
   }
@@ -78,7 +78,13 @@ export class ResourceManager {
       try {
         // 폴더가 없으면 생성하여 오류를 방지합니다.
         await fs.mkdir(basePath, { recursive: true });
-        const files = await fs.readdir(basePath);
+        let files = await fs.readdir(basePath);
+
+        // 시퀀스 타입일 경우 .json 파일만 필터링합니다.
+        if (assetType === 'sequence') {
+          files = files.filter(file => file.endsWith('.json'));
+        }
+
         files.forEach(file => allFiles.add(file));
       } catch (error) {
         console.error(`[ResourceManager] Error reading directory ${basePath}:`, error);

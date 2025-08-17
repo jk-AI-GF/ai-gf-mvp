@@ -358,12 +358,17 @@ export class VRMManager {
                         return { type: 'pose', data: clip };
                     }
                 } catch (e) {
-                    // If JSON parsing fails, assume it's a binary animation
+                    // If JSON parsing fails, assume it's a binary format (animation or pose)
                     const gltf = await this.loader.parseAsync(fileContent, '');
                     const vrmAnim = gltf.userData.vrmAnimations?.[0];
                     if (vrmAnim) {
                         const clip = createVRMAnimationClip(vrmAnim, this.currentVrm!);
-                        return { type: 'animation', data: clip };
+                        // Heuristic: If the animation has a duration of 0, it's a pose.
+                        if (clip.duration === 0) {
+                            return { type: 'pose', data: clip };
+                        } else {
+                            return { type: 'animation', data: clip };
+                        }
                     }
                 }
                 // If it's a .vrma but doesn't fit either format, fall through to return null

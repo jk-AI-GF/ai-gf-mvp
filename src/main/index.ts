@@ -104,33 +104,8 @@ ipcMain.handle('resource:resolve-path', (event, assetType, fileName) => {
 ipcMain.handle('list-assets', (event, assetType) => {
   return resourceManager.listAssets(assetType);
 });
-// Legacy handler, to be removed
-ipcMain.handle('get-path', (event, pathName: 'assets' | 'userData') => {
-  return pathName === 'assets' ? PathManager.getStaticAssetPath() : PathManager.getUserDataPath();
-});
-// Legacy handler, to be removed
-ipcMain.handle('resolve-path', (event, pathName: 'assets' | 'userData' | 'customAssets', subpath: string) => {
-  switch (pathName) {
-    case 'assets':
-      return PathManager.getStaticAssetPath(subpath);
-    case 'customAssets':
-      return PathManager.getCustomAssetsPath(subpath);
-    case 'userData':
-    default:
-      return PathManager.getUserDataPath(subpath);
-  }
-});
 ipcMain.handle('path:basename', (event, filePath: string) => {
   return path.basename(filePath);
-});
-// Legacy handler, to be removed
-ipcMain.handle('fs:exists', async (event, filePath: string) => {
-  try {
-    await fsp.access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
 });
 
 // --- Settings IPC Handlers ---
@@ -148,77 +123,50 @@ ipcMain.on('set-llm-settings', (event, settings: LlmSettings) => store.set('llmS
 
 // --- Sequences ---
 const getSequencesByType = async (type: 'sequence' | 'subroutine') => {
-  const sequencesDir = PathManager.getCustomAssetsPath('sequences');
-  try {
-    const files = await fsp.readdir(sequencesDir);
-    const jsonFiles = files.filter(file => file.endsWith('.json'));
+  const sequenceFiles = await resourceManager.listAssets('sequence');
+  const sequencesDir = PathManager.getCustomAssetsPath('sequences'); // Reading content still needs a path
 
-    const filteredFiles = [];
-    for (const file of jsonFiles) {
-      try {
-        const content = await fsp.readFile(path.join(sequencesDir, file), 'utf-8');
-        const data = JSON.parse(content);
-        if (data.type === type) {
-          filteredFiles.push(file);
-        }
-      } catch (e) {
-        // JSON 파싱 오류 등은 무시하고 계속 진행
-        console.warn(`Could not parse or check type for ${file}, skipping. Error: ${e.message}`);
+  const filteredFiles = [];
+  for (const file of sequenceFiles) {
+    try {
+      const content = await fsp.readFile(path.join(sequencesDir, file), 'utf-8');
+      const data = JSON.parse(content);
+      if (data.type === type) {
+        filteredFiles.push(file);
       }
+    } catch (e) {
+      console.warn(`Could not parse or check type for ${file}, skipping. Error: ${e.message}`);
     }
-    return filteredFiles;
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      return [];
-    }
-    throw error;
   }
+  return filteredFiles;
 };
 
 ipcMain.handle('get-all-sequence-files-with-type', async () => {
+  const sequenceFiles = await resourceManager.listAssets('sequence');
   const sequencesDir = PathManager.getCustomAssetsPath('sequences');
-  try {
-    const files = await fsp.readdir(sequencesDir);
-    const jsonFiles = files.filter(file => file.endsWith('.json'));
 
-    const filesWithType = [];
-    for (const file of jsonFiles) {
-      try {
-        const content = await fsp.readFile(path.join(sequencesDir, file), 'utf-8');
-        const data = JSON.parse(content);
-        filesWithType.push({
-          name: file,
-          type: data.type === 'subroutine' ? 'subroutine' : 'sequence',
-        });
-      } catch (e) {
-        console.warn(`Could not parse or check type for ${file}, assuming 'sequence'. Error: ${e.message}`);
-        filesWithType.push({ name: file, type: 'sequence' });
-      }
+  const filesWithType = [];
+  for (const file of sequenceFiles) {
+    try {
+      const content = await fsp.readFile(path.join(sequencesDir, file), 'utf-8');
+      const data = JSON.parse(content);
+      filesWithType.push({
+        name: file,
+        type: data.type === 'subroutine' ? 'subroutine' : 'sequence',
+      });
+    } catch (e) {
+      console.warn(`Could not parse or check type for ${file}, assuming 'sequence'. Error: ${e.message}`);
+      filesWithType.push({ name: file, type: 'sequence' });
     }
-    return filesWithType;
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      return [];
-    }
-    throw error;
   }
+  return filesWithType;
 });
 
 ipcMain.handle('get-sequence-files', () => getSequencesByType('sequence'));
 ipcMain.handle('get-subroutine-files', () => getSequencesByType('subroutine'));
 
 ipcMain.handle('get-2d-asset-list', async () => {
-  try {
-    const assetsDir = PathManager.getCustomAssetsPath('assets');
-    const files = await fsp.readdir(assetsDir);
-    return files.filter(file => /\.(png|jpe?g|gif)$/i.test(file));
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      return []; // Folder doesn't exist yet
-    }
-    console.error('Failed to get 2D asset list:', error);
-    return [];
-  }
+  return resourceManager.listAssets('image');
 });
 
 ipcMain.handle('get-2d-asset-data', async (event, fileName: string) => {
@@ -373,22 +321,9 @@ ipcMain.handle('save-persona-to-file', (event, persona: string) => handleFileDia
 ));
 
 // --- File System Access ---
-ipcMain.handle('read-asset-file', async (event, filePath: string) => {
-  const fullPath = PathManager.getStaticAssetPath(filePath);
-  if (!fullPath.startsWith(PathManager.getStaticAssetPath())) throw new Error('Attempted to read file outside the assets directory.');
-  return fsp.readFile(fullPath).then(data => data.buffer).catch(err => ({ error: err.message }));
-});
 ipcMain.handle('read-absolute-file', async (event, filePath: string) => {
   if (!path.isAbsolute(filePath)) throw new Error('Path must be absolute.');
   return fsp.readFile(filePath).then(data => data.buffer).catch(err => ({ error: err.message }));
-});
-ipcMain.handle('readFile', async (event, filePath: string) => {
-  let fullPath = filePath;
-  if (!path.isAbsolute(filePath)) {
-    fullPath = PathManager.getStaticAssetPath(filePath);
-    if (!fullPath.startsWith(PathManager.getStaticAssetPath())) throw new Error('Attempted to access file outside the assets directory.');
-  }
-  return fsp.readFile(fullPath).then(data => data.buffer).catch(err => ({ error: err.message }));
 });
 
 // --- App Control ---

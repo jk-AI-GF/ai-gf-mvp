@@ -54,15 +54,7 @@ const AnimationEditPanel: React.FC<AnimationEditPanelProps> = ({
       setSelectedKeyframe(null);
 
       try {
-        const userPath = await window.electronAPI.resolvePath('userData', `animations/${animationName}`);
-        const assetPath = await window.electronAPI.resolvePath('assets', `animations/${animationName}`);
-        
-        let filePath: string | null = null;
-        if (await window.electronAPI.fileExists(userPath)) {
-          filePath = userPath;
-        } else if (await window.electronAPI.fileExists(assetPath)) {
-          filePath = assetPath;
-        }
+        const filePath = await window.electronAPI.invoke<string | null>('resource:resolve-path', 'animation', animationName);
 
         if (!filePath) {
           throw new Error(`애니메이션 파일을 찾을 수 없습니다: ${animationName}`);
