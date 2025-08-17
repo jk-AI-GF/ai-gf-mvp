@@ -1,17 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
+import { VRMHumanBoneName } from '@pixiv/three-vrm';
 import * as THREE from 'three';
 import eventBus from '../../core/event-bus';
 import BoneSlider from './BoneSlider';
-import Panel from './Panel';
 import { useAppContext } from '../contexts/AppContext';
 import styles from './JointControlPanel.module.css';
-
-interface JointControlPanelProps {
-  onClose: () => void;
-  initialPos: { x: number, y: number };
-  onDragEnd: (pos: { x: number, y: number }) => void;
-}
 
 type BoneInfo = {
   boneName: VRMHumanBoneName;
@@ -20,7 +13,7 @@ type BoneInfo = {
   z: number;
 };
 
-const JointControlPanel: React.FC<JointControlPanelProps> = ({ onClose, initialPos, onDragEnd }) => {
+const JointControlPanel: React.FC = () => {
   const { pluginManager } = useAppContext();
   const [bones, setBones] = useState<BoneInfo[]>([]);
   const [hipHeight, setHipHeight] = useState(0);
@@ -110,7 +103,7 @@ const JointControlPanel: React.FC<JointControlPanelProps> = ({ onClose, initialP
   }, [pluginManager, updateBoneStateFromVrm]);
 
   return (
-    <Panel title="관절 조절" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
+    <>
       {bones.length === 0 ? (
         <p className="empty-message">VRM 모델을 로드해주세요.</p>
       ) : (
@@ -140,7 +133,7 @@ const JointControlPanel: React.FC<JointControlPanelProps> = ({ onClose, initialP
           ))}
         </>
       )}
-    </Panel>
+    </>
   );
 };
 

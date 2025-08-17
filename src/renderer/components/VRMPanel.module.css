@@ -2,6 +2,8 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  background-color: #2e2e2e;
+  color: #e0e0e0;
 }
 
 .header {
@@ -30,30 +32,16 @@
 .list {
   overflow-y: auto;
   flex-grow: 1;
-  padding: 8px;
 }
 
-.listButton {
-  display: block;
-  width: 100%;
+.listItem {
   padding: 10px 12px;
-  margin-bottom: 6px;
-  background-color: #3a3a3a;
-  color: #e0e0e0;
-  border: 1px solid #555;
-  border-radius: 4px;
-  text-align: left;
   cursor: pointer;
-  transition: background-color 0.2s, border-color 0.2s;
+  border-bottom: 1px solid #383838;
+  font-size: 0.9em;
+  transition: background-color 0.2s;
 }
 
-.listButton:hover {
-  background-color: #4a4a4a;
-  border-color: #777;
-}
-
-.emptyMessage {
-  text-align: center;
-  color: #888;
-  margin-top: 20px;
+.listItem:hover {
+  background-color: #3a3a3a;
 }

@@ -1,70 +1,85 @@
-.content {
-    max-height: 400px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .animationItem {
-    background-color: #333;
-    border: 1px solid #555;
-    color: #eee;
-    padding: 8px 12px;
-    border-radius: 5px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-  }
-  
-  .fileName {
-    flex-grow: 1;
-    font-size: 14px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  .buttonGroup {
-    display: flex;
-    gap: 8px;
-    flex-shrink: 0;
-  }
-  
-  .actionButton {
-    border: none;
-    color: white;
-    padding: 6px 12px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  
-  .editButton {
-    background-color: #007bff; /* Blue */
-  }
-  
-  .editButton:hover {
-    background-color: #0056b3;
-  }
-  
-  .playButton {
-    background-color: #28a745; /* Green */
-  }
-  
-  .playButton:hover {
-    background-color: #1e7e34;
-  }
-  
-  .emptyMessage {
-    color: #888;
-    text-align: center;
-    margin-top: 20px;
-  }
-  
-  
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.header {
+  padding: 8px;
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid #444;
+}
+
+.actionButton {
+  flex: 1;
+  padding: 8px 12px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.2s;
+}
+
+.actionButton:hover {
+  background-color: #5aa1f2;
+}
+
+.list {
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.animationItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid #383838;
+}
+
+.fileName {
+  cursor: pointer;
+  font-size: 0.9em;
+  flex-grow: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fileName:hover {
+  color: #4a90e2;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.listItemActionButton {
+  padding: 4px 8px;
+  font-size: 0.8em;
+  border-radius: 3px;
+  border: 1px solid #555;
+  background-color: #444;
+  color: #ddd;
+  cursor: pointer;
+}
+
+.editButton:hover {
+  background-color: #77dd77;
+}
+
+.playButton:hover {
+  background-color: #4a90e2;
+}
+
+.emptyMessage {
+  text-align: center;
+  color: #888;
+  margin-top: 20px;
+  padding: 0 12px;
+}

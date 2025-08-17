@@ -2,10 +2,9 @@
 // Please do not change this file!
 interface CssExports {
   'actionButton': string;
-  'emptyMessage': string;
   'header': string;
   'list': string;
-  'listButton': string;
+  'listItem': string;
   'panel': string;
 }
 export const cssExports: CssExports;

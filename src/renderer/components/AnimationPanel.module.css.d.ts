@@ -4,10 +4,13 @@ interface CssExports {
   'actionButton': string;
   'animationItem': string;
   'buttonGroup': string;
-  'content': string;
   'editButton': string;
   'emptyMessage': string;
   'fileName': string;
+  'header': string;
+  'list': string;
+  'listItemActionButton': string;
+  'panel': string;
   'playButton': string;
 }
 export const cssExports: CssExports;

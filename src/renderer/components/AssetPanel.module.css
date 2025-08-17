@@ -1,0 +1,41 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #282828;
+}
+
+.tabBar {
+  display: flex;
+  flex-shrink: 0;
+  background-color: #2e2e2e;
+  border-bottom: 1px solid #444;
+}
+
+.tabBar button {
+  flex: 1;
+  padding: 10px 5px;
+  background-color: transparent;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  font-size: 0.85em;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.tabBar button:hover {
+  background-color: #3a3a3a;
+  color: #fff;
+}
+
+.tabBar button.activeTab {
+  color: #4a90e2;
+  border-bottom: 2px solid #4a90e2;
+  font-weight: bold;
+}
+
+.tabContent {
+  flex-grow: 1;
+  overflow-y: auto;
+}

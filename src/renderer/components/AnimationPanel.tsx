@@ -1,18 +1,14 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
-import Panel from './Panel';
+import React, { useState, useEffect } from 'react';
 import styles from './AnimationPanel.module.css';
 import { useAppContext } from '../contexts/AppContext';
 
 interface AnimationPanelProps {
-  onClose: () => void;
-  initialPos: { x: number, y: number };
-  onDragEnd: (pos: { x: number, y: number }) => void;
   onEdit: (fileName: string) => void;
 }
 
-const AnimationPanel: React.FC<AnimationPanelProps> = ({ onClose, initialPos, onDragEnd, onEdit }) => {
-  const { pluginManager } = useAppContext(); // vrmManager에서 pluginManager로 변경
+const AnimationPanel: React.FC<AnimationPanelProps> = ({ onEdit }) => {
+  const { pluginManager } = useAppContext();
   const [animationFiles, setAnimationFiles] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,31 +33,35 @@ const AnimationPanel: React.FC<AnimationPanelProps> = ({ onClose, initialPos, on
   }, []);
 
   const handlePlayClick = (fileName: string) => {
-    if (pluginManager) {
-      pluginManager.context.actions.playAnimation(fileName, false);
-    } else {
-      console.error('pluginManager is not available.');
-      setError('플러그인 매니저를 찾을 수 없습니다.');
-    }
+    pluginManager?.context.actions.playAnimation(fileName, false);
+  };
+
+  const handleOpenExplorer = () => {
+    window.electronAPI.invoke('resource:open-in-explorer', 'animation');
   };
 
   return (
-    <Panel title="애니메이션 선택" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
-      <div className={styles.content}>
+    <div className={styles.panel}>
+      <div className={styles.header}>
+        <button className={styles.actionButton} onClick={handleOpenExplorer}>
+          파일매니저에서 열기
+        </button>
+      </div>
+      <div className={styles.list}>
         {error && <p className={styles.emptyMessage}>{error}</p>}
         {animationFiles.map((file) => (
           <div key={file} className={styles.animationItem}>
-            <span className={styles.fileName}>{file}</span>
+            <span className={styles.fileName} onClick={() => handlePlayClick(file)}>{file}</span>
             <div className={styles.buttonGroup}>
               <button
                 onClick={() => onEdit(file)}
-                className={`${styles.actionButton} ${styles.editButton}`}
+                className={`${styles.listItemActionButton} ${styles.editButton}`}
               >
                 편집
               </button>
               <button
                 onClick={() => handlePlayClick(file)}
-                className={`${styles.actionButton} ${styles.playButton}`}
+                className={`${styles.listItemActionButton} ${styles.playButton}`}
               >
                 재생
               </button>
@@ -69,7 +69,7 @@ const AnimationPanel: React.FC<AnimationPanelProps> = ({ onClose, initialPos, on
           </div>
         ))}
       </div>
-    </Panel>
+    </div>
   );
 };
 

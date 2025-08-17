@@ -1,5 +1,5 @@
 import '../core/path-manager';
-import { app, BrowserWindow, globalShortcut, dialog, session, ipcMain, screen } from 'electron';
+import { app, BrowserWindow, globalShortcut, dialog, session, ipcMain, screen, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import fsp from 'fs/promises';
@@ -106,6 +106,10 @@ ipcMain.handle('list-assets', (event, assetType) => {
 });
 ipcMain.handle('path:basename', (event, filePath: string) => {
   return path.basename(filePath);
+});
+ipcMain.handle('resource:open-in-explorer', (event, assetType) => {
+  const assetPath = PathManager.getCustomAssetsPath(assetType);
+  shell.openPath(assetPath);
 });
 
 // --- Settings IPC Handlers ---

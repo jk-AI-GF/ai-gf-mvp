@@ -19,6 +19,7 @@ import { LlmSettings } from '../core/llm-settings';
   savePersonaToFile: (persona: string) => ipcRenderer.invoke('save-persona-to-file', persona),
   openPersonaFile: () => ipcRenderer.invoke('open-persona-file'),
   readAbsoluteFile: async (filePath: string) => ipcRenderer.invoke('read-absolute-file', filePath),
+  openInExplorer: (assetType: 'vrm' | 'animation' | 'pose') => ipcRenderer.invoke('resource:open-in-explorer', assetType),
 
   // Action API
   playAnimation: (animationName: string, loop: boolean, crossFadeDuration: number) => ipcRenderer.invoke('play-animation', animationName, loop, crossFadeDuration),
@@ -105,6 +106,7 @@ declare global {
       savePersonaToFile: (persona: string) => Promise<{ success: boolean, message?: string, error?: string }>;
       openPersonaFile: () => Promise<string | null>;
       readAbsoluteFile: (filePath: string) => Promise<ArrayBuffer | { error: string }>;
+      openInExplorer: (assetType: 'vrm' | 'animation' | 'pose') => Promise<void>;
 
       // Action API
       playAnimation: (animationName: string, loop: boolean, crossFadeDuration: number) => Promise<void>;

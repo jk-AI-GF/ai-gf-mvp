@@ -274,6 +274,7 @@ export class VRMManager {
         this.removeHitboxes();
 
         const vrmPath = await window.electronAPI.invoke<string | null>('resource:resolve-path', 'vrm', filePathOrUrl);
+
         if (!vrmPath) {
             alert(`Failed to find VRM model: ${filePathOrUrl}`);
             return;
@@ -881,6 +882,8 @@ export class VRMManager {
           }
         }
       });
+
+      this.eventBus.emit('vrm:scaled', { scale: newScale });
     }
 }
 

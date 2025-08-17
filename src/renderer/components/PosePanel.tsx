@@ -1,17 +1,10 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
-import Panel from './Panel';
+import React, { useState, useEffect } from 'react';
 import styles from './PosePanel.module.css';
 import { useAppContext } from '../contexts/AppContext';
 
-interface PosePanelProps {
-  onClose: () => void;
-  initialPos: { x: number, y: number };
-  onDragEnd: (pos: { x: number, y: number }) => void;
-}
-
-const PosePanel: React.FC<PosePanelProps> = ({ onClose, initialPos, onDragEnd }) => {
-  const { pluginManager } = useAppContext(); // vrmManager에서 pluginManager로 변경
+const PosePanel: React.FC = () => {
+  const { pluginManager } = useAppContext();
   const [poseFiles, setPoseFiles] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,18 +29,28 @@ const PosePanel: React.FC<PosePanelProps> = ({ onClose, initialPos, onDragEnd })
   }, []);
 
   const handlePoseClick = (fileName: string) => {
-    if (pluginManager) {
-      // 표준 Actions 인터페이스를 통해 포즈 설정
-      pluginManager.context.actions.setPose(fileName);
-    } else {
-      console.error('pluginManager is not available.');
-      setError('플러그인 매니저를 찾을 수 없습니다.');
-    }
+    pluginManager?.context.actions.setPose(fileName);
+  };
+
+  const handleSavePose = () => {
+    pluginManager?.context.actions.saveCurrentPose();
+  };
+
+  const handleOpenExplorer = () => {
+    window.electronAPI.invoke('resource:open-in-explorer', 'pose');
   };
 
   return (
-    <Panel title="포즈 선택" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
-      <div className={styles.content}>
+    <div className={styles.panel}>
+      <div className={styles.header}>
+        <button className={styles.actionButton} onClick={handleSavePose}>
+          Save Current Pose
+        </button>
+        <button className={styles.actionButton} onClick={handleOpenExplorer}>
+          파일매니저에서 열기
+        </button>
+      </div>
+      <div className={styles.list}>
         {error && <p className={styles.emptyMessage}>{error}</p>}
         {poseFiles.map((file) => (
           <button
@@ -59,7 +62,7 @@ const PosePanel: React.FC<PosePanelProps> = ({ onClose, initialPos, onDragEnd })
           </button>
         ))}
       </div>
-    </Panel>
+    </div>
   );
 };
 
