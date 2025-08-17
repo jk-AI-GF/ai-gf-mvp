@@ -14,13 +14,16 @@ import { characterState } from './character-state';
 // 이 파일은 모든 시스템 액션을 ActionRegistry에 등록하는 역할을 합니다.
 // 렌더러 프로세스에서만 사용됩니다.
 
+import { ChatService } from '../renderer/chat-service';
+
 export function registerCoreActions(
   registry: ActionRegistry,
   context: PluginContext,
   renderer: WebGLRenderer,
+  chatService: ChatService,
 ) {
   const { vrmManager, sequenceManager, imageAssetManager } = context;
-  if (!vrmManager || !renderer || !sequenceManager || !imageAssetManager) {
+  if (!vrmManager || !renderer || !sequenceManager || !imageAssetManager || !chatService) {
     console.error("Cannot register core actions: A required manager is missing from the context.");
     return;
   }
@@ -28,6 +31,59 @@ export function registerCoreActions(
   // getAvailableActions는 특별한 케이스로, 레지스트리 자체에서 정보를 가져옵니다.
   // 별도로 등록하지 않고 context-factory에서 직접 처리합니다.
 
+  // --- LLM Actions ---
+  registry.register(
+    {
+      name: 'llm.invoke',
+      description: 'LLM에 동적 프롬프트를 보내고 응답을 받습니다.',
+      params: [
+        { name: 'userRequest', type: 'string', description: 'LLM에게 전달할 핵심 요청' },
+        { name: 'includeBasePrompt', type: 'boolean', defaultValue: true, description: '기본 시스템 프롬프트를 포함할지 여부' },
+        { name: 'includePersona', type: 'boolean', defaultValue: true, description: '현재 페르소나 정보를 포함할지 여부' },
+        { name: 'includeCharacterState', type: 'boolean', defaultValue: true, description: '캐릭터의 현재 상태를 포함할지 여부' },
+        { name: 'includeSubroutines', type: 'boolean', defaultValue: true, description: '사용 가능한 서브루틴 목록과 JSON 출력 형식을 포함할지 여부' },
+        { name: 'includeChatHistory', type: 'boolean', defaultValue: false, description: '현재 대화 기록을 포함할지 여부' },
+        { name: 'responseAsJson', type: 'boolean', defaultValue: false, description: '응답을 순수 텍스트 대신 JSON 객체(문자열)로 받을지 여부' },
+      ],
+      returns: { type: 'string', description: 'LLM의 응답 (텍스트 또는 JSON 문자열)' },
+    },
+    async (
+      userRequest: string,
+      includeBasePrompt?: boolean,
+      includePersona?: boolean,
+      includeCharacterState?: boolean,
+      includeSubroutines?: boolean,
+      includeChatHistory?: boolean,
+      responseAsJson?: boolean
+    ) => {
+      try {
+        const llmSettings = await window.electronAPI.getLlmSettings();
+        const persona = await window.electronAPI.getPersona();
+
+        const systemPrompt = chatService.buildDynamicSystemPrompt(persona, llmSettings, {
+          userRequest,
+          includeBasePrompt,
+          includePersona,
+          includeCharacterState,
+          includeSubroutines,
+        });
+
+        const history = includeChatHistory ? chatService.getChatHistory() : [];
+        
+        const payload = await chatService.invokeLlm(systemPrompt, history, llmSettings);
+        
+        if (responseAsJson) {
+          return JSON.stringify(payload);
+        }
+        
+        return payload.text || '';
+      } catch (error) {
+        console.error('[Action] llm.invoke failed:', error);
+        return responseAsJson ? '{}' : '';
+      }
+    }
+  );
+  
   registry.register(
     {
       name: 'playAnimation',

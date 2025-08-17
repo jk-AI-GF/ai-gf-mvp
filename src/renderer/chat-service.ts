@@ -51,6 +51,10 @@ export class ChatService {
     });
   }
 
+  public getChatHistory(): HistoryMessage[] {
+    return [...this.chatHistory];
+  }
+
   /**
    * 사용자의 채팅 메시지를 처리하고 LLM 응답을 요청합니다.
    */
@@ -67,11 +71,17 @@ export class ChatService {
     this.chatHistory.push({ role: 'user', content: userMsg });
 
     try {
-      // 채팅 시나리오에 맞는 시스템 프롬프트를 생성합니다.
-      const systemPrompt = this._buildChatSystemPrompt(persona, llmSettings);
+      // 채팅 시나리오에서는 모든 컨텍스트를 포함하여 프롬프트를 생성합니다.
+      const systemPrompt = this.buildDynamicSystemPrompt(persona, llmSettings, {
+        userRequest: userMsg,
+        includeBasePrompt: true,
+        includePersona: true,
+        includeCharacterState: true,
+        includeSubroutines: true,
+      });
 
       // 범용 LLM 호출 함수를 사용합니다.
-      const payload = await this._invokeLlm(systemPrompt, this.chatHistory, llmSettings);
+      const payload = await this.invokeLlm(systemPrompt, this.chatHistory, llmSettings);
 
       // LLM 응답을 기반으로 관련 이벤트를 발생시켜 다른 시스템들이 처리하도록 합니다.
       const speech = payload.text || "죄송해요, 잘 이해하지 못했어요.";
@@ -93,27 +103,71 @@ export class ChatService {
   }
 
   /**
-   * 채팅 시나리오에 특화된 시스템 프롬프트를 생성합니다.
+   * 옵션에 따라 동적으로 시스템 프롬프트를 생성합니다.
+   * @param persona - 캐릭터 페르소나
+   * @param llmSettings - LLM 설정
+   * @param options - 프롬프트에 포함할 요소들을 제어하는 불리언 값들의 객체
+   * @returns 생성된 시스템 프롬프트 문자열
    */
-  private _buildChatSystemPrompt(persona: string, llmSettings: LlmSettings): string {
-    const vrmExpressionList = this.vrmManager.currentVrm
-      ? Object.keys(this.vrmManager.currentVrm.expressionManager.expressionMap)
-      : ['neutral', 'happy', 'sad'];
+  public buildDynamicSystemPrompt(
+    persona: string,
+    llmSettings: LlmSettings,
+    options: {
+      userRequest: string;
+      includeBasePrompt?: boolean;
+      includePersona?: boolean;
+      includeCharacterState?: boolean;
+      includeSubroutines?: boolean;
+    }
+  ): string {
+    const {
+      userRequest,
+      includeBasePrompt = true,
+      includePersona = true,
+      includeCharacterState = true,
+      includeSubroutines = true,
+    } = options;
 
-    const currentState = characterState.toJSON();
-    const stateJson = JSON.stringify(currentState, null, 2);
+    let parts: string[] = [];
 
-    const combinedSystemPrompt = `${llmSettings.systemPrompt}\n\n${persona}\n\n캐릭터의 현재 상태는 다음과 같습니다:\n${stateJson}`;
+    if (includeBasePrompt) {
+      parts.push(llmSettings.systemPrompt);
+    }
+    if (includePersona) {
+      parts.push(persona);
+    }
+    if (includeCharacterState) {
+      const currentState = characterState.toJSON();
+      const stateJson = JSON.stringify(currentState, null, 2);
+      parts.push(`캐릭터의 현재 상태는 다음과 같습니다:\n${stateJson}`);
+    }
 
-    const basePrompt = `${combinedSystemPrompt}\n\n모든 응답에 <표정: [표정_이름]> 형식의 표정 태그를 포함해 주세요. 표정_이름은 다음 목록 중 하나여야 합니다: ${vrmExpressionList.join(', ')}. 예시: <표정: happy> 안녕하세요!`;
-    
-    const availableSubroutines = this.pluginManager.context?.sequenceManager?.getAvailableSubroutines() || [];
-    const subJson = JSON.stringify(availableSubroutines, null, 2);
-    
-    return `${basePrompt}\n\n다음 JSON 배열은 현재 실행 가능한 Action(서브루틴) 목록입니다:
-${subJson}
+    // 표정 목록은 서브루틴(JSON 응답)을 요구할 때만 의미가 있으므로 함께 묶습니다.
+    if (includeSubroutines) {
+      const vrmExpressionList = this.vrmManager.currentVrm
+        ? Object.keys(this.vrmManager.currentVrm.expressionManager.expressionMap)
+        : ['neutral', 'happy', 'sad'];
+      
+      parts.push(`모든 응답에 <표정: [표정_이름]> 형식의 표정 태그를 포함해 주세요. 표정_이름은 다음 목록 중 하나여야 합니다: ${vrmExpressionList.join(', ')}. 예시: <표정: happy> 안녕하세요!`);
 
-사용자의 다음 요청을 분석하여, 가장 적절한 행동을 결정하세요.
+      const availableSubroutines = this.pluginManager.context?.sequenceManager?.getAvailableSubroutines() || [];
+      const subJson = JSON.stringify(availableSubroutines, null, 2);
+      
+      parts.push(`다음 JSON 배열은 현재 실행 가능한 Action(서브루틴) 목록입니다:\n${subJson}`);
+      parts.push(this.getJsonResponseFormatInstruction());
+    }
+
+    // 최종적으로 사용자의 요청을 추가합니다.
+    parts.push(`사용자의 요청:\n"""\n${userRequest}\n"""`);
+
+    return parts.join('\n\n');
+  }
+
+  /**
+   * LLM에게 JSON 응답 형식을 지시하는 템플릿 문자열을 반환합니다.
+   */
+  private getJsonResponseFormatInstruction(): string {
+    return `사용자의 요청을 분석하여, 가장 적절한 행동을 결정하세요.
 
 **응답 생성 규칙:**
 1.  **먼저 생각하기 (Think Step):** 사용자의 요청을 완수하기 위해 어떤 서브루틴을 사용해야 할지, 또는 단순 대화로 충분할지 판단합니다. 복잡한 요청은 여러 서브루틴의 조합으로 해결할 수 있습니다.
@@ -164,7 +218,7 @@ ${subJson}
    * @param llmSettings 사용할 LLM 설정
    * @returns 파싱된 JSON 객체 응답
    */
-  private async _invokeLlm(
+  public async invokeLlm(
     systemPrompt: string,
     history: HistoryMessage[],
     llmSettings: LlmSettings

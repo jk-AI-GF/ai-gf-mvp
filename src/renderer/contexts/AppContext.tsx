@@ -149,8 +149,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const sequenceManager = new SequenceManager(pluginManager.context);
     pluginManager.context.sequenceManager = sequenceManager;
 
+    const chatService = new ChatService(vrmManager, pluginManager);
+
     // IMPORTANT: Register core actions and data providers now that the context is fully populated
-    registerCoreActions(actionRegistry, pluginManager.context, renderer);
+    registerCoreActions(actionRegistry, pluginManager.context, renderer, chatService);
     registerCoreDataProviders(dataProviderRegistry, pluginManager.context);
     console.log('[AppContext] Core actions and data providers registered.');
 
@@ -165,8 +167,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     pluginManager.register(new LlmResponseHandlerPlugin());
     pluginManager.register(new InteractionTrackerPlugin());
     console.log('[AppContext] All plugins registered.');
-
-    const chatService = new ChatService(vrmManager, pluginManager);
 
     setManagers({
       vrmManager,
@@ -184,7 +184,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       console.log("[AppContext] SequenceManager initialized.");
       setSequenceManagerInitialized(true); // Signal that initialization is complete
       vrmManager.loadVRM('VRM/Liqu.vrm');
-    }).catch(err => console.error("Failed to initialize SequenceManager:", err));
+    }).catch((err: any) => console.error("Failed to initialize SequenceManager:", err));
 
   }, [coreManagers]);
 
