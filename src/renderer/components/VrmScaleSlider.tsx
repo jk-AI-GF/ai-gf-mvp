@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppContext } from '../contexts/AppContext';
 import styles from './VrmScaleSlider.module.css';
 
 const VrmScaleSlider: React.FC = () => {
+  const { t } = useTranslation();
   const { vrmManager } = useAppContext();
   const [scale, setScale] = useState(1.0);
 
@@ -37,7 +39,7 @@ const VrmScaleSlider: React.FC = () => {
 
   return (
     <div className={styles.sliderContainer}>
-      <label htmlFor="vrmScale" className={styles.sliderLabel}>스케일</label>
+      <label htmlFor="vrmScale" className={styles.sliderLabel}>{t('vrmScaleSlider.scale')}</label>
       <input
         type="range"
         id="vrmScale"

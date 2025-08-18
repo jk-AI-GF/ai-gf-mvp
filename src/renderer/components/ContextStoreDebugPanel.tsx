@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import Panel from './Panel';
 import styles from './ContextStoreDebugPanel.module.css';
 import { useAppContext } from '../contexts/AppContext';
@@ -10,6 +11,7 @@ interface ContextStoreDebugPanelProps {
 }
 
 const ContextStoreDebugPanel: React.FC<ContextStoreDebugPanelProps> = ({ onClose, initialPos, onDragEnd }) => {
+  const { t } = useTranslation();
   const { contextStore } = useAppContext();
   const [contextData, setContextData] = useState<Record<string, any>>({});
 
@@ -32,13 +34,13 @@ const ContextStoreDebugPanel: React.FC<ContextStoreDebugPanelProps> = ({ onClose
   }, [contextStore]);
 
   return (
-    <Panel title="컨텍스트 스토어 뷰어" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
+    <Panel title={t('contextStoreDebugPanel.title')} onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
       <div className={styles.container}>
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Key</th>
-              <th>Value</th>
+              <th>{t('contextStoreDebugPanel.key')}</th>
+              <th>{t('contextStoreDebugPanel.value')}</th>
             </tr>
           </thead>
           <tbody>
@@ -51,7 +53,7 @@ const ContextStoreDebugPanel: React.FC<ContextStoreDebugPanelProps> = ({ onClose
               ))
             ) : (
               <tr>
-                <td colSpan={2} className={styles.emptyMessage}>No data in context store.</td>
+                <td colSpan={2} className={styles.emptyMessage}>{t('contextStoreDebugPanel.noData')}</td>
               </tr>
             )}
           </tbody>

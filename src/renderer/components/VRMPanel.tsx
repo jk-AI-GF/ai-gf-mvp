@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppContext } from '../contexts/AppContext';
 import styles from './VRMPanel.module.css';
 import { VRMMeta } from '@pixiv/three-vrm';
 import VRMPreviewDialog from './VRMPreviewDialog';
 
 const VRMPanel: React.FC = () => {
+  const { t } = useTranslation();
   const { vrmManager } = useAppContext();
   const [vrmFiles, setVrmFiles] = useState<string[]>([]);
   const [vrmPreview, setVrmPreview] = useState<{ path: string; meta: VRMMeta } | null>(null);
@@ -28,7 +30,7 @@ const VRMPanel: React.FC = () => {
         if (meta) {
             setVrmPreview({ path: fileName, meta }); // Pass fileName, not absolutePath
         } else {
-            alert('Failed to read VRM metadata.');
+            alert(t('vrmPanel.metaReadError'));
         }
     }
   };
@@ -53,7 +55,7 @@ const VRMPanel: React.FC = () => {
       <div className={styles.panel}>
         <div className={styles.header}>
           <button className={styles.actionButton} onClick={handleOpenExplorer}>
-            파일매니저에서 열기
+            {t('animationPanel.openInExplorer')}
           </button>
         </div>
         <div className={styles.list}>

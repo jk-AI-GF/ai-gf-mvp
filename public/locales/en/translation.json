@@ -120,5 +120,61 @@
   "posePanel": {
     "noFiles": "No saved pose files (.vrma) found.",
     "saveCurrentPose": "Save Current Pose"
+  },
+  "vrmPanel": {
+    "metaReadError": "Failed to read VRM metadata."
+  },
+  "vrmPreviewDialog": {
+    "allow": "Allow",
+    "disallow": "Disallow",
+    "title": "Load VRM",
+    "noPreview": "No Preview",
+    "metaTitle": "Title",
+    "metaAuthors": "Author(s)",
+    "metaVersion": "Version",
+    "metaFile": "File",
+    "permissionsTitle": "Permissions (VRM {{version}}.0)",
+    "v1": {
+      "avatarPermission": "Avatar Permission",
+      "commercialUsage": "Commercial Usage",
+      "allowRedistribution": "Allow Redistribution",
+      "creditNotation": "Credit Notation",
+      "modification": "Modification",
+      "allowExcessivelyViolentUsage": "Excessively Violent",
+      "allowExcessivelySexualUsage": "Excessively Sexual",
+      "allowPoliticalOrReligiousUsage": "Political/Religious",
+      "allowAntisocialOrHateUsage": "Antisocial/Hate"
+    },
+    "v0": {
+      "allowedUserName": "Allowed User",
+      "violentUssageName": "Violent Usage",
+      "sexualUssageName": "Sexual Usage",
+      "commercialUssageName": "Commercial Usage",
+      "licenseName": "License"
+    },
+    "confirmMessage": "Would you like to load this model?",
+    "cancel": "Cancel",
+    "load": "Load"
+  },
+  "boneSlider": {
+    "reset": "Reset"
+  },
+  "contextStoreDebugPanel": {
+    "title": "Context Store Viewer",
+    "key": "Key",
+    "value": "Value",
+    "noData": "No data in context store."
+  },
+  "editMenu": {
+    "vrm": "VRM",
+    "joint": "Joints",
+    "expression": "Expressions",
+    "pose": "Poses",
+    "animation": "Anims",
+    "mesh": "Mesh",
+    "hitboxes": "Hitboxes"
+  },
+  "vrmScaleSlider": {
+    "scale": "Scale"
   }
 }

@@ -11,13 +11,14 @@ interface VRMPreviewDialogProps {
 }
 
 const MetaField: React.FC<{ label: string; value?: string | string[] | boolean | null; link?: string }> = ({ label, value, link }) => {
+  const { t } = useTranslation();
   if (value === undefined || value === null || (Array.isArray(value) && value.length === 0)) {
     return null;
   }
 
   let displayValue: React.ReactNode;
   if (typeof value === 'boolean') {
-    displayValue = value ? <span className={styles.allow}>Allow</span> : <span className={styles.disallow}>Disallow</span>;
+    displayValue = value ? <span className={styles.allow}>{t('vrmPreviewDialog.allow')}</span> : <span className={styles.disallow}>{t('vrmPreviewDialog.disallow')}</span>;
   } else if (Array.isArray(value)) {
     displayValue = value.join(', ');
   } else {
@@ -42,6 +43,7 @@ const VRMPreviewDialog: React.FC<VRMPreviewDialogProps> = ({
   onConfirm,
   onCancel,
 }) => {
+  const { t } = useTranslation();
   const [thumbnail, setThumbnail] = useState<string | null>(null);
 
   useEffect(() => {
@@ -80,57 +82,57 @@ const VRMPreviewDialog: React.FC<VRMPreviewDialogProps> = ({
   return (
     <div className={styles.overlay}>
       <div className={styles.dialog}>
-        <h2 className={styles.title}>Load VRM</h2>
+        <h2 className={styles.title}>{t('vrmPreviewDialog.title')}</h2>
         <div className={styles.content}>
           {thumbnail ? (
             <img src={thumbnail} alt="VRM Thumbnail" className={styles.thumbnail} />
           ) : (
-            <div className={`${styles.thumbnail} ${styles.noThumbnail}`}>No Preview</div>
+            <div className={`${styles.thumbnail} ${styles.noThumbnail}`}>{t('vrmPreviewDialog.noPreview')}</div>
           )}
           <div className={styles.info}>
-            <MetaField label="Title" value={v1Meta?.name || v0Meta?.title} />
-            <MetaField label="Author(s)" value={v1Meta?.authors || v0Meta?.author} />
-            <MetaField label="Version" value={v1Meta?.version || v0Meta?.version} />
+            <MetaField label={t('vrmPreviewDialog.metaTitle')} value={v1Meta?.name || v0Meta?.title} />
+            <MetaField label={t('vrmPreviewDialog.metaAuthors')} value={v1Meta?.authors || v0Meta?.author} />
+            <MetaField label={t('vrmPreviewDialog.metaVersion')} value={v1Meta?.version || v0Meta?.version} />
             <p className={styles.filePath}>
-              <strong>File:</strong> {filePath}
+              <strong>{t('vrmPreviewDialog.metaFile')}:</strong> {filePath}
             </p>
           </div>
         </div>
 
         <div className={styles.details}>
-          <h3 className={styles.subtitle}>Permissions (VRM {meta.metaVersion}.0)</h3>
+          <h3 className={styles.subtitle}>{t('vrmPreviewDialog.permissionsTitle', { version: meta.metaVersion })}</h3>
           {isV1 && v1Meta && (
             <>
-              <MetaField label="Avatar Permission" value={v1Meta.avatarPermission} />
-              <MetaField label="Commercial Usage" value={v1Meta.commercialUsage} />
-              <MetaField label="Allow Redistribution" value={v1Meta.allowRedistribution} />
-              <MetaField label="Credit Notation" value={v1Meta.creditNotation} />
-              <MetaField label="Modification" value={v1Meta.modification} />
+              <MetaField label={t('vrmPreviewDialog.v1.avatarPermission')} value={v1Meta.avatarPermission} />
+              <MetaField label={t('vrmPreviewDialog.v1.commercialUsage')} value={v1Meta.commercialUsage} />
+              <MetaField label={t('vrmPreviewDialog.v1.allowRedistribution')} value={v1Meta.allowRedistribution} />
+              <MetaField label={t('vrmPreviewDialog.v1.creditNotation')} value={v1Meta.creditNotation} />
+              <MetaField label={t('vrmPreviewDialog.v1.modification')} value={v1Meta.modification} />
               <hr className={styles.separator} />
-              <MetaField label="Excessively Violent" value={v1Meta.allowExcessivelyViolentUsage} />
-              <MetaField label="Excessively Sexual" value={v1Meta.allowExcessivelySexualUsage} />
-              <MetaField label="Political/Religious" value={v1Meta.allowPoliticalOrReligiousUsage} />
-              <MetaField label="Antisocial/Hate" value={v1Meta.allowAntisocialOrHateUsage} />
+              <MetaField label={t('vrmPreviewDialog.v1.allowExcessivelyViolentUsage')} value={v1Meta.allowExcessivelyViolentUsage} />
+              <MetaField label={t('vrmPreviewDialog.v1.allowExcessivelySexualUsage')} value={v1Meta.allowExcessivelySexualUsage} />
+              <MetaField label={t('vrmPreviewDialog.v1.allowPoliticalOrReligiousUsage')} value={v1Meta.allowPoliticalOrReligiousUsage} />
+              <MetaField label={t('vrmPreviewDialog.v1.allowAntisocialOrHateUsage')} value={v1Meta.allowAntisocialOrHateUsage} />
             </>
           )}
           {!isV1 && v0Meta && (
             <>
-              <MetaField label="Allowed User" value={v0Meta.allowedUserName} />
-              <MetaField label="Violent Usage" value={v0Meta.violentUssageName} />
-              <MetaField label="Sexual Usage" value={v0Meta.sexualUssageName} />
-              <MetaField label="Commercial Usage" value={v0Meta.commercialUssageName} />
-              <MetaField label="License" value={v0Meta.licenseName} link={v0Meta.otherLicenseUrl} />
+              <MetaField label={t('vrmPreviewDialog.v0.allowedUserName')} value={v0Meta.allowedUserName} />
+              <MetaField label={t('vrmPreviewDialog.v0.violentUssageName')} value={v0Meta.violentUssageName} />
+              <MetaField label={t('vrmPreviewDialog.v0.sexualUssageName')} value={v0Meta.sexualUssageName} />
+              <MetaField label={t('vrmPreviewDialog.v0.commercialUssageName')} value={v0Meta.commercialUssageName} />
+              <MetaField label={t('vrmPreviewDialog.v0.licenseName')} value={v0Meta.licenseName} link={v0Meta.otherLicenseUrl} />
             </>
           )}
         </div>
 
-        <p className={styles.confirmMessage}>Would you like to load this model?</p>
+        <p className={styles.confirmMessage}>{t('vrmPreviewDialog.confirmMessage')}</p>
         <div className={styles.buttons}>
           <button onClick={onCancel} className={`${styles.button} ${styles.cancelButton}`}>
-            Cancel
+            {t('vrmPreviewDialog.cancel')}
           </button>
           <button onClick={handleConfirm} className={`${styles.button} ${styles.confirmButton}`}>
-            Load
+            {t('vrmPreviewDialog.load')}
           </button>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import eventBus from '../../core/event-bus';
 import styles from './EditMenu.module.css';
 import VrmScaleSlider from './VrmScaleSlider';
@@ -11,6 +12,7 @@ interface EditMenuProps {
 }
 
 const EditMenu: React.FC<EditMenuProps> = ({ onOpenAssetPanel, onOpenMeshControlPanel }) => {
+  const { t } = useTranslation();
   const { pluginManager } = useAppContext();
   const [isVisible, setIsVisible] = useState(false);
   const [showHitboxes, setShowHitboxes] = useState(false);
@@ -35,12 +37,12 @@ const EditMenu: React.FC<EditMenuProps> = ({ onOpenAssetPanel, onOpenMeshControl
 
   return (
     <div className={styles.menuContainer}>
-      <button className={styles.menuButton} onClick={() => onOpenAssetPanel('vrm')}>VRM</button>
-      <button className={styles.menuButton} onClick={() => onOpenAssetPanel('joint')}>관절</button>
-      <button className={styles.menuButton} onClick={() => onOpenAssetPanel('expression')}>표정</button>
-      <button className={styles.menuButton} onClick={() => onOpenAssetPanel('pose')}>포즈</button>
-      <button className={styles.menuButton} onClick={() => onOpenAssetPanel('animation')}>애니</button>
-      <button className={styles.menuButton} onClick={onOpenMeshControlPanel}>메쉬</button>
+      <button className={styles.menuButton} onClick={() => onOpenAssetPanel('vrm')}>{t('editMenu.vrm')}</button>
+      <button className={styles.menuButton} onClick={() => onOpenAssetPanel('joint')}>{t('editMenu.joint')}</button>
+      <button className={styles.menuButton} onClick={() => onOpenAssetPanel('expression')}>{t('editMenu.expression')}</button>
+      <button className={styles.menuButton} onClick={() => onOpenAssetPanel('pose')}>{t('editMenu.pose')}</button>
+      <button className={styles.menuButton} onClick={() => onOpenAssetPanel('animation')}>{t('editMenu.animation')}</button>
+      <button className={styles.menuButton} onClick={onOpenMeshControlPanel}>{t('editMenu.mesh')}</button>
       
       <div className={styles.checkboxContainer}>
         <input
@@ -49,7 +51,7 @@ const EditMenu: React.FC<EditMenuProps> = ({ onOpenAssetPanel, onOpenMeshControl
           checked={showHitboxes}
           onChange={handleToggleHitboxes}
         />
-        <label htmlFor="showHitboxes" className={styles.checkboxLabel}>히트박스</label>
+        <label htmlFor="showHitboxes" className={styles.checkboxLabel}>{t('editMenu.hitboxes')}</label>
       </div>
       <VrmScaleSlider />
     </div>

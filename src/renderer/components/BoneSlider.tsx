@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { VRMHumanBoneName } from '@pixiv/three-vrm';
 
 interface BoneSliderProps {
@@ -11,6 +12,7 @@ interface BoneSliderProps {
 }
 
 const BoneSlider: React.FC<BoneSliderProps> = React.memo(({ boneName, x, y, z, onSliderChange, onReset }) => {
+  const { t } = useTranslation();
   console.log(`Rendering BoneSlider for: ${boneName}`); // For debugging re-renders
   return (
     <div style={{ marginBottom: '15px' }} data-bone-name={boneName}>
@@ -28,7 +30,7 @@ const BoneSlider: React.FC<BoneSliderProps> = React.memo(({ boneName, x, y, z, o
         </div>
       ))}
       <button onClick={() => onReset(boneName)} style={{ marginTop: '5px', padding: '5px 10px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.8rem' }}>
-        초기화
+        {t('boneSlider.reset')}
       </button>
     </div>
   );

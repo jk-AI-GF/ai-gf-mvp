@@ -120,5 +120,61 @@
   "posePanel": {
     "noFiles": "저장된 포즈 파일(.vrma)이 없습니다.",
     "saveCurrentPose": "현재 포즈 저장"
+  },
+  "vrmPanel": {
+    "metaReadError": "VRM 메타데이터를 읽는 데 실패했습니다."
+  },
+  "vrmPreviewDialog": {
+    "allow": "허용",
+    "disallow": "비허용",
+    "title": "VRM 불러오기",
+    "noPreview": "미리보기 없음",
+    "metaTitle": "제목",
+    "metaAuthors": "제작자",
+    "metaVersion": "버전",
+    "metaFile": "파일",
+    "permissionsTitle": "권한 (VRM {{version}}.0)",
+    "v1": {
+      "avatarPermission": "아바타 사용 권한",
+      "commercialUsage": "상업적 이용",
+      "allowRedistribution": "재배포 허용",
+      "creditNotation": "크레딧 표기",
+      "modification": "수정",
+      "allowExcessivelyViolentUsage": "과도한 폭력",
+      "allowExcessivelySexualUsage": "과도한 성적 표현",
+      "allowPoliticalOrReligiousUsage": "정치/종교적 이용",
+      "allowAntisocialOrHateUsage": "반사회적/혐오 표현"
+    },
+    "v0": {
+      "allowedUserName": "허용된 사용자",
+      "violentUssageName": "폭력적 사용",
+      "sexualUssageName": "성적 사용",
+      "commercialUssageName": "상업적 이용",
+      "licenseName": "라이선스"
+    },
+    "confirmMessage": "이 모델을 불러오시겠습니까?",
+    "cancel": "취소",
+    "load": "불러오기"
+  },
+  "boneSlider": {
+    "reset": "초기화"
+  },
+  "contextStoreDebugPanel": {
+    "title": "컨텍스트 스토어 뷰어",
+    "key": "키",
+    "value": "값",
+    "noData": "컨텍스트 스토어에 데이터가 없습니다."
+  },
+  "editMenu": {
+    "vrm": "VRM",
+    "joint": "관절",
+    "expression": "표정",
+    "pose": "포즈",
+    "animation": "애니",
+    "mesh": "메쉬",
+    "hitboxes": "히트박스"
+  },
+  "vrmScaleSlider": {
+    "scale": "스케일"
   }
 }
