@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './Sidebar.module.css';
 import eventBus from '../../core/event-bus';
 import { useAppContext } from '../contexts/AppContext';
@@ -22,7 +23,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   onOpenLightPanel,
   onOpenCreatorPanel,
 }) => {
-  const { pluginManager, contextStore } = useAppContext();
+  const { contextStore } = useAppContext();
+  const { t } = useTranslation();
   const [isEditMode, setIsEditMode] = useState(false);
 
   const handleToggleEditMode = () => {
@@ -47,21 +49,21 @@ const Sidebar: React.FC<SidebarProps> = ({
           className={`${styles.menuButton} ${isEditMode ? styles.active : ''}`}
           onClick={handleToggleEditMode}
         >
-          {isEditMode ? '편집 모드 ON' : '편집 모드 OFF'}
+          {isEditMode ? t('sidebar.editModeOn') : t('sidebar.editModeOff')}
         </button>
         <button
           className={`${styles.menuButton} ${!isUiInteractive ? styles.active : ''}`}
           onClick={handleToggleMouseIgnore}
         >
-          {!isUiInteractive ? '마우스 무시중' : '마우스 무시'}
+          {!isUiInteractive ? t('sidebar.mouseIgnoreOn') : t('sidebar.mouseIgnoreOff')}
         </button>
-        <button className={styles.menuButton} onClick={onOpenSettings}>설정</button>
-        <button className={styles.menuButton} onClick={onOpenMaterialPanel}>재질</button>
-        <button className={styles.menuButton} onClick={onOpenLightPanel}>조명</button>
-        <button className={styles.menuButton} onClick={onOpenCreatorPanel}>크리에이터</button>
-        <button className={styles.menuButton} onClick={onOpenPluginsPanel}>플러그인</button>
-        <button className={styles.menuButton} onClick={onOpenModManagementPanel}>모드 관리</button>
-        <button className={`${styles.menuButton} ${styles.quitButton}`} onClick={handleQuit}>종료</button>
+        <button className={styles.menuButton} onClick={onOpenSettings}>{t('sidebar.settings')}</button>
+        <button className={styles.menuButton} onClick={onOpenMaterialPanel}>{t('sidebar.materials')}</button>
+        <button className={styles.menuButton} onClick={onOpenLightPanel}>{t('sidebar.lighting')}</button>
+        <button className={styles.menuButton} onClick={onOpenCreatorPanel}>{t('sidebar.creator')}</button>
+        <button className={styles.menuButton} onClick={onOpenPluginsPanel}>{t('sidebar.plugins')}</button>
+        <button className={styles.menuButton} onClick={onOpenModManagementPanel}>{t('sidebar.modManagement')}</button>
+        <button className={`${styles.menuButton} ${styles.quitButton}`} onClick={handleQuit}>{t('sidebar.quit')}</button>
       </div>
     </div>
   );

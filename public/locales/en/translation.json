@@ -19,5 +19,41 @@
     "personaPlaceholder": "Define the AI's role. e.g., You are a friendly AI assistant.",
     "systemPromptTitle": "System Prompt",
     "systemPromptPlaceholder": "Enter AI's behavior rules, constraints, etc."
+  },
+  "chat": {
+    "closeLog": "Close Log",
+    "openLog": "Open Log",
+    "you": "You",
+    "ai": "AI",
+    "placeholder": "Type a message...",
+    "send": "Send"
+  },
+  "creatorPanel": {
+    "title": "Creator Panel",
+    "sequencesTitle": "Sequences & Subroutines",
+    "noSequences": "No sequences created yet.",
+    "subroutineIndicator": "(Sub)",
+    "delete": "Delete",
+    "edit": "Edit",
+    "run": "Run",
+    "subroutineTooltip": "Subroutines cannot be activated directly.",
+    "toggleTooltip": "Activate/Deactivate",
+    "newSequence": "New Sequence/Subroutine",
+    "debugToolsTitle": "Debug Tools",
+    "contextStoreViewer": "Context Store Viewer",
+    "characterStateViewer": "CharacterState Viewer"
+  },
+  "sidebar": {
+    "editModeOn": "Edit Mode ON",
+    "editModeOff": "Edit Mode OFF",
+    "mouseIgnoreOn": "Ignoring Mouse",
+    "mouseIgnoreOff": "Ignore Mouse",
+    "settings": "Settings",
+    "materials": "Materials",
+    "lighting": "Lighting",
+    "creator": "Creator",
+    "plugins": "Plugins",
+    "modManagement": "Mod Management",
+    "quit": "Quit"
   }
 }

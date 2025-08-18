@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './Chat.module.css';
 import { useAppContext } from '../contexts/AppContext';
 import { useDraggable } from '../hooks/useDraggable';
@@ -15,6 +16,7 @@ interface ChatProps {
 
 const Chat: React.FC<ChatProps> = ({ messages, onSendMessage }) => {
   const { isUiInteractive } = useAppContext();
+  const { t } = useTranslation();
   const [input, setInput] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -77,13 +79,13 @@ const Chat: React.FC<ChatProps> = ({ messages, onSendMessage }) => {
           className={styles.toggleButton} 
           onClick={() => setIsExpanded(!isExpanded)}
         >
-          {isExpanded ? 'Close Log' : 'Open Log'}
+          {isExpanded ? t('chat.closeLog') : t('chat.openLog')}
         </button>
       </div>
       <div className={`${styles.messages} ${isExpanded ? styles.expanded : ''}`}>
         {messages.map((msg, index) => (
           <div key={index} className={`${styles.message} ${getRoleStyle(msg.role)}`}>
-            <strong>{msg.role === 'user' ? 'You' : 'AI'}: </strong>{msg.text}
+            <strong>{msg.role === 'user' ? t('chat.you') : t('chat.ai')}: </strong>{msg.text}
           </div>
         ))}
         <div ref={messagesEndRef} />
@@ -91,13 +93,13 @@ const Chat: React.FC<ChatProps> = ({ messages, onSendMessage }) => {
       <form onSubmit={handleSubmit} className={styles.form}>
         <input
           type="text"
-          placeholder="메시지를 입력하세요..."
+          placeholder={t('chat.placeholder')}
           autoComplete="off"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           className={styles.input}
         />
-        <button type="submit" className={styles.button}>전송</button>
+        <button type="submit" className={styles.button}>{t('chat.send')}</button>
       </form>
     </div>
   );

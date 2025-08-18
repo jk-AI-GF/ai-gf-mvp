@@ -19,5 +19,41 @@
     "personaPlaceholder": "AI의 역할을 정의해주세요. 예: 당신은 친절한 AI 비서입니다.",
     "systemPromptTitle": "시스템 프롬프트",
     "systemPromptPlaceholder": "AI의 행동 규칙, 제약사항 등을 입력합니다."
+  },
+  "chat": {
+    "closeLog": "로그 닫기",
+    "openLog": "로그 열기",
+    "you": "당신",
+    "ai": "AI",
+    "placeholder": "메시지를 입력하세요...",
+    "send": "전송"
+  },
+  "creatorPanel": {
+    "title": "크리에이터 패널",
+    "sequencesTitle": "시퀀스 & 서브루틴",
+    "noSequences": "생성된 시퀀스가 없습니다.",
+    "subroutineIndicator": "(서브)",
+    "delete": "삭제",
+    "edit": "편집",
+    "run": "실행",
+    "subroutineTooltip": "서브루틴은 직접 활성화할 수 없습니다.",
+    "toggleTooltip": "활성화/비활성화",
+    "newSequence": "새 시퀀스/서브루틴 만들기",
+    "debugToolsTitle": "디버그 도구",
+    "contextStoreViewer": "컨텍스트 스토어 뷰어",
+    "characterStateViewer": "CharacterState 뷰어"
+  },
+  "sidebar": {
+    "editModeOn": "편집 모드 ON",
+    "editModeOff": "편집 모드 OFF",
+    "mouseIgnoreOn": "마우스 무시중",
+    "mouseIgnoreOff": "마우스 무시",
+    "settings": "설정",
+    "materials": "재질",
+    "lighting": "조명",
+    "creator": "크리에이터",
+    "plugins": "플러그인",
+    "modManagement": "모드 관리",
+    "quit": "종료"
   }
 }

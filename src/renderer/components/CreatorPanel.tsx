@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Panel from './Panel';
 import styles from './CreatorPanel.module.css';
 import { useAppContext } from '../contexts/AppContext';
@@ -31,6 +32,7 @@ const CreatorPanel: React.FC<CreatorPanelProps> = ({
   onManualStartSequence,
 }) => {
   const { actionRegistry } = useAppContext();
+  const { t } = useTranslation();
 
   const handleToggleSequence = (sequenceFile: string, shouldActivate: boolean) => {
     if (!actionRegistry) {
@@ -48,20 +50,20 @@ const CreatorPanel: React.FC<CreatorPanelProps> = ({
   };
 
   return (
-    <Panel title="크리에이터 패널" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
+    <Panel title={t('creatorPanel.title')} onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
       <div className={styles.container}>
         <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>시퀀스 & 서브루틴</h3>
+          <h3 className={styles.sectionTitle}>{t('creatorPanel.sequencesTitle')}</h3>
           <div className={styles.itemList}>
             {sequences.length === 0 ? (
-              <p className={styles.emptyMessage}>생성된 시퀀스가 없습니다.</p>
+              <p className={styles.emptyMessage}>{t('creatorPanel.noSequences')}</p>
             ) : (
               sequences.map(sequence => (
                 <div key={sequence.name} className={styles.item}>
                   <span className={styles.itemName} title={sequence.name}>
                     {sequence.name.replace('.json', '')}
                     <span className={styles.typeIndicator}>
-                      {sequence.type === 'subroutine' ? '(Sub)' : ''}
+                      {sequence.type === 'subroutine' ? t('creatorPanel.subroutineIndicator') : ''}
                     </span>
                   </span>
                   <div className={styles.controls}>
@@ -69,23 +71,23 @@ const CreatorPanel: React.FC<CreatorPanelProps> = ({
                       className={`${styles.controlButton} ${styles.deleteButton}`} 
                       onClick={() => onDeleteSequence(sequence.name)}
                     >
-                      삭제
+                      {t('creatorPanel.delete')}
                     </button>
                     <button 
                       className={`${styles.controlButton} ${styles.editButton}`} 
                       onClick={() => onEditSequence(sequence.name)}
                     >
-                      편집
+                      {t('creatorPanel.edit')}
                     </button>
                     {sequence.type !== 'subroutine' && (
                       <button 
                         className={`${styles.controlButton} ${styles.runButton}`} 
                         onClick={() => onManualStartSequence(sequence.name)}
                       >
-                        실행
+                        {t('creatorPanel.run')}
                       </button>
                     )}
-                    <label className={styles.switch} title={sequence.type === 'subroutine' ? "서브루틴은 직접 활성화할 수 없습니다" : "활성화/비활성화"}>
+                    <label className={styles.switch} title={sequence.type === 'subroutine' ? t('creatorPanel.subroutineTooltip') : t('creatorPanel.toggleTooltip')}>
                       <input 
                         type="checkbox" 
                         checked={activeSequences.includes(sequence.name)}
@@ -100,16 +102,16 @@ const CreatorPanel: React.FC<CreatorPanelProps> = ({
             )}
           </div>
           <button className={styles.primaryButton} onClick={() => onOpenSequenceEditor(null)}>
-            새 시퀀스/서브루틴 만들기
+            {t('creatorPanel.newSequence')}
           </button>
         </div>
         <div className={styles.section}>
-           <h3 className={styles.sectionTitle}>디버그 도구</h3>
+           <h3 className={styles.sectionTitle}>{t('creatorPanel.debugToolsTitle')}</h3>
            <button className={styles.secondaryButton} onClick={onOpenContextViewer}>
-            컨텍스트 스토어 뷰어
+            {t('creatorPanel.contextStoreViewer')}
           </button>
           <button className={styles.secondaryButton} onClick={onOpenCharacterStateViewer} style={{marginTop: '10px'}}>
-            CharacterState 뷰어
+            {t('creatorPanel.characterStateViewer')}
           </button>
         </div>
       </div>
