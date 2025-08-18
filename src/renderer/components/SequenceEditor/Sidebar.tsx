@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActionDefinition } from '../../../plugin-api/actions';
 import { DataProviderDefinition } from '../../../plugin-api/data-providers';
 import { EventDefinition } from '../../../core/event-definitions';
@@ -52,6 +53,7 @@ const toRgba = (hex: string, alpha: number) => {
 };
 
 const Sidebar: React.FC<SidebarProps> = ({ actions, events, dataProviders, nodes }) => {
+  const { t } = useTranslation();
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
     start: false,
     control: false,
@@ -144,28 +146,28 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events, dataProviders, nodes
       overflowY: 'auto',
     }}>
       <h3 style={headerStyle} onClick={() => toggleSection('start')}>
-        Start Nodes {collapsedSections.start ? '▼' : '▲'}
+        {t('sequenceEditor.sidebar.startNodes')} {collapsedSections.start ? '▼' : '▲'}
       </h3>
       {!collapsedSections.start && (
         <>
           {React.cloneElement(renderDraggableItem(
             'subroutineInputNode',
-            'Subroutine Input',
-            '서브루틴의 입력을 정의합니다.',
+            t('sequenceEditor.sidebar.subroutineInput'),
+            t('sequenceEditor.sidebar.subroutineInputDesc'),
             'start',
             sequenceType === 'sequence' || hasInputNode || hasClockNode
           ), { key: 'subroutineInputNode' })}
           {React.cloneElement(renderDraggableItem(
             'manualStartNode',
-            'Manual Start',
-            '수동으로 시퀀스를 시작합니다.',
+            t('sequenceEditor.sidebar.manualStart'),
+            t('sequenceEditor.sidebar.manualStartDesc'),
             'manual',
             sequenceType === 'subroutine'
           ), { key: 'manualStartNode' })}
           {events.map((eventDef) => React.cloneElement(renderDraggableItem(
             'eventNode',
             eventDef.name,
-            eventDef.description,
+            t(eventDef.description),
             'events',
             sequenceType === 'subroutine'
           ), { key: eventDef.name }))}
@@ -175,17 +177,17 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events, dataProviders, nodes
       <hr style={{ borderColor: '#444', margin: '15px 5px' }} />
 
       <h3 style={headerStyle} onClick={() => toggleSection('control')}>
-        Control Nodes {collapsedSections.control ? '▼' : '▲'}
+        {t('sequenceEditor.sidebar.controlNodes')} {collapsedSections.control ? '▼' : '▲'}
       </h3>
       {!collapsedSections.control && (
         <>
-          {React.cloneElement(renderDraggableItem('delayNode', 'Delay', '실행을 잠시 멈춥니다.', 'control', false), { key: 'delayNode' })}
-          {React.cloneElement(renderDraggableItem('branchNode', 'Branch (If)', '조건에 따라 실행 흐름을 분기합니다.', 'control', false), { key: 'branchNode' })}
-          {React.cloneElement(renderDraggableItem('callSubroutineNode', 'Call Subroutine', '다른 서브루틴을 호출합니다.', 'control', false), { key: 'callSubroutineNode' })}
+          {React.cloneElement(renderDraggableItem('delayNode', t('sequenceEditor.sidebar.delay'), t('sequenceEditor.sidebar.delayDesc'), 'control', false), { key: 'delayNode' })}
+          {React.cloneElement(renderDraggableItem('branchNode', t('sequenceEditor.sidebar.branch'), t('sequenceEditor.sidebar.branchDesc'), 'control', false), { key: 'branchNode' })}
+          {React.cloneElement(renderDraggableItem('callSubroutineNode', t('sequenceEditor.sidebar.callSubroutine'), t('sequenceEditor.sidebar.callSubroutineDesc'), 'control', false), { key: 'callSubroutineNode' })}
           {React.cloneElement(renderDraggableItem(
             'clockNode',
-            'Clock',
-            '일정 간격으로 실행 신호를 보냅니다.',
+            t('sequenceEditor.sidebar.clock'),
+            t('sequenceEditor.sidebar.clockDesc'),
             'control',
             hasInputNode // subroutineInputNode가 있으면 Clock 비활성화
           ), { key: 'clockNode' })}
@@ -195,14 +197,14 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events, dataProviders, nodes
       <hr style={{ borderColor: '#444', margin: '15px 5px' }} />
       
       <h3 style={headerStyle} onClick={() => toggleSection('data')}>
-        Data Nodes {collapsedSections.data ? '▼' : '▲'}
+        {t('sequenceEditor.sidebar.dataNodes')} {collapsedSections.data ? '▼' : '▲'}
       </h3>
       {!collapsedSections.data && (
         <>
-          {React.cloneElement(renderDraggableItem('literalNode', 'Literal', '문자열, 숫자 등 고정 값을 만듭니다.', 'data', false), { key: 'literalNode' })}
-          {React.cloneElement(renderDraggableItem('randomNode', 'Random Number', '무작위 숫자를 생성합니다.', 'data', false), { key: 'randomNode' })}
-          {React.cloneElement(renderDraggableItem('numToStrNode', 'Int to String', '정수를 문자열로 변환합니다.', 'data', false), { key: 'numToStrNode' })}
-          {React.cloneElement(renderDraggableItem('commentNode', 'Comment', '메모를 위한 주석 노드입니다.', 'data', false), { key: 'commentNode' })}
+          {React.cloneElement(renderDraggableItem('literalNode', t('sequenceEditor.sidebar.literal'), t('sequenceEditor.sidebar.literalDesc'), 'data', false), { key: 'literalNode' })}
+          {React.cloneElement(renderDraggableItem('randomNode', t('sequenceEditor.sidebar.randomNumber'), t('sequenceEditor.sidebar.randomNumberDesc'), 'data', false), { key: 'randomNode' })}
+          {React.cloneElement(renderDraggableItem('numToStrNode', t('sequenceEditor.sidebar.intToString'), t('sequenceEditor.sidebar.intToStringDesc'), 'data', false), { key: 'numToStrNode' })}
+          {React.cloneElement(renderDraggableItem('commentNode', t('sequenceEditor.sidebar.comment'), t('sequenceEditor.sidebar.commentDesc'), 'data', false), { key: 'commentNode' })}
           {dataProviders.map((provider) => React.cloneElement(renderDraggableItem(
             'dataProviderNode',
             provider.name,
@@ -216,25 +218,25 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events, dataProviders, nodes
       <hr style={{ borderColor: '#444', margin: '15px 5px' }} />
 
       <h3 style={headerStyle} onClick={() => toggleSection('operators')}>
-        Operator Nodes {collapsedSections.operators ? '▼' : '▲'}
+        {t('sequenceEditor.sidebar.operatorNodes')} {collapsedSections.operators ? '▼' : '▲'}
       </h3>
       {!collapsedSections.operators && (
         <>
-          {React.cloneElement(renderDraggableItem('operatorNode', 'Math Operation', '산술 연산을 수행합니다.', 'operators', false, { category: 'math', operator: '+' }), { key: 'op_math' })}
-          {React.cloneElement(renderDraggableItem('operatorNode', 'Comparison', '두 값을 비교합니다.', 'operators', false, { category: 'comparison', operator: '==' }), { key: 'op_compare' })}
-          {React.cloneElement(renderDraggableItem('operatorNode', 'Logic Operation', '논리 연산을 수행합니다.', 'operators', false, { category: 'logic', operator: 'AND' }), { key: 'op_logic' })}
+          {React.cloneElement(renderDraggableItem('operatorNode', t('sequenceEditor.sidebar.mathOperation'), t('sequenceEditor.sidebar.mathOperationDesc'), 'operators', false, { category: 'math', operator: '+' }), { key: 'op_math' })}
+          {React.cloneElement(renderDraggableItem('operatorNode', t('sequenceEditor.sidebar.comparison'), t('sequenceEditor.sidebar.comparisonDesc'), 'operators', false, { category: 'comparison', operator: '==' }), { key: 'op_compare' })}
+          {React.cloneElement(renderDraggableItem('operatorNode', t('sequenceEditor.sidebar.logicOperation'), t('sequenceEditor.sidebar.logicOperationDesc'), 'operators', false, { category: 'logic', operator: 'AND' }), { key: 'op_logic' })}
         </>
       )}
 
       <hr style={{ borderColor: '#444', margin: '15px 5px' }} />
       
       <h3 style={headerStyle} onClick={() => toggleSection('actions')}>
-        Action Nodes {collapsedSections.actions ? '▼' : '▲'}
+        {t('sequenceEditor.sidebar.actionNodes')} {collapsedSections.actions ? '▼' : '▲'}
       </h3>
       {!collapsedSections.actions && actions.map((action) => React.cloneElement(renderDraggableItem(
         'actionNode',
         action.name,
-        action.description,
+        t(action.description),
         'actions',
         false
       ), { key: action.name }))}

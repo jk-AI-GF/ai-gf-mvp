@@ -35,7 +35,7 @@ export function registerCoreActions(
   registry.register(
     {
     name: 'llm.invoke',
-      description: 'LLM에 동적 프롬프트를 보내고 캐릭터의 반응을 유도합니다.',
+      description: 'actions.llm.invoke.description',
       params: [
         { name: 'userRequest', type: 'string', description: 'LLM에게 전달할 핵심 요청' },
         { name: 'includeBasePrompt', type: 'boolean', defaultValue: true, description: '기본 시스템 프롬프트를 포함할지 여부' },
@@ -74,7 +74,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'llm.updateMemory',
-      description: 'LLM과의 상호작용에서 발견된 중요한 정보를 장기 기억 파일에 저장하거나 업데이트합니다.',
+      description: 'actions.llm.updateMemory.description',
       params: [
         { name: 'key', type: 'string', description: '저장/업데이트할 정보의 고유 키' },
         { name: 'value', type: 'any', description: '저장할 정보의 값' },
@@ -127,7 +127,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'playAnimation',
-      description: '캐릭터 애니메이션을 재생합니다.',
+      description: 'actions.playAnimation.description',
       params: [
         { 
           name: 'animationName', 
@@ -149,7 +149,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'playTTS',
-      description: 'TTS 음성을 재생합니다.',
+      description: 'actions.playTTS.description',
       params: [{ 
         name: 'text', 
         type: 'string', 
@@ -165,7 +165,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'showMessage',
-      description: '화면에 말풍선 메시지를 표시합니다.',
+      description: 'actions.showMessage.description',
       params: [
         { name: 'message', type: 'string', description: '표시할 메시지' },
         { name: 'duration', type: 'number', defaultValue: 5, description: '표시 시간(초)' },
@@ -179,7 +179,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'moveCharacterToScreenPosition',
-      description: '화면 비율 좌표로 캐릭터를 이동시킵니다.',
+      description: 'actions.moveCharacterToScreenPosition.description',
       params: [
         { name: 'x', type: 'number', description: '화면 X 좌표 (0.0-1.0은 화면 내)', defaultValue: 0.5 },
         { name: 'y', type: 'number', description: '화면 Y 좌표 (0.0-1.0은 화면 내)', defaultValue: 0.5 },
@@ -231,7 +231,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'setExpression',
-      description: '캐릭터의 표정을 부드럽게 변경합니다.',
+      description: 'actions.setExpression.description',
       params: [
         { name: 'expressionName', type: 'string', description: '표정 이름' },
         { name: 'weight', type: 'number', defaultValue: 1.0, description: '강도 (0-1)' },
@@ -246,7 +246,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'setExpressionWeight',
-      description: '캐릭터 표정 가중치를 즉시 설정합니다.',
+      description: 'actions.setExpressionWeight.description',
       params: [
         { name: 'expressionName', type: 'string', description: '표정 이름' },
         { name: 'weight', type: 'number', defaultValue: 1.0, description: '강도 (0-1)' },
@@ -262,7 +262,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'setPose',
-      description: '캐릭터의 포즈를 설정합니다.',
+      description: 'actions.setPose.description',
       params: [
         { name: 'poseName', type: 'string', description: '포즈 파일 이름', dynamicOptions: 'poses' },
         { name: 'blendTime', type: 'number', defaultValue: 0.0, description: '블렌딩 시간(초)' }
@@ -277,7 +277,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'lookAt',
-      description: '캐릭터의 시선을 고정합니다.',
+      description: 'actions.lookAt.description',
       params: [
         {
           name: 'target',
@@ -301,7 +301,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'changeBackground',
-      description: '배경 이미지를 변경합니다.',
+      description: 'actions.changeBackground.description',
       params: [{ name: 'imagePath', type: 'string', description: '이미지 파일 경로' }],
     },
     (imagePath: string) => {
@@ -316,7 +316,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'setHitboxesVisible',
-      description: '히트박스 가시성을 설정합니다.',
+      description: 'actions.setHitboxesVisible.description',
       params: [{ name: 'visible', type: 'boolean', description: '표시 여부' }],
     },
     (visible: boolean) => {
@@ -327,7 +327,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'resetPose',
-      description: '캐릭터를 기본 T-Pose로 되돌립니다.',
+      description: 'actions.resetPose.description',
       params: [],
     },
     () => {
@@ -338,7 +338,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'saveCurrentPose',
-      description: '현재 포즈를 파일로 저장합니다.',
+      description: 'actions.saveCurrentPose.description',
       params: [],
     },
     () => {
@@ -349,7 +349,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'loadCharacter',
-      description: '다른 VRM 모델을 불러옵니다.',
+      description: 'actions.loadCharacter.description',
       params: [{ name: 'fileName', type: 'string', description: 'VRM 파일 이름' }],
     },
     (fileName: string) => {
@@ -360,7 +360,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'setCameraMode',
-      description: '카메라 모드를 변경합니다.',
+      description: 'actions.setCameraMode.description',
       params: [
         {
           name: 'mode',
@@ -378,7 +378,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'setContext',
-      description: '전역 컨텍스트에 값을 저장합니다.',
+      description: 'actions.setContext.description',
       params: [
         { name: 'key', type: 'string', description: '저장할 키' },
         { name: 'value', type: 'string', description: '저장할 값 (문자열, 숫자, boolean만 가능)' },
@@ -392,7 +392,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'log',
-      description: '콘솔에 디버그 메시지를 출력합니다.',
+      description: 'actions.log.description',
       params: [{ name: 'message', type: 'any', description: '출력할 메시지' }],
     },
     (message: any) => {
@@ -403,7 +403,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'setCharacterState',
-      description: '캐릭터의 내부 상태 값을 변경합니다.',
+      description: 'actions.setCharacterState.description',
       params: [
         { name: 'key', type: 'enum', options: ['characterName', 'userName', 'curiosity', 'happiness', 'energy'], description: '변경할 상태' },
         { name: 'mode', type: 'enum', options: ['set', 'add', 'subtract'], defaultValue: 'set', description: '변경 방식' },
@@ -459,7 +459,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'toggleSequence',
-      description: '지정된 시퀀스를 활성화하거나 비활성화합니다.',
+      description: 'actions.toggleSequence.description',
       params: [
         { name: 'sequenceName', type: 'string', description: '토글할 시퀀스의 파일 이름', dynamicOptions: 'sequences' },
         { name: 'shouldActivate', type: 'boolean', description: '활성화 여부' },
@@ -473,7 +473,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'togglePlugin',
-      description: '지정된 플러그인을 활성화하거나 비활성화합니다.',
+      description: 'actions.togglePlugin.description',
       params: [
         { name: 'pluginName', type: 'string', description: '토글할 플러그인의 이름', dynamicOptions: 'plugins' },
         { name: 'enabled', type: 'boolean', description: '활성화 여부' },
@@ -491,7 +491,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'disableAllPlugins',
-      description: '모든 활성 플러그인을 비활성화하고 현재 상태를 기억합니다.',
+      description: 'actions.disableAllPlugins.description',
       params: [],
     },
     () => {
@@ -502,7 +502,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'restorePlugins',
-      description: '이전에 disableAllPlugins으로 비활성화된 플러그인들을 다시 활성화합니다.',
+      description: 'actions.restorePlugins.description',
       params: [],
     },
     () => {
@@ -513,7 +513,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'setCharacterScale',
-      description: '캐릭터의 전체 크기를 조절합니다.',
+      description: 'actions.setCharacterScale.description',
       params: [
         { name: 'scale', type: 'number', defaultValue: 1.0, description: '크기 값 (1.0이 기본)' },
       ],
@@ -526,7 +526,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'setRotation',
-      description: '캐릭터를 Y축 기준으로 회전시킵니다.',
+      description: 'actions.setRotation.description',
       params: [
         { name: 'y', type: 'number', description: 'Y축 회전값 (degrees)', defaultValue: 0 },
         { name: 'blendTime', type: 'number', defaultValue: 0.5, description: '블렌딩 시간(초)' },
@@ -542,7 +542,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'showImageAsset',
-      description: '화면에 2D 이미지 에셋을 표시하고 ID를 반환합니다.',
+      description: 'actions.showImageAsset.description',
       params: [
         { name: 'fileName', type: 'string', description: '표시할 이미지 파일 이름', dynamicOptions: 'assets' },
         { name: 'x', type: 'number', defaultValue: 0.5, description: '초기 X 위치 (0-1)' },
@@ -559,7 +559,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'hideImageAsset',
-      description: 'ID로 특정 2D 이미지 에셋을 숨깁니다.',
+      description: 'actions.hideImageAsset.description',
       params: [
         { name: 'assetId', type: 'string', description: '숨길 에셋의 ID' },
       ],
@@ -572,7 +572,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'moveImageAsset',
-      description: 'ID로 특정 2D 이미지 에셋을 이동시킵니다.',
+      description: 'actions.moveImageAsset.description',
       params: [
         { name: 'assetId', type: 'string', description: '이동할 에셋의 ID' },
         { name: 'x', type: 'number', description: '새로운 X 위치 (0-1)' },
@@ -588,7 +588,7 @@ export function registerCoreActions(
   registry.register(
     {
       name: 'updateImageAsset',
-      description: 'ID로 특정 2D 이미지 에셋의 속성을 변경합니다.',
+      description: 'actions.updateImageAsset.description',
       params: [
         { name: 'assetId', type: 'string', description: '수정할 에셋의 ID' },
         { name: 'scale', type: 'number', description: '새로운 크기' },

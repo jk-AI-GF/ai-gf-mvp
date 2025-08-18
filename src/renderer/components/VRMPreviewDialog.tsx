@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { VRMMeta, VRM0Meta, VRM1Meta } from '@pixiv/three-vrm';
 import * as THREE from 'three';
 import styles from './VRMPreviewDialog.module.css';

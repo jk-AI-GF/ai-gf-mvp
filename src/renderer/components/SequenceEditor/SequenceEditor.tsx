@@ -324,12 +324,12 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
       if (result.success && result.data) {
         loadSequenceData(result.data);
       } else if (result.error) {
-        console.error('시퀀스 불러오기 실패:', result.error);
+        console.error(t('sequenceEditor.notifications.loadFailed', { error: result.error }));
       }
     } catch (error) {
-      console.error('시퀀스 불러오기 중 예외 발생:', error);
+      console.error(t('sequenceEditor.notifications.loadException'), error);
     }
-  }, [loadSequenceData]);
+  }, [loadSequenceData, t]);
 
   const handleRun = useCallback(() => {
     if (!sequenceManager) {
@@ -533,12 +533,12 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
               <TagInput
                 tags={capabilities}
                 onChange={setCapabilities}
-                placeholder="필요한 Capability를 입력하고 Enter"
+                placeholder={t('sequenceEditor.placeholders.capabilityInput')}
               />
               <TagInput
                 tags={locks}
                 onChange={setLocks}
-                placeholder="점유할 Lock을 입력하고 Enter"
+                placeholder={t('sequenceEditor.placeholders.lockInput')}
               />
             </div>
           </div>

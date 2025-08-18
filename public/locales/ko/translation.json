@@ -4,7 +4,54 @@
     "run": "실행",
     "save": "저장",
     "saveAs": "다른 이름으로 저장",
-    "load": "불러오기"
+    "load": "불러오기",
+    "notifications": {
+      "loadErrorInvalidFormat": "잘못된 시퀀스 파일 형식입니다.",
+      "loadSuccess": "시퀀스를 성공적으로 불러왔습니다.",
+      "saveSuccess": "시퀀스가 성공적으로 저장되었습니다: {{filePath}}",
+      "saveFailed": "시퀀스 저장 실패: {{error}}",
+      "saveException": "시퀀스 저장 중 예외 발생: {{error}}",
+      "loadFailed": "시퀀스 불러오기 실패: {{error}}",
+      "loadException": "시퀀스 불러오기 중 예외가 발생했습니다."
+    },
+    "placeholders": {
+      "subroutineDescription": "서브루틴의 기능에 대한 자연어 설명을 입력하세요 (LLM이 사용). 예: 캐릭터가 특정 메시지를 말하며 표정을 짓습니다.",
+      "capabilityInput": "필요한 Capability를 입력하고 Enter",
+      "lockInput": "점유할 Lock을 입력하고 Enter"
+    },
+    "sidebar": {
+      "startNodes": "시작 노드",
+      "controlNodes": "제어 노드",
+      "dataNodes": "데이터 노드",
+      "operatorNodes": "연산자 노드",
+      "actionNodes": "액션 노드",
+      "subroutineInput": "서브루틴 입력",
+      "subroutineInputDesc": "서브루틴의 입력을 정의합니다.",
+      "manualStart": "수동 시작",
+      "manualStartDesc": "수동으로 시퀀스를 시작합니다.",
+      "delay": "지연",
+      "delayDesc": "실행을 잠시 멈춥니다.",
+      "branch": "분기 (If)",
+      "branchDesc": "조건에 따라 실행 흐름을 분기합니다.",
+      "callSubroutine": "서브루틴 호출",
+      "callSubroutineDesc": "다른 서브루틴을 호출합니다.",
+      "clock": "클럭",
+      "clockDesc": "일정 간격으로 실행 신호를 보냅니다.",
+      "literal": "리터럴",
+      "literalDesc": "문자열, 숫자 등 고정 값을 만듭니다.",
+      "randomNumber": "무작위 숫자",
+      "randomNumberDesc": "무작위 숫자를 생성합니다.",
+      "intToString": "정수 → 문자열",
+      "intToStringDesc": "정수를 문자열로 변환합니다.",
+      "comment": "주석",
+      "commentDesc": "메모를 위한 주석 노드입니다.",
+      "mathOperation": "산술 연산",
+      "mathOperationDesc": "산술 연산을 수행합니다.",
+      "comparison": "비교 연산",
+      "comparisonDesc": "두 값을 비교합니다.",
+      "logicOperation": "논리 연산",
+      "logicOperationDesc": "논리 연산을 수행합니다."
+    }
   },
   "settingsModal": {
     "title": "설정",
@@ -176,5 +223,127 @@
   },
   "vrmScaleSlider": {
     "scale": "스케일"
+  },
+  "meshControlPanel": {
+    "title": "메쉬 관리",
+    "noVrm": "VRM 모델이 로드되지 않았거나 메쉬가 없습니다.",
+    "hide": "숨기기",
+    "show": "보이기"
+  },
+  "actions": {
+    "llm.invoke": {
+      "description": "LLM에 동적 프롬프트를 보내고 캐릭터의 반응을 유도합니다."
+    },
+    "llm.updateMemory": {
+      "description": "LLM과의 상호작용에서 발견된 중요한 정보를 장기 기억 파일에 저장하거나 업데이트합니다."
+    },
+    "playAnimation": {
+      "description": "캐릭터 애니메이션을 재생합니다."
+    },
+    "playTTS": {
+      "description": "TTS 음성을 재생합니다."
+    },
+    "showMessage": {
+      "description": "화면에 말풍선 메시지를 표시합니다."
+    },
+    "moveCharacterToScreenPosition": {
+      "description": "화면 비율 좌표로 캐릭터를 이동시킵니다."
+    },
+    "setExpression": {
+      "description": "캐릭터의 표정을 부드럽게 변경합니다."
+    },
+    "setExpressionWeight": {
+      "description": "캐릭터 표정 가중치를 즉시 설정합니다."
+    },
+    "setPose": {
+      "description": "캐릭터의 포즈를 설정합니다."
+    },
+    "lookAt": {
+      "description": "캐릭터의 시선을 고정합니다."
+    },
+    "changeBackground": {
+      "description": "배경 이미지를 변경합니다."
+    },
+    "setHitboxesVisible": {
+      "description": "히트박스 가시성을 설정합니다."
+    },
+    "resetPose": {
+      "description": "캐릭터를 기본 T-Pose로 되돌립니다."
+    },
+    "saveCurrentPose": {
+      "description": "현재 포즈를 파일로 저장합니다."
+    },
+    "loadCharacter": {
+      "description": "다른 VRM 모델을 불러옵니다."
+    },
+    "setCameraMode": {
+      "description": "카메라 모드를 변경합니다."
+    },
+    "setContext": {
+      "description": "전역 컨텍스트에 값을 저장합니다."
+    },
+    "log": {
+      "description": "콘솔에 디버그 메시지를 출력합니다."
+    },
+    "setCharacterState": {
+      "description": "캐릭터의 내부 상태 값을 변경합니다."
+    },
+    "toggleSequence": {
+      "description": "지정된 시퀀스를 활성화하거나 비활성화합니다."
+    },
+    "togglePlugin": {
+      "description": "지정된 플러그인을 활성화하거나 비활성화합니다."
+    },
+    "disableAllPlugins": {
+      "description": "모든 활성 플러그인을 비활성화하고 현재 상태를 기억합니다."
+    },
+    "restorePlugins": {
+      "description": "이전에 disableAllPlugins으로 비활성화된 플러그인들을 다시 활성화합니다."
+    },
+    "setCharacterScale": {
+      "description": "캐릭터의 전체 크기를 조절합니다."
+    },
+    "setRotation": {
+      "description": "캐릭터를 Y축 기준으로 회전시킵니다."
+    },
+    "showImageAsset": {
+      "description": "화면에 2D 이미지 에셋을 표시하고 ID를 반환합니다."
+    },
+    "hideImageAsset": {
+      "description": "ID로 특정 2D 이미지 에셋을 숨깁니다."
+    },
+    "moveImageAsset": {
+      "description": "ID로 특정 2D 이미지 에셋을 이동시킵니다."
+    },
+    "updateImageAsset": {
+      "description": "ID로 특정 2D 이미지 에셋의 속성을 변경합니다."
+    }
+  },
+  "events": {
+    "chat:newMessage": { "description": "새 채팅 메시지 수신" },
+    "llm:responseReceived": { "description": "LLM 응답 수신" },
+    "vrm:loaded": { "description": "VRM 모델 로드 완료" },
+    "vrm:unloaded": { "description": "VRM 모델 언로드" },
+    "vrm:animationFinished": { "description": "애니메이션 재생 완료" },
+    "vrm:poseApplied": { "description": "포즈 적용 완료" },
+    "vrm:scaled": { "description": "VRM 모델 크기 변경" },
+    "character_part_clicked": { "description": "캐릭터 신체 부위 클릭" },
+    "character_part_right_clicked": { "description": "캐릭터 신체 부위 우클릭" },
+    "character:grabStart": { "description": "캐릭터 잡기 시작" },
+    "character:grabEnd": { "description": "캐릭터 잡기 종료" },
+    "character:dragStart": { "description": "캐릭터 드래그 시작" },
+    "character:dragEnd": { "description": "캐릭터 드래그 종료" },
+    "ui:showFloatingMessage": { "description": "플로팅 메시지 표시" },
+    "ui:updateFloatingMessagePosition": { "description": "플로팅 메시지 위치 업데이트" },
+    "ui:editModeToggled": { "description": "편집 모드 활성/비활성" },
+    "camera:setMode": { "description": "카메라 모드 설정" },
+    "camera:modeChanged": { "description": "카메라 모드 변경됨" },
+    "system:mouse-ignore-toggle": { "description": "마우스 이벤트 무시 전환" },
+    "plugin:enabled": { "description": "플러그인 활성화됨" },
+    "plugin:disabled": { "description": "플러그인 비활성화됨" },
+    "sequences-updated": { "description": "시퀀스 목록 업데이트됨" },
+    "character-state:changed": { "description": "캐릭터의 내부 상태(호기심, 행복 등)가 변경될 때 발생합니다. (전체 상태)" },
+    "character-state:propertyChanged": { "description": "캐릭터의 특정 내부 상태 값이 변경될 때 발생합니다." },
+    "assets:updated": { "description": "화면에 표시되는 2D 에셋 목록이 변경될 때 발생합니다." }
   }
 }

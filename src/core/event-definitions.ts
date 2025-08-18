@@ -25,7 +25,7 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
   // Chat
   {
     name: 'chat:newMessage',
-    description: '새 채팅 메시지 수신',
+    description: 'events.chat:newMessage.description',
     payloadSchema: [
         { key: 'role', type: 'string', description: '메시지 발신자 (user, assistant)' },
         { key: 'text', type: 'string', description: '메시지 내용' }
@@ -33,7 +33,7 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
   },
   {
     name: 'llm:responseReceived',
-    description: 'LLM 응답 수신',
+    description: 'events.llm:responseReceived.description',
     payloadSchema: [
         { key: 'text', type: 'string', description: '응답 텍스트' },
         { key: 'expression', type: 'string', description: '추천 표정' }
@@ -42,7 +42,7 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
   // VRM
   {
     name: 'vrm:loaded',
-    description: 'VRM 모델 로드 완료',
+    description: 'events.vrm:loaded.description',
     payloadSchema: [
         // { key: 'vrm', type: 'any', description: '로드된 VRM 객체' }, // 복잡한 객체는 일단 제외
         { key: 'expressionNames', type: 'any', description: '표정 이름 목록 (string[])' },
@@ -50,26 +50,26 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
   },
   {
     name: 'vrm:unloaded',
-    description: 'VRM 모델 언로드',
+    description: 'events.vrm:unloaded.description',
     payloadSchema: [],
   },
   {
     name: 'vrm:animationFinished',
-    description: '애니메이션 재생 완료',
+    description: 'events.vrm:animationFinished.description',
     payloadSchema: [
         { key: 'clipName', type: 'string', description: '완료된 애니메이션 이름' }
     ],
   },
   {
     name: 'vrm:poseApplied',
-    description: '포즈 적용 완료',
+    description: 'events.vrm:poseApplied.description',
     payloadSchema: [
         { key: 'poseName', type: 'string', description: '적용된 포즈 이름' }
     ],
   },
   {
     name: 'vrm:scaled',
-    description: 'VRM 모델 크기 변경',
+    description: 'events.vrm:scaled.description',
     payloadSchema: [
         { key: 'scale', type: 'number', description: '적용된 크기 값' }
     ],
@@ -77,42 +77,42 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
   // Interaction
   {
     name: 'character_part_clicked',
-    description: '캐릭터 신체 부위 클릭',
+    description: 'events.character_part_clicked.description',
     payloadSchema: [
         { key: 'partName', type: 'string', description: '클릭된 부위 이름' }
     ],
   },
   {
     name: 'character_part_right_clicked',
-    description: '캐릭터 신체 부위 우클릭',
+    description: 'events.character_part_right_clicked.description',
     payloadSchema: [
         { key: 'partName', type: 'string', description: '우클릭된 부위 이름' }
     ],
   },
   {
     name: 'character:grabStart',
-    description: '캐릭터 잡기 시작',
+    description: 'events.character:grabStart.description',
     payloadSchema: [],
   },
   {
     name: 'character:grabEnd',
-    description: '캐릭터 잡기 종료',
+    description: 'events.character:grabEnd.description',
     payloadSchema: [],
   },
   {
     name: 'character:dragStart',
-    description: '캐릭터 드래그 시작',
+    description: 'events.character:dragStart.description',
     payloadSchema: [],
   },
   {
     name: 'character:dragEnd',
-    description: '캐릭터 드래그 종료',
+    description: 'events.character:dragEnd.description',
     payloadSchema: [],
   },
   // UI
   {
     name: 'ui:showFloatingMessage',
-    description: '플로팅 메시지 표시',
+    description: 'events.ui:showFloatingMessage.description',
     payloadSchema: [
         { key: 'text', type: 'string', description: '표시할 메시지' },
         { key: 'duration', type: 'number', description: '표시 시간(초)' }
@@ -120,7 +120,7 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
   },
   {
     name: 'ui:updateFloatingMessagePosition',
-    description: '플로팅 메시지 위치 업데이트',
+    description: 'events.ui:updateFloatingMessagePosition.description',
     payloadSchema: [
         { key: 'left', type: 'number', description: 'x 좌표' },
         { key: 'top', type: 'number', description: 'y 좌표' },
@@ -129,7 +129,7 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
   },
   {
     name: 'ui:editModeToggled',
-    description: '편집 모드 활성/비활성',
+    description: 'events.ui:editModeToggled.description',
     payloadSchema: [
         { key: 'isEditMode', type: 'boolean', description: '편집 모드 여부' }
     ],
@@ -137,14 +137,14 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
   // Camera
   {
     name: 'camera:setMode',
-    description: '카메라 모드 설정',
+    description: 'events.camera:setMode.description',
     payloadSchema: [
         { key: 'mode', type: 'string', description: '카메라 모드 (orbit, fixed)' }
     ],
   },
   {
     name: 'camera:modeChanged',
-    description: '카메라 모드 변경됨',
+    description: 'events.camera:modeChanged.description',
     payloadSchema: [
         { key: 'mode', type: 'string', description: '변경된 카메라 모드 (follow, free)' }
     ],
@@ -152,33 +152,33 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
   // System
   {
     name: 'system:mouse-ignore-toggle',
-    description: '마우스 이벤트 무시 전환',
+    description: 'events.system:mouse-ignore-toggle.description',
     payloadSchema: [
         { key: 'isIgnoring', type: 'boolean', description: '무시 여부' }
     ],
   },
   {
     name: 'plugin:enabled',
-    description: '플러그인 활성화됨',
+    description: 'events.plugin:enabled.description',
     payloadSchema: [
         { key: 'pluginName', type: 'string', description: '플러그인 이름' }
     ],
   },
   {
     name: 'plugin:disabled',
-    description: '플러그인 비활성화됨',
+    description: 'events.plugin:disabled.description',
     payloadSchema: [
         { key: 'pluginName', type: 'string', description: '플러그인 이름' }
     ],
   },
   {
     name: 'sequences-updated',
-    description: '시퀀스 목록 업데이트됨',
+    description: 'events.sequences-updated.description',
     payloadSchema: [],
   },
   {
     name: 'character-state:changed',
-    description: '캐릭터의 내부 상태(호기심, 행복 등)가 변경될 때 발생합니다. (전체 상태)',
+    description: 'events.character-state:changed.description',
     payloadSchema: [
         { key: 'characterName', type: 'string', description: '캐릭터의 현재 이름' },
         { key: 'userName', type: 'string', description: '캐릭터가 유저를 부르는 이름' },
@@ -190,7 +190,7 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
   },
   {
     name: 'character-state:propertyChanged',
-    description: '캐릭터의 특정 내부 상태 값이 변경될 때 발생합니다.',
+    description: 'events.character-state:propertyChanged.description',
     payloadSchema: [
         { key: 'property', type: 'string', description: '변경된 속성 이름 (curiosity, happiness, energy 등)' },
         { key: 'newValue', type: 'any', description: '변경된 새 값' },
@@ -200,7 +200,7 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
   // 2D Assets
   {
     name: 'assets:updated',
-    description: '화면에 표시되는 2D 에셋 목록이 변경될 때 발생합니다.',
+    description: 'events.assets:updated.description',
     payloadSchema: [
         { key: 'assets', type: 'any', description: '현재 화면에 표시된 모든 에셋의 상태 배열' }
     ],

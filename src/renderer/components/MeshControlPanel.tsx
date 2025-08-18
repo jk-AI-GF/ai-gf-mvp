@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import * as THREE from 'three';
 import { VRM } from '@pixiv/three-vrm';
 import Panel from './Panel';
@@ -11,6 +12,7 @@ interface MeshControlPanelProps {
 }
 
 const MeshControlPanel: React.FC<MeshControlPanelProps> = ({ onClose, initialPos, onDragEnd }) => {
+  const { t } = useTranslation();
   const { vrmManager } = useAppContext();
   const [meshes, setMeshes] = useState<{ name: string; visible: boolean }[]>([]);
   const [currentVrm, setCurrentVrm] = useState<VRM | null>(null);
@@ -71,9 +73,9 @@ const MeshControlPanel: React.FC<MeshControlPanelProps> = ({ onClose, initialPos
   }, [vrmManager, listVrmMeshes]);
 
   return (
-    <Panel title="메쉬 관리" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
+    <Panel title={t('meshControlPanel.title')} onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
       {meshes.length === 0 ? (
-        <p className="empty-message">VRM 모델이 로드되지 않았거나 메쉬가 없습니다.</p>
+        <p className="empty-message">{t('meshControlPanel.noVrm')}</p>
       ) : (
         meshes.map((mesh) => (
           <div key={mesh.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #333' }}>
@@ -85,7 +87,7 @@ const MeshControlPanel: React.FC<MeshControlPanelProps> = ({ onClose, initialPos
                 backgroundColor: mesh.visible ? '#555' : '#007bff', color: 'white'
               }}
             >
-              {mesh.visible ? '숨기기' : '보이기'}
+              {mesh.visible ? t('meshControlPanel.hide') : t('meshControlPanel.show')}
             </button>
           </div>
         ))
