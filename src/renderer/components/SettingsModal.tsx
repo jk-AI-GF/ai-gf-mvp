@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppContext } from '../contexts/AppContext';
 import { SUPPORTED_MODELS } from '../../core/llm-settings';
 
@@ -35,6 +36,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     setLlmSettings,
   } = useAppContext();
   const [shortcut, setShortcut] = useState('');
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     if (isOpen) {
@@ -46,6 +48,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     const newShortcut = e.target.value;
     setShortcut(newShortcut);
     window.electronAPI.setMouseIgnoreShortcut(newShortcut);
+  };
+
+  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newLang = e.target.value;
+    i18n.changeLanguage(newLang);
+    window.electronAPI.setLanguage(newLang);
   };
 
   if (!isOpen) {
@@ -113,13 +121,29 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         </button>
 
         <h2 style={{ marginTop: 0, marginBottom: '30px', fontSize: '1.8rem', textAlign: 'center' }}>
-          설정
+          {t('settingsModal.title')}
         </h2>
+
+        {/* Language Selection */}
+        <div style={{ marginBottom: '30px' }}>
+          <label htmlFor="language-select" style={labelStyle}>
+            {t('settingsModal.languageLabel')}
+          </label>
+          <select
+            id="language-select"
+            value={i18n.language}
+            onChange={handleLanguageChange}
+            style={inputStyle}
+          >
+            <option value="en">English</option>
+            <option value="ko">한국어</option>
+          </select>
+        </div>
 
         {/* Opacity Control */}
         <div style={{ marginBottom: '30px' }}>
           <label htmlFor="opacity-slider" style={labelStyle}>
-            창 투명도: {Math.round(windowOpacity * 100)}%
+            {t('settingsModal.opacityLabel')}: {Math.round(windowOpacity * 100)}%
           </label>
           <input
             type="range"
@@ -136,25 +160,25 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         {/* Shortcut Control */}
         <div style={{ marginBottom: '30px' }}>
           <label htmlFor="shortcut-input" style={labelStyle}>
-            마우스 무시 단축키
+            {t('settingsModal.shortcutLabel')}
           </label>
           <input
             type="text"
             id="shortcut-input"
             value={shortcut}
             onChange={handleShortcutChange}
-            placeholder="예: CommandOrControl+Shift+O"
+            placeholder={t('settingsModal.shortcutPlaceholder')}
             style={inputStyle}
           />
         </div>
 
         <h3 style={{ marginTop: '20px', marginBottom: '20px', fontSize: '1.5rem', borderBottom: '1px solid #444', paddingBottom: '10px' }}>
-          챗봇 LLM API
+          {t('settingsModal.llmApiTitle')}
         </h3>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div>
-            <label htmlFor="llm-model" style={labelStyle}>모델 선택</label>
+            <label htmlFor="llm-model" style={labelStyle}>{t('settingsModal.modelSelectLabel')}</label>
             <select
               id="llm-model"
               value={llmSettings.selectedModel}
@@ -168,7 +192,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
           </div>
 
           <div>
-            <label htmlFor="openai-api-key" style={labelStyle}>OpenAI API 키</label>
+            <label htmlFor="openai-api-key" style={labelStyle}>OpenAI API {t('settingsModal.keyLabel')}</label>
             <input
               type="password"
               id="openai-api-key"
@@ -180,7 +204,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
           </div>
 
           <div>
-            <label htmlFor="google-api-key" style={labelStyle}>Google API 키</label>
+            <label htmlFor="google-api-key" style={labelStyle}>Google API {t('settingsModal.keyLabel')}</label>
             <input
               type="password"
               id="google-api-key"
@@ -192,7 +216,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
           </div>
           
           <div>
-            <label htmlFor="anthropic-api-key" style={labelStyle}>Anthropic API 키</label>
+            <label htmlFor="anthropic-api-key" style={labelStyle}>Anthropic API {t('settingsModal.keyLabel')}</label>
             <input
               type="password"
               id="anthropic-api-key"
@@ -236,13 +260,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         </div>
 
         <h3 style={{ marginTop: '30px', marginBottom: '15px', fontSize: '1.5rem', borderBottom: '1px solid #444', paddingBottom: '10px' }}>
-          페르소나
+          {t('settingsModal.personaTitle')}
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <textarea
             id="persona-text"
             rows={5}
-            placeholder="AI의 역할을 정의해주세요. 예: 당신은 친절한 AI 비서입니다."
+            placeholder={t('settingsModal.personaPlaceholder')}
             style={{ ...inputStyle, resize: 'vertical' }}
             value={persona}
             onChange={(e) => setPersona(e.target.value)}
@@ -250,13 +274,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         </div>
 
         <h3 style={{ marginTop: '30px', marginBottom: '15px', fontSize: '1.5rem', borderBottom: '1px solid #444', paddingBottom: '10px' }}>
-          시스템 프롬프트
+          {t('settingsModal.systemPromptTitle')}
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <textarea
             id="system-prompt-text"
             rows={5}
-            placeholder="AI의 행동 규칙, 제약사항 등을 입력합니다."
+            placeholder={t('settingsModal.systemPromptPlaceholder')}
             style={{ ...inputStyle, resize: 'vertical' }}
             value={llmSettings.systemPrompt}
             onChange={(e) => setLlmSettings({ systemPrompt: e.target.value })}

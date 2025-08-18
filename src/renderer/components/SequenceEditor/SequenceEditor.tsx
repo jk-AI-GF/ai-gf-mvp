@@ -157,6 +157,8 @@ const TagInput: React.FC<TagInputProps> = ({ tags, onChange, placeholder }) => {
   );
 };
 
+import { useTranslation } from 'react-i18next';
+
 // 포트 타입을 CSS 모듈 클래스 이름으로 매핑합니다.
 const EDGE_CLASS_MAP: { [key: string]: string } = {
   execution: 'edgeExecution',
@@ -169,6 +171,7 @@ const EDGE_CLASS_MAP: { [key: string]: string } = {
 };
 
 const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClose: () => void }> = ({ sequenceToLoad, onClose }) => {
+  const { t } = useTranslation();
   const { actionRegistry, dataProviderRegistry, sequenceManager } = useAppContext();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -541,10 +544,10 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
           </div>
         )}
         <div className={styles.buttonContainer}>
-          <button onClick={handleRun} className={`${styles.button} ${styles.buttonRun}`}>실행</button>
-          <button onClick={handleSave} className={`${styles.button} ${styles.buttonPrimary}`}>저장</button>
-          <button onClick={handleSaveAs} className={`${styles.button} ${styles.buttonPrimary}`}>다른 이름으로 저장</button>
-          <button onClick={handleLoad} className={`${styles.button} ${styles.buttonSecondary}`}>불러오기</button>
+          <button onClick={handleRun} className={`${styles.button} ${styles.buttonRun}`}>{t('sequenceEditor.run')}</button>
+          <button onClick={handleSave} className={`${styles.button} ${styles.buttonPrimary}`}>{t('sequenceEditor.save')}</button>
+          <button onClick={handleSaveAs} className={`${styles.button} ${styles.buttonPrimary}`}>{t('sequenceEditor.saveAs')}</button>
+          <button onClick={handleLoad} className={`${styles.button} ${styles.buttonSecondary}`}>{t('sequenceEditor.load')}</button>
         </div>
         <ReactFlow
           style={{ width: '100%', height: '100%' }}
@@ -574,7 +577,9 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
 
 // --- The rest of the file remains the same ---
 
-const FullScreenModal: React.FC<{ children: React.ReactNode; onClose: () => void }> = ({ children, onClose }) => (
+const FullScreenModal: React.FC<{ children: React.ReactNode; onClose: () => void }> = ({ children, onClose }) => {
+  const { t } = useTranslation();
+  return (
     <div style={{
         position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
         background: 'rgba(0, 0, 0, 0.7)', display: 'flex',
@@ -599,14 +604,15 @@ const FullScreenModal: React.FC<{ children: React.ReactNode; onClose: () => void
                 ×
             </button>
             <h2 style={{ marginTop: 0, marginBottom: '20px', textAlign: 'center' }}>
-                Sequence Editor
+                {t('sequenceEditor.title')}
             </h2>
             <div style={{ flex: 1, background: '#1E1E1E', borderRadius: '8px', overflow: 'hidden' }}>
                 {children}
             </div>
         </div>
     </div>
-);
+  );
+};
 
 const SequenceEditor: React.FC<SequenceEditorProps> = (props) => {
   if (!props.isOpen) return null;

@@ -1,0 +1,23 @@
+{
+  "sequenceEditor": {
+    "title": "Sequence Editor",
+    "run": "Run",
+    "save": "Save",
+    "saveAs": "Save As",
+    "load": "Load"
+  },
+  "settingsModal": {
+    "title": "Settings",
+    "languageLabel": "Language",
+    "opacityLabel": "Window Opacity",
+    "shortcutLabel": "Mouse Ignore Shortcut",
+    "shortcutPlaceholder": "e.g., CommandOrControl+Shift+O",
+    "llmApiTitle": "Chatbot LLM API",
+    "modelSelectLabel": "Select Model",
+    "keyLabel": "Key",
+    "personaTitle": "Persona",
+    "personaPlaceholder": "Define the AI's role. e.g., You are a friendly AI assistant.",
+    "systemPromptTitle": "System Prompt",
+    "systemPromptPlaceholder": "Enter AI's behavior rules, constraints, etc."
+  }
+}

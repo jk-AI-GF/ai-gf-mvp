@@ -40,7 +40,7 @@
     "@vercel/webpack-asset-relocator-loader": "^1.7.3",
     "babel-jest": "^30.0.5",
     "babel-loader": "^10.0.0",
-    "copy-webpack-plugin": "^13.0.0",
+    "copy-webpack-plugin": "^13.0.1",
     "css-loader": "^6.11.0",
     "css-modules-typescript-loader": "^4.0.1",
     "electron": "37.2.3",
@@ -66,10 +66,13 @@
     "@types/three": "^0.178.1",
     "electron-squirrel-startup": "^1.0.1",
     "electron-store": "^8.1.0",
+    "i18next": "^25.3.6",
+    "i18next-http-backend": "^3.0.2",
     "mime": "^4.0.7",
     "mime-types": "^3.0.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-i18next": "^15.6.1",
     "reactflow": "^11.11.4",
     "three": "^0.178.0"
   }

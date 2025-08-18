@@ -1,0 +1,23 @@
+{
+  "sequenceEditor": {
+    "title": "시퀀스 에디터",
+    "run": "실행",
+    "save": "저장",
+    "saveAs": "다른 이름으로 저장",
+    "load": "불러오기"
+  },
+  "settingsModal": {
+    "title": "설정",
+    "languageLabel": "언어",
+    "opacityLabel": "창 투명도",
+    "shortcutLabel": "마우스 무시 단축키",
+    "shortcutPlaceholder": "예: CommandOrControl+Shift+O",
+    "llmApiTitle": "챗봇 LLM API",
+    "modelSelectLabel": "모델 선택",
+    "keyLabel": "키",
+    "personaTitle": "페르소나",
+    "personaPlaceholder": "AI의 역할을 정의해주세요. 예: 당신은 친절한 AI 비서입니다.",
+    "systemPromptTitle": "시스템 프롬프트",
+    "systemPromptPlaceholder": "AI의 행동 규칙, 제약사항 등을 입력합니다."
+  }
+}

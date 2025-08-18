@@ -230,3 +230,29 @@ LLM이나 플러그인에서 사용자가 만든 서브루틴을 호출하는 �
 
 ### Backend (`backend/`)
 -   `main.py`: 텍스트를 음성으로 변환하는 TTS(Text-to-Speech) 기능을 제공하는 FastAPI 서버.
+
+---
+
+## 9. 현지화 (Localization)
+
+애플리케이션의 UI 텍스트는 다국어 지원을 위해 `i18next` 기반의 현지화(i18n) 시스템으로 관리됩니다. 새로운 UI 텍스트를 추가하거나 기존 텍스트를 수정할 때 아래의 워크플로우를 따릅니다.
+
+### 새로운 UI 텍스트 추가 워크플로우
+
+1.  **언어 리소스 파일에 키(Key) 추가 (`public/locales/`)**
+    *   **목적**: 번역할 텍스트의 고유 식별자(key)와 실제 번역문을 추가합니다.
+    *   **수행 작업**:
+        *   `public/locales/ko/translation.json`: 한국어 번역문을 추가합니다.
+        *   `public/locales/en/translation.json`: 영어 번역문을 추가합니다.
+        *   **예시**: `{"myNewButton": "나의 새 버튼"}` (ko), `{"myNewButton": "My New Button"}` (en)
+
+2.  **React 컴포넌트에서 텍스트 사용**
+    *   **목적**: `useTranslation` 훅을 사용하여 컴포넌트 내에서 번역된 텍스트를 동적으로 불러옵니다.
+    *   **수행 작업**:
+        *   컴포넌트 상단에서 `const { t } = useTranslation();` 훅을 호출합니다.
+        *   UI에 텍스트를 표시할 부분에 `t('myNewButton')`와 같이 1단계에서 추가한 키를 사용합니다.
+        *   **예시**: `<button>{t('myNewButton')}</button>`
+
+### 시스템 구성 참고
+*   **초기화 설정**: `i18next`의 모든 설정은 `src/renderer/i18n.ts` 파일에 정의되어 있습니다.
+*   **전역 적용**: `src/renderer/renderer.tsx` 파일에서 `I18nextProvider`를 통해 모든 컴포넌트에 번역 기능이 제공됩니다.

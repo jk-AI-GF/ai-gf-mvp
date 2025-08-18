@@ -22,6 +22,7 @@ interface StoreSchema {
   mouseIgnoreShortcut: string;
   activeSequences: string[];
   characterState: Partial<ICharacterState>;
+  language?: string;
 }
 
 const DEFAULT_CHARACTER_STATE: ICharacterState = {
@@ -148,6 +149,17 @@ ipcMain.on('set-persona', (event, persona: string) => store.set('persona', perso
 ipcMain.handle('get-persona', () => store.get('persona'));
 ipcMain.handle('get-llm-settings', () => ({ ...DEFAULT_LLM_SETTINGS, ...store.get('llmSettings') }));
 ipcMain.on('set-llm-settings', (event, settings: LlmSettings) => store.set('llmSettings', settings));
+ipcMain.handle('get-language', () => {
+  const storedLang = store.get('language');
+  if (storedLang) {
+    return storedLang;
+  }
+  // Return the OS locale, but only the language part (e.g., 'ko' from 'ko-KR')
+  const osLang = app.getLocale().split('-')[0];
+  // Support only 'en' and 'ko' for now
+  return ['en', 'ko'].includes(osLang) ? osLang : 'en';
+});
+ipcMain.on('set-language', (event, language: string) => store.set('language', language));
 
 // --- Sequences ---
 const getSequencesByType = async (type: 'sequence' | 'subroutine') => {
