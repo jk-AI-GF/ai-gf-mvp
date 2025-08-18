@@ -56,11 +56,12 @@ export class ChatService {
     this.chatHistory.push({ role: 'user', content: userMsg });
 
     try {
-      const systemPrompt = this.buildDynamicSystemPrompt(persona, llmSettings, {
+      const systemPrompt = await this.buildDynamicSystemPrompt(persona, llmSettings, {
         includeBasePrompt: true,
         includePersona: true,
         includeCharacterState: true,
         includeSubroutines: true,
+        includeMemory: true, // Always include memory for regular chat
       });
 
       const payload = await this.invokeLlm(systemPrompt, this.chatHistory, llmSettings);
@@ -82,12 +83,13 @@ export class ChatService {
       includeCharacterState?: boolean;
       includeSubroutines?: boolean;
       includeChatHistory?: boolean;
+      includeMemory?: boolean;
     }
   ): Promise<string> {
     const { userRequest, includeChatHistory = false, ...promptOptions } = options;
 
     try {
-      const systemPrompt = this.buildDynamicSystemPrompt(persona, llmSettings, promptOptions);
+      const systemPrompt = await this.buildDynamicSystemPrompt(persona, llmSettings, promptOptions);
       
       const history = includeChatHistory ? this.getChatHistory() : [];
       history.push({ role: 'user', content: userRequest });
@@ -116,7 +118,7 @@ export class ChatService {
     eventBus.emit('ui:showFloatingMessage', { text: speech });
   }
 
-  public buildDynamicSystemPrompt(
+  public async buildDynamicSystemPrompt(
     persona: string,
     llmSettings: LlmSettings,
     options: {
@@ -124,13 +126,15 @@ export class ChatService {
       includePersona?: boolean;
       includeCharacterState?: boolean;
       includeSubroutines?: boolean;
+      includeMemory?: boolean;
     }
-  ): string {
+  ): Promise<string> {
     const {
       includeBasePrompt = true,
       includePersona = true,
       includeCharacterState = true,
       includeSubroutines = true,
+      includeMemory = true,
     } = options;
 
     let parts: string[] = [];
@@ -140,7 +144,24 @@ export class ChatService {
     if (includeCharacterState) {
       const currentState = characterState.toJSON();
       const stateJson = JSON.stringify(currentState, null, 2);
-      parts.push(`캐릭터의 현재 상태는 다음과 같습니다:\n${stateJson}`);
+      parts.push(`캐릭터의 현재 상태는 다음과 같습니다:
+${stateJson}`);
+    }
+    if (includeMemory) {
+      const memory = await window.electronAPI.readLlmMemory();
+      if (Array.isArray(memory) && memory.length > 0) {
+        // Sort by importance (desc) and then by timestamp (desc) to prioritize
+        const sortedMemory = memory.sort((a, b) => {
+          if (b.importance !== a.importance) {
+            return b.importance - a.importance;
+          }
+          return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+        });
+        
+        const memoryJson = JSON.stringify(sortedMemory, null, 2);
+        parts.push(`다음은 당신과 사용자의 상호작용에 대한 장기 기억입니다. 중요도(importance)와 최신성(timestamp)을 참고하여 대화에 활용하세요:
+${memoryJson}`);
+      }
     }
     if (includeSubroutines) {
       const vrmExpressionList = this.vrmManager.currentVrm

@@ -43,6 +43,7 @@ export function registerCoreActions(
         { name: 'includeCharacterState', type: 'boolean', defaultValue: true, description: '캐릭터의 현재 상태를 포함할지 여부' },
         { name: 'includeSubroutines', type: 'boolean', defaultValue: true, description: '사용 가능한 서브루틴 목록과 JSON 출력 형식을 포함할지 여부' },
         { name: 'includeChatHistory', type: 'boolean', defaultValue: false, description: '현재 대화 기록을 포함할지 여부' },
+        { name: 'includeMemory', type: 'boolean', defaultValue: true, description: '장기 기억 정보를 포함할지 여부' },
       ],
       returns: { type: 'string', description: 'LLM의 텍스트 응답' },
     },
@@ -52,7 +53,8 @@ export function registerCoreActions(
       includePersona?: boolean,
       includeCharacterState?: boolean,
       includeSubroutines?: boolean,
-      includeChatHistory?: boolean
+      includeChatHistory?: boolean,
+      includeMemory?: boolean
     ) => {
       const llmSettings = await window.electronAPI.getLlmSettings();
       const persona = await window.electronAPI.getPersona();
@@ -64,10 +66,64 @@ export function registerCoreActions(
         includeCharacterState,
         includeSubroutines,
         includeChatHistory,
+        includeMemory,
       });
     }
   );
   
+  registry.register(
+    {
+      name: 'llm.updateMemory',
+      description: 'LLM과의 상호작용에서 발견된 중요한 정보를 장기 기억 파일에 저장하거나 업데이트합니다.',
+      params: [
+        { name: 'key', type: 'string', description: '저장/업데이트할 정보의 고유 키' },
+        { name: 'value', type: 'any', description: '저장할 정보의 값' },
+        { name: 'type', type: 'string', defaultValue: 'fact', description: '정보의 종류 (예: fact, preference, summary, goal)' },
+        { name: 'importance', type: 'number', defaultValue: 0.5, description: '정보의 중요도 (0.0 ~ 1.0)' },
+        { name: 'source', type: 'string', defaultValue: 'llm_inference', description: '정보의 출처 (예: user_direct_statement, llm_inference, llm_generated)' },
+      ],
+      returns: { type: 'boolean', description: '성공 여부' },
+    },
+    async (key: string, value: any, type: string, importance: number, source: string) => {
+      try {
+        const currentMemory = await window.electronAPI.readLlmMemory();
+        if (!Array.isArray(currentMemory)) {
+          console.error('LLM memory is not an array. Re-initializing.');
+          // A simple recovery mechanism
+          const result = await window.electronAPI.writeLlmMemory([]);
+          if (!result.success) return false;
+        }
+
+        const memoryIndex = currentMemory.findIndex((item: any) => item.key === key);
+        const newMemoryEntry = {
+          key,
+          value,
+          type,
+          importance,
+          source,
+          timestamp: new Date().toISOString(),
+        };
+
+        if (memoryIndex > -1) {
+          // Update existing entry
+          currentMemory[memoryIndex] = { ...currentMemory[memoryIndex], ...newMemoryEntry };
+        } else {
+          // Add new entry
+          currentMemory.push(newMemoryEntry);
+        }
+
+        const result = await window.electronAPI.writeLlmMemory(currentMemory);
+        if (!result.success) {
+          console.error(`Failed to update LLM memory: ${result.error}`);
+        }
+        return result.success;
+      } catch (error) {
+        console.error('Error in llm.updateMemory action:', error);
+        return false;
+      }
+    }
+  );
+
   registry.register(
     {
       name: 'playAnimation',

@@ -242,7 +242,7 @@ const SequenceEditorComponent: React.FC<{ sequenceToLoad?: string | null, onClos
       const load = async () => {
         try {
           // Use the new resourceManager-backed API
-          const filePath = await window.electronAPI.invoke<string | null>('resolve-path', 'customAssets', `sequences/${sequenceToLoad}`);
+          const filePath = await window.electronAPI.invoke<string | null>('resource:resolve-path', 'sequence', sequenceToLoad);
           if (!filePath) {
             throw new Error(`Sequence file not found: ${sequenceToLoad}`);
           }

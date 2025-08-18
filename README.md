@@ -1,65 +1,116 @@
 # AI-GF MVP
 
-> 사용자가 직접 기능을 확장하는 모딩(Modding) 생태계 중심의 인터랙티브 AI 캐릭터 애플리케이션입니다.
+> **모딩(Modding) 생태계 중심의 인터랙티브 AI 캐릭터 애플리케이션**
 
-이 프로젝트는 사용자와 상호작용하는 3D 캐릭터를 특징으로 하는 데스크톱 애플리케이션의 초기 MVP 버전입니다. 핵심 개발 철학은 안정적인 최소한의 코어를 제공하고, 사용자가 직접 플러그인과 모드 시스템을 통해 새로운 기능, 행동, 콘텐츠를 추가할 수 있도록 강력하고 사용하기 쉬운 환경을 제공하는 것입니다.
+AI-GF는 사용자와 상호작용하는 3D 캐릭터를 구현한 데스크톱 애플리케이션입니다. 이 프로젝트의 핵심 철학은 단순히 완성된 기능을 제공하는 것을 넘어, 사용자가 직접 캐릭터의 행동과 상호작용을 창조하고 공유할 수 있는 **강력하고 유연한 모딩 샌드박스**를 제공하는 것입니다.
 
-## 🚀 핵심 컨셉
+사용자는 더 이상 단순한 관객이 아닌, 자신만의 AI 캐릭터를 연출하는 **감독(Director)**이 됩니다.
 
--   **사용자 주도 생태계:** 핵심 목표는 우리가 직접 기능을 추가하는 것이 아니라, 모더(Modder)들이 기능을 창조할 수 있는 샌드박스를 제공하는 것입니다.
--   **안전한 최소 코어:** 애플리케이션은 모드가 캐릭터 및 시스템과 상호작용할 수 있도록, 안정성이 검증된 최소한의 API만을 제공합니다.
--   **간단한 모딩 파이프라인:** 모드는 간단하게 제작하고 설치할 수 있도록 설계되었습니다.
+![Application Screenshot](https://via.placeholder.com/800x450.png?text=AI-GF+Application+Screenshot)
+*(스크린샷 예시 - 실제 이미지로 교체 필요)*
 
-## ✨ 주요 기능
+---
 
--   **VRM** 포맷을 사용한 인터랙티브 3D 캐릭터 렌더링
--   견고한 **플러그인 기반 아키텍처**
--   **사용자 모드를 통한 확장:** 코어 기능과 사용자가 추가한 기능이 아키텍처적으로 동등하게 취급됩니다.
--   **React 기반 UI:** 현대적이고 반응성이 뛰어난 사용자 인터페이스
--   **코어 상호작용 API:**
-    -   **Actions:** 캐릭터와 환경을 제어하는 표준화된 게이트웨이
-    -   **EventBus:** 애플리케이션의 여러 부분을 분리하여 소통하는 통신 시스템
-    -   **Triggers:** 특정 조건에 따라 행동을 선언적으로 실행하는 시스템
+## ✨ 주요 기능 (Key Features)
 
-## 🛠️ 주요 기술 스택
+*   **🎨 비주얼 스크립팅 (Visual Scripting):** `Sequence` 시스템을 통해 코딩 없이 노드 기반 에디터로 복잡한 캐릭터 행동 로직과 스토리를 직접 만들 수 있습니다.
+*   **🧩 강력한 모딩 API:** 모든 핵심 기능은 플러그인과 모드에서 동일하게 사용할 수 있는 `Action` API로 노출됩니다. 코어 플러그인과 사용자 모드는 기술적으로 동등한 권한을 가집니다.
+*   **🤖 LLM 기반 대화 시스템:** Google Gemini, OpenAI, Anthropic 등 최신 언어 모델(LLM)과 연동하여 자연스러운 대화와 상황 판단 능력을 갖추고 있습니다.
+*   **🗣️ TTS 음성 출력:** Python FastAPI 기반의 백엔드를 통해 Google TTS 또는 로컬 Coqui TTS 모델로 자연스러운 음성을 생성하고 스트리밍합니다.
+*   **💃 VRM 모델 완벽 지원:** `@pixiv/three-vrm`을 사용하여 VRM 포맷의 3D 모델, 애니메이션, 표정을 완벽하게 제어합니다.
+*   **🛡️ 안정적인 아키텍처:** `EventBus`, `ActionRegistry` 등 핵심 시스템을 통해 각 기능이 독립적으로 작동하여 안정성과 확장성을 보장합니다.
 
--   **애플리케이션 셸:** Electron
--   **3D 렌더링:** Three.js & @pixiv/three-vrm
--   **UI:** React & TypeScript
--   **빌드 도구:** Webpack, Electron Forge
+---
 
-## ▶️ 시작하기
+## 🛠️ 기술 스택 (Tech Stack)
 
-로컬 환경에서 애플리케이션을 실행하려면 다음 단계를 따르세요.
+| 분야                  | 기술                                                              |
+| --------------------- | ----------------------------------------------------------------- |
+| **Application Shell** | **Electron**                                                      |
+| **UI (Renderer)**     | **React**, **TypeScript**, **Three.js** (@pixiv/three-vrm)        |
+| **Backend (TTS)**     | **Python**, **FastAPI**, **Google-TTS** / **Coqui-TTS**           |
+| **Build Tools**       | **Webpack**, **Electron Forge**                                   |
+| **State Management**  | **React Context**, **Electron Store**, Custom In-Memory Stores    |
 
-1.  **의존성 설치:**
-    ```bash
-    npm install
-    ```
+---
 
-2.  **개발 모드로 애플리케이션 실행:**
-    ```bash
-    npm start
-    ```
+## 🚀 시작하기 (Getting Started)
 
-## 📁 디렉토리 구조
+### 사전 요구사항 (Prerequisites)
+
+*   [Node.js](https://nodejs.org/) (v18.x 이상 권장)
+*   [Python](https://www.python.org/) (v3.9 이상 권장)
+
+### 1. 프로젝트 클론 및 의존성 설치
+
+```bash
+git clone https://github.com/your-username/ai-gf-mvp.git
+cd ai-gf-mvp
+
+# 메인 애플리케이션 의존성 설치
+npm install
+```
+
+### 2. Python 백엔드(TTS) 서버 실행
+
+```bash
+# 백엔드 디렉토리로 이동
+cd backend
+
+# Python 가상환경 생성 및 활성화 (권장)
+python -m venv venv
+source venv/bin/activate  # macOS/Linux
+# venv\Scripts\activate    # Windows
+
+# Python 의존성 설치
+pip install -r requirements.txt
+
+# 백엔드 서버 실행
+python main.py
+```
+TTS 서버는 `http://localhost:8000`에서 실행됩니다.
+
+### 3. 메인 애플리케이션 실행
+
+```bash
+# 프로젝트 루트 디렉토리에서 실행
+npm start
+```
+
+---
+
+## 📁 프로젝트 구조 (Project Structure)
 
 ```
 .
-├── docs/                # 프로젝트 문서, 가이드, API 레퍼런스
+├── backend/              # Python FastAPI 기반 TTS 서버
+├── docs/                 # 📖 프로젝트 아키텍처, 개발 가이드 등 상세 문서
+├── public/               # VRM, 애니메이션 등 정적 에셋
 ├── src/
-│   ├── core/            # 코어 로직 (EventBus, TriggerEngine 등)
-│   ├── main/            # Electron 메인 프로세스
-│   ├── plugins/         # 기본 행동을 제공하는 코어 플러그인
-│   ├── plugin-api/      # 플러그인을 위한 API 정의 (Actions, Triggers 등)
-│   └── renderer/        # 프론트엔드 코드 (React 컴포넌트, Three.js 렌더링)
-└── userdata/
-    └── mods/            # 사용자가 생성한 모드를 넣는 디렉토리
+│   ├── core/             # 🧠 Action, EventBus, Sequence 등 핵심 로직
+│   ├── main/             # Electron 메인 프로세스 (Node.js)
+│   ├── renderer/         # 🎨 프론트엔드 (React, Three.js)
+│   ├── plugins/          # ✨ 기본 행동을 제공하는 코어 플러그인
+│   └── plugin-api/       # 🔌 모드(Mod) 개발을 위한 API 정의
+└── .appdata/
+    └── userData/
+        └── custom/       # 📂 사용자가 추가하는 VRM, 모드, 시퀀스 폴더
 ```
 
-## 🤝 기여 및 모드 제작 방법
+---
 
-이 프로젝트에 기여하는 가장 좋은 방법은 새로운 플러그인(모드)을 만드는 것입니다! 시작하려면 아래의 상세 개발 문서를 참고하세요.
+## 🤝 기여 및 모드 제작 (Contributing & Modding)
 
--   **[개발 가이드 (Development Guide)](./docs/Development_Guide.md):** 프로젝트 아키텍처를 이해하고 새로운 기능을 추가하는 방법을 안내합니다.
--   **[API 레퍼런스 (API Reference)](./docs/API_Reference.md):** `Actions`, `EventBus`, `Triggers` 등 사용 가능한 모든 API에 대한 상세 설명서입니다.
+이 프로젝트에 기여하는 가장 좋은 방법은 **새로운 모드(플러그인)나 시퀀스를 만드는 것**입니다!
+
+자세한 개발 방법은 아래의 공식 문서를 참고하세요.
+
+*   **[DEVELOPMENT_COOKBOOK.md](./DEVELOPMENT_COOKBOOK.md):** 새로운 `Action` 추가, `Event` 사용법 등 일반적인 개발 워크플로우를 안내하는 실용적인 가이드입니다.
+*   **[Architecture Overview](./docs/Architecture_Overview.md):** 프로젝트의 전체적인 구조와 데이터 흐름을 이해하기 위한 문서입니다.
+*   **[Visual Scripting Guide](./docs/Vision_Visual_Scripting.md):** `Sequence` 시스템의 컨셉과 사용법을 설명합니다.
+
+---
+
+## 📜 라이선스 (License)
+
+[MIT](./LICENSE)

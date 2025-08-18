@@ -20,6 +20,8 @@ import { LlmSettings } from '../core/llm-settings';
   openPersonaFile: () => ipcRenderer.invoke('open-persona-file'),
   readAbsoluteFile: async (filePath: string) => ipcRenderer.invoke('read-absolute-file', filePath),
   openInExplorer: (assetType: 'vrm' | 'animation' | 'pose') => ipcRenderer.invoke('resource:open-in-explorer', assetType),
+  readLlmMemory: () => ipcRenderer.invoke('llm-memory:read'),
+  writeLlmMemory: (memoryData: any) => ipcRenderer.invoke('llm-memory:write', memoryData),
 
   // Action API
   playAnimation: (animationName: string, loop: boolean, crossFadeDuration: number) => ipcRenderer.invoke('play-animation', animationName, loop, crossFadeDuration),
@@ -70,7 +72,6 @@ import { LlmSettings } from '../core/llm-settings';
   updatePluginList: (plugins: string[]) => ipcRenderer.send('update-plugin-list', plugins),
 
   // --- Sequence API ---
-        // --- Sequence API ---
       listAssets: (assetType: 'vrm' | 'animation' | 'pose' | 'image' | 'sequence') => ipcRenderer.invoke('list-assets', assetType),
       getAllSequenceFilesWithType: (): Promise<{ name: string, type: 'sequence' | 'subroutine' }[]> => ipcRenderer.invoke('get-all-sequence-files-with-type'),
   getSequenceFiles: (): Promise<string[]> => ipcRenderer.invoke('get-sequence-files'),
@@ -107,6 +108,8 @@ declare global {
       openPersonaFile: () => Promise<string | null>;
       readAbsoluteFile: (filePath: string) => Promise<ArrayBuffer | { error: string }>;
       openInExplorer: (assetType: 'vrm' | 'animation' | 'pose') => Promise<void>;
+      readLlmMemory: () => Promise<any>;
+      writeLlmMemory: (memoryData: any) => Promise<{ success: boolean, error?: string }>;
 
       // Action API
       playAnimation: (animationName: string, loop: boolean, crossFadeDuration: number) => Promise<void>;

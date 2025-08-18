@@ -75,6 +75,30 @@ if (require('electron-squirrel-startup')) {
 // IPC HANDLER REGISTRATION
 //==============================================================================
 
+// --- LLM Memory IPC Handlers ---
+ipcMain.handle('llm-memory:read', async () => {
+  const llmMemoryPath = PathManager.getLlmMemoryPath();
+  try {
+    const data = await fsp.readFile(llmMemoryPath, 'utf-8');
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('Failed to read llm-memory.json:', error);
+    // Return an empty object on error to prevent crashes
+    return {};
+  }
+});
+
+ipcMain.handle('llm-memory:write', async (event, memoryData: any) => {
+  const llmMemoryPath = PathManager.getLlmMemoryPath();
+  try {
+    await fsp.writeFile(llmMemoryPath, JSON.stringify(memoryData, null, 2), 'utf-8');
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to write to llm-memory.json:', error);
+    return { success: false, error: error.message };
+  }
+});
+
 // --- Plugin List Cache ---
 ipcMain.on('update-plugin-list', (event, plugins: string[]) => {
   pluginListCache = plugins;
@@ -499,6 +523,23 @@ app.on('ready', async () => {
     console.log('User custom asset directories verified/created successfully.');
   } catch (error) {
     console.error('Failed to create user custom asset directories:', error);
+  }
+
+  // Ensure llm-memory.json exists
+  const llmMemoryPath = PathManager.getLlmMemoryPath();
+  try {
+    await fsp.access(llmMemoryPath);
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      try {
+        await fsp.writeFile(llmMemoryPath, JSON.stringify([], null, 2), 'utf-8');
+        console.log('llm-memory.json created successfully with an empty array.');
+      } catch (writeError) {
+        console.error('Failed to write initial llm-memory.json:', writeError);
+      }
+    } else {
+      console.error('Failed to check llm-memory.json:', error);
+    }
   }
 
   // Initialize core components

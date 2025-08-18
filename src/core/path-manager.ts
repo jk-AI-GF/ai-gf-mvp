@@ -53,7 +53,13 @@ export const PathManager = {
   getLogPath: (...paths: string[]): string => path.join(app.getPath('logs' as any), ...paths),
 
   /**
+   * LLM 메모리 파일의 경로를 반환합니다.
+   * @returns {string} 절대 경로
+   */
+  getLlmMemoryPath: (): string => path.join(app.getPath('userData'), 'llm-memory.json'),
+
+  /**
    * 애플리케이션 루트 경로를 반환합니다.
    */
-  getAppPath: (): string => app.getAppPath(),
+   getAppPath: (): string => app.getAppPath(),
 };
