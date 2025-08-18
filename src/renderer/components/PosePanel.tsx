@@ -1,9 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './PosePanel.module.css';
 import { useAppContext } from '../contexts/AppContext';
 
 const PosePanel: React.FC = () => {
+  const { t } = useTranslation();
   const { pluginManager } = useAppContext();
   const [poseFiles, setPoseFiles] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -16,17 +18,17 @@ const PosePanel: React.FC = () => {
         setPoseFiles(vrmaFiles);
 
         if (vrmaFiles.length === 0) {
-          setError('저장된 포즈 파일(.vrma)이 없습니다.');
+          setError(t('posePanel.noFiles'));
         }
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
+        const errorMessage = err instanceof Error ? err.message : t('animationPanel.unknownError');
         console.error('Failed to list poses:', err);
         setError(errorMessage);
       }
     };
 
     fetchPoses();
-  }, []);
+  }, [t]);
 
   const handlePoseClick = (fileName: string) => {
     pluginManager?.context.actions.setPose(fileName);
@@ -44,10 +46,10 @@ const PosePanel: React.FC = () => {
     <div className={styles.panel}>
       <div className={styles.header}>
         <button className={styles.actionButton} onClick={handleSavePose}>
-          Save Current Pose
+          {t('posePanel.saveCurrentPose')}
         </button>
         <button className={styles.actionButton} onClick={handleOpenExplorer}>
-          파일매니저에서 열기
+          {t('animationPanel.openInExplorer')}
         </button>
       </div>
       <div className={styles.list}>

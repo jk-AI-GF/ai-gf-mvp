@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import Panel from './Panel';
 import { useAppContext } from '../contexts/AppContext';
 import { IPlugin } from '../../plugins/plugin-manager';
@@ -10,6 +11,7 @@ interface PluginPanelProps {
 }
 
 const PluginPanel: React.FC<PluginPanelProps> = ({ onClose, initialPos, onDragEnd }) => {
+  const { t } = useTranslation();
   const { pluginManager } = useAppContext();
   const [plugins, setPlugins] = useState<IPlugin[]>([]);
 
@@ -34,7 +36,7 @@ const PluginPanel: React.FC<PluginPanelProps> = ({ onClose, initialPos, onDragEn
   };
 
   return (
-    <Panel title="플러그인 관리" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
+    <Panel title={t('pluginPanel.title')} onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
       {plugins.length > 0 ? (
         plugins.map(plugin => (
           <div key={plugin.name} style={{ display: 'flex', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #333' }}>
@@ -51,7 +53,7 @@ const PluginPanel: React.FC<PluginPanelProps> = ({ onClose, initialPos, onDragEn
           </div>
         ))
       ) : (
-        <p className="empty-message">사용 가능한 플러그인이 없습니다.</p>
+        <p className="empty-message">{t('pluginPanel.noPlugins')}</p>
       )}
     </Panel>
   );

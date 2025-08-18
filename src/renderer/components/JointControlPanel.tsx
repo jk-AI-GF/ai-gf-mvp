@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { VRMHumanBoneName } from '@pixiv/three-vrm';
 import * as THREE from 'three';
 import eventBus from '../../core/event-bus';
@@ -14,6 +15,7 @@ type BoneInfo = {
 };
 
 const JointControlPanel: React.FC = () => {
+  const { t } = useTranslation();
   const { pluginManager } = useAppContext();
   const [bones, setBones] = useState<BoneInfo[]>([]);
   const [hipHeight, setHipHeight] = useState(0);
@@ -105,11 +107,11 @@ const JointControlPanel: React.FC = () => {
   return (
     <>
       {bones.length === 0 ? (
-        <p className="empty-message">VRM 모델을 로드해주세요.</p>
+        <p className="empty-message">{t('expressionPanel.loadVrmFirst')}</p>
       ) : (
         <>
           <div className={styles.hipSliderContainer}>
-            <label htmlFor="hipHeight">캐릭터 높이 (Hips Y)</label>
+            <label htmlFor="hipHeight">{t('jointControlPanel.characterHeight')}</label>
             <input
               type="range"
               id="hipHeight"

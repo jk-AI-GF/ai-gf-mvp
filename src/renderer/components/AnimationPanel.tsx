@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './AnimationPanel.module.css';
 import { useAppContext } from '../contexts/AppContext';
 
@@ -8,6 +9,7 @@ interface AnimationPanelProps {
 }
 
 const AnimationPanel: React.FC<AnimationPanelProps> = ({ onEdit }) => {
+  const { t } = useTranslation();
   const { pluginManager } = useAppContext();
   const [animationFiles, setAnimationFiles] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -20,17 +22,17 @@ const AnimationPanel: React.FC<AnimationPanelProps> = ({ onEdit }) => {
         setAnimationFiles(animFiles);
 
         if (animFiles.length === 0) {
-          setError('저장된 애니메이션 파일(.vrma, .fbx)이 없습니다.');
+          setError(t('animationPanel.noFiles'));
         }
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
+        const errorMessage = err instanceof Error ? err.message : t('animationPanel.unknownError');
         console.error('Failed to list animations:', err);
         setError(errorMessage);
       }
     };
 
     fetchAnimations();
-  }, []);
+  }, [t]);
 
   const handlePlayClick = (fileName: string) => {
     pluginManager?.context.actions.playAnimation(fileName, false);
@@ -44,7 +46,7 @@ const AnimationPanel: React.FC<AnimationPanelProps> = ({ onEdit }) => {
     <div className={styles.panel}>
       <div className={styles.header}>
         <button className={styles.actionButton} onClick={handleOpenExplorer}>
-          파일매니저에서 열기
+          {t('animationPanel.openInExplorer')}
         </button>
       </div>
       <div className={styles.list}>
@@ -57,13 +59,13 @@ const AnimationPanel: React.FC<AnimationPanelProps> = ({ onEdit }) => {
                 onClick={() => onEdit(file)}
                 className={`${styles.listItemActionButton} ${styles.editButton}`}
               >
-                편집
+                {t('animationPanel.edit')}
               </button>
               <button
                 onClick={() => handlePlayClick(file)}
                 className={`${styles.listItemActionButton} ${styles.playButton}`}
               >
-                재생
+                {t('animationPanel.play')}
               </button>
             </div>
           </div>

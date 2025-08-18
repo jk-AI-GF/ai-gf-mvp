@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import * as THREE from 'three';
 import Panel from './Panel';
 import { useAppContext } from '../contexts/AppContext';
@@ -12,6 +13,7 @@ interface LightPanelProps {
 }
 
 const LightPanel: React.FC<LightPanelProps> = ({ onClose, initialPos, onDragEnd }) => {
+  const { t } = useTranslation();
   const { directionalLight, ambientLight, vrmManager } = useAppContext();
 
   // State for light properties
@@ -92,37 +94,37 @@ const LightPanel: React.FC<LightPanelProps> = ({ onClose, initialPos, onDragEnd 
   };
 
   return (
-    <Panel title="조명 편집" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd} width="320px">
+    <Panel title={t('lightPanel.title')} onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd} width="320px">
       <div className={styles.content}>
-        <h4 className={styles.header}>주 조명 (Directional)</h4>
+        <h4 className={styles.header}>{t('lightPanel.directionalTitle')}</h4>
         <div className={styles.controlRow}>
-          <label>강도</label>
+          <label>{t('lightPanel.intensity')}</label>
           <input type="range" min="0" max="5" step="0.1" value={dirIntensity} onChange={handleDirIntensityChange} />
           <span>{dirIntensity.toFixed(1)}</span>
         </div>
         <div className={styles.controlRow}>
-          <label>색상</label>
+          <label>{t('lightPanel.color')}</label>
           <input type="color" value={dirColor} onChange={handleDirColorChange} />
         </div>
         <div className={styles.controlRow}>
-          <label>각도</label>
+          <label>{t('lightPanel.angle')}</label>
           <input type="range" min="0" max="360" step="1" value={dirAngle} onChange={handleAngleChange} />
           <span>{dirAngle.toFixed(0)}°</span>
         </div>
         <div className={styles.controlRow}>
-          <label>거리</label>
+          <label>{t('lightPanel.distance')}</label>
           <input type="range" min="1" max="10" step="0.1" value={dirDistance} onChange={handleDistanceChange} />
           <span>{dirDistance.toFixed(1)}</span>
         </div>
         <hr className={styles.divider} />
-        <h4 className={styles.header}>환경광 (Ambient)</h4>
+        <h4 className={styles.header}>{t('lightPanel.ambientTitle')}</h4>
         <div className={styles.controlRow}>
-          <label>강도</label>
+          <label>{t('lightPanel.intensity')}</label>
           <input type="range" min="0" max="5" step="0.1" value={ambIntensity} onChange={handleAmbIntensityChange} />
           <span>{ambIntensity.toFixed(1)}</span>
         </div>
         <div className={styles.controlRow}>
-          <label>색상</label>
+          <label>{t('lightPanel.color')}</label>
           <input type="color" value={ambColor} onChange={handleAmbColorChange} />
         </div>
       </div>

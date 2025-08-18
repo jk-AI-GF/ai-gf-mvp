@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import Panel from './Panel';
 
 interface Mod {
@@ -18,6 +19,7 @@ interface ModManagementPanelProps {
 }
 
 const ModManagementPanel: React.FC<ModManagementPanelProps> = ({ onClose, initialPos, onDragEnd }) => {
+  const { t } = useTranslation();
   const [mods, setMods] = useState<Mod[]>([]);
   const [modSettings, setModSettings] = useState<ModSettings>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -37,13 +39,13 @@ const ModManagementPanel: React.FC<ModManagementPanelProps> = ({ onClose, initia
         setError(null);
       } catch (err) {
         console.error('Failed to fetch mods:', err);
-        setError('모드 목록을 불러오는 데 실패했습니다.');
+        setError(t('modManagementPanel.errorLoading'));
       } finally {
         setIsLoading(false);
       }
     };
     fetchMods();
-  }, []);
+  }, [t]);
 
   const handleToggle = async (modName: string, isEnabled: boolean) => {
     setModSettings(prev => ({ ...prev, [modName]: isEnabled }));
@@ -52,9 +54,9 @@ const ModManagementPanel: React.FC<ModManagementPanelProps> = ({ onClose, initia
   };
 
   const renderContent = () => {
-    if (isLoading) return <p className="empty-message">모드를 불러오는 중...</p>;
+    if (isLoading) return <p className="empty-message">{t('modManagementPanel.loading')}</p>;
     if (error) return <p className="empty-message" style={{ color: 'red' }}>{error}</p>;
-    if (mods.length === 0) return <p className="empty-message">설치된 모드가 없습니다.</p>;
+    if (mods.length === 0) return <p className="empty-message">{t('modManagementPanel.noMods')}</p>;
     
     return mods.map(mod => {
       const isEnabled = modSettings[mod.name] !== false;
@@ -76,14 +78,14 @@ const ModManagementPanel: React.FC<ModManagementPanelProps> = ({ onClose, initia
   };
 
   return (
-    <Panel title="모드 관리" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
+    <Panel title={t('modManagementPanel.title')} onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
       {renderContent()}
       {showRestartMessage && (
         <p style={{
           marginTop: '15px', padding: '8px', background: 'rgba(255, 255, 0, 0.1)',
           border: '1px solid rgba(255, 255, 0, 0.3)', borderRadius: '4px', textAlign: 'center'
         }}>
-          ℹ️ 앱을 재시작하여 변경사항을 적용하세요.
+          {t('modManagementPanel.restartMessage')}
         </p>
       )}
     </Panel>

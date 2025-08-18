@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Panel from './Panel';
 import styles from './AssetPanel.module.css';
 import VRMPanel from './VRMPanel';
@@ -24,6 +25,7 @@ const AssetPanel: React.FC<AssetPanelProps> = ({
   onDragEnd,
   onEditAnimation,
 }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<AssetTabType>(initialTab);
 
   const renderTabContent = () => {
@@ -44,14 +46,14 @@ const AssetPanel: React.FC<AssetPanelProps> = ({
   };
 
   return (
-    <Panel title="Asset Panel" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd} width="350px" height="500px">
+    <Panel title={t('assetPanel.title')} onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd} width="350px" height="500px">
       <div className={styles.container}>
         <div className={styles.tabBar}>
-          <button onClick={() => setActiveTab('vrm')} className={activeTab === 'vrm' ? styles.activeTab : ''}>VRM</button>
-          <button onClick={() => setActiveTab('animation')} className={activeTab === 'animation' ? styles.activeTab : ''}>Animation</button>
-          <button onClick={() => setActiveTab('pose')} className={activeTab === 'pose' ? styles.activeTab : ''}>Pose</button>
-          <button onClick={() => setActiveTab('joint')} className={activeTab === 'joint' ? styles.activeTab : ''}>Joint</button>
-          <button onClick={() => setActiveTab('expression')} className={activeTab === 'expression' ? styles.activeTab : ''}>Expression</button>
+          <button onClick={() => setActiveTab('vrm')} className={activeTab === 'vrm' ? styles.activeTab : ''}>{t('assetPanel.tabVrm')}</button>
+          <button onClick={() => setActiveTab('animation')} className={activeTab === 'animation' ? styles.activeTab : ''}>{t('assetPanel.tabAnimation')}</button>
+          <button onClick={() => setActiveTab('pose')} className={activeTab === 'pose' ? styles.activeTab : ''}>{t('assetPanel.tabPose')}</button>
+          <button onClick={() => setActiveTab('joint')} className={activeTab === 'joint' ? styles.activeTab : ''}>{t('assetPanel.tabJoint')}</button>
+          <button onClick={() => setActiveTab('expression')} className={activeTab === 'expression' ? styles.activeTab : ''}>{t('assetPanel.tabExpression')}</button>
         </div>
         <div className={styles.tabContent}>
           {renderTabContent()}

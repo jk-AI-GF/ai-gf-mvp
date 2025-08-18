@@ -55,5 +55,70 @@
     "plugins": "Plugins",
     "modManagement": "Mod Management",
     "quit": "Quit"
+  },
+  "animationPanel": {
+    "noFiles": "No saved animation files (.vrma, .fbx) found.",
+    "unknownError": "An unknown error occurred.",
+    "openInExplorer": "Open in File Explorer",
+    "edit": "Edit",
+    "play": "Play"
+  },
+  "assetPanel": {
+    "title": "Asset Panel",
+    "tabVrm": "VRM",
+    "tabAnimation": "Animation",
+    "tabPose": "Pose",
+    "tabJoint": "Joint",
+    "tabExpression": "Expression"
+  },
+  "characterStateViewer": {
+    "title": "Character State",
+    "characterName": "Character Name:",
+    "userName": "User Name:",
+    "curiosity": "Curiosity:",
+    "happiness": "Happiness:",
+    "energy": "Energy:",
+    "lastInteraction": "Last Interaction:",
+    "loading": "Loading character state...",
+    "secondsAgo": "{{seconds}}s ago"
+  },
+  "expressionPanel": {
+    "loadVrmFirst": "Please load a VRM model first."
+  },
+  "jointControlPanel": {
+    "characterHeight": "Character Height (Hips Y)"
+  },
+  "lightPanel": {
+    "title": "Edit Lighting",
+    "directionalTitle": "Directional Light",
+    "intensity": "Intensity",
+    "color": "Color",
+    "angle": "Angle",
+    "distance": "Distance",
+    "ambientTitle": "Ambient Light"
+  },
+  "materialPanel": {
+    "title": "Batch Edit Materials",
+    "shadeColor": "Shade Color",
+    "outlineColor": "Outline Color",
+    "outlineWidth": "Outline Width",
+    "toonShading": "Toon Shading",
+    "rimLightColor": "Rim Light Color",
+    "rimLightIntensity": "Rim Light Intensity"
+  },
+  "modManagementPanel": {
+    "title": "Mod Management",
+    "errorLoading": "Failed to load mod list.",
+    "loading": "Loading mods...",
+    "noMods": "No mods installed.",
+    "restartMessage": "ℹ️ Restart the app to apply changes."
+  },
+  "pluginPanel": {
+    "title": "Plugin Management",
+    "noPlugins": "No plugins available."
+  },
+  "posePanel": {
+    "noFiles": "No saved pose files (.vrma) found.",
+    "saveCurrentPose": "Save Current Pose"
   }
 }

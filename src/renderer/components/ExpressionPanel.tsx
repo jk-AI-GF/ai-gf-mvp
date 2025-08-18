@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppContext } from '../contexts/AppContext';
 import eventBus from '../../core/event-bus';
 import styles from './ExpressionPanel.module.css';
 
 const ExpressionPanel: React.FC = () => {
+  const { t } = useTranslation();
   const { vrmManager } = useAppContext();
   const [expressions, setExpressions] = useState<string[]>([]);
   const [expressionValues, setExpressionValues] = useState<{ [key: string]: number }>({});
@@ -35,7 +37,7 @@ const ExpressionPanel: React.FC = () => {
   };
 
   if (expressions.length === 0) {
-    return <div className={styles.container}>VRM 모델을 먼저 로드해주세요.</div>;
+    return <div className={styles.container}>{t('expressionPanel.loadVrmFirst')}</div>;
   }
 
   return (

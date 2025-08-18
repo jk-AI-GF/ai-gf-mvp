@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import Panel from './Panel';
 import { useAppContext } from '../contexts/AppContext';
 import styles from './CharacterStateViewer.module.css';
@@ -11,6 +12,7 @@ interface CharacterStateViewerProps {
 }
 
 const CharacterStateViewer: React.FC<CharacterStateViewerProps> = ({ onClose, initialPos, onDragEnd }) => {
+  const { t } = useTranslation();
   const { pluginManager } = useAppContext();
   const [state, setState] = useState<ICharacterState | null>(null);
   const [elapsedTime, setElapsedTime] = useState<string>('N/A');
@@ -32,7 +34,7 @@ const CharacterStateViewer: React.FC<CharacterStateViewerProps> = ({ onClose, in
 
         if (newState.lastInteractionTimestamp) {
           const secondsAgo = Math.floor((Date.now() - newState.lastInteractionTimestamp) / 1000);
-          setElapsedTime(`${secondsAgo}s ago`);
+          setElapsedTime(t('characterStateViewer.secondsAgo', { seconds: secondsAgo }));
         }
       }
     };
@@ -41,40 +43,40 @@ const CharacterStateViewer: React.FC<CharacterStateViewerProps> = ({ onClose, in
     const interval = setInterval(updateState, 500); // Poll for updates
 
     return () => clearInterval(interval);
-  }, [pluginManager]);
+  }, [pluginManager, t]);
 
   return (
-    <Panel title="Character State" onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
+    <Panel title={t('characterStateViewer.title')} onClose={onClose} initialPos={initialPos} onDragEnd={onDragEnd}>
       <div className={styles.container}>
         {state ? (
           <>
             <div className={styles.stateItem}>
-              <span className={styles.stateKey}>Character Name:</span>
+              <span className={styles.stateKey}>{t('characterStateViewer.characterName')}</span>
               <span className={styles.stateValue}>{state.characterName}</span>
             </div>
             <div className={styles.stateItem}>
-              <span className={styles.stateKey}>User Name:</span>
+              <span className={styles.stateKey}>{t('characterStateViewer.userName')}</span>
               <span className={styles.stateValue}>{state.userName}</span>
             </div>
             <div className={styles.stateItem}>
-              <span className={styles.stateKey}>Curiosity:</span>
+              <span className={styles.stateKey}>{t('characterStateViewer.curiosity')}</span>
               <span className={styles.stateValue}>{state.curiosity.toFixed(3)}</span>
             </div>
             <div className={styles.stateItem}>
-              <span className={styles.stateKey}>Happiness:</span>
+              <span className={styles.stateKey}>{t('characterStateViewer.happiness')}</span>
               <span className={styles.stateValue}>{state.happiness.toFixed(3)}</span>
             </div>
             <div className={styles.stateItem}>
-              <span className={styles.stateKey}>Energy:</span>
+              <span className={styles.stateKey}>{t('characterStateViewer.energy')}</span>
               <span className={styles.stateValue}>{state.energy.toFixed(3)}</span>
             </div>
             <div className={styles.stateItem}>
-              <span className={styles.stateKey}>Last Interaction:</span>
+              <span className={styles.stateKey}>{t('characterStateViewer.lastInteraction')}</span>
               <span className={styles.stateValue}>{elapsedTime}</span>
             </div>
           </>
         ) : (
-          <p>Loading character state...</p>
+          <p>{t('characterStateViewer.loading')}</p>
         )}
       </div>
     </Panel>
