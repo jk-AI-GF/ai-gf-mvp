@@ -6,20 +6,7 @@ import { VRMManager } from '../../vrm-manager';
 import { PluginManager } from '../../../plugins/plugin-manager';
 import eventBus from '../../../core/event-bus';
 import { initAudioContext, playTTS, toggleTts, setMasterVolume } from '../../audio-service';
-import { AutoLookAtPlugin } from '../../../plugins/auto-look-at-plugin';
-import { AutoBlinkPlugin } from '../../../plugins/auto-blink-plugin';
-import { AutoIdleAnimationPlugin } from '../../../plugins/auto-idle-animation-plugin';
-import { createPluginContext } from '../../../plugin-api/context-factory';
-import { ProactiveDialoguePlugin } from '../../../plugins/proactive-dialogue-plugin';
-import { ActionTestPlugin } from '../../../plugins/action-test-plugin';
 import { MToonMaterialOutlineWidthMode } from '@pixiv/three-vrm';
-import { GrabVrmPlugin } from '../../../plugins/grab-vrm-plugin';
-import { GravityPlugin } from '../../../plugins/gravity-plugin';
-import { LlmResponseHandlerPlugin } from '../../../plugins/LlmResponseHandlerPlugin';
-import { InteractionTrackerPlugin } from '../../../plugins/interaction-tracker-plugin';
-import { SystemControls } from '../../../plugin-api/system-controls';
-import { registerCoreActions } from '../../../core/action-registrar';
-import { ActionRegistry } from '../../../core/action-registry';
 import { characterState } from '../../../core/character-state';
 
 interface VRMCanvasProps {

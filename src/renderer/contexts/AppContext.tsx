@@ -16,11 +16,6 @@ import { createPluginContext } from '../../plugin-api/context-factory';
 import eventBus from '../../core/event-bus';
 import { SystemControls } from '../../plugin-api/system-controls';
 import { toggleTts, setMasterVolume } from '../audio-service';
-import { AutoLookAtPlugin } from '../../plugins/auto-look-at-plugin';
-import { AutoBlinkPlugin } from '../../plugins/auto-blink-plugin';
-import { AutoIdleAnimationPlugin } from '../../plugins/auto-idle-animation-plugin';
-import { ProactiveDialoguePlugin } from '../../plugins/proactive-dialogue-plugin';
-import { ActionTestPlugin } from '../../plugins/action-test-plugin';
 import { GrabVrmPlugin } from '../../plugins/grab-vrm-plugin';
 import { GravityPlugin } from '../../plugins/gravity-plugin';
 import { LlmResponseHandlerPlugin } from '../../plugins/LlmResponseHandlerPlugin';
@@ -157,11 +152,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     console.log('[AppContext] Core actions and data providers registered.');
 
     // Register all plugins
-    pluginManager.register(new AutoLookAtPlugin());
-    pluginManager.register(new AutoBlinkPlugin());
-    pluginManager.register(new AutoIdleAnimationPlugin());
-    pluginManager.register(new ProactiveDialoguePlugin());
-    pluginManager.register(new ActionTestPlugin());
     pluginManager.register(new GrabVrmPlugin());
     pluginManager.register(new GravityPlugin());
     pluginManager.register(new LlmResponseHandlerPlugin());
