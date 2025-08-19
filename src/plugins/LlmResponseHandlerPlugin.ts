@@ -40,18 +40,18 @@ export class LlmResponseHandlerPlugin implements IPlugin {
 
       if (subroutineFileName) {
         await this.context.sequenceManager?.runSubroutine(subroutineFileName, args);
-        this.context.actions.setExpression(expression, 1.0, 0.5);
-        this.context.actions.playTTS(text);
+        this.context.actions['character.setExpression'](expression, 1.0, 0.5);
+        this.context.actions['character.playTTS'](text);
       } else {
         console.warn(`[LlmResponseHandlerPlugin] Subroutine with name '${subroutine}' not found. Falling back to talk.`);
-        this.context.actions.setExpression(expression, 1.0, 0.5);
-        this.context.actions.playTTS(text);
+        this.context.actions['character.setExpression'](expression, 1.0, 0.5);
+        this.context.actions['character.playTTS'](text);
       }
     } else if (type === 'action_array') {
       const { subroutines, expression, text } = data as any;
       
-      this.context.actions.setExpression(expression, 1.0, 0.5);
-      this.context.actions.playTTS(text);
+      this.context.actions['character.setExpression'](expression, 1.0, 0.5);
+      this.context.actions['character.playTTS'](text);
 
       if (subroutines && Array.isArray(subroutines)) {
         for (const sub of subroutines) {
@@ -66,8 +66,8 @@ export class LlmResponseHandlerPlugin implements IPlugin {
       }
     } else {
       const { text, expression } = data as any;
-      this.context.actions.setExpression(expression, 1.0, 0.5);
-      this.context.actions.playTTS(text);
+      this.context.actions['character.setExpression'](expression, 1.0, 0.5);
+      this.context.actions['character.playTTS'](text);
     }
   };
 

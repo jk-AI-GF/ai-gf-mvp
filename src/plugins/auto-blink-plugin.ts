@@ -53,11 +53,11 @@ export class AutoBlinkPlugin implements IPlugin {
       // 다른 표정에 영향을 주지 않는 animateExpressionAdditive 함수를 사용합니다.
       if (this.context.actions) {
         // 0.075초 동안 빠르게 눈을 감습니다.
-        this.context.actions.setExpression(VRMExpressionPresetName.Blink, 1.0, 0.075);
+        this.context.actions['character.setExpression'](VRMExpressionPresetName.Blink, 1.0, 0.075);
 
         // 100ms 후에 0.15초 동안 천천히 눈을 뜹니다.
         setTimeout(() => {
-          this.context.actions.setExpression(VRMExpressionPresetName.Blink, 0.0, 0.15);
+          this.context.actions['character.setExpression'](VRMExpressionPresetName.Blink, 0.0, 0.15);
         }, 100);
       }
     }

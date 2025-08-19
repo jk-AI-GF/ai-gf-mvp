@@ -38,7 +38,7 @@ export class GrabVrmPlugin implements IPlugin {
   }
 
   onEnable(): void {
-    this.partClickedUnsubscribe = this.context.eventBus.on('character_part_clicked', this.handleMouseDownOnPart);
+    this.partClickedUnsubscribe = this.context.eventBus.on('character:partClicked', this.handleMouseDownOnPart);
   }
 
   onDisable(): void {
@@ -75,12 +75,12 @@ export class GrabVrmPlugin implements IPlugin {
         document.addEventListener('mousemove', this.handleMouseMove);
         document.addEventListener('mouseup', this.handleMouseUp, { once: true });
 
-        await this.context.actions.setPose("pose_grabbed.vrma");
+        await this.context.actions['character.setPose']("pose_grabbed.vrma");
         
         // Now that the pose is applied, set the rest rotation in local space
         this.restRotation.copy(hips.quaternion);
 
-        this.context.actions.showMessage("으악!");
+        this.context.actions['ui.showMessage']("으악!");
         this.context.eventBus.emit('character:grabStart');
 
         if (activeCamera instanceof THREE.PerspectiveCamera) {
@@ -131,7 +131,7 @@ export class GrabVrmPlugin implements IPlugin {
     if (!this.isDragging) return;
     this.isDragging = false;
     this.context.eventBus.emit('character:grabEnd');
-    this.context.actions.setPose("pose_stand_001.vrma", 0.2);
+    this.context.actions['character.setPose']("pose_stand_001.vrma", 0.2);
 
     document.removeEventListener('mousemove', this.handleMouseMove);
 

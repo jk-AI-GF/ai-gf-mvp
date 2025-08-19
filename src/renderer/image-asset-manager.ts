@@ -12,7 +12,7 @@ export class ImageAssetManager {
   }
 
   private notifyUpdates() {
-    this.eventBus.emit('assets:updated', { assets: this.getAssets() });
+    this.eventBus.emit('asset:updated', { assets: this.getAssets() });
   }
 
   public getAssets(): ImageAssetState[] {

@@ -31,11 +31,11 @@ const PosePanel: React.FC = () => {
   }, [t]);
 
   const handlePoseClick = (fileName: string) => {
-    pluginManager?.context.actions.setPose(fileName);
+    pluginManager?.context.actions['character.setPose'](fileName);
   };
 
   const handleSavePose = () => {
-    pluginManager?.context.actions.saveCurrentPose();
+    pluginManager?.context.actions['character.saveCurrentPose']();
   };
 
   const handleOpenExplorer = () => {

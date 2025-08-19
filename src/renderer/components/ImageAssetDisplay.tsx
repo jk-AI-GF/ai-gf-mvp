@@ -17,7 +17,7 @@ export const ImageAssetDisplay: React.FC = () => {
       setAssets(data.assets);
     };
 
-    const unsubscribe = eventBus.on('assets:updated', handleAssetsUpdated);
+    const unsubscribe = eventBus.on('asset:updated', handleAssetsUpdated);
 
     return () => {
       unsubscribe();

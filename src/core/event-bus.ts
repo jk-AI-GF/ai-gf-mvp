@@ -48,26 +48,26 @@ export type AppEvents = {
   'ipc:play-animation': { clip: string };
 
   /** 캐릭터 상호작용 */
-  'character_part_clicked': { partName: string };
-  'character_part_right_clicked': { partName: string };
+  'character:partClicked': { partName: string };
+  'character:partRightClicked': { partName: string };
   'character:dragStart': void;
   'character:dragEnd': void;
   'character:grabStart': void;
   'character:grabEnd': void;
 
   /** 캐릭터 상태 */
-  'character-state:changed': ICharacterState;
-  'character-state:propertyChanged': { property: keyof Omit<ICharacterState, 'toJSON' | 'hydrate' | 'initialize'>; newValue: any; oldValue: any };
+  'characterState:changed': ICharacterState;
+  'characterState:propertyChanged': { property: keyof Omit<ICharacterState, 'toJSON' | 'hydrate' | 'initialize'>; newValue: any; oldValue: any };
 
   /** 2D 에셋 */
-  'assets:updated': { assets: ImageAssetState[] };
+  'asset:updated': { assets: ImageAssetState[] };
 
   /** 공통 에러 */
   'error': { scope: string; error: Error };
 
   /** 시스템 이벤트 */
-  'system:mouse-ignore-toggle': boolean;
-  'sequences-updated': {
+  'system:mouseIgnoreToggled': boolean;
+  'sequence:updated': {
     allSequences: { name: string, type: 'sequence' | 'subroutine' }[],
     activeSequences: string[],
   };

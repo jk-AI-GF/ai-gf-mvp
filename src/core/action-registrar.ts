@@ -124,10 +124,11 @@ export function registerCoreActions(
     }
   );
 
+  // --- Character Actions ---
   registry.register(
     {
-      name: 'playAnimation',
-      description: 'actions.playAnimation.description',
+      name: 'character.playAnimation',
+      description: 'actions.character.playAnimation.description',
       params: [
         { 
           name: 'animationName', 
@@ -148,8 +149,8 @@ export function registerCoreActions(
 
   registry.register(
     {
-      name: 'playTTS',
-      description: 'actions.playTTS.description',
+      name: 'character.playTTS',
+      description: 'actions.character.playTTS.description',
       params: [{ 
         name: 'text', 
         type: 'string', 
@@ -164,22 +165,8 @@ export function registerCoreActions(
 
   registry.register(
     {
-      name: 'showMessage',
-      description: 'actions.showMessage.description',
-      params: [
-        { name: 'message', type: 'string', description: '표시할 메시지' },
-        { name: 'duration', type: 'number', defaultValue: 5, description: '표시 시간(초)' },
-      ],
-    },
-    (message: string, duration?: number) => {
-      eventBus.emit('ui:showFloatingMessage', { text: message, duration });
-    }
-  );
-
-  registry.register(
-    {
-      name: 'moveCharacterToScreenPosition',
-      description: 'actions.moveCharacterToScreenPosition.description',
+      name: 'character.moveToScreenPosition',
+      description: 'actions.character.moveToScreenPosition.description',
       params: [
         { name: 'x', type: 'number', description: '화면 X 좌표 (0.0-1.0은 화면 내)', defaultValue: 0.5 },
         { name: 'y', type: 'number', description: '화면 Y 좌표 (0.0-1.0은 화면 내)', defaultValue: 0.5 },
@@ -188,12 +175,12 @@ export function registerCoreActions(
     },
     async (x: number, y: number, duration: number) => {
       if (!vrmManager.currentVrm) {
-        console.warn("moveCharacterToScreenPosition: VRM not loaded.");
+        console.warn("character.moveToScreenPosition: VRM not loaded.");
         return;
       }
       // A more robust check for a valid camera object.
       if (!vrmManager.activeCamera || !vrmManager.activeCamera.isCamera) {
-        console.error("moveCharacterToScreenPosition: Active camera is not a valid THREE.Camera. Aborting.", vrmManager.activeCamera);
+        console.error("character.moveToScreenPosition: Active camera is not a valid THREE.Camera. Aborting.", vrmManager.activeCamera);
         return;
       }
 
@@ -223,15 +210,15 @@ export function registerCoreActions(
         await vrmManager.animateCharacterMove(targetPosition, duration);
         eventBus.emit('character:dragEnd'); // 이동 완료 후 중력 재활성화
       } else {
-        console.warn("moveCharacterToScreenPosition: Could not find an intersection point on the dynamic plane.");
+        console.warn("character.moveToScreenPosition: Could not find an intersection point on the dynamic plane.");
       }
     }
   );
 
   registry.register(
     {
-      name: 'setExpression',
-      description: 'actions.setExpression.description',
+      name: 'character.setExpression',
+      description: 'actions.character.setExpression.description',
       params: [
         { name: 'expressionName', type: 'string', description: '표정 이름' },
         { name: 'weight', type: 'number', defaultValue: 1.0, description: '강도 (0-1)' },
@@ -245,8 +232,8 @@ export function registerCoreActions(
 
   registry.register(
     {
-      name: 'setExpressionWeight',
-      description: 'actions.setExpressionWeight.description',
+      name: 'character.setExpressionWeight',
+      description: 'actions.character.setExpressionWeight.description',
       params: [
         { name: 'expressionName', type: 'string', description: '표정 이름' },
         { name: 'weight', type: 'number', defaultValue: 1.0, description: '강도 (0-1)' },
@@ -261,8 +248,8 @@ export function registerCoreActions(
 
   registry.register(
     {
-      name: 'setPose',
-      description: 'actions.setPose.description',
+      name: 'character.setPose',
+      description: 'actions.character.setPose.description',
       params: [
         { name: 'poseName', type: 'string', description: '포즈 파일 이름', dynamicOptions: 'poses' },
         { name: 'blendTime', type: 'number', defaultValue: 0.0, description: '블렌딩 시간(초)' }
@@ -276,8 +263,8 @@ export function registerCoreActions(
 
   registry.register(
     {
-      name: 'lookAt',
-      description: 'actions.lookAt.description',
+      name: 'character.lookAt',
+      description: 'actions.character.lookAt.description',
       params: [
         {
           name: 'target',
@@ -300,23 +287,8 @@ export function registerCoreActions(
 
   registry.register(
     {
-      name: 'changeBackground',
-      description: 'actions.changeBackground.description',
-      params: [{ name: 'imagePath', type: 'string', description: '이미지 파일 경로' }],
-    },
-    (imagePath: string) => {
-      document.body.style.backgroundImage = `url('${imagePath}')`;
-      document.body.style.backgroundColor = 'transparent';
-      document.body.style.backgroundSize = 'cover';
-      document.body.style.backgroundPosition = 'center';
-      renderer.setClearAlpha(0);
-    }
-  );
-
-  registry.register(
-    {
-      name: 'setHitboxesVisible',
-      description: 'actions.setHitboxesVisible.description',
+      name: 'character.setHitboxesVisible',
+      description: 'actions.character.setHitboxesVisible.description',
       params: [{ name: 'visible', type: 'boolean', description: '표시 여부' }],
     },
     (visible: boolean) => {
@@ -326,8 +298,8 @@ export function registerCoreActions(
 
   registry.register(
     {
-      name: 'resetPose',
-      description: 'actions.resetPose.description',
+      name: 'character.resetPose',
+      description: 'actions.character.resetPose.description',
       params: [],
     },
     () => {
@@ -337,8 +309,8 @@ export function registerCoreActions(
 
   registry.register(
     {
-      name: 'saveCurrentPose',
-      description: 'actions.saveCurrentPose.description',
+      name: 'character.saveCurrentPose',
+      description: 'actions.character.saveCurrentPose.description',
       params: [],
     },
     () => {
@@ -348,8 +320,8 @@ export function registerCoreActions(
 
   registry.register(
     {
-      name: 'loadCharacter',
-      description: 'actions.loadCharacter.description',
+      name: 'character.load',
+      description: 'actions.character.load.description',
       params: [{ name: 'fileName', type: 'string', description: 'VRM 파일 이름' }],
     },
     (fileName: string) => {
@@ -359,51 +331,8 @@ export function registerCoreActions(
 
   registry.register(
     {
-      name: 'setCameraMode',
-      description: 'actions.setCameraMode.description',
-      params: [
-        {
-          name: 'mode',
-          type: 'enum',
-          options: ['orbit', 'fixed'],
-          description: '카메라 모드',
-        },
-      ],
-    },
-    (mode: 'orbit' | 'fixed') => {
-      eventBus.emit('camera:setMode', { mode });
-    }
-  );
-
-  registry.register(
-    {
-      name: 'setContext',
-      description: 'actions.setContext.description',
-      params: [
-        { name: 'key', type: 'string', description: '저장할 키' },
-        { name: 'value', type: 'string', description: '저장할 값 (문자열, 숫자, boolean만 가능)' },
-      ],
-    },
-    (key: string, value: any) => {
-      window.electronAPI.send('context:set', key, value);
-    }
-  );
-
-  registry.register(
-    {
-      name: 'log',
-      description: 'actions.log.description',
-      params: [{ name: 'message', type: 'any', description: '출력할 메시지' }],
-    },
-    (message: any) => {
-      console.log('[SEQUENCE DEBUG]', message);
-    }
-  );
-
-  registry.register(
-    {
-      name: 'setCharacterState',
-      description: 'actions.setCharacterState.description',
+      name: 'character.setState',
+      description: 'actions.character.setState.description',
       params: [
         { name: 'key', type: 'enum', options: ['characterName', 'userName', 'curiosity', 'happiness', 'energy'], description: '변경할 상태' },
         { name: 'mode', type: 'enum', options: ['set', 'add', 'subtract'], defaultValue: 'set', description: '변경 방식' },
@@ -413,7 +342,7 @@ export function registerCoreActions(
     (key: 'characterName' | 'userName' | 'curiosity' | 'happiness' | 'energy', mode: 'set' | 'add' | 'subtract', value: any) => {
       // 1. Key 유효성 검사
       if (!key) {
-        console.error(`[Action] setCharacterState: 'key' is required but was not provided.`);
+        console.error(`[Action] character.setState: 'key' is required but was not provided.`);
         return;
       }
 
@@ -424,14 +353,14 @@ export function registerCoreActions(
           if (typeof value === 'string') {
             characterState[key] = value;
           } else {
-            console.warn(`[Action] setCharacterState: '${key}' requires a string value for 'set' mode.`);
+            console.warn(`[Action] character.setState: '${key}' requires a string value for 'set' mode.`);
           }
         } else { // 'curiosity', 'happiness', 'energy'
           const numValue = Number(value);
           if (!isNaN(numValue)) {
             characterState[key] = numValue; // Setter에서 0-1 클램핑 처리
           } else {
-            console.warn(`[Action] setCharacterState: '${key}' requires a numeric value for 'set' mode.`);
+            console.warn(`[Action] character.setState: '${key}' requires a numeric value for 'set' mode.`);
           }
         }
       } else {
@@ -441,7 +370,7 @@ export function registerCoreActions(
         const currentValue = characterState[numericKey];
 
         if (typeof currentValue !== 'number' || typeof value !== 'number') {
-          console.warn(`[Action] setCharacterState: '${key}' requires numeric values for '${mode}' mode.`);
+          console.warn(`[Action] character.setState: '${key}' requires numeric values for '${mode}' mode.`);
           return;
         }
 
@@ -458,8 +387,112 @@ export function registerCoreActions(
 
   registry.register(
     {
-      name: 'toggleSequence',
-      description: 'actions.toggleSequence.description',
+      name: 'character.setScale',
+      description: 'actions.character.setScale.description',
+      params: [
+        { name: 'scale', type: 'number', defaultValue: 1.0, description: '크기 값 (1.0이 기본)' },
+      ],
+    },
+    (scale: number) => {
+      vrmManager.setScale(scale);
+    }
+  );
+
+  registry.register(
+    {
+      name: 'character.setRotation',
+      description: 'actions.character.setRotation.description',
+      params: [
+        { name: 'y', type: 'number', description: 'Y축 회전값 (degrees)', defaultValue: 0 },
+        { name: 'blendTime', type: 'number', defaultValue: 0.5, description: '블렌딩 시간(초)' },
+      ],
+    },
+    (y: number, blendTime: number) => {
+      const yRad = THREE.MathUtils.degToRad(y);
+      return vrmManager.animateCharacterRotation(yRad, blendTime);
+    }
+  );
+
+  // --- UI Actions ---
+  registry.register(
+    {
+      name: 'ui.showMessage',
+      description: 'actions.ui.showMessage.description',
+      params: [
+        { name: 'message', type: 'string', description: '표시할 메시지' },
+        { name: 'duration', type: 'number', defaultValue: 5, description: '표시 시간(초)' },
+      ],
+    },
+    (message: string, duration?: number) => {
+      eventBus.emit('ui:showFloatingMessage', { text: message, duration });
+    }
+  );
+
+  registry.register(
+    {
+      name: 'ui.changeBackground',
+      description: 'actions.ui.changeBackground.description',
+      params: [{ name: 'imagePath', type: 'string', description: '이미지 파일 경로' }],
+    },
+    (imagePath: string) => {
+      document.body.style.backgroundImage = `url('${imagePath}')`;
+      document.body.style.backgroundColor = 'transparent';
+      document.body.style.backgroundSize = 'cover';
+      document.body.style.backgroundPosition = 'center';
+      renderer.setClearAlpha(0);
+    }
+  );
+
+  // --- Camera Actions ---
+  registry.register(
+    {
+      name: 'camera.setMode',
+      description: 'actions.camera.setMode.description',
+      params: [
+        {
+          name: 'mode',
+          type: 'enum',
+          options: ['orbit', 'fixed'],
+          description: '카메라 모드',
+        },
+      ],
+    },
+    (mode: 'orbit' | 'fixed') => {
+      eventBus.emit('camera:setMode', { mode });
+    }
+  );
+
+  // --- System Actions ---
+  registry.register(
+    {
+      name: 'system.setContext',
+      description: 'actions.system.setContext.description',
+      params: [
+        { name: 'key', type: 'string', description: '저장할 키' },
+        { name: 'value', type: 'string', description: '저장할 값 (문자열, 숫자, boolean만 가능)' },
+      ],
+    },
+    (key: string, value: any) => {
+      window.electronAPI.send('context:set', key, value);
+    }
+  );
+
+  registry.register(
+    {
+      name: 'system.log',
+      description: 'actions.system.log.description',
+      params: [{ name: 'message', type: 'any', description: '출력할 메시지' }],
+    },
+    (message: any) => {
+      console.log('[SEQUENCE DEBUG]', message);
+    }
+  );
+
+  // --- Sequence Actions ---
+  registry.register(
+    {
+      name: 'sequence.toggle',
+      description: 'actions.sequence.toggle.description',
       params: [
         { name: 'sequenceName', type: 'string', description: '토글할 시퀀스의 파일 이름', dynamicOptions: 'sequences' },
         { name: 'shouldActivate', type: 'boolean', description: '활성화 여부' },
@@ -470,10 +503,11 @@ export function registerCoreActions(
     }
   );
 
+  // --- Plugin Actions ---
   registry.register(
     {
-      name: 'togglePlugin',
-      description: 'actions.togglePlugin.description',
+      name: 'plugin.toggle',
+      description: 'actions.plugin.toggle.description',
       params: [
         { name: 'pluginName', type: 'string', description: '토글할 플러그인의 이름', dynamicOptions: 'plugins' },
         { name: 'enabled', type: 'boolean', description: '활성화 여부' },
@@ -490,8 +524,8 @@ export function registerCoreActions(
 
   registry.register(
     {
-      name: 'disableAllPlugins',
-      description: 'actions.disableAllPlugins.description',
+      name: 'plugin.disableAll',
+      description: 'actions.plugin.disableAll.description',
       params: [],
     },
     () => {
@@ -501,8 +535,8 @@ export function registerCoreActions(
 
   registry.register(
     {
-      name: 'restorePlugins',
-      description: 'actions.restorePlugins.description',
+      name: 'plugin.restoreAll',
+      description: 'actions.plugin.restoreAll.description',
       params: [],
     },
     () => {
@@ -510,39 +544,11 @@ export function registerCoreActions(
     }
   );
 
-  registry.register(
-    {
-      name: 'setCharacterScale',
-      description: 'actions.setCharacterScale.description',
-      params: [
-        { name: 'scale', type: 'number', defaultValue: 1.0, description: '크기 값 (1.0이 기본)' },
-      ],
-    },
-    (scale: number) => {
-      vrmManager.setScale(scale);
-    }
-  );
-
-  registry.register(
-    {
-      name: 'setRotation',
-      description: 'actions.setRotation.description',
-      params: [
-        { name: 'y', type: 'number', description: 'Y축 회전값 (degrees)', defaultValue: 0 },
-        { name: 'blendTime', type: 'number', defaultValue: 0.5, description: '블렌딩 시간(초)' },
-      ],
-    },
-    (y: number, blendTime: number) => {
-      const yRad = THREE.MathUtils.degToRad(y);
-      return vrmManager.animateCharacterRotation(yRad, blendTime);
-    }
-  );
-
   // --- 2D Asset Actions ---
   registry.register(
     {
-      name: 'showImageAsset',
-      description: 'actions.showImageAsset.description',
+      name: 'asset.showImage',
+      description: 'actions.asset.showImage.description',
       params: [
         { name: 'fileName', type: 'string', description: '표시할 이미지 파일 이름', dynamicOptions: 'assets' },
         { name: 'x', type: 'number', defaultValue: 0.5, description: '초기 X 위치 (0-1)' },
@@ -558,8 +564,8 @@ export function registerCoreActions(
 
   registry.register(
     {
-      name: 'hideImageAsset',
-      description: 'actions.hideImageAsset.description',
+      name: 'asset.hideImage',
+      description: 'actions.asset.hideImage.description',
       params: [
         { name: 'assetId', type: 'string', description: '숨길 에셋의 ID' },
       ],
@@ -571,8 +577,8 @@ export function registerCoreActions(
 
   registry.register(
     {
-      name: 'moveImageAsset',
-      description: 'actions.moveImageAsset.description',
+      name: 'asset.moveImage',
+      description: 'actions.asset.moveImage.description',
       params: [
         { name: 'assetId', type: 'string', description: '이동할 에셋의 ID' },
         { name: 'x', type: 'number', description: '새로운 X 위치 (0-1)' },
@@ -587,8 +593,8 @@ export function registerCoreActions(
 
   registry.register(
     {
-      name: 'updateImageAsset',
-      description: 'actions.updateImageAsset.description',
+      name: 'asset.updateImage',
+      description: 'actions.asset.updateImage.description',
       params: [
         { name: 'assetId', type: 'string', description: '수정할 에셋의 ID' },
         { name: 'scale', type: 'number', description: '새로운 크기' },

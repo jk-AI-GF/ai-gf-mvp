@@ -35,7 +35,7 @@ const AnimationPanel: React.FC<AnimationPanelProps> = ({ onEdit }) => {
   }, [t]);
 
   const handlePlayClick = (fileName: string) => {
-    pluginManager?.context.actions.playAnimation(fileName, false);
+    pluginManager?.context.actions['character.playAnimation'](fileName, false);
   };
 
   const handleOpenExplorer = () => {

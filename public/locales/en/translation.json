@@ -231,120 +231,186 @@
     "show": "Show"
   },
   "actions": {
-    "llm.invoke": {
-      "description": "Sends a dynamic prompt to the LLM to elicit a character response."
+    "llm": {
+      "invoke": {
+        "description": "Sends a dynamic prompt to the LLM to elicit a character response."
+      },
+      "updateMemory": {
+        "description": "Saves or updates important information discovered during LLM interactions into the long-term memory file."
+      }
     },
-    "llm.updateMemory": {
-      "description": "Saves or updates important information discovered during LLM interactions into the long-term memory file."
+    "character": {
+      "playAnimation": {
+        "description": "Plays a character animation."
+      },
+      "playTTS": {
+        "description": "Plays TTS (Text-to-Speech) audio."
+      },
+      "moveToScreenPosition": {
+        "description": "Moves the character to a position based on screen ratio coordinates."
+      },
+      "setExpression": {
+        "description": "Smoothly changes the character's facial expression."
+      },
+      "setExpressionWeight": {
+        "description": "Instantly sets the weight of a character's facial expression."
+      },
+      "setPose": {
+        "description": "Sets the character's pose."
+      },
+      "lookAt": {
+        "description": "Fixes the character's gaze on a target."
+      },
+      "setHitboxesVisible": {
+        "description": "Sets the visibility of the hitboxes."
+      },
+      "resetPose": {
+        "description": "Resets the character to the default T-Pose."
+      },
+      "saveCurrentPose": {
+        "description": "Saves the current pose to a file."
+      },
+      "load": {
+        "description": "Loads a different VRM model."
+      },
+      "setState": {
+        "description": "Changes the character's internal state values."
+      },
+      "setScale": {
+        "description": "Adjusts the overall size of the character."
+      },
+      "setRotation": {
+        "description": "Rotates the character around the Y-axis."
+      }
     },
-    "playAnimation": {
-      "description": "Plays a character animation."
+    "ui": {
+      "showMessage": {
+        "description": "Displays a speech bubble message on the screen."
+      },
+      "changeBackground": {
+        "description": "Changes the background image."
+      }
     },
-    "playTTS": {
-      "description": "Plays TTS (Text-to-Speech) audio."
+    "camera": {
+      "setMode": {
+        "description": "Changes the camera mode."
+      }
     },
-    "showMessage": {
-      "description": "Displays a speech bubble message on the screen."
+    "system": {
+      "setContext": {
+        "description": "Saves a value to the global context."
+      },
+      "log": {
+        "description": "Outputs a debug message to the console."
+      }
     },
-    "moveCharacterToScreenPosition": {
-      "description": "Moves the character to a position based on screen ratio coordinates."
+    "sequence": {
+      "toggle": {
+        "description": "Activates or deactivates a specified sequence."
+      }
     },
-    "setExpression": {
-      "description": "Smoothly changes the character's facial expression."
+    "plugin": {
+      "toggle": {
+        "description": "Enables or disables a specified plugin."
+      },
+      "disableAll": {
+        "description": "Disables all active plugins and remembers their current state."
+      },
+      "restoreAll": {
+        "description": "Re-enables plugins that were previously disabled by disableAllPlugins."
+      }
     },
-    "setExpressionWeight": {
-      "description": "Instantly sets the weight of a character's facial expression."
-    },
-    "setPose": {
-      "description": "Sets the character's pose."
-    },
-    "lookAt": {
-      "description": "Fixes the character's gaze on a target."
-    },
-    "changeBackground": {
-      "description": "Changes the background image."
-    },
-    "setHitboxesVisible": {
-      "description": "Sets the visibility of the hitboxes."
-    },
-    "resetPose": {
-      "description": "Resets the character to the default T-Pose."
-    },
-    "saveCurrentPose": {
-      "description": "Saves the current pose to a file."
-    },
-    "loadCharacter": {
-      "description": "Loads a different VRM model."
-    },
-    "setCameraMode": {
-      "description": "Changes the camera mode."
-    },
-    "setContext": {
-      "description": "Saves a value to the global context."
-    },
-    "log": {
-      "description": "Outputs a debug message to the console."
-    },
-    "setCharacterState": {
-      "description": "Changes the character's internal state values."
-    },
-    "toggleSequence": {
-      "description": "Activates or deactivates a specified sequence."
-    },
-    "togglePlugin": {
-      "description": "Enables or disables a specified plugin."
-    },
-    "disableAllPlugins": {
-      "description": "Disables all active plugins and remembers their current state."
-    },
-    "restorePlugins": {
-      "description": "Re-enables plugins that were previously disabled by disableAllPlugins."
-    },
-    "setCharacterScale": {
-      "description": "Adjusts the overall size of the character."
-    },
-    "setRotation": {
-      "description": "Rotates the character around the Y-axis."
-    },
-    "showImageAsset": {
-      "description": "Displays a 2D image asset on the screen and returns its ID."
-    },
-    "hideImageAsset": {
-      "description": "Hides a specific 2D image asset by its ID."
-    },
-    "moveImageAsset": {
-      "description": "Moves a specific 2D image asset by its ID."
-    },
-    "updateImageAsset": {
-    "description": "Changes the properties of a specific 2D image asset by its ID."
+    "asset": {
+      "showImage": {
+        "description": "Displays a 2D image asset on the screen and returns its ID."
+      },
+      "hideImage": {
+        "description": "Hides a specific 2D image asset by its ID."
+      },
+      "moveImage": {
+        "description": "Moves a specific 2D image asset by its ID."
+      },
+      "updateImage": {
+        "description": "Changes the properties of a specific 2D image asset by its ID."
+      }
     }
   },
   "events": {
-    "chat:newMessage": { "description": "Received a new chat message." },
-    "llm:responseReceived": { "description": "Received a response from the LLM." },
-    "vrm:loaded": { "description": "VRM model loading is complete." },
-    "vrm:unloaded": { "description": "VRM model has been unloaded." },
-    "vrm:animationFinished": { "description": "Animation playback has finished." },
-    "vrm:poseApplied": { "description": "A pose has been successfully applied." },
-    "vrm:scaled": { "description": "The VRM model's size has changed." },
-    "character_part_clicked": { "description": "A part of the character's body was clicked." },
-    "character_part_right_clicked": { "description": "A part of the character's body was right-clicked." },
-    "character:grabStart": { "description": "Started grabbing the character." },
-    "character:grabEnd": { "description": "Stopped grabbing the character." },
-    "character:dragStart": { "description": "Started dragging the character." },
-    "character:dragEnd": { "description": "Stopped dragging the character." },
-    "ui:showFloatingMessage": { "description": "A floating message is displayed." },
-    "ui:updateFloatingMessagePosition": { "description": "The floating message position is updated." },
-    "ui:editModeToggled": { "description": "Edit mode has been toggled on/off." },
-    "camera:setMode": { "description": "The camera mode has been set." },
-    "camera:modeChanged": { "description": "The camera mode has changed." },
-    "system:mouse-ignore-toggle": { "description": "Mouse event ignoring has been toggled." },
-    "plugin:enabled": { "description": "A plugin has been enabled." },
-    "plugin:disabled": { "description": "A plugin has been disabled." },
-    "sequences-updated": { "description": "The list of sequences has been updated." },
-    "character-state:changed": { "description": "The character's internal state (curiosity, happiness, etc.) has changed (entire state)." },
-    "character-state:propertyChanged": { "description": "A specific internal state value of the character has changed." },
-    "assets:updated": { "description": "The list of 2D assets displayed on the screen has changed." }
+    "chat:newMessage": {
+      "description": "Received a new chat message."
+    },
+    "llm:responseReceived": {
+      "description": "Received a response from the LLM."
+    },
+    "vrm:loaded": {
+      "description": "VRM model loading is complete."
+    },
+    "vrm:unloaded": {
+      "description": "VRM model has been unloaded."
+    },
+    "character:animationFinished": {
+      "description": "Animation playback has finished."
+    },
+    "character:poseApplied": {
+      "description": "A pose has been successfully applied."
+    },
+    "character:scaled": {
+      "description": "The VRM model's size has changed."
+    },
+    "character:partClicked": {
+      "description": "A part of the character's body was clicked."
+    },
+    "character:partRightClicked": {
+      "description": "A part of the character's body was right-clicked."
+    },
+    "character:grabStart": {
+      "description": "Started grabbing the character."
+    },
+    "character:grabEnd": {
+      "description": "Stopped grabbing the character."
+    },
+    "character:dragStart": {
+      "description": "Started dragging the character."
+    },
+    "character:dragEnd": {
+      "description": "Stopped dragging the character."
+    },
+    "ui:showFloatingMessage": {
+      "description": "A floating message is displayed."
+    },
+    "ui:updateFloatingMessagePosition": {
+      "description": "The floating message position is updated."
+    },
+    "ui:editModeToggled": {
+      "description": "Edit mode has been toggled on/off."
+    },
+    "camera:setMode": {
+      "description": "The camera mode has been set."
+    },
+    "camera:modeChanged": {
+      "description": "The camera mode has changed."
+    },
+    "system:mouseIgnoreToggled": {
+      "description": "Mouse event ignoring has been toggled."
+    },
+    "plugin:enabled": {
+      "description": "A plugin has been enabled."
+    },
+    "plugin:disabled": {
+      "description": "A plugin has been disabled."
+    },
+    "sequence:updated": {
+      "description": "The list of sequences has been updated."
+    },
+    "characterState:changed": {
+      "description": "The character's internal state (curiosity, happiness, etc.) has changed (entire state)."
+    },
+    "characterState:propertyChanged": {
+      "description": "A specific internal state value of the character has changed."
+    },
+    "asset:updated": {
+      "description": "The list of 2D assets displayed on the screen has changed."
+    }
   },
   "dataProviders": {
     "getMousePosition": {

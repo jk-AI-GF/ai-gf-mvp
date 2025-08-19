@@ -34,7 +34,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ pluginManager, onLoad }) => {
       unsubLoad(); 
     });
 
-    eventBus.on('character-state:changed', (newState) => {
+    eventBus.on('characterState:changed', (newState) => {
       window.electronAPI.sendCharacterStateChanged(newState);
     });
 
@@ -158,10 +158,10 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ pluginManager, onLoad }) => {
       const intersects = raycaster.intersectObjects(vrmManager.hitboxes);
       if (intersects.length > 0) {
         const partName = intersects[0].object.name.replace('hitbox_', '');
-        if (event.button === 0) eventBus.emit('character_part_clicked', { partName });
+        if (event.button === 0) eventBus.emit('character:partClicked', { partName });
         else if (event.button === 2) {
           event.preventDefault();
-          eventBus.emit('character_part_right_clicked', { partName });
+          eventBus.emit('character:partRightClicked', { partName });
         }
       }
     };

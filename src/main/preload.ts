@@ -24,9 +24,9 @@ import { LlmSettings } from '../core/llm-settings';
   writeLlmMemory: (memoryData: any) => ipcRenderer.invoke('llm-memory:write', memoryData),
 
   // Action API
-  playAnimation: (animationName: string, loop: boolean, crossFadeDuration: number) => ipcRenderer.invoke('play-animation', animationName, loop, crossFadeDuration),
-  showMessage: (message: string, duration: number) => ipcRenderer.invoke('show-message', message, duration),
-  setExpression: (expressionName: string, weight: number, duration: number) => ipcRenderer.invoke('set-expression', expressionName, weight, duration),
+  'character.playAnimation': (animationName: string, loop: boolean, crossFadeDuration: number) => ipcRenderer.invoke('character.playAnimation', animationName, loop, crossFadeDuration),
+  'ui.showMessage': (message: string, duration: number) => ipcRenderer.invoke('ui.showMessage', message, duration),
+  'character.setExpression': (expressionName: string, weight: number, duration: number) => ipcRenderer.invoke('character.setExpression', expressionName, weight, duration),
   
   // Event Bus
   on: (channel: string, listener: (...args: any[]) => void) => {
@@ -115,9 +115,9 @@ declare global {
       writeLlmMemory: (memoryData: any) => Promise<{ success: boolean, error?: string }>;
 
       // Action API
-      playAnimation: (animationName: string, loop: boolean, crossFadeDuration: number) => Promise<void>;
-      showMessage: (message: string, duration: number) => Promise<void>;
-      setExpression: (expressionName: string, weight: number, duration: number) => Promise<void>;
+      'character.playAnimation': (animationName: string, loop: boolean, crossFadeDuration: number) => Promise<void>;
+      'ui.showMessage': (message: string, duration: number) => Promise<void>;
+      'character.setExpression': (expressionName: string, weight: number, duration: number) => Promise<void>;
 
       // Event Bus
       on: (channel: string, listener: (...args: any[]) => void) => () => void;

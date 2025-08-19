@@ -40,12 +40,12 @@ const CreatorPanel: React.FC<CreatorPanelProps> = ({
       return;
     }
 
-    const action = actionRegistry.get('toggleSequence')?.implementation;
+    const action = actionRegistry.get('sequence.toggle')?.implementation;
 
     if (action) {
       action(sequenceFile, shouldActivate);
     } else {
-      console.error(`Action "toggleSequence" not found.`);
+      console.error(`Action "sequence.toggle" not found.`);
     }
   };
 

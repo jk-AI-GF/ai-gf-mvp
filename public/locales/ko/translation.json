@@ -231,120 +231,186 @@
     "show": "보이기"
   },
   "actions": {
-    "llm.invoke": {
-      "description": "LLM에 동적 프롬프트를 보내고 캐릭터의 반응을 유도합니다."
+    "llm": {
+      "invoke": {
+        "description": "LLM에 동적 프롬프트를 보내고 캐릭터의 반응을 유도합니다."
+      },
+      "updateMemory": {
+        "description": "LLM과의 상호작용에서 발견된 중요한 정보를 장기 기억 파일에 저장하거나 업데이트합니다."
+      }
     },
-    "llm.updateMemory": {
-      "description": "LLM과의 상호작용에서 발견된 중요한 정보를 장기 기억 파일에 저장하거나 업데이트합니다."
+    "character": {
+      "playAnimation": {
+        "description": "캐릭터 애니메이션을 재생합니다."
+      },
+      "playTTS": {
+        "description": "TTS 음성을 재생합니다."
+      },
+      "moveToScreenPosition": {
+        "description": "화면 비율 좌표로 캐릭터를 이동시킵니다."
+      },
+      "setExpression": {
+        "description": "캐릭터의 표정을 부드럽게 변경합니다."
+      },
+      "setExpressionWeight": {
+        "description": "캐릭터 표정 가중치를 즉시 설정합니다."
+      },
+      "setPose": {
+        "description": "캐릭터의 포즈를 설정합니다."
+      },
+      "lookAt": {
+        "description": "캐릭터의 시선을 고정합니다."
+      },
+      "setHitboxesVisible": {
+        "description": "히트박스 가시성을 설정합니다."
+      },
+      "resetPose": {
+        "description": "캐릭터를 기본 T-Pose로 되돌립니다."
+      },
+      "saveCurrentPose": {
+        "description": "현재 포즈를 파일로 저장합니다."
+      },
+      "load": {
+        "description": "다른 VRM 모델을 불러옵니다."
+      },
+      "setState": {
+        "description": "캐릭터의 내부 상태 값을 변경합니다."
+      },
+      "setScale": {
+        "description": "캐릭터의 전체 크기를 조절합니다."
+      },
+      "setRotation": {
+        "description": "캐릭터를 Y축 기준으로 회전시킵니다."
+      }
     },
-    "playAnimation": {
-      "description": "캐릭터 애니메이션을 재생합니다."
+    "ui": {
+      "showMessage": {
+        "description": "화면에 말풍선 메시지를 표시합니다."
+      },
+      "changeBackground": {
+        "description": "배경 이미지를 변경합니다."
+      }
     },
-    "playTTS": {
-      "description": "TTS 음성을 재생합니다."
+    "camera": {
+      "setMode": {
+        "description": "카메라 모드를 변경합니다."
+      }
     },
-    "showMessage": {
-      "description": "화면에 말풍선 메시지를 표시합니다."
+    "system": {
+      "setContext": {
+        "description": "전역 컨텍스트에 값을 저장합니다."
+      },
+      "log": {
+        "description": "콘솔에 디버그 메시지를 출력합니다."
+      }
     },
-    "moveCharacterToScreenPosition": {
-      "description": "화면 비율 좌표로 캐릭터를 이동시킵니다."
+    "sequence": {
+      "toggle": {
+        "description": "지정된 시퀀스를 활성화하거나 비활성화합니다."
+      }
     },
-    "setExpression": {
-      "description": "캐릭터의 표정을 부드럽게 변경합니다."
+    "plugin": {
+      "toggle": {
+        "description": "지정된 플러그인을 활성화하거나 비활성화합니다."
+      },
+      "disableAll": {
+        "description": "모든 활성 플러그인을 비활성화하고 현재 상태를 기억합니다."
+      },
+      "restoreAll": {
+        "description": "이전에 disableAllPlugins으로 비활성화된 플러그인들을 다시 활성화합니다."
+      }
     },
-    "setExpressionWeight": {
-      "description": "캐릭터 표정 가중치를 즉시 설정합니다."
-    },
-    "setPose": {
-      "description": "캐릭터의 포즈를 설정합니다."
-    },
-    "lookAt": {
-      "description": "캐릭터의 시선을 고정합니다."
-    },
-    "changeBackground": {
-      "description": "배경 이미지를 변경합니다."
-    },
-    "setHitboxesVisible": {
-      "description": "히트박스 가시성을 설정합니다."
-    },
-    "resetPose": {
-      "description": "캐릭터를 기본 T-Pose로 되돌립니다."
-    },
-    "saveCurrentPose": {
-      "description": "현재 포즈를 파일로 저장합니다."
-    },
-    "loadCharacter": {
-      "description": "다른 VRM 모델을 불러옵니다."
-    },
-    "setCameraMode": {
-      "description": "카메라 모드를 변경합니다."
-    },
-    "setContext": {
-      "description": "전역 컨텍스트에 값을 저장합니다."
-    },
-    "log": {
-      "description": "콘솔에 디버그 메시지를 출력합니다."
-    },
-    "setCharacterState": {
-      "description": "캐릭터의 내부 상태 값을 변경합니다."
-    },
-    "toggleSequence": {
-      "description": "지정된 시퀀스를 활성화하거나 비활성화합니다."
-    },
-    "togglePlugin": {
-      "description": "지정된 플러그인을 활성화하거나 비활성화합니다."
-    },
-    "disableAllPlugins": {
-      "description": "모든 활성 플러그인을 비활성화하고 현재 상태를 기억합니다."
-    },
-    "restorePlugins": {
-      "description": "이전에 disableAllPlugins으로 비활성화된 플러그인들을 다시 활성화합니다."
-    },
-    "setCharacterScale": {
-      "description": "캐릭터의 전체 크기를 조절합니다."
-    },
-    "setRotation": {
-      "description": "캐릭터를 Y축 기준으로 회전시킵니다."
-    },
-    "showImageAsset": {
-      "description": "화면에 2D 이미지 에셋을 표시하고 ID를 반환합니다."
-    },
-    "hideImageAsset": {
-      "description": "ID로 특정 2D 이미지 에셋을 숨깁니다."
-    },
-    "moveImageAsset": {
-      "description": "ID로 특정 2D 이미지 에셋을 이동시킵니다."
-    },
-    "updateImageAsset": {
-      "description": "ID로 특정 2D 이미지 에셋의 속성을 변경합니다."
+    "asset": {
+      "showImage": {
+        "description": "화면에 2D 이미지 에셋을 표시하고 ID를 반환합니다."
+      },
+      "hideImage": {
+        "description": "ID로 특정 2D 이미지 에셋을 숨깁니다."
+      },
+      "moveImage": {
+        "description": "ID로 특정 2D 이미지 에셋을 이동시킵니다."
+      },
+      "updateImage": {
+        "description": "ID로 특정 2D 이미지 에셋의 속성을 변경합니다."
+      }
     }
   },
   "events": {
-    "chat:newMessage": { "description": "새 채팅 메시지 수신" },
-    "llm:responseReceived": { "description": "LLM 응답 수신" },
-    "vrm:loaded": { "description": "VRM 모델 로드 완료" },
-    "vrm:unloaded": { "description": "VRM 모델 언로드" },
-    "vrm:animationFinished": { "description": "애니메이션 재생 완료" },
-    "vrm:poseApplied": { "description": "포즈 적용 완료" },
-    "vrm:scaled": { "description": "VRM 모델 크기 변경" },
-    "character_part_clicked": { "description": "캐릭터 신체 부위 클릭" },
-    "character_part_right_clicked": { "description": "캐릭터 신체 부위 우클릭" },
-    "character:grabStart": { "description": "캐릭터 잡기 시작" },
-    "character:grabEnd": { "description": "캐릭터 잡기 종료" },
-    "character:dragStart": { "description": "캐릭터 드래그 시작" },
-    "character:dragEnd": { "description": "캐릭터 드래그 종료" },
-    "ui:showFloatingMessage": { "description": "플로팅 메시지 표시" },
-    "ui:updateFloatingMessagePosition": { "description": "플로팅 메시지 위치 업데이트" },
-    "ui:editModeToggled": { "description": "편집 모드 활성/비활성" },
-    "camera:setMode": { "description": "카메라 모드 설정" },
-    "camera:modeChanged": { "description": "카메라 모드 변경됨" },
-    "system:mouse-ignore-toggle": { "description": "마우스 이벤트 무시 전환" },
-    "plugin:enabled": { "description": "플러그인 활성화됨" },
-    "plugin:disabled": { "description": "플러그인 비활성화됨" },
-    "sequences-updated": { "description": "시퀀스 목록 업데이트됨" },
-    "character-state:changed": { "description": "캐릭터의 내부 상태(호기심, 행복 등)가 변경될 때 발생합니다. (전체 상태)" },
-    "character-state:propertyChanged": { "description": "캐릭터의 특정 내부 상태 값이 변경될 때 발생합니다." },
-    "assets:updated": { "description": "화면에 표시되는 2D 에셋 목록이 변경될 때 발생합니다." }
+    "chat:newMessage": {
+      "description": "새 채팅 메시지 수신"
+    },
+    "llm:responseReceived": {
+      "description": "LLM 응답 수신"
+    },
+    "vrm:loaded": {
+      "description": "VRM 모델 로드 완료"
+    },
+    "vrm:unloaded": {
+      "description": "VRM 모델 언로드"
+    },
+    "character:animationFinished": {
+      "description": "애니메이션 재생 완료"
+    },
+    "character:poseApplied": {
+      "description": "포즈 적용 완료"
+    },
+    "character:scaled": {
+      "description": "VRM 모델 크기 변경"
+    },
+    "character:partClicked": {
+      "description": "캐릭터 신체 부위 클릭"
+    },
+    "character:partRightClicked": {
+      "description": "캐릭터 신체 부위 우클릭"
+    },
+    "character:grabStart": {
+      "description": "캐릭터 잡기 시작"
+    },
+    "character:grabEnd": {
+      "description": "캐릭터 잡기 종료"
+    },
+    "character:dragStart": {
+      "description": "캐릭터 드래그 시작"
+    },
+    "character:dragEnd": {
+      "description": "캐릭터 드래그 종료"
+    },
+    "ui:showFloatingMessage": {
+      "description": "플로팅 메시지 표시"
+    },
+    "ui:updateFloatingMessagePosition": {
+      "description": "플로팅 메시지 위치 업데이트"
+    },
+    "ui:editModeToggled": {
+      "description": "편집 모드 활성/비활성"
+    },
+    "camera:setMode": {
+      "description": "카메라 모드 설정"
+    },
+    "camera:modeChanged": {
+      "description": "카메라 모드 변경됨"
+    },
+    "system:mouseIgnoreToggled": {
+      "description": "마우스 이벤트 무시 전환"
+    },
+    "plugin:enabled": {
+      "description": "플러그인 활성화됨"
+    },
+    "plugin:disabled": {
+      "description": "플러그인 비활성화됨"
+    },
+    "sequence:updated": {
+      "description": "시퀀스 목록 업데이트됨"
+    },
+    "characterState:changed": {
+      "description": "캐릭터의 내부 상태(호기심, 행복 등)가 변경될 때 발생합니다. (전체 상태)"
+    },
+    "characterState:propertyChanged": {
+      "description": "캐릭터의 특정 내부 상태 값이 변경될 때 발생합니다."
+    },
+    "asset:updated": {
+      "description": "화면에 표시되는 2D 에셋 목록이 변경될 때 발생합니다."
+    }
   },
   "dataProviders": {
     "getMousePosition": {

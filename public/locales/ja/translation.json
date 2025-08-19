@@ -231,120 +231,186 @@
     "show": "表示"
   },
   "actions": {
-    "llm.invoke": {
-      "description": "LLMに動的なプロンプトを送信して、キャラクターの応答を引き出します。"
+    "llm": {
+      "invoke": {
+        "description": "LLMに動的なプロンプトを送信して、キャラクターの応答を引き出します。"
+      },
+      "updateMemory": {
+        "description": "LLMとの対話中に発見された重要な情報を長期記憶ファイルに保存または更新します。"
+      }
     },
-    "llm.updateMemory": {
-      "description": "LLMとの対話中に発見された重要な情報を長期記憶ファイルに保存または更新します。"
+    "character": {
+      "playAnimation": {
+        "description": "キャラクターのアニメーションを再生します。"
+      },
+      "playTTS": {
+        "description": "TTS（テキスト読み上げ）音声を再生します。"
+      },
+      "moveToScreenPosition": {
+        "description": "画面比率座標に基づいてキャラクターを移動します。"
+      },
+      "setExpression": {
+        "description": "キャラクターの表情を滑らかに変更します。"
+      },
+      "setExpressionWeight": {
+        "description": "キャラクターの表情の重みを即座に設定します。"
+      },
+      "setPose": {
+        "description": "キャラクターのポーズを設定します。"
+      },
+      "lookAt": {
+        "description": "キャラクターの視線をターゲットに固定します。"
+      },
+      "setHitboxesVisible": {
+        "description": "ヒットボックスの可視性を設定します。"
+      },
+      "resetPose": {
+        "description": "キャラクターをデフォルトのTポーズにリセットします。"
+      },
+      "saveCurrentPose": {
+        "description": "現在のポーズをファイルに保存します。"
+      },
+      "load": {
+        "description": "別のVRMモデルを読み込みます。"
+      },
+      "setState": {
+        "description": "キャラクターの内部状態値を変更します。"
+      },
+      "setScale": {
+        "description": "キャラクター全体のサイズを調整します。"
+      },
+      "setRotation": {
+        "description": "キャラクターをY軸周りに回転させます。"
+      }
     },
-    "playAnimation": {
-      "description": "キャラクターのアニメーションを再生します。"
+    "ui": {
+      "showMessage": {
+        "description": "画面に吹き出しメッセージを表示します。"
+      },
+      "changeBackground": {
+        "description": "背景画像を変更します。"
+      }
     },
-    "playTTS": {
-      "description": "TTS（テキスト読み上げ）音声を再生します。"
+    "camera": {
+      "setMode": {
+        "description": "カメラモードを変更します。"
+      }
     },
-    "showMessage": {
-      "description": "画面に吹き出しメッセージを表示します。"
+    "system": {
+      "setContext": {
+        "description": "グローバルコンテキストに値を保存します。"
+      },
+      "log": {
+        "description": "コンソールにデバッグメッセージを出力します。"
+      }
     },
-    "moveCharacterToScreenPosition": {
-      "description": "画面比率座標に基づいてキャラクターを移動します。"
+    "sequence": {
+      "toggle": {
+        "description": "指定されたシーケンスをアクティブ化または非アクティブ化します。"
+      }
     },
-    "setExpression": {
-      "description": "キャラクターの表情を滑らかに変更します。"
+    "plugin": {
+      "toggle": {
+        "description": "指定されたプラグインを有効または無効にします。"
+      },
+      "disableAll": {
+        "description": "すべてのアクティブなプラグインを無効にし、現在の状態を記憶します。"
+      },
+      "restoreAll": {
+        "description": "以前にdisableAllPluginsで無効にされたプラグインを再度有効にします。"
+      }
     },
-    "setExpressionWeight": {
-      "description": "キャラクターの表情の重みを即座に設定します。"
-    },
-    "setPose": {
-      "description": "キャラクターのポーズを設定します。"
-    },
-    "lookAt": {
-      "description": "キャラクターの視線をターゲットに固定します。"
-    },
-    "changeBackground": {
-      "description": "背景画像を変更します。"
-    },
-    "setHitboxesVisible": {
-      "description": "ヒットボックスの可視性を設定します。"
-    },
-    "resetPose": {
-      "description": "キャラクターをデフォルトのTポーズにリセットします。"
-    },
-    "saveCurrentPose": {
-      "description": "現在のポーズをファイルに保存します。"
-    },
-    "loadCharacter": {
-      "description": "別のVRMモデルを読み込みます。"
-    },
-    "setCameraMode": {
-      "description": "カメラモードを変更します。"
-    },
-    "setContext": {
-      "description": "グローバルコンテキストに値を保存します。"
-    },
-    "log": {
-      "description": "コンソールにデバッグメッセージを出力します。"
-    },
-    "setCharacterState": {
-      "description": "キャラクターの内部状態値を変更します。"
-    },
-    "toggleSequence": {
-      "description": "指定されたシーケンスをアクティブ化または非アクティブ化します。"
-    },
-    "togglePlugin": {
-      "description": "指定されたプラグインを有効または無効にします。"
-    },
-    "disableAllPlugins": {
-      "description": "すべてのアクティブなプラグインを無効にし、現在の状態を記憶します。"
-    },
-    "restorePlugins": {
-      "description": "以前にdisableAllPluginsで無効にされたプラグインを再度有効にします。"
-    },
-    "setCharacterScale": {
-      "description": "キャラクター全体のサイズを調整します。"
-    },
-    "setRotation": {
-      "description": "キャラクターをY軸周りに回転させます。"
-    },
-    "showImageAsset": {
-      "description": "画面に2D画像アセットを表示し、そのIDを返します。"
-    },
-    "hideImageAsset": {
-      "description": "IDで特定の2D画像アセットを非表示にします。"
-    },
-    "moveImageAsset": {
-      "description": "IDで特定の2D画像アセットを移動します。"
-    },
-    "updateImageAsset": {
-      "description": "IDで特定の2D画像アセットのプロパティを変更します。"
+    "asset": {
+      "showImage": {
+        "description": "画面に2D画像アセットを表示し、そのIDを返します。"
+      },
+      "hideImage": {
+        "description": "IDで特定の2D画像アセットを非表示にします。"
+      },
+      "moveImage": {
+        "description": "IDで特定の2D画像アセットを移動します。"
+      },
+      "updateImage": {
+        "description": "IDで特定の2D画像アセットのプロパティを変更します。"
+      }
     }
   },
   "events": {
-    "chat:newMessage": { "description": "新しいチャットメッセージを受信しました。" },
-    "llm:responseReceived": { "description": "LLMから応答を受信しました。" },
-    "vrm:loaded": { "description": "VRMモデルの読み込みが完了しました。" },
-    "vrm:unloaded": { "description": "VRMモデルがアンロードされました。" },
-    "vrm:animationFinished": { "description": "アニメーションの再生が終了しました。" },
-    "vrm:poseApplied": { "description": "ポーズが正常に適用されました。" },
-    "vrm:scaled": { "description": "VRMモデルのサイズが変更されました。" },
-    "character_part_clicked": { "description": "キャラクターの体の一部がクリックされました。" },
-    "character_part_right_clicked": { "description": "キャラクターの体の一部が右クリックされました。" },
-    "character:grabStart": { "description": "キャラクターの掴みを開始しました。" },
-    "character:grabEnd": { "description": "キャラクターの掴みを終了しました。" },
-    "character:dragStart": { "description": "キャラクターのドラッグを開始しました。" },
-    "character:dragEnd": { "description": "キャラクターのドラッグを終了しました。" },
-    "ui:showFloatingMessage": { "description": "フローティングメッセージが表示されます。" },
-    "ui:updateFloatingMessagePosition": { "description": "フローティングメッセージの位置が更新されます。" },
-    "ui:editModeToggled": { "description": "編集モードがオン/オフに切り替わりました。" },
-    "camera:setMode": { "description": "カメラモードが設定されました。" },
-    "camera:modeChanged": { "description": "カメラモードが変更されました。" },
-    "system:mouse-ignore-toggle": { "description": "マウスイベントの無視が切り替わりました。" },
-    "plugin:enabled": { "description": "プラグインが有効になりました。" },
-    "plugin:disabled": { "description": "プラグインが無効になりました。" },
-    "sequences-updated": { "description": "シーケンスのリストが更新されました。" },
-    "character-state:changed": { "description": "キャラクターの内部状態（好奇心、幸福度など）が変更されました（状態全体）。" },
-    "character-state:propertyChanged": { "description": "キャラクターの特定の内部状態値が変更されました。" },
-    "assets:updated": { "description": "画面に表示されている2Dアセットのリストが変更されました。" }
+    "chat:newMessage": {
+      "description": "新しいチャットメッセージを受信しました。"
+    },
+    "llm:responseReceived": {
+      "description": "LLMから応答を受信しました。"
+    },
+    "vrm:loaded": {
+      "description": "VRMモデルの読み込みが完了しました。"
+    },
+    "vrm:unloaded": {
+      "description": "VRMモデルがアンロードされました。"
+    },
+    "character:animationFinished": {
+      "description": "アニメーションの再生が終了しました。"
+    },
+    "character:poseApplied": {
+      "description": "ポーズが正常に適用されました。"
+    },
+    "character:scaled": {
+      "description": "VRMモデルのサイズが変更されました。"
+    },
+    "character:partClicked": {
+      "description": "キャラクターの体の一部がクリックされました。"
+    },
+    "character:partRightClicked": {
+      "description": "キャラクターの体の一部が右クリックされました。"
+    },
+    "character:grabStart": {
+      "description": "キャラクターの掴みを開始しました。"
+    },
+    "character:grabEnd": {
+      "description": "キャラクターの掴みを終了しました。"
+    },
+    "character:dragStart": {
+      "description": "キャラクターのドラッグを開始しました。"
+    },
+    "character:dragEnd": {
+      "description": "キャラクターのドラッグを終了しました。"
+    },
+    "ui:showFloatingMessage": {
+      "description": "フローティングメッセージが表示されます。"
+    },
+    "ui:updateFloatingMessagePosition": {
+      "description": "フローティングメッセージの位置が更新されます。"
+    },
+    "ui:editModeToggled": {
+      "description": "編集モードがオン/オフに切り替わりました。"
+    },
+    "camera:setMode": {
+      "description": "カメラモードが設定されました。"
+    },
+    "camera:modeChanged": {
+      "description": "カメラモードが変更されました。"
+    },
+    "system:mouseIgnoreToggled": {
+      "description": "マウスイベントの無視が切り替わりました。"
+    },
+    "plugin:enabled": {
+      "description": "プラグインが有効になりました。"
+    },
+    "plugin:disabled": {
+      "description": "プラグインが無効になりました。"
+    },
+    "sequence:updated": {
+      "description": "シーケンスのリストが更新されました。"
+    },
+    "characterState:changed": {
+      "description": "キャラクターの内部状態（好奇心、幸福度など）が変更されました（状態全体）。"
+    },
+    "characterState:propertyChanged": {
+      "description": "キャラクターの特定の内部状態値が変更されました。"
+    },
+    "asset:updated": {
+      "description": "画面に表示されている2Dアセットのリストが変更されました。"
+    }
   },
   "dataProviders": {
     "getMousePosition": {

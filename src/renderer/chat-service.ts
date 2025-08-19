@@ -30,7 +30,7 @@ export class ChatService {
     this.vrmManager = vrmManager;
     this.pluginManager = pluginManager;
 
-    eventBus.on('sequences-updated', () => {
+    eventBus.on('sequence:updated', () => {
       if (this.pluginManager.context?.sequenceManager) {
         const availableSubroutines = this.pluginManager.context.sequenceManager.getAvailableSubroutines();
         console.log('[ChatService] Sequences updated. Available subroutines:', availableSubroutines);

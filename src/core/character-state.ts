@@ -17,7 +17,7 @@ class CharacterState implements ICharacterState {
     }
 
     private emitChangeEvent() {
-        this.eventBus?.emit('character-state:changed', this.toJSON());
+        this.eventBus?.emit('characterState:changed', this.toJSON());
     }
 
     private setProperty(property: keyof Omit<ICharacterState, 'lastInteractionTimestamp' | 'toJSON' | 'hydrate' | 'initialize' | 'characterName' | 'userName'>, value: number) {
@@ -28,7 +28,7 @@ class CharacterState implements ICharacterState {
         (this as any)[privateKey] = Math.max(0, Math.min(1, value));
         const newValue = this[privateKey] as number;
 
-        this.eventBus?.emit('character-state:propertyChanged', { property, newValue, oldValue });
+        this.eventBus?.emit('characterState:propertyChanged', { property, newValue, oldValue });
         this.emitChangeEvent();
     }
 
@@ -40,7 +40,7 @@ class CharacterState implements ICharacterState {
         (this as any)[privateKey] = value;
         const newValue = this[privateKey] as string;
 
-        this.eventBus?.emit('character-state:propertyChanged', { property, newValue, oldValue });
+        this.eventBus?.emit('characterState:propertyChanged', { property, newValue, oldValue });
         this.emitChangeEvent();
     }
 
@@ -92,7 +92,7 @@ class CharacterState implements ICharacterState {
         if (this._lastInteractionTimestamp === value) return;
         const oldValue = this._lastInteractionTimestamp;
         this._lastInteractionTimestamp = value;
-        this.eventBus?.emit('character-state:propertyChanged', { property: 'lastInteractionTimestamp', newValue: value, oldValue });
+        this.eventBus?.emit('characterState:propertyChanged', { property: 'lastInteractionTimestamp', newValue: value, oldValue });
         this.emitChangeEvent();
     }
 

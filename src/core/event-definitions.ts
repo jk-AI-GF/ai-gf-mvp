@@ -39,7 +39,7 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
         { key: 'expression', type: 'string', description: '추천 표정' }
     ],
   },
-  // VRM
+  // VRM / Character
   {
     name: 'vrm:loaded',
     description: 'events.vrm:loaded.description',
@@ -54,37 +54,37 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
     payloadSchema: [],
   },
   {
-    name: 'vrm:animationFinished',
-    description: 'events.vrm:animationFinished.description',
+    name: 'character:animationFinished',
+    description: 'events.character:animationFinished.description',
     payloadSchema: [
         { key: 'clipName', type: 'string', description: '완료된 애니메이션 이름' }
     ],
   },
   {
-    name: 'vrm:poseApplied',
-    description: 'events.vrm:poseApplied.description',
+    name: 'character:poseApplied',
+    description: 'events.character:poseApplied.description',
     payloadSchema: [
         { key: 'poseName', type: 'string', description: '적용된 포즈 이름' }
     ],
   },
   {
-    name: 'vrm:scaled',
-    description: 'events.vrm:scaled.description',
+    name: 'character:scaled',
+    description: 'events.character:scaled.description',
     payloadSchema: [
         { key: 'scale', type: 'number', description: '적용된 크기 값' }
     ],
   },
   // Interaction
   {
-    name: 'character_part_clicked',
-    description: 'events.character_part_clicked.description',
+    name: 'character:partClicked',
+    description: 'events.character:partClicked.description',
     payloadSchema: [
         { key: 'partName', type: 'string', description: '클릭된 부위 이름' }
     ],
   },
   {
-    name: 'character_part_right_clicked',
-    description: 'events.character_part_right_clicked.description',
+    name: 'character:partRightClicked',
+    description: 'events.character:partRightClicked.description',
     payloadSchema: [
         { key: 'partName', type: 'string', description: '우클릭된 부위 이름' }
     ],
@@ -151,8 +151,8 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
   },
   // System
   {
-    name: 'system:mouse-ignore-toggle',
-    description: 'events.system:mouse-ignore-toggle.description',
+    name: 'system:mouseIgnoreToggled',
+    description: 'events.system:mouseIgnoreToggled.description',
     payloadSchema: [
         { key: 'isIgnoring', type: 'boolean', description: '무시 여부' }
     ],
@@ -172,13 +172,13 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
     ],
   },
   {
-    name: 'sequences-updated',
-    description: 'events.sequences-updated.description',
+    name: 'sequence:updated',
+    description: 'events.sequence:updated.description',
     payloadSchema: [],
   },
   {
-    name: 'character-state:changed',
-    description: 'events.character-state:changed.description',
+    name: 'characterState:changed',
+    description: 'events.characterState:changed.description',
     payloadSchema: [
         { key: 'characterName', type: 'string', description: '캐릭터의 현재 이름' },
         { key: 'userName', type: 'string', description: '캐릭터가 유저를 부르는 이름' },
@@ -189,8 +189,8 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
     ],
   },
   {
-    name: 'character-state:propertyChanged',
-    description: 'events.character-state:propertyChanged.description',
+    name: 'characterState:propertyChanged',
+    description: 'events.characterState:propertyChanged.description',
     payloadSchema: [
         { key: 'property', type: 'string', description: '변경된 속성 이름 (curiosity, happiness, energy 등)' },
         { key: 'newValue', type: 'any', description: '변경된 새 값' },
@@ -199,8 +199,8 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
   },
   // 2D Assets
   {
-    name: 'assets:updated',
-    description: 'events.assets:updated.description',
+    name: 'asset:updated',
+    description: 'events.asset:updated.description',
     payloadSchema: [
         { key: 'assets', type: 'any', description: '현재 화면에 표시된 모든 에셋의 상태 배열' }
     ],

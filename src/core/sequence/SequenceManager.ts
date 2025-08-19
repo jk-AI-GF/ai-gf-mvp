@@ -249,7 +249,7 @@ export class SequenceManager {
       const updatedAllFiles = await window.electronAPI.getAllSequenceFilesWithType();
       this.allSequenceFiles = updatedAllFiles.map(f => f.name);
 
-      this.pluginContext.eventBus.emit('sequences-updated', {
+      this.pluginContext.eventBus.emit('sequence:updated', {
         allSequences: updatedAllFiles,
         activeSequences: this.getActiveSequenceFiles(),
       });
@@ -516,7 +516,7 @@ export class SequenceManager {
         const updatedAllFiles = await window.electronAPI.getAllSequenceFilesWithType();
         this.allSequenceFiles = updatedAllFiles.map(f => f.name);
 
-        this.pluginContext.eventBus.emit('sequences-updated', {
+        this.pluginContext.eventBus.emit('sequence:updated', {
           allSequences: updatedAllFiles,
           activeSequences: this.getActiveSequenceFiles(),
         });

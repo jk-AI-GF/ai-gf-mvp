@@ -28,7 +28,7 @@ const EditMenu: React.FC<EditMenuProps> = ({ onOpenAssetPanel, onOpenMeshControl
   const handleToggleHitboxes = (e: React.ChangeEvent<HTMLInputElement>) => {
     const isChecked = e.target.checked;
     setShowHitboxes(isChecked);
-    pluginManager?.context.actions.setHitboxesVisible(isChecked);
+    pluginManager?.context.actions['character.setHitboxesVisible'](isChecked);
   };
 
   if (!isVisible) {

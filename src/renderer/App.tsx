@@ -75,7 +75,7 @@ const App: React.FC = () => {
         setActiveSequences(data.activeSequences);
       }
     };
-    const unsubscribe = eventBus.on('sequences-updated', handleSequencesUpdated);
+    const unsubscribe = eventBus.on('sequence:updated', handleSequencesUpdated);
     return () => unsubscribe();
   }, []);
 

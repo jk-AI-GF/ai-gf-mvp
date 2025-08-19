@@ -29,7 +29,7 @@ export class InteractionTrackerPlugin implements IPlugin {
   }
 
   onEnable(): void {
-    this.context.eventBus.on('character_part_clicked', this.handleInteraction);
+    this.context.eventBus.on('character:partClicked', this.handleInteraction);
     this.context.eventBus.on('chat:newMessage', this.handleChatMessage);
     
     // 마우스 위치를 기본값으로 초기화합니다.
@@ -42,7 +42,7 @@ export class InteractionTrackerPlugin implements IPlugin {
   }
 
   onDisable(): void {
-    this.context.eventBus.off('character_part_clicked', this.handleInteraction);
+    this.context.eventBus.off('character:partClicked', this.handleInteraction);
     this.context.eventBus.off('chat:newMessage', this.handleChatMessage);
     window.removeEventListener('mousemove', this.handleMouseMove);
     console.log('[InteractionTrackerPlugin] Disabled.');
