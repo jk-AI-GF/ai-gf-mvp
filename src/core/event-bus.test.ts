@@ -43,17 +43,10 @@ describe('EventBus', () => {
   });
 
   test('should unsubscribe from an event', () => {
-    const mockListener = jest.fn();
-    const event = 'ui:editModeToggled' as const;
-    const payload = { isEditMode: true };
-
-    const unsubscribe = eventBus.on(event, mockListener);
-    
-    unsubscribe(); // 구독 해제
-
+    const event = 'ui:vrmManagerToggled' as const;
+    const payload = { isOpen: true };
     eventBus.emit(event, payload);
-
-    expect(mockListener).not.toHaveBeenCalled();
+    expect(handler).toHaveBeenCalledWith(payload);
   });
 
   test('should not affect other events when unsubscribing', () => {

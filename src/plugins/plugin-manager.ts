@@ -15,7 +15,7 @@ export interface IPlugin {
    * 편집 모드에서도 플러그인을 실행할지 여부.
    * @default false
    */
-  runInEditMode?: boolean;
+  runInVrmMode?: boolean;
 
   /**
    * 플러그인이 등록될 때 한 번만 호출됩니다.
@@ -49,8 +49,8 @@ export interface IPlugin {
 export class PluginManager {
   public plugins: Map<string, IPlugin> = new Map();
   public context: PluginContext;
-  private isEditMode = false;
-  private pluginsDisabledByEditMode: Set<string> = new Set();
+  private isVrmMode = false;
+  private pluginsDisabledByVrmMode: Set<string> = new Set();
   private previouslyEnabledPlugins: Set<string> = new Set();
 
   constructor(context: PluginContext) {
@@ -72,7 +72,7 @@ export class PluginManager {
     const isEnabledByDefault = plugin.enabled;
     plugin.enabled = false; // Reset before calling enable, so the check inside enable() works
 
-    if (isEnabledByDefault && (!this.isEditMode || plugin.runInEditMode)) {
+    if (isEnabledByDefault && (!this.isVrmMode || plugin.runInVrmMode)) {
       this.enable(plugin.name);
     }
     
@@ -80,28 +80,28 @@ export class PluginManager {
   }
 
   /**
-   * 편집 모드 상태를 설정하고, 상태에 따라 플러그인을 활성화/비활성화합니다.
-   * @param isEditMode 새로운 편집 모드 상태
+   * VRM 관리 모드 상태를 설정하고, 상태에 따라 플러그인을 활성화/비활성화합니다.
+   * @param isVrmMode 새로운 VRM 관리 모드 상태
    */
-  setEditMode(isEditMode: boolean): void {
-    if (this.isEditMode === isEditMode) return;
-    this.isEditMode = isEditMode;
+  setVrmMode(isVrmMode: boolean): void {
+    if (this.isVrmMode === isVrmMode) return;
+    this.isVrmMode = isVrmMode;
 
-    if (this.isEditMode) {
-      // Entering edit mode
-      this.pluginsDisabledByEditMode.clear();
+    if (this.isVrmMode) {
+      // Entering VRM mode
+      this.pluginsDisabledByVrmMode.clear();
       for (const plugin of this.plugins.values()) {
-        if (plugin.enabled && !plugin.runInEditMode) {
-          this.pluginsDisabledByEditMode.add(plugin.name);
+        if (plugin.enabled && !plugin.runInVrmMode) {
+          this.pluginsDisabledByVrmMode.add(plugin.name);
           this.disable(plugin.name);
         }
       }
     } else {
-      // Exiting edit mode
-      for (const pluginName of this.pluginsDisabledByEditMode) {
+      // Exiting VRM mode
+      for (const pluginName of this.pluginsDisabledByVrmMode) {
         this.enable(pluginName);
       }
-      this.pluginsDisabledByEditMode.clear();
+      this.pluginsDisabledByVrmMode.clear();
     }
   }
 
@@ -126,11 +126,11 @@ export class PluginManager {
   enable(name: string): void {
     const plugin = this.plugins.get(name);
     if (plugin && !plugin.enabled) {
-      // 편집 모드이고 플러그인이 편집 모드에서 실행되도록 설정되지 않은 경우 활성화하지 않습니다.
-      if (this.isEditMode && !plugin.runInEditMode) {
-        console.log(`Plugin "${name}" cannot be enabled in edit mode.`);
-        // 이 경우를 대비해 편집 모드로 인해 비활성화된 플러그인 목록에 추가할 수도 있습니다.
-        this.pluginsDisabledByEditMode.add(name);
+      // VRM 관리 모드이고 플러그인이 VRM 관리 모드에서 실행되도록 설정되지 않은 경우 활성화하지 않습니다.
+      if (this.isVrmMode && !plugin.runInVrmMode) {
+        console.log(`Plugin "${name}" cannot be enabled in VRM management mode.`);
+        // 이 경우를 대비해 VRM 관리 모드로 인해 비활성화된 플러그인 목록에 추가할 수도 있습니다.
+        this.pluginsDisabledByVrmMode.add(name);
         return;
       }
       plugin.enabled = true;

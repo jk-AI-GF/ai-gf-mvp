@@ -203,11 +203,11 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ pluginManager, onLoad }) => {
         vrmManager.setActiveCamera(activeCamera); // VRMManager에 활성 카메라 업데이트
     };
 
-    const handleEditModeChange = (data: { isEditMode: boolean }) => {
-        pluginManager.setEditMode(data.isEditMode);
-        handleSetCameraMode(data.isEditMode ? 'orbit' : 'fixed');
+    const handleVrmManagerToggle = (data: { isOpen: boolean }) => {
+        pluginManager.setVrmMode(data.isOpen);
+        handleSetCameraMode(data.isOpen ? 'orbit' : 'fixed');
 
-        if (data.isEditMode) {
+        if (data.isOpen) {
             focusCameraOnCharacter();
         }
     };
@@ -223,7 +223,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ pluginManager, onLoad }) => {
     
     eventBus.on('camera:requestState', requestCameraState);
     eventBus.on('camera:setMode', ({ mode }) => handleSetCameraMode(mode));
-    eventBus.on('ui:editModeToggled', handleEditModeChange);
+    eventBus.on('ui:vrmManagerToggled', handleVrmManagerToggle);
 
     // --- Cleanup ---
     return () => {
@@ -232,7 +232,7 @@ const VRMCanvas: React.FC<VRMCanvasProps> = ({ pluginManager, onLoad }) => {
         unsubTts();
         eventBus.off('camera:requestState', requestCameraState);
         eventBus.off('camera:setMode', ({ mode }) => handleSetCameraMode(mode));
-        eventBus.off('ui:editModeToggled', handleEditModeChange);
+        eventBus.off('ui:vrmManagerToggled', handleVrmManagerToggle);
     };
   }, [pluginManager, onLoad]);
 

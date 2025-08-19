@@ -8,16 +8,16 @@ import eventBus from '../core/event-bus';
 class MockPlugin implements IPlugin {
   name = 'mock-plugin';
   enabled = true; // 기본값을 true로 변경하여 등록 시 활성화 테스트
-  runInEditMode = false;
+  runInVrmMode = false;
 
   setup = jest.fn();
   onEnable = jest.fn();
   onDisable = jest.fn();
   update = jest.fn();
 
-  constructor(name = 'mock-plugin', runInEditMode = false) {
+  constructor(name = 'mock-plugin', runInVrmMode = false) {
     this.name = name;
-    this.runInEditMode = runInEditMode;
+    this.runInVrmMode = runInVrmMode;
   }
 }
 
@@ -71,38 +71,38 @@ describe('PluginManager', () => {
     expect(plugin.update).not.toHaveBeenCalled();
   });
 
-  describe('setEditMode', () => {
+  describe('setVrmMode', () => {
     let plugin: MockPlugin;
-    let editModePlugin: MockPlugin;
+    let vrmModePlugin: MockPlugin;
 
     beforeEach(() => {
       plugin = new MockPlugin('normal-plugin', false);
-      editModePlugin = new MockPlugin('edit-mode-plugin', true);
+      vrmModePlugin = new MockPlugin('vrm-mode-plugin', true);
       pluginManager.register(plugin);
-      pluginManager.register(editModePlugin);
+      pluginManager.register(vrmModePlugin);
     });
 
-    test('should disable normal plugins when entering edit mode', () => {
-      pluginManager.setEditMode(true);
+    test('should disable normal plugins when entering vrm mode', () => {
+      pluginManager.setVrmMode(true);
       expect(plugin.onDisable).toHaveBeenCalledTimes(1);
       expect(plugin.enabled).toBe(false);
-      expect(editModePlugin.onDisable).not.toHaveBeenCalled();
-      expect(editModePlugin.enabled).toBe(true);
+      expect(vrmModePlugin.onDisable).not.toHaveBeenCalled();
+      expect(vrmModePlugin.enabled).toBe(true);
     });
 
-    test('should re-enable normal plugins when exiting edit mode', () => {
-      pluginManager.setEditMode(true); // 진입
+    test('should re-enable normal plugins when exiting vrm mode', () => {
+      pluginManager.setVrmMode(true); // 진입
       plugin.onEnable.mockClear(); // 호출 카운트 초기화
       
-      pluginManager.setEditMode(false); // 종료
+      pluginManager.setVrmMode(false); // 종료
       expect(plugin.onEnable).toHaveBeenCalledTimes(1);
       expect(plugin.enabled).toBe(true);
     });
 
-    test('should not change state if edit mode is set to the same value', () => {
-      pluginManager.setEditMode(true);
+    test('should not change state if vrm mode is set to the same value', () => {
+      pluginManager.setVrmMode(true);
       expect(plugin.onDisable).toHaveBeenCalledTimes(1);
-      pluginManager.setEditMode(true);
+      pluginManager.setVrmMode(true);
       expect(plugin.onDisable).toHaveBeenCalledTimes(1);
     });
   });

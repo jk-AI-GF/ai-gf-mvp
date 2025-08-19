@@ -72,9 +72,9 @@ const Scene: React.FC<SceneProps> = ({ onLoad }) => {
     const handleResize = () => onWindowResize(camera, renderer);
     window.addEventListener('resize', handleResize);
 
-    const handleEditModeToggle = ({ isEditMode }: { isEditMode: boolean }) => {
-      // isEditMode가 true이면 바닥(기본값), false이면 벽으로 사용
-      if (isEditMode) {
+    const handleVrmManagerToggle = ({ isOpen }: { isOpen: boolean }) => {
+      // isOpen이 true이면 바닥(기본값), false이면 벽으로 사용
+      if (isOpen) {
         plane.rotation.x = -Math.PI / 2;
         plane.position.z = 0;
         renderer.setClearColor(0x000000, 0.5); // 편집 모드: 반투명 검은색
@@ -85,13 +85,13 @@ const Scene: React.FC<SceneProps> = ({ onLoad }) => {
       }
     };
 
-    eventBus.on('ui:editModeToggled', handleEditModeToggle);
+    eventBus.on('ui:vrmManagerToggled', handleVrmManagerToggle);
 
 
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
-      eventBus.off('ui:editModeToggled', handleEditModeToggle);
+      eventBus.off('ui:vrmManagerToggled', handleVrmManagerToggle);
       container.removeChild(renderer.domElement);
       // Dispose Three.js objects to prevent memory leaks
       scene.traverse(object => {

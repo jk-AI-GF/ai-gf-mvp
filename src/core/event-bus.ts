@@ -23,7 +23,7 @@ export type AppEvents = {
   'camera:setMode': { mode: 'orbit' | 'fixed' };
 
   /** UI */
-  'ui:editModeToggled': { isEditMode: boolean };
+  'ui:vrmManagerToggled': { isOpen: boolean };
 
   /** 채팅 및 LLM */
   'chat:newMessage': { role: string, text: string };

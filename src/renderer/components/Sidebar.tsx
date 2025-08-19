@@ -25,13 +25,13 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { contextStore } = useAppContext();
   const { t } = useTranslation();
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [isVrmManagerOpen, setIsVrmManagerOpen] = useState(false);
 
-  const handleToggleEditMode = () => {
-    const newMode = !isEditMode;
-    setIsEditMode(newMode);
-    contextStore.set('isEditMode', newMode);
-    eventBus.emit('ui:editModeToggled', { isEditMode: newMode });
+  const handleToggleVrmManager = () => {
+    const newMode = !isVrmManagerOpen;
+    setIsVrmManagerOpen(newMode);
+    contextStore.set('isVrmManagerOpen', newMode);
+    eventBus.emit('ui:vrmManagerToggled', { isOpen: newMode });
   };
 
   const handleToggleMouseIgnore = () => {
@@ -46,10 +46,10 @@ const Sidebar: React.FC<SidebarProps> = ({
     <div className={styles.container}>
       <div className={styles.sidebar}>
         <button
-          className={`${styles.menuButton} ${isEditMode ? styles.active : ''}`}
-          onClick={handleToggleEditMode}
+          className={`${styles.menuButton} ${isVrmManagerOpen ? styles.active : ''}`}
+          onClick={handleToggleVrmManager}
         >
-          {isEditMode ? t('sidebar.editModeOn') : t('sidebar.editModeOff')}
+          {t('sidebar.vrmManagement')}
         </button>
         <button
           className={`${styles.menuButton} ${!isUiInteractive ? styles.active : ''}`}

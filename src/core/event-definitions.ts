@@ -128,11 +128,11 @@ export const EVENT_DEFINITIONS: EventDefinition[] = [
     ],
   },
   {
-    name: 'ui:editModeToggled',
-    description: 'events.ui:editModeToggled.description',
+    name: 'ui:vrmManagerToggled',
+    description: 'events.ui:vrmManagerToggled.description',
     payloadSchema: [
-        { key: 'isEditMode', type: 'boolean', description: '편집 모드 여부' }
-    ],
+        { key: 'isOpen', type: 'boolean', description: 'VRM 관리 모드 여부' }
+    ]
   },
   // Camera
   {

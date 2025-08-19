@@ -91,8 +91,7 @@
     "characterStateViewer": "CharacterState 뷰어"
   },
   "sidebar": {
-    "editModeOn": "편집 모드 ON",
-    "editModeOff": "편집 모드 OFF",
+    "vrmManagement": "VRM 관리",
     "mouseIgnoreOn": "마우스 무시중",
     "mouseIgnoreOff": "마우스 무시",
     "settings": "설정",

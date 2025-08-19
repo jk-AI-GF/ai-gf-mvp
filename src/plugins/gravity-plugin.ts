@@ -6,7 +6,7 @@ import { VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
 export class GravityPlugin implements IPlugin {
   public readonly name = 'Gravity';
   public enabled = true;
-  public runInEditMode = false; // 중력은 편집 모드에서 비활성화
+  public runInVrmMode = false; // 중력은 VRM 관리 모드에서 비활성화
 
   private context!: PluginContext;
   private vrmManager!: PluginContext['vrmManager'];

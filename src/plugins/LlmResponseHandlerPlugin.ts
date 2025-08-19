@@ -9,7 +9,7 @@ import { PluginContext } from '../plugin-api/plugin-context';
 export class LlmResponseHandlerPlugin implements IPlugin {
   public readonly name = 'LlmResponseHandler';
   public enabled = true;
-  public runInEditMode = false;
+  public runInVrmMode = false;
 
   private context: PluginContext | null = null;
 

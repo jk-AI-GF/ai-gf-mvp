@@ -18,10 +18,10 @@ const EditMenu: React.FC<EditMenuProps> = ({ onOpenAssetPanel, onOpenMeshControl
   const [showHitboxes, setShowHitboxes] = useState(false);
 
   useEffect(() => {
-    const handleEditModeToggle = (data: { isEditMode: boolean }) => {
-      setIsVisible(data.isEditMode);
+    const handleVrmManagerToggle = (data: { isOpen: boolean }) => {
+      setIsVisible(data.isOpen);
     };
-    const unsubscribe = eventBus.on('ui:editModeToggled', handleEditModeToggle);
+    const unsubscribe = eventBus.on('ui:vrmManagerToggled', handleVrmManagerToggle);
     return () => unsubscribe();
   }, []);
 

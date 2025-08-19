@@ -13,7 +13,7 @@ import { PluginContext } from '../plugin-api/plugin-context';
 export class InteractionTrackerPlugin implements IPlugin {
   public readonly name = 'InteractionTracker';
   public enabled = true;
-  public runInEditMode = true; // This should run regardless of mode
+  public runInVrmMode = true; // This should run regardless of mode
 
   private context!: PluginContext;
 

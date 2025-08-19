@@ -53,7 +53,7 @@
 | **UI & System**                      |                                    |                                                        |
 | `ui:showFloatingMessage`             | 플로팅 메시지 표시 요청            | `{ text: string, duration: number }`                   |
 | `ui:updateFloatingMessagePosition`   | 플로팅 메시지 위치 업데이트        | `{ left: number, top: number, visible: boolean }`      |
-| `ui:editModeToggled`                 | 편집 모드 활성/비활성              | `{ isEditMode: boolean }`                              |
+| `ui:vrmManagerToggled`                 | VRM 관리 모드 활성/비활성              | `{ isOpen: boolean }`                                  |
 | `camera:setMode`                     | 카메라 모드 설정 요청              | `{ mode: 'orbit' \| 'fixed' }`                         |
 | `camera:modeChanged`                 | 카메라 모드 변경됨                 | `{ mode: 'follow' \| 'free' }`                         |
 | `system:mouse-ignore-toggle`         | 마우스 이벤트 무시 모드 전환       | `{ isIgnoring: boolean }`                              |
