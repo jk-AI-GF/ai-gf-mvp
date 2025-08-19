@@ -4,11 +4,9 @@ import { useTranslation } from 'react-i18next';
 import styles from './AnimationPanel.module.css';
 import { useAppContext } from '../contexts/AppContext';
 
-interface AnimationPanelProps {
-  onEdit: (fileName: string) => void;
-}
+interface AnimationPanelProps {}
 
-const AnimationPanel: React.FC<AnimationPanelProps> = ({ onEdit }) => {
+const AnimationPanel: React.FC<AnimationPanelProps> = () => {
   const { t } = useTranslation();
   const { pluginManager } = useAppContext();
   const [animationFiles, setAnimationFiles] = useState<string[]>([]);
@@ -55,12 +53,6 @@ const AnimationPanel: React.FC<AnimationPanelProps> = ({ onEdit }) => {
           <div key={file} className={styles.animationItem}>
             <span className={styles.fileName} onClick={() => handlePlayClick(file)}>{file}</span>
             <div className={styles.buttonGroup}>
-              <button
-                onClick={() => onEdit(file)}
-                className={`${styles.listItemActionButton} ${styles.editButton}`}
-              >
-                {t('animationPanel.edit')}
-              </button>
               <button
                 onClick={() => handlePlayClick(file)}
                 className={`${styles.listItemActionButton} ${styles.playButton}`}

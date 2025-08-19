@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import styles from './PosePanel.module.css';
+import styles from './AnimationPanel.module.css';
 import { useAppContext } from '../contexts/AppContext';
 
 const PosePanel: React.FC = () => {
@@ -55,13 +55,17 @@ const PosePanel: React.FC = () => {
       <div className={styles.list}>
         {error && <p className={styles.emptyMessage}>{error}</p>}
         {poseFiles.map((file) => (
-          <button
-            key={file}
-            onClick={() => handlePoseClick(file)}
-            className={styles.listButton}
-          >
-            {file}
-          </button>
+          <div key={file} className={styles.animationItem}>
+            <span className={styles.fileName} onClick={() => handlePoseClick(file)}>{file}</span>
+            <div className={styles.buttonGroup}>
+              <button
+                onClick={() => handlePoseClick(file)}
+                className={`${styles.listItemActionButton} ${styles.playButton}`}
+              >
+                {t('animationPanel.play')}
+              </button>
+            </div>
+          </div>
         ))}
       </div>
     </div>

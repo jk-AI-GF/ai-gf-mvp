@@ -15,15 +15,13 @@ interface AssetPanelProps {
   initialTab?: AssetTabType;
   initialPos: { x: number, y: number };
   onDragEnd: (pos: { x: number, y: number }) => void;
-  onEditAnimation: (animationName: string) => void;
 }
 
-const AssetPanel: React.FC<AssetPanelProps> = ({ 
-  onClose, 
+const AssetPanel: React.FC<AssetPanelProps> = ({
+  onClose,
   initialTab = 'vrm',
-  initialPos, 
+  initialPos,
   onDragEnd,
-  onEditAnimation,
 }) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<AssetTabType>(initialTab);
@@ -33,7 +31,7 @@ const AssetPanel: React.FC<AssetPanelProps> = ({
       case 'vrm':
         return <VRMPanel />;
       case 'animation':
-        return <AnimationPanel onEdit={onEditAnimation} />;
+        return <AnimationPanel />;
       case 'pose':
         return <PosePanel />;
       case 'joint':
