@@ -160,6 +160,20 @@ ipcMain.handle('get-language', () => {
   return ['en', 'ko'].includes(osLang) ? osLang : 'en';
 });
 ipcMain.on('set-language', (event, language: string) => store.set('language', language));
+ipcMain.handle('get-available-languages', async () => {
+  try {
+    const localesPath = PathManager.getStaticAssetPath('locales');
+    const entries = await fsp.readdir(localesPath, { withFileTypes: true });
+    const languages = entries
+      .filter(dirent => dirent.isDirectory())
+      .map(dirent => dirent.name);
+    return languages;
+  } catch (error) {
+    console.error('Failed to get available languages:', error);
+    // Return a default list in case of an error
+    return ['en', 'ko'];
+  }
+});
 
 // --- Sequences ---
 const getSequencesByType = async (type: 'sequence' | 'subroutine') => {

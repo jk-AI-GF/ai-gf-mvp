@@ -345,5 +345,39 @@
     "character-state:changed": { "description": "The character's internal state (curiosity, happiness, etc.) has changed (entire state)." },
     "character-state:propertyChanged": { "description": "A specific internal state value of the character has changed." },
     "assets:updated": { "description": "The list of 2D assets displayed on the screen has changed." }
+  },
+  "dataProviders": {
+    "getMousePosition": {
+      "description": "Gets the current screen coordinates (px) of the mouse cursor.",
+      "outputs": {
+        "x": "Screen X coordinate (px)",
+        "y": "Screen Y coordinate (px)"
+      }
+    },
+    "getCharacterState": {
+      "description": "Gets the character's current internal state values.",
+      "params": {
+        "key": "The state to retrieve"
+      },
+      "outputs": {
+        "value": "The state value"
+      }
+    },
+    "getContextValue": {
+      "description": "Gets a value from the global ContextStore.",
+      "params": {
+        "key": "The key to retrieve"
+      },
+      "outputs": {
+        "value": "The context value"
+      }
+    },
+    "getCharacterScreenPosition": {
+      "description": "Gets the character's current screen coordinates (0.0-1.0).",
+      "outputs": {
+        "x": "Screen X coordinate (0.0-1.0)",
+        "y": "Screen Y coordinate (0.0-1.0)"
+      }
+    }
   }
 }

@@ -65,6 +65,7 @@ import { LlmSettings } from '../core/llm-settings';
   setMouseIgnoreShortcut: (shortcut: string) => ipcRenderer.send('set-mouse-ignore-shortcut', shortcut),
   getLanguage: (): Promise<string> => ipcRenderer.invoke('get-language'),
   setLanguage: (language: string) => ipcRenderer.send('set-language', language),
+  getAvailableLanguages: (): Promise<string[]> => ipcRenderer.invoke('get-available-languages'),
   
   // --- Mod Management ---
   getAllMods: () => ipcRenderer.invoke('get-all-mods'),
@@ -138,6 +139,7 @@ declare global {
       setMouseIgnoreShortcut: (shortcut: string) => void;
       getLanguage: () => Promise<string>;
       setLanguage: (language: string) => void;
+      getAvailableLanguages: () => Promise<string[]>;
 
       // --- Mod Management ---
       getAllMods: () => Promise<{ name: string, version: string, path: string }[]>;

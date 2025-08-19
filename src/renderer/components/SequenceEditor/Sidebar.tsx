@@ -208,7 +208,7 @@ const Sidebar: React.FC<SidebarProps> = ({ actions, events, dataProviders, nodes
           {dataProviders.map((provider) => React.cloneElement(renderDraggableItem(
             'dataProviderNode',
             provider.name,
-            provider.description,
+            t(provider.description),
             'data',
             false
           ), { key: provider.name }))}

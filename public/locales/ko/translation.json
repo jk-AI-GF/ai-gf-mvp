@@ -345,5 +345,39 @@
     "character-state:changed": { "description": "캐릭터의 내부 상태(호기심, 행복 등)가 변경될 때 발생합니다. (전체 상태)" },
     "character-state:propertyChanged": { "description": "캐릭터의 특정 내부 상태 값이 변경될 때 발생합니다." },
     "assets:updated": { "description": "화면에 표시되는 2D 에셋 목록이 변경될 때 발생합니다." }
+  },
+  "dataProviders": {
+    "getMousePosition": {
+      "description": "현재 마우스 커서의 화면 좌표(px)를 가져옵니다.",
+      "outputs": {
+        "x": "화면 X 좌표 (px)",
+        "y": "화면 Y 좌표 (px)"
+      }
+    },
+    "getCharacterState": {
+      "description": "캐릭터의 현재 내부 상태 값을 가져옵니다.",
+      "params": {
+        "key": "가져올 상태"
+      },
+      "outputs": {
+        "value": "상태 값"
+      }
+    },
+    "getContextValue": {
+      "description": "전역 컨텍스트(ContextStore)에서 값을 가져옵니다.",
+      "params": {
+        "key": "가져올 키"
+      },
+      "outputs": {
+        "value": "컨텍스트 값"
+      }
+    },
+    "getCharacterScreenPosition": {
+      "description": "캐릭터의 현재 화면 좌표(0.0-1.0)를 가져옵니다.",
+      "outputs": {
+        "x": "화면 X 좌표 (0.0-1.0)",
+        "y": "화면 Y 좌표 (0.0-1.0)"
+      }
+    }
   }
 }

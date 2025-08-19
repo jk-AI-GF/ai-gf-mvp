@@ -15,6 +15,7 @@ const initializeI18n = async () => {
       fallbackLng: 'en', // Fallback language
       ns: ['translation'],
       defaultNS: 'translation',
+      nsSeparator: false, // <--- 이 부분을 추가합니다.
       backend: {
         // Path to translation files
         loadPath: '/locales/{{lng}}/{{ns}}.json',

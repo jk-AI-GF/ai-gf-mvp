@@ -15,11 +15,11 @@ export function registerCoreDataProviders(
   registry.register(
     {
       name: 'getMousePosition',
-      description: '현재 마우스 커서의 화면 좌표(px)를 가져옵니다.',
+      description: 'dataProviders.getMousePosition.description',
       params: [],
       outputs: [
-        { name: 'x', type: 'number', description: '화면 X 좌표 (px)' },
-        { name: 'y', type: 'number', description: '화면 Y 좌표 (px)' },
+        { name: 'x', type: 'number', description: 'dataProviders.getMousePosition.outputs.x' },
+        { name: 'y', type: 'number', description: 'dataProviders.getMousePosition.outputs.y' },
       ],
     },
     () => {
@@ -34,17 +34,17 @@ export function registerCoreDataProviders(
   registry.register(
     {
       name: 'getCharacterState',
-      description: '캐릭터의 현재 내부 상태 값을 가져옵니다.',
+      description: 'dataProviders.getCharacterState.description',
       params: [
         { 
           name: 'key', 
           type: 'enum', 
           options: ['characterName', 'userName', 'curiosity', 'happiness', 'energy', 'lastInteractionTimestamp'], 
-          description: '가져올 상태',
+          description: 'dataProviders.getCharacterState.params.key',
         },
       ],
       outputs: [
-        { name: 'value', type: 'any', description: '상태 값' },
+        { name: 'value', type: 'any', description: 'dataProviders.getCharacterState.outputs.value' },
       ],
     },
     (params: { key: keyof Omit<ICharacterState, 'toJSON' | 'hydrate' | 'initialize'> }) => {
@@ -57,10 +57,10 @@ export function registerCoreDataProviders(
   registry.register(
     {
       name: 'getContextValue',
-      description: '전역 컨텍스트(ContextStore)에서 값을 가져옵니다.',
-      params: [{ name: 'key', type: 'string', description: '가져올 키' }],
+      description: 'dataProviders.getContextValue.description',
+      params: [{ name: 'key', type: 'string', description: 'dataProviders.getContextValue.params.key' }],
       outputs: [
-        { name: 'value', type: 'any', description: '컨텍스트 값' },
+        { name: 'value', type: 'any', description: 'dataProviders.getContextValue.outputs.value' },
       ],
     },
     async (params: { key: string }) => {
@@ -73,11 +73,11 @@ export function registerCoreDataProviders(
   registry.register(
     {
       name: 'getCharacterScreenPosition',
-      description: '캐릭터의 현재 화면 좌표(0.0-1.0)를 가져옵니다.',
+      description: 'dataProviders.getCharacterScreenPosition.description',
       params: [], // 입력 파라미터 없음
       outputs: [
-        { name: 'x', type: 'number', description: '화면 X 좌표 (0.0-1.0)' },
-        { name: 'y', type: 'number', description: '화면 Y 좌표 (0.0-1.0)' },
+        { name: 'x', type: 'number', description: 'dataProviders.getCharacterScreenPosition.outputs.x' },
+        { name: 'y', type: 'number', description: 'dataProviders.getCharacterScreenPosition.outputs.y' },
       ],
     },
     () => {

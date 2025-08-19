@@ -1,0 +1,383 @@
+{
+  "sequenceEditor": {
+    "title": "シーケンスエディタ",
+    "run": "実行",
+    "save": "保存",
+    "saveAs": "名前を付けて保存",
+    "load": "読み込み",
+    "notifications": {
+      "loadErrorInvalidFormat": "無効なシーケンスファイル形式です。",
+      "loadSuccess": "シーケンスが正常に読み込まれました。",
+      "saveSuccess": "シーケンスが正常に保存されました: {{filePath}}",
+      "saveFailed": "シーケンスの保存に失敗しました: {{error}}",
+      "saveException": "シーケンスの保存中に例外が発生しました: {{error}}",
+      "loadFailed": "シーケンスの読み込みに失敗しました: {{error}}",
+      "loadException": "シーケンスの読み込み中に例外が発生しました。"
+    },
+    "placeholders": {
+      "subroutineDescription": "サブルーチンの機能に関する自然言語の説明を入力します（LLMが使用）。例：キャラクターが特定のメッセージを話し、表情を作ります。",
+      "capabilityInput": "必要なCapabilityを入力してEnterキーを押します",
+      "lockInput": "占有するLockを入力してEnterキーを押します"
+    },
+    "sidebar": {
+      "startNodes": "開始ノード",
+      "controlNodes": "制御ノード",
+      "dataNodes": "データノード",
+      "operatorNodes": "演算子ノード",
+      "actionNodes": "アクションノード",
+      "subroutineInput": "サブルーチン入力",
+      "subroutineInputDesc": "サブルーチンの入力を定義します。",
+      "manualStart": "手動開始",
+      "manualStartDesc": "シーケンスを手動で開始します。",
+      "delay": "遅延",
+      "delayDesc": "実行を一時停止します。",
+      "branch": "分岐 (If)",
+      "branchDesc": "条件に基づいて実行フローを分岐します。",
+      "callSubroutine": "サブルーチン呼び出し",
+      "callSubroutineDesc": "別のサブルーチンを呼び出します。",
+      "clock": "クロック",
+      "clockDesc": "定期的に実行シグナルを送信します。",
+      "literal": "リテラル",
+      "literalDesc": "文字列や数値などの固定値を作成します。",
+      "randomNumber": "乱数",
+      "randomNumberDesc": "乱数を生成します。",
+      "intToString": "整数→文字列",
+      "intToStringDesc": "整数を文字列に変換します。",
+      "comment": "コメント",
+      "commentDesc": "メモを残すためのコメントノードです。",
+      "mathOperation": "算術演算",
+      "mathOperationDesc": "算術演算を実行します。",
+      "comparison": "比較演算",
+      "comparisonDesc": "2つの値を比較します。",
+      "logicOperation": "論理演算",
+      "logicOperationDesc": "論理演算を実行します。"
+    }
+  },
+  "settingsModal": {
+    "title": "設定",
+    "languageLabel": "言語",
+    "opacityLabel": "ウィンドウの不透明度",
+    "shortcutLabel": "マウス無視ショートカット",
+    "shortcutPlaceholder": "例: CommandOrControl+Shift+O",
+    "llmApiTitle": "チャットボットLLM API",
+    "modelSelectLabel": "モデルを選択",
+    "keyLabel": "キー",
+    "personaTitle": "ペルソナ",
+    "personaPlaceholder": "AIの役割を定義します。例：あなたはフレンドリーなAIアシスタントです。",
+    "systemPromptTitle": "システムプロンプト",
+    "systemPromptPlaceholder": "AIの行動ルール、制約などを入力します。"
+  },
+  "chat": {
+    "closeLog": "ログを閉じる",
+    "openLog": "ログを開く",
+    "you": "あなた",
+    "ai": "AI",
+    "placeholder": "メッセージを入力...",
+    "send": "送信"
+  },
+  "creatorPanel": {
+    "title": "クリエイターパネル",
+    "sequencesTitle": "シーケンスとサブルーチン",
+    "noSequences": "作成されたシーケンスはありません。",
+    "subroutineIndicator": "(サブルーチン)",
+    "delete": "削除",
+    "edit": "編集",
+    "run": "実行",
+    "subroutineTooltip": "サブルーチンは直接アクティブ化できません。",
+    "toggleTooltip": "アクティブ化/非アクティブ化",
+    "newSequence": "新しいシーケンス/サブルーチン",
+    "debugToolsTitle": "デバッグツール",
+    "contextStoreViewer": "コンテキストストアビューア",
+    "characterStateViewer": "CharacterStateビューア"
+  },
+  "sidebar": {
+    "editModeOn": "編集モードON",
+    "editModeOff": "編集モードOFF",
+    "mouseIgnoreOn": "マウスを無視中",
+    "mouseIgnoreOff": "マウスを無視",
+    "settings": "設定",
+    "materials": "マテリアル",
+    "lighting": "照明",
+    "creator": "クリエイター",
+    "plugins": "プラグイン",
+    "modManagement": "MOD管理",
+    "quit": "終了"
+  },
+  "animationPanel": {
+    "noFiles": "保存されたアニメーションファイル（.vrma、.fbx）が見つかりません。",
+    "unknownError": "不明なエラーが発生しました。",
+    "openInExplorer": "ファイルエクスプローラーで開く",
+    "edit": "編集",
+    "play": "再生"
+  },
+  "assetPanel": {
+    "title": "アセットパネル",
+    "tabVrm": "VRM",
+    "tabAnimation": "アニメーション",
+    "tabPose": "ポーズ",
+    "tabJoint": "関節",
+    "tabExpression": "表情"
+  },
+  "characterStateViewer": {
+    "title": "キャラクターステート",
+    "characterName": "キャラクター名:",
+    "userName": "ユーザー名:",
+    "curiosity": "好奇心:",
+    "happiness": "幸福度:",
+    "energy": "エネルギー:",
+    "lastInteraction": "最終インタラクション:",
+    "loading": "キャラクターステートを読み込み中...",
+    "secondsAgo": "{{seconds}}秒前"
+  },
+  "expressionPanel": {
+    "loadVrmFirst": "最初にVRMモデルを読み込んでください。"
+  },
+  "jointControlPanel": {
+    "characterHeight": "キャラクターの身長（腰Y）"
+  },
+  "lightPanel": {
+    "title": "照明の編集",
+    "directionalTitle": "ディレクショナルライト",
+    "intensity": "強度",
+    "color": "色",
+    "angle": "角度",
+    "distance": "距離",
+    "ambientTitle": "アンビエントライト"
+  },
+  "materialPanel": {
+    "title": "マテリアルの一括編集",
+    "shadeColor": "シェードカラー",
+    "outlineColor": "アウトラインカラー",
+    "outlineWidth": "アウトラインの幅",
+    "toonShading": "トゥーンシェーディング",
+    "rimLightColor": "リムライトカラー",
+    "rimLightIntensity": "リムライトの強度"
+  },
+  "modManagementPanel": {
+    "title": "MOD管理",
+    "errorLoading": "MODリストの読み込みに失敗しました。",
+    "loading": "MODを読み込み中...",
+    "noMods": "インストールされているMODはありません。",
+    "restartMessage": "ℹ️ 変更を適用するにはアプリを再起動してください。"
+  },
+  "pluginPanel": {
+    "title": "プラグイン管理",
+    "noPlugins": "利用可能なプラグインはありません。"
+  },
+  "posePanel": {
+    "noFiles": "保存されたポーズファイル（.vrma）が見つかりません。",
+    "saveCurrentPose": "現在のポーズを保存"
+  },
+  "vrmPanel": {
+    "metaReadError": "VRMメタデータの読み取りに失敗しました。"
+  },
+  "vrmPreviewDialog": {
+    "allow": "許可",
+    "disallow": "不許可",
+    "title": "VRMを読み込む",
+    "noPreview": "プレビューなし",
+    "metaTitle": "タイトル",
+    "metaAuthors": "作成者",
+    "metaVersion": "バージョン",
+    "metaFile": "ファイル",
+    "permissionsTitle": "権限 (VRM {{version}}.0)",
+    "v1": {
+      "avatarPermission": "アバターの許可",
+      "commercialUsage": "商用利用",
+      "allowRedistribution": "再配布を許可",
+      "creditNotation": "クレジット表記",
+      "modification": "改変",
+      "allowExcessivelyViolentUsage": "過度に暴力的な使用",
+      "allowExcessivelySexualUsage": "過度に性的な使用",
+      "allowPoliticalOrReligiousUsage": "政治的・宗教的な使用",
+      "allowAntisocialOrHateUsage": "反社会的・ヘイト的な使用"
+    },
+    "v0": {
+      "allowedUserName": "許可されたユーザー",
+      "violentUssageName": "暴力的な使用",
+      "sexualUssageName": "性的な使用",
+      "commercialUssageName": "商用利用",
+      "licenseName": "ライセンス"
+    },
+    "confirmMessage": "このモデルを読み込みますか？",
+    "cancel": "キャンセル",
+    "load": "読み込み"
+  },
+  "boneSlider": {
+    "reset": "リセット"
+  },
+  "contextStoreDebugPanel": {
+    "title": "コンテキストストアビューア",
+    "key": "キー",
+    "value": "値",
+    "noData": "コンテキストストアにデータがありません。"
+  },
+  "editMenu": {
+    "vrm": "VRM",
+    "joint": "関節",
+    "expression": "表情",
+    "pose": "ポーズ",
+    "animation": "アニメ",
+    "mesh": "メッシュ",
+    "hitboxes": "ヒットボックス"
+  },
+  "vrmScaleSlider": {
+    "scale": "スケール"
+  },
+  "meshControlPanel": {
+    "title": "メッシュ管理",
+    "noVrm": "VRMモデルが読み込まれていないか、メッシュが見つかりません。",
+    "hide": "非表示",
+    "show": "表示"
+  },
+  "actions": {
+    "llm.invoke": {
+      "description": "LLMに動的なプロンプトを送信して、キャラクターの応答を引き出します。"
+    },
+    "llm.updateMemory": {
+      "description": "LLMとの対話中に発見された重要な情報を長期記憶ファイルに保存または更新します。"
+    },
+    "playAnimation": {
+      "description": "キャラクターのアニメーションを再生します。"
+    },
+    "playTTS": {
+      "description": "TTS（テキスト読み上げ）音声を再生します。"
+    },
+    "showMessage": {
+      "description": "画面に吹き出しメッセージを表示します。"
+    },
+    "moveCharacterToScreenPosition": {
+      "description": "画面比率座標に基づいてキャラクターを移動します。"
+    },
+    "setExpression": {
+      "description": "キャラクターの表情を滑らかに変更します。"
+    },
+    "setExpressionWeight": {
+      "description": "キャラクターの表情の重みを即座に設定します。"
+    },
+    "setPose": {
+      "description": "キャラクターのポーズを設定します。"
+    },
+    "lookAt": {
+      "description": "キャラクターの視線をターゲットに固定します。"
+    },
+    "changeBackground": {
+      "description": "背景画像を変更します。"
+    },
+    "setHitboxesVisible": {
+      "description": "ヒットボックスの可視性を設定します。"
+    },
+    "resetPose": {
+      "description": "キャラクターをデフォルトのTポーズにリセットします。"
+    },
+    "saveCurrentPose": {
+      "description": "現在のポーズをファイルに保存します。"
+    },
+    "loadCharacter": {
+      "description": "別のVRMモデルを読み込みます。"
+    },
+    "setCameraMode": {
+      "description": "カメラモードを変更します。"
+    },
+    "setContext": {
+      "description": "グローバルコンテキストに値を保存します。"
+    },
+    "log": {
+      "description": "コンソールにデバッグメッセージを出力します。"
+    },
+    "setCharacterState": {
+      "description": "キャラクターの内部状態値を変更します。"
+    },
+    "toggleSequence": {
+      "description": "指定されたシーケンスをアクティブ化または非アクティブ化します。"
+    },
+    "togglePlugin": {
+      "description": "指定されたプラグインを有効または無効にします。"
+    },
+    "disableAllPlugins": {
+      "description": "すべてのアクティブなプラグインを無効にし、現在の状態を記憶します。"
+    },
+    "restorePlugins": {
+      "description": "以前にdisableAllPluginsで無効にされたプラグインを再度有効にします。"
+    },
+    "setCharacterScale": {
+      "description": "キャラクター全体のサイズを調整します。"
+    },
+    "setRotation": {
+      "description": "キャラクターをY軸周りに回転させます。"
+    },
+    "showImageAsset": {
+      "description": "画面に2D画像アセットを表示し、そのIDを返します。"
+    },
+    "hideImageAsset": {
+      "description": "IDで特定の2D画像アセットを非表示にします。"
+    },
+    "moveImageAsset": {
+      "description": "IDで特定の2D画像アセットを移動します。"
+    },
+    "updateImageAsset": {
+      "description": "IDで特定の2D画像アセットのプロパティを変更します。"
+    }
+  },
+  "events": {
+    "chat:newMessage": { "description": "新しいチャットメッセージを受信しました。" },
+    "llm:responseReceived": { "description": "LLMから応答を受信しました。" },
+    "vrm:loaded": { "description": "VRMモデルの読み込みが完了しました。" },
+    "vrm:unloaded": { "description": "VRMモデルがアンロードされました。" },
+    "vrm:animationFinished": { "description": "アニメーションの再生が終了しました。" },
+    "vrm:poseApplied": { "description": "ポーズが正常に適用されました。" },
+    "vrm:scaled": { "description": "VRMモデルのサイズが変更されました。" },
+    "character_part_clicked": { "description": "キャラクターの体の一部がクリックされました。" },
+    "character_part_right_clicked": { "description": "キャラクターの体の一部が右クリックされました。" },
+    "character:grabStart": { "description": "キャラクターの掴みを開始しました。" },
+    "character:grabEnd": { "description": "キャラクターの掴みを終了しました。" },
+    "character:dragStart": { "description": "キャラクターのドラッグを開始しました。" },
+    "character:dragEnd": { "description": "キャラクターのドラッグを終了しました。" },
+    "ui:showFloatingMessage": { "description": "フローティングメッセージが表示されます。" },
+    "ui:updateFloatingMessagePosition": { "description": "フローティングメッセージの位置が更新されます。" },
+    "ui:editModeToggled": { "description": "編集モードがオン/オフに切り替わりました。" },
+    "camera:setMode": { "description": "カメラモードが設定されました。" },
+    "camera:modeChanged": { "description": "カメラモードが変更されました。" },
+    "system:mouse-ignore-toggle": { "description": "マウスイベントの無視が切り替わりました。" },
+    "plugin:enabled": { "description": "プラグインが有効になりました。" },
+    "plugin:disabled": { "description": "プラグインが無効になりました。" },
+    "sequences-updated": { "description": "シーケンスのリストが更新されました。" },
+    "character-state:changed": { "description": "キャラクターの内部状態（好奇心、幸福度など）が変更されました（状態全体）。" },
+    "character-state:propertyChanged": { "description": "キャラクターの特定の内部状態値が変更されました。" },
+    "assets:updated": { "description": "画面に表示されている2Dアセットのリストが変更されました。" }
+  },
+  "dataProviders": {
+    "getMousePosition": {
+      "description": "マウスカーソルの現在の画面座標（px）を取得します。",
+      "outputs": {
+        "x": "画面X座標（px）",
+        "y": "画面Y座標（px）"
+      }
+    },
+    "getCharacterState": {
+      "description": "キャラクターの現在の内部状態値を取得します。",
+      "params": {
+        "key": "取得する状態"
+      },
+      "outputs": {
+        "value": "状態値"
+      }
+    },
+    "getContextValue": {
+      "description": "グローバルContextStoreから値を取得します。",
+      "params": {
+        "key": "取得するキー"
+      },
+      "outputs": {
+        "value": "コンテキスト値"
+      }
+    },
+    "getCharacterScreenPosition": {
+      "description": "キャラクターの現在の画面座標（0.0-1.0）を取得します。",
+      "outputs": {
+        "x": "画面X座標（0.0-1.0）",
+        "y": "画面Y座標（0.0-1.0）"
+      }
+    }
+  }
+}

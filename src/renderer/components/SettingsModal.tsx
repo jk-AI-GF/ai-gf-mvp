@@ -36,11 +36,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     setLlmSettings,
   } = useAppContext();
   const [shortcut, setShortcut] = useState('');
+  const [availableLanguages, setAvailableLanguages] = useState<string[]>([]);
   const { t, i18n } = useTranslation();
 
   useEffect(() => {
     if (isOpen) {
       window.electronAPI.getMouseIgnoreShortcut().then(setShortcut);
+      window.electronAPI.getAvailableLanguages().then(setAvailableLanguages);
     }
   }, [isOpen]);
 
@@ -67,6 +69,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         [provider]: value,
       },
     });
+  };
+
+  const languageNames: { [key: string]: string } = {
+    en: 'English',
+    ko: '한국어',
+    ja: '日本語',
   };
 
   return (
@@ -135,8 +143,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
             onChange={handleLanguageChange}
             style={inputStyle}
           >
-            <option value="en">English</option>
-            <option value="ko">한국어</option>
+            {availableLanguages.map((lang) => (
+              <option key={lang} value={lang}>
+                {languageNames[lang] || lang}
+              </option>
+            ))}
           </select>
         </div>
 

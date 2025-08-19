@@ -1,4 +1,5 @@
 import React, { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { DataProviderNodeModel } from '../../../core/sequence/DataProviderNodeModel';
 import { IPort } from '../../../core/sequence/BaseNode';
@@ -17,6 +18,7 @@ const getPortColor = (type: IPort['type']) => {
 };
 
 const DataProviderNode: React.FC<NodeProps<DataProviderNodeModel>> = ({ data }) => {
+  const { t } = useTranslation();
   if (!data) return null;
 
   const { name, outputs } = data;
@@ -31,7 +33,7 @@ const DataProviderNode: React.FC<NodeProps<DataProviderNodeModel>> = ({ data }) 
       fontSize: '12px',
     }}>
       <div style={{ background: '#2196F3', padding: '8px', fontWeight: 'bold', textAlign: 'center', borderTopLeftRadius: '4px', borderTopRightRadius: '4px' }}>
-        {name}
+        {t(name)}
       </div>
       <div style={{ padding: '10px', textAlign: 'right' }}>
         {outputs.map((port) => (

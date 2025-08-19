@@ -1,4 +1,5 @@
 import React, { memo, useCallback, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Handle, Position, NodeProps, useReactFlow, useStoreApi } from 'reactflow';
 import { ActionNodeModel } from '../../../core/sequence/ActionNodeModel';
 import { IPort } from '../../../core/sequence/BaseNode';
@@ -123,6 +124,7 @@ const inputStyle: React.CSSProperties = {
 };
 
 const ActionNode: React.FC<NodeProps<ActionNodeModel>> = ({ id, data }) => {
+  const { t } = useTranslation();
   const { setNodes } = useReactFlow();
   const store = useStoreApi();
 
@@ -162,7 +164,7 @@ const ActionNode: React.FC<NodeProps<ActionNodeModel>> = ({ id, data }) => {
       fontSize: '12px',
     }}>
       <div style={{ background: '#4a4a4a', padding: '8px', fontWeight: 'bold', textAlign: 'center', borderTopLeftRadius: '4px', borderTopRightRadius: '4px' }}>
-        {name}
+        {t(name)}
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-start', width: '100%' }}>
